@@ -28,6 +28,23 @@ from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_
 if sys.platform.startswith("linux"):
     os.environ.setdefault("KIVY_CLIPBOARD", "sdl2")
 
+# Frozen builds: point OpenSSL at certifi's CA bundle. The bundled Python
+# interpreter ships its own OpenSSL, whose compiled-in default cert paths
+# point at the *build runner's* filesystem (e.g. /etc/ssl/certs/...), so
+# any caller that uses Python's default SSL context — kivy.loader fetching
+# IGDB box art, urllib.request, requests, websockets — fails with
+# "CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate" on
+# the user's machine. Setting SSL_CERT_FILE / REQUESTS_CA_BUNDLE before
+# the ssl module is loaded patches every call site at once.
+if use_worlds_venv():
+    try:
+        import certifi
+        _ca_bundle = certifi.where()
+        os.environ.setdefault("SSL_CERT_FILE", _ca_bundle)
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", _ca_bundle)
+    except ImportError:
+        pass  # certifi unavailable — leave OpenSSL defaults in place
+
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
