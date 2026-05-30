@@ -809,36 +809,79 @@ def _yo_emit(payload) -> int:
     return 0
 
 
+# Exit code that asks the caller to re-run us in a fresh process. Reuses the
+# project-wide "bad environment / needs reload" convention (Utils.exit_restart_
+# for_update, handled by the launcher) — here it means "world installed, but it
+# can't be loaded in this already-`import worlds`-ed process; re-run me".
+EXIT_NEEDS_RELOAD = 10
+
+
+def _yo_world_installed(module: str) -> bool:
+    """True if `worlds.<module>` is pip-installed, checked WITHOUT importing the
+    worlds package (importlib.metadata reads dist-info only)."""
+    import importlib.metadata
+    try:
+        importlib.metadata.distribution(f"worlds.{module}")
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
 def dump_yaml_options(game_name: str, visibility: str) -> int:
     """Install/load `game_name` and write its option metadata to stdout as JSON.
 
     Runs inside the frozen Generate executable, so worlds load in the real
     bundle environment (C-extension base deps like bsdiff4 import fine).
     Returns a process exit code; the JSON `ok` field carries success/failure.
+
+    Two-call install: a world can't be installed and loaded in the same
+    process, because importing `worlds` to load it also caches the package with
+    its load loop already run against the old queue. So when a world isn't yet
+    installed we install it directly (ModuleUpdate.install_worlds, which never
+    imports `worlds`) and exit EXIT_NEEDS_RELOAD; the caller re-runs us and the
+    fresh process loads it cleanly. Already-installed worlds load in one call.
     """
     import traceback
     try:
-        if game_name not in GameIndex.game_names:
+        module = GameIndex.game_names.get(game_name)
+        if module is None:
             return _yo_emit({
                 "ok": False,
                 "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
             })
 
-        # set_game_names installs the world (uv) if missing and queues it for
-        # loading; the subsequent `import worlds` runs the load loop.
+        if not _yo_world_installed(module):
+            # Install directly via ModuleUpdate, which reads importlib.metadata
+            # and never imports `worlds` — unlike set_game_names, whose find_spec
+            # would import `worlds` before the install is queued, so the load loop
+            # misses the new world and the cached module never re-loads. We can't
+            # load in this process, so install and ask the caller to re-run; the
+            # fresh process sees it installed and loads it cleanly.
+            apworlds = ModuleUpdate.install_worlds([module])
+            if not _yo_world_installed(module) and f"worlds.{module}" not in apworlds:
+                return _yo_emit({
+                    "ok": False,
+                    "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
+                })
+            logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
+            return EXIT_NEEDS_RELOAD
+
+        # Already installed: queue + load here. set_game_names takes the
+        # metadata path (no find_spec), and `from worlds import` is the first
+        # import of the package, so the load loop picks the world up.
         set_game_names([game_name], strict=False)
         from worlds import AutoWorldRegister, failed_world_loads
 
         world = AutoWorldRegister.world_types.get(game_name)
         if world is None:
-            if game_name in failed_world_loads:
+            if f"worlds.{module}" in failed_world_loads or game_name in failed_world_loads:
                 return _yo_emit({
                     "ok": False,
                     "error": f"World for '{game_name}' failed to import. See stderr for the traceback.",
                 })
             return _yo_emit({
                 "ok": False,
-                "error": f"'{game_name}' did not register a World subclass after install.",
+                "error": f"'{game_name}' did not register a World subclass.",
             })
 
         visibility_flag = (
