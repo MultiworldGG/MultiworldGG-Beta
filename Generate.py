@@ -82,6 +82,8 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
     parser.add_argument("--game", help="Game name, used by --yaml-options.")
+    parser.add_argument("--module", help="World module slug for --yaml-options. Lets custom (non-pip) worlds "
+                                         "load without a game-index lookup; falls back to the index when omitted.")
     parser.add_argument("--yaml-options", action="store_true",
                         help="Install/load --game, write its option metadata to stdout as JSON, then exit. "
                              "Used by the YAML creator GUI; no seed is generated.")
@@ -827,49 +829,91 @@ def _yo_world_installed(module: str) -> bool:
         return False
 
 
-def dump_yaml_options(game_name: str, visibility: str) -> int:
+def _yo_custom_world_entry(module: str):
+    """A `Utils._worlds_to_load` entry for an already-present *custom* world (one
+    with no pip metadata), or None if `module` isn't present on disk.
+
+    The launcher only offers worlds get_available_worlds() found on disk, so a
+    selectable custom world already exists — we never install it. Two on-disk
+    shapes, in load-precedence order:
+      - an apworld previously extracted into the venv worlds dir -> import via
+        the string "worlds.<module>" (worlds/__init__ extends __path__ to that
+        dir, so the normal file loader finds it).
+      - a custom_worlds/<module>.apworld not yet extracted -> an APWorldContainer,
+        loaded in-process via zipimport.
+    Checked WITHOUT importing `worlds` (path lookups + a zip manifest read only).
+    """
+    if (ModuleUpdate._venv_worlds_dir() / module).is_dir():
+        return f"worlds.{module}"
+    apworld_file = ModuleUpdate.custom_worlds_dir / f"{module}.apworld"
+    if apworld_file.is_file():
+        from APContainer import APWorldContainer
+        container = APWorldContainer(apworld_file)
+        container.read()  # populate .game from the manifest (for failure reporting)
+        return container
+    return None
+
+
+def dump_yaml_options(game_name: str, visibility: str, module: str | None = None) -> int:
     """Install/load `game_name` and write its option metadata to stdout as JSON.
 
     Runs inside the frozen Generate executable, so worlds load in the real
     bundle environment (C-extension base deps like bsdiff4 import fine).
     Returns a process exit code; the JSON `ok` field carries success/failure.
 
-    Two-call install: a world can't be installed and loaded in the same
-    process, because importing `worlds` to load it also caches the package with
-    its load loop already run against the old queue. So when a world isn't yet
-    installed we install it directly (ModuleUpdate.install_worlds, which never
-    imports `worlds`) and exit EXIT_NEEDS_RELOAD; the caller re-runs us and the
-    fresh process loads it cleanly. Already-installed worlds load in one call.
+    Two-call install (index/pip worlds): a world can't be installed and loaded
+    in the same process, because importing `worlds` to load it also caches the
+    package with its load loop already run against the old queue. So when an
+    index world isn't yet installed we install it directly
+    (ModuleUpdate.install_worlds, which never imports `worlds`) and exit
+    EXIT_NEEDS_RELOAD; the caller re-runs us and the fresh process loads it
+    cleanly. Already-installed worlds load in one call.
+
+    Custom worlds (apworld extractions, custom_worlds/*.apworld) have no pip
+    metadata and can't be "installed", but the launcher only offers worlds found
+    on disk, so they already exist. We queue their load entry onto
+    `Utils._worlds_to_load` directly and load them in this same process — no
+    install, no reload, no find_spec.
     """
     import traceback
     try:
-        module = GameIndex.game_names.get(game_name)
+        if not module:
+            module = GameIndex.game_names.get(game_name)
         if module is None:
             return _yo_emit({
                 "ok": False,
                 "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
             })
 
-        if not _yo_world_installed(module):
-            # Install directly via ModuleUpdate, which reads importlib.metadata
-            # and never imports `worlds` — unlike set_game_names, whose find_spec
-            # would import `worlds` before the install is queued, so the load loop
-            # misses the new world and the cached module never re-loads. We can't
-            # load in this process, so install and ask the caller to re-run; the
-            # fresh process sees it installed and loads it cleanly.
-            apworlds = ModuleUpdate.install_worlds([module])
-            if not _yo_world_installed(module) and f"worlds.{module}" not in apworlds:
-                return _yo_emit({
-                    "ok": False,
-                    "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
-                })
-            logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
-            return EXIT_NEEDS_RELOAD
+        if _yo_world_installed(module):
+            # Pip-installed (index) world: set_game_names takes the
+            # importlib.metadata path (no find_spec), and `from worlds import` is
+            # the first import of the package, so the load loop picks it up.
+            set_game_names([game_name], strict=False)
+        else:
+            entry = _yo_custom_world_entry(module)
+            if entry is None:
+                # Genuinely-missing index world: install directly via
+                # ModuleUpdate, which reads importlib.metadata and never imports
+                # `worlds` — unlike set_game_names, whose find_spec would import
+                # `worlds` before the install is queued, so the load loop misses
+                # the new world and the cached module never re-loads. We can't
+                # load in this process, so install and ask the caller to re-run;
+                # the fresh process sees it installed and loads it cleanly.
+                apworlds = ModuleUpdate.install_worlds([module])
+                if not _yo_world_installed(module) and f"worlds.{module}" not in apworlds:
+                    return _yo_emit({
+                        "ok": False,
+                        "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
+                    })
+                logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
+                return EXIT_NEEDS_RELOAD
+            # Already-present custom world: queue its load entry BEFORE the first
+            # `from worlds import` so worlds/__init__'s load loop picks it up,
+            # bypassing set_game_names' find_spec (which would import `worlds`
+            # before the world is queued and miss it).
+            Utils._worlds_to_load.append(entry)
 
-        # Already installed: queue + load here. set_game_names takes the
-        # metadata path (no find_spec), and `from worlds import` is the first
-        # import of the package, so the load loop picks the world up.
-        set_game_names([game_name], strict=False)
         from worlds import AutoWorldRegister, failed_world_loads
 
         world = AutoWorldRegister.world_types.get(game_name)
@@ -922,7 +966,7 @@ if __name__ == '__main__':
     # subprocess).
     if _YAML_OPTIONS_MODE:
         _yo_args = mystery_argparse()
-        sys.exit(dump_yaml_options(_yo_args.game, _yo_args.visibility))
+        sys.exit(dump_yaml_options(_yo_args.game, _yo_args.visibility, _yo_args.module))
 
     confirmation = atexit.register(input, "Press enter to close.")
     try:
