@@ -132,12 +132,12 @@ function makeOctokits(state: FakeIndex) {
 }
 
 const KAREN_DATA: any = {
-  name: "Karen-Multiworld-Bot",
-  html_url: "https://github.com/apps/karen-multiworld-bot",
+  name: "Karen-Head-of-Multiworld-QA",
+  html_url: "https://github.com/apps/karen-head-of-multiworld-qa",
 };
 const OLIVER_DATA: any = {
-  name: "Oliver-Multiworld-Squirrel",
-  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+  name: "Oliver-the-Multiworld-Squirrel",
+  html_url: "https://github.com/apps/oliver-the-multiworld-squirrel",
 };
 
 const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "karenOctokit" | "oliverOctokit"> => ({

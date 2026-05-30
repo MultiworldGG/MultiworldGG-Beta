@@ -238,9 +238,7 @@ class WinFileUtils(_DesktopFileUtils):
             filter_parts = []
             for text, ext in filetypes:
                 # Convert extensions like ["*.txt", "*.log"] to "*.txt;*.log"
-                for i, e in enumerate(ext):
-                    if not "*" in e:
-                        ext[i] = "*" + e
+                ext = [e if "*" in e else "*" + e for e in ext]
                 ext_str = ";".join(ext)
                 filter_parts.append(text + " (" + ext_str + ")")
                 filter_parts.append(ext_str)
@@ -382,9 +380,7 @@ class WinFileUtils(_DesktopFileUtils):
             filter_parts = []
             for text, ext in filetypes:
                 # Convert extensions like ["*.txt", "*.log"] to "*.txt;*.log"
-                for i, e in enumerate(ext):
-                    if not "*" in e:
-                        ext[i] = "*" + e
+                ext = [e if "*" in e else "*" + e for e in ext]
                 ext_str = ";".join(ext)
                 filter_parts.append(text + " (" + ext_str + ")")
                 filter_parts.append(ext_str)
