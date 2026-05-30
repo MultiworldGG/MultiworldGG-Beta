@@ -100,8 +100,8 @@ Expected log signature for a healthy cold start:
   (workers do not re-import because `preload_app = True`), then two
   `gunicorn: worker` processes boot and stay up.
 - `nginx-1`: ready for startup.
-- `mwgg-github-bot-1`: `Oliver the Multiworld Squirrel is listening … Karen the
-  Multiworld Knight is running automations on the Index`, `Listening on
+- `mwgg-github-bot-1`: `Oliver the Multiworld Squirrel is listening … Karen Head 
+   of Multiworld QA is running automations on the Index`, `Listening on
   http://0.0.0.0:3000`.
 
 Concurrent installs from multiworld and web are serialized by a POSIX file

@@ -69,7 +69,7 @@ afterEach(() => {
 describe("status page (TODO #1 hardening)", () => {
   it("renders the new title and h1 and does not leak service-internal strings", () => {
     const router = makeRouter();
-    mountStatusRoutes(router as any, fakeProbot, botData("oliver-multiworld-squirrel"), botData("karen-multiworld-bot"));
+    mountStatusRoutes(router as any, fakeProbot, botData("oliver-the-multiworld-squirrel"), botData("karen-head-of-multiworld-qa"));
     const { body, headers } = captureHtml(router.handlers["/"]);
 
     expect(headers["Content-Type"]).toMatch(/text\/html/);
