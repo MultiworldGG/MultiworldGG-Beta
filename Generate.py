@@ -81,7 +81,8 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--spoiler-only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
-    parser.add_argument("--game", help="Game name, used by --yaml-options.")
+    parser.add_argument("--game", dest="yaml_options_game",
+                        help="Game name, used by --yaml-options.")
     parser.add_argument("--module", help="World module slug for --yaml-options. Lets custom (non-pip) worlds "
                                          "load without a game-index lookup; falls back to the index when omitted.")
     parser.add_argument("--yaml-options", action="store_true",
@@ -91,7 +92,7 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Option visibility level for --yaml-options.")
     args = parser.parse_args(argv)
 
-    if args.yaml_options and not args.game:
+    if args.yaml_options and not args.yaml_options_game:
         parser.error("--yaml-options requires --game")
 
     if args.skip_output and args.spoiler_only:
@@ -691,24 +692,24 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
 # --yaml-options: dump a world's option metadata as JSON (for the YAML creator)
 # ---------------------------------------------------------------------------
 
-def _yo_serialize_default(value):
+def _y_serialize_default(value):
     """Coerce option defaults into JSON-safe values."""
     if value is None or isinstance(value, (bool, int, float, str)):
         return value
     if isinstance(value, (list, tuple, set, frozenset)):
-        return [_yo_serialize_default(v) for v in value]
+        return [_y_serialize_default(v) for v in value]
     if isinstance(value, dict):
-        return {str(k): _yo_serialize_default(v) for k, v in value.items()}
+        return {str(k): _y_serialize_default(v) for k, v in value.items()}
     return str(value)
 
 
-def _yo_clean_docstring(text):
+def _y_clean_docstring(text):
     if not text:
         return ""
     return " ".join(line.strip() for line in text.strip().splitlines() if line.strip())
 
 
-def _yo_choice_extras(option_class):
+def _y_choice_extras(option_class):
     """`choices` (key -> machine name) and `display_names` (key -> human label)."""
     lookup = dict(getattr(option_class, "name_lookup", {}) or {})
     choices, display_names = {}, {}
@@ -723,35 +724,35 @@ def _yo_choice_extras(option_class):
     return {"choices": choices, "display_names": display_names}
 
 
-def _yo_range_extras(option_class):
+def _y_range_extras(option_class):
     return {
         "range_start": int(getattr(option_class, "range_start", 0)),
         "range_end": int(getattr(option_class, "range_end", 100)),
     }
 
 
-def _yo_describe_option(option_name, option_class):
+def _y_describe_option(option_name, option_class):
     """JSON-safe descriptor for one option class. Order matters: subclass first."""
     desc = {
         "name": option_name,
         "display_name": getattr(option_class, "display_name", None) or option_name,
-        "docstring": _yo_clean_docstring(getattr(option_class, "__doc__", "") or ""),
-        "default": _yo_serialize_default(getattr(option_class, "default", None)),
+        "docstring": _y_clean_docstring(getattr(option_class, "__doc__", "") or ""),
+        "default": _y_serialize_default(getattr(option_class, "default", None)),
     }
     if issubclass(option_class, Options.Toggle):
         desc["type"] = "toggle"
         return desc
     if issubclass(option_class, Options.TextChoice):
         desc["type"] = "text_choice"
-        desc.update(_yo_choice_extras(option_class))
+        desc.update(_y_choice_extras(option_class))
         return desc
     if issubclass(option_class, Options.Choice):
         desc["type"] = "choice"
-        desc.update(_yo_choice_extras(option_class))
+        desc.update(_y_choice_extras(option_class))
         return desc
     if issubclass(option_class, Options.NamedRange):
         desc["type"] = "named_range"
-        desc.update(_yo_range_extras(option_class))
+        desc.update(_y_range_extras(option_class))
         desc["special_range_names"] = {
             str(k): int(v)
             for k, v in (getattr(option_class, "special_range_names", {}) or {}).items()
@@ -759,7 +760,7 @@ def _yo_describe_option(option_name, option_class):
         return desc
     if issubclass(option_class, Options.Range):
         desc["type"] = "range"
-        desc.update(_yo_range_extras(option_class))
+        desc.update(_y_range_extras(option_class))
         return desc
     if issubclass(option_class, Options.FreeText):
         desc["type"] = "free_text"
@@ -790,7 +791,7 @@ def _yo_describe_option(option_name, option_class):
     return desc
 
 
-def _yo_describe_world(world):
+def _y_describe_world(world):
     return {
         "item_names": sorted(getattr(world, "item_names", []) or []),
         "location_names": sorted(getattr(world, "location_names", []) or []),
@@ -805,7 +806,7 @@ def _yo_describe_world(world):
     }
 
 
-def _yo_emit(payload) -> int:
+def _y_emit(payload) -> int:
     _JSON_OUT.write(json.dumps(payload))
     _JSON_OUT.flush()
     return 0
@@ -818,7 +819,7 @@ def _yo_emit(payload) -> int:
 EXIT_NEEDS_RELOAD = 10
 
 
-def _yo_world_installed(module: str) -> bool:
+def _y_world_installed(module: str) -> bool:
     """True if `worlds.<module>` is pip-installed, checked WITHOUT importing the
     worlds package (importlib.metadata reads dist-info only)."""
     import importlib.metadata
@@ -829,7 +830,7 @@ def _yo_world_installed(module: str) -> bool:
         return False
 
 
-def _yo_custom_world_entry(module: str):
+def _y_custom_world_entry(module: str):
     """A `Utils._worlds_to_load` entry for an already-present *custom* world (one
     with no pip metadata), or None if `module` isn't present on disk.
 
@@ -880,18 +881,18 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
         if not module:
             module = GameIndex.game_names.get(game_name)
         if module is None:
-            return _yo_emit({
+            return _y_emit({
                 "ok": False,
                 "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
             })
 
-        if _yo_world_installed(module):
+        if _y_world_installed(module):
             # Pip-installed (index) world: set_game_names takes the
             # importlib.metadata path (no find_spec), and `from worlds import` is
             # the first import of the package, so the load loop picks it up.
             set_game_names([game_name], strict=False)
         else:
-            entry = _yo_custom_world_entry(module)
+            entry = _y_custom_world_entry(module)
             if entry is None:
                 # Genuinely-missing index world: install directly via
                 # ModuleUpdate, which reads importlib.metadata and never imports
@@ -901,8 +902,8 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
                 # load in this process, so install and ask the caller to re-run;
                 # the fresh process sees it installed and loads it cleanly.
                 apworlds = ModuleUpdate.install_worlds([module])
-                if not _yo_world_installed(module) and f"worlds.{module}" not in apworlds:
-                    return _yo_emit({
+                if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
+                    return _y_emit({
                         "ok": False,
                         "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
                     })
@@ -919,11 +920,11 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
         world = AutoWorldRegister.world_types.get(game_name)
         if world is None:
             if f"worlds.{module}" in failed_world_loads or game_name in failed_world_loads:
-                return _yo_emit({
+                return _y_emit({
                     "ok": False,
                     "error": f"World for '{game_name}' failed to import. See stderr for the traceback.",
                 })
-            return _yo_emit({
+            return _y_emit({
                 "ok": False,
                 "error": f"'{game_name}' did not register a World subclass.",
             })
@@ -940,21 +941,21 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
             descs = []
             for option_name, option_class in (options or {}).items():
                 try:
-                    descs.append(_yo_describe_option(option_name, option_class))
+                    descs.append(_y_describe_option(option_name, option_class))
                 except Exception as e:
                     logging.warning("describe_option(%s) failed: %s", option_name, e)
             if descs:
                 groups_out[group_name] = descs
 
-        return _yo_emit({
+        return _y_emit({
             "ok": True,
             "game_name": game_name,
-            "world": _yo_describe_world(world),
+            "world": _y_describe_world(world),
             "groups": groups_out,
         })
     except Exception as e:
         logging.error("dump_yaml_options failed", exc_info=True)
-        return _yo_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
+        return _y_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
 
 
 if __name__ == '__main__':
@@ -965,8 +966,8 @@ if __name__ == '__main__':
     # before the interactive "Press enter" atexit hook, which would hang a
     # subprocess).
     if _YAML_OPTIONS_MODE:
-        _yo_args = mystery_argparse()
-        sys.exit(dump_yaml_options(_yo_args.game, _yo_args.visibility, _yo_args.module))
+        _y_args = mystery_argparse()
+        sys.exit(dump_yaml_options(_y_args.yaml_options_game, _y_args.visibility, _y_args.module))
 
     confirmation = atexit.register(input, "Press enter to close.")
     try:
