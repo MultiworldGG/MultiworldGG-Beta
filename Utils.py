@@ -419,10 +419,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         if error_callback:
             error_callback()
         update_logger.error(f"Module installation failed: {error}")
-    
-    if not is_windows:
-        _perform_module_launch("", **kwargs)
-        return
 
     try:
         importlib.import_module(module_name)

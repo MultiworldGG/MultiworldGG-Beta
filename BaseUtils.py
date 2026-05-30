@@ -25,7 +25,9 @@ __all__ = ("Version",
            "write_path",
            "use_worlds_venv",
            "mwgg_venv_site_packages",
+           "mwgg_venv_python",
            "reload_application_options",
+           "get_frontend_versions",
            "init_logging",
            "loglevel_mapping",
            "WORLDS_EXIST",
@@ -301,6 +303,22 @@ def write_path(*path: str) -> str:
     else:
         raise RuntimeError("Unsupported platform")
 
+def mwgg_venv_python() -> str:
+    """Path to the Python interpreter inside the mwgg_venv.
+
+    Frozen builds need this to spawn helper subprocesses that have to actually
+    run Python code (e.g. mwgg-gui's yaml worker, pip introspection) —
+    `sys.executable` in a frozen build points at the cx_Freeze launcher, which
+    just runs MultiWorld.py and rejects unknown CLI args.
+
+    On Windows: <write_path('mwgg_venv')>/Scripts/python.exe
+    On Linux/macOS: <write_path('mwgg_venv')>/bin/python
+    """
+    if is_windows:
+        return write_path("mwgg_venv", "Scripts", "python.exe")
+    return write_path("mwgg_venv", "bin", "python")
+
+
 def mwgg_venv_site_packages(*path: str) -> str:
     """Path under <write_path('mwgg_venv')>/<lib>/site-packages, where <lib> is
     'Lib' on Windows and 'lib/python<X>.<Y>' on Linux/macOS"""
@@ -377,6 +395,26 @@ def _print_startup_logo() -> None:
         pass
     finally:
         _startup_logo_printed = True
+
+
+_FRONTEND_PACKAGES = ("mwgg_gui", "mwgg_tui", "mwgg_splash")
+
+
+def get_frontend_versions() -> "dict[str, str]":
+    """Return {package: version} for the bundled frontend packages.
+
+    Reads dist-info via importlib.metadata so the heavy modules (which pull in
+    Kivy) are never imported just to read a version. Packages with no
+    discoverable metadata report "unknown".
+    """
+    import importlib.metadata as _md
+    versions: dict[str, str] = {}
+    for name in _FRONTEND_PACKAGES:
+        try:
+            versions[name] = _md.version(name)
+        except Exception:
+            versions[name] = "unknown"
+    return versions
 
 
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
@@ -497,6 +535,9 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f" on {platform.platform()} process {os.getpid()}"
         f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         f"{' (frozen)' if is_frozen() else ''}"
+    )
+    logging.info(
+        "Frontends: " + ", ".join(f"{name} {ver}" for name, ver in get_frontend_versions().items())
     )
 
 def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:

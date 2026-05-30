@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import json
 import logging
 import os
 import random
@@ -12,6 +13,17 @@ import urllib.request
 from collections import Counter
 from itertools import chain
 from typing import Any
+
+# Lightweight "dump option metadata as JSON" mode, used by mwgg-gui's YAML
+# creator. Detected as early as possible — before ModuleUpdate configures the
+# root logger to stdout — because the GUI captures a single JSON object from
+# stdout, so every other byte of output must be diverted to stderr. The real
+# stdout is preserved in _JSON_OUT for the final emit.
+_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv
+_JSON_OUT = sys.stdout
+if _YAML_OPTIONS_MODE:
+    logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
+    sys.stdout = sys.stderr
 
 import ModuleUpdate
 
@@ -69,7 +81,19 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--spoiler-only", action="store_true",
                         help="Skips generation assertion and multidata, outputting only a spoiler log. "
                              "Intended for debugging and testing purposes.")
+    parser.add_argument("--game", dest="yaml_options_game",
+                        help="Game name, used by --yaml-options.")
+    parser.add_argument("--module", help="World module slug for --yaml-options. Lets custom (non-pip) worlds "
+                                         "load without a game-index lookup; falls back to the index when omitted.")
+    parser.add_argument("--yaml-options", action="store_true",
+                        help="Install/load --game, write its option metadata to stdout as JSON, then exit. "
+                             "Used by the YAML creator GUI; no seed is generated.")
+    parser.add_argument("--visibility", choices=("simple", "complex"), default="simple",
+                        help="Option visibility level for --yaml-options.")
     args = parser.parse_args(argv)
+
+    if args.yaml_options and not args.yaml_options_game:
+        parser.error("--yaml-options requires --game")
 
     if args.skip_output and args.spoiler_only:
         parser.error("Cannot mix --skip-output and --spoiler-only")
@@ -664,9 +688,287 @@ def roll_settings(weights: dict, plando_options: PlandoOptions = PlandoOptions.b
     return ret
 
 
+# ---------------------------------------------------------------------------
+# --yaml-options: dump a world's option metadata as JSON (for the YAML creator)
+# ---------------------------------------------------------------------------
+
+def _y_serialize_default(value):
+    """Coerce option defaults into JSON-safe values."""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [_y_serialize_default(v) for v in value]
+    if isinstance(value, dict):
+        return {str(k): _y_serialize_default(v) for k, v in value.items()}
+    return str(value)
+
+
+def _y_clean_docstring(text):
+    if not text:
+        return ""
+    return " ".join(line.strip() for line in text.strip().splitlines() if line.strip())
+
+
+def _y_choice_extras(option_class):
+    """`choices` (key -> machine name) and `display_names` (key -> human label)."""
+    lookup = dict(getattr(option_class, "name_lookup", {}) or {})
+    choices, display_names = {}, {}
+    for key, name in lookup.items():
+        if name == "random":
+            continue
+        choices[str(key)] = name
+        try:
+            display_names[str(key)] = option_class.get_option_name(key)
+        except Exception:
+            display_names[str(key)] = name
+    return {"choices": choices, "display_names": display_names}
+
+
+def _y_range_extras(option_class):
+    return {
+        "range_start": int(getattr(option_class, "range_start", 0)),
+        "range_end": int(getattr(option_class, "range_end", 100)),
+    }
+
+
+def _y_describe_option(option_name, option_class):
+    """JSON-safe descriptor for one option class. Order matters: subclass first."""
+    desc = {
+        "name": option_name,
+        "display_name": getattr(option_class, "display_name", None) or option_name,
+        "docstring": _y_clean_docstring(getattr(option_class, "__doc__", "") or ""),
+        "default": _y_serialize_default(getattr(option_class, "default", None)),
+    }
+    if issubclass(option_class, Options.Toggle):
+        desc["type"] = "toggle"
+        return desc
+    if issubclass(option_class, Options.TextChoice):
+        desc["type"] = "text_choice"
+        desc.update(_y_choice_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.Choice):
+        desc["type"] = "choice"
+        desc.update(_y_choice_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.NamedRange):
+        desc["type"] = "named_range"
+        desc.update(_y_range_extras(option_class))
+        desc["special_range_names"] = {
+            str(k): int(v)
+            for k, v in (getattr(option_class, "special_range_names", {}) or {}).items()
+        }
+        return desc
+    if issubclass(option_class, Options.Range):
+        desc["type"] = "range"
+        desc.update(_y_range_extras(option_class))
+        return desc
+    if issubclass(option_class, Options.FreeText):
+        desc["type"] = "free_text"
+        return desc
+    if issubclass(option_class, Options.ItemSet):
+        desc["type"] = "item_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.LocationSet):
+        desc["type"] = "location_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.OptionCounter):
+        desc["type"] = "option_counter"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        desc["verify_item_name"] = bool(getattr(option_class, "verify_item_name", False))
+        desc["verify_location_name"] = bool(getattr(option_class, "verify_location_name", False))
+        return desc
+    if issubclass(option_class, (Options.OptionSet, Options.OptionList)):
+        desc["type"] = "option_set"
+        desc["valid_keys"] = sorted(getattr(option_class, "valid_keys", []) or [])
+        return desc
+    if issubclass(option_class, Options.OptionDict):
+        desc["type"] = "option_dict"
+        return desc
+    # Unmodeled subclass — let the GUI fall back to a free-text/raw-YAML field.
+    desc["type"] = "free_text"
+    return desc
+
+
+def _y_describe_world(world):
+    return {
+        "item_names": sorted(getattr(world, "item_names", []) or []),
+        "location_names": sorted(getattr(world, "location_names", []) or []),
+        "item_name_groups": {
+            name: sorted(members or [])
+            for name, members in (getattr(world, "item_name_groups", {}) or {}).items()
+        },
+        "location_name_groups": {
+            name: sorted(members or [])
+            for name, members in (getattr(world, "location_name_groups", {}) or {}).items()
+        },
+    }
+
+
+def _y_emit(payload) -> int:
+    _JSON_OUT.write(json.dumps(payload))
+    _JSON_OUT.flush()
+    return 0
+
+
+# Exit code that asks the caller to re-run us in a fresh process. Reuses the
+# project-wide "bad environment / needs reload" convention (Utils.exit_restart_
+# for_update, handled by the launcher) — here it means "world installed, but it
+# can't be loaded in this already-`import worlds`-ed process; re-run me".
+EXIT_NEEDS_RELOAD = 10
+
+
+def _y_world_installed(module: str) -> bool:
+    """True if `worlds.<module>` is pip-installed, checked WITHOUT importing the
+    worlds package (importlib.metadata reads dist-info only)."""
+    import importlib.metadata
+    try:
+        importlib.metadata.distribution(f"worlds.{module}")
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
+
+
+def _y_custom_world_entry(module: str):
+    """A `Utils._worlds_to_load` entry for an already-present *custom* world (one
+    with no pip metadata), or None if `module` isn't present on disk.
+
+    The launcher only offers worlds get_available_worlds() found on disk, so a
+    selectable custom world already exists — we never install it. Two on-disk
+    shapes, in load-precedence order:
+      - an apworld previously extracted into the venv worlds dir -> import via
+        the string "worlds.<module>" (worlds/__init__ extends __path__ to that
+        dir, so the normal file loader finds it).
+      - a custom_worlds/<module>.apworld not yet extracted -> an APWorldContainer,
+        loaded in-process via zipimport.
+    Checked WITHOUT importing `worlds` (path lookups + a zip manifest read only).
+    """
+    if (ModuleUpdate._venv_worlds_dir() / module).is_dir():
+        return f"worlds.{module}"
+    apworld_file = ModuleUpdate.custom_worlds_dir / f"{module}.apworld"
+    if apworld_file.is_file():
+        from APContainer import APWorldContainer
+        container = APWorldContainer(apworld_file)
+        container.read()  # populate .game from the manifest (for failure reporting)
+        return container
+    return None
+
+
+def dump_yaml_options(game_name: str, visibility: str, module: str | None = None) -> int:
+    """Install/load `game_name` and write its option metadata to stdout as JSON.
+
+    Runs inside the frozen Generate executable, so worlds load in the real
+    bundle environment (C-extension base deps like bsdiff4 import fine).
+    Returns a process exit code; the JSON `ok` field carries success/failure.
+
+    Two-call install (index/pip worlds): a world can't be installed and loaded
+    in the same process, because importing `worlds` to load it also caches the
+    package with its load loop already run against the old queue. So when an
+    index world isn't yet installed we install it directly
+    (ModuleUpdate.install_worlds, which never imports `worlds`) and exit
+    EXIT_NEEDS_RELOAD; the caller re-runs us and the fresh process loads it
+    cleanly. Already-installed worlds load in one call.
+
+    Custom worlds (apworld extractions, custom_worlds/*.apworld) have no pip
+    metadata and can't be "installed", but the launcher only offers worlds found
+    on disk, so they already exist. We queue their load entry onto
+    `Utils._worlds_to_load` directly and load them in this same process — no
+    install, no reload, no find_spec.
+    """
+    import traceback
+    try:
+        if not module:
+            module = GameIndex.game_names.get(game_name)
+        if module is None:
+            return _y_emit({
+                "ok": False,
+                "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
+            })
+
+        if _y_world_installed(module):
+            # Pip-installed (index) world: set_game_names takes the
+            # importlib.metadata path (no find_spec), and `from worlds import` is
+            # the first import of the package, so the load loop picks it up.
+            set_game_names([game_name], strict=False)
+        else:
+            entry = _y_custom_world_entry(module)
+            if entry is None:
+                # Genuinely-missing index world: install directly via
+                # ModuleUpdate, which reads importlib.metadata and never imports
+                # `worlds` — unlike set_game_names, whose find_spec would import
+                # `worlds` before the install is queued, so the load loop misses
+                # the new world and the cached module never re-loads. We can't
+                # load in this process, so install and ask the caller to re-run;
+                # the fresh process sees it installed and loads it cleanly.
+                apworlds = ModuleUpdate.install_worlds([module])
+                if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
+                    return _y_emit({
+                        "ok": False,
+                        "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
+                    })
+                logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
+                return EXIT_NEEDS_RELOAD
+            # Already-present custom world: queue its load entry BEFORE the first
+            # `from worlds import` so worlds/__init__'s load loop picks it up,
+            # bypassing set_game_names' find_spec (which would import `worlds`
+            # before the world is queued and miss it).
+            Utils._worlds_to_load.append(entry)
+
+        from worlds import AutoWorldRegister, failed_world_loads
+
+        world = AutoWorldRegister.world_types.get(game_name)
+        if world is None:
+            if f"worlds.{module}" in failed_world_loads or game_name in failed_world_loads:
+                return _y_emit({
+                    "ok": False,
+                    "error": f"World for '{game_name}' failed to import. See stderr for the traceback.",
+                })
+            return _y_emit({
+                "ok": False,
+                "error": f"'{game_name}' did not register a World subclass.",
+            })
+
+        visibility_flag = (
+            Options.Visibility.complex_ui
+            if visibility == "complex"
+            else Options.Visibility.simple_ui
+        )
+        option_groups = Options.get_option_groups(world, visibility_level=visibility_flag)
+
+        groups_out: dict[str, list] = {}
+        for group_name, options in option_groups.items():
+            descs = []
+            for option_name, option_class in (options or {}).items():
+                try:
+                    descs.append(_y_describe_option(option_name, option_class))
+                except Exception as e:
+                    logging.warning("describe_option(%s) failed: %s", option_name, e)
+            if descs:
+                groups_out[group_name] = descs
+
+        return _y_emit({
+            "ok": True,
+            "game_name": game_name,
+            "world": _y_describe_world(world),
+            "groups": groups_out,
+        })
+    except Exception as e:
+        logging.error("dump_yaml_options failed", exc_info=True)
+        return _y_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
+
+
 if __name__ == '__main__':
     import atexit
     import sys
+
+    # YAML-options mode: emit JSON and exit before the generation pipeline (and
+    # before the interactive "Press enter" atexit hook, which would hang a
+    # subprocess).
+    if _YAML_OPTIONS_MODE:
+        _y_args = mystery_argparse()
+        sys.exit(dump_yaml_options(_y_args.yaml_options_game, _y_args.visibility, _y_args.module))
+
     confirmation = atexit.register(input, "Press enter to close.")
     try:
         erargs, seed = main()
