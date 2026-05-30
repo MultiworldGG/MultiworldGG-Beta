@@ -15,7 +15,13 @@
         <p class="mw-hub-lead">Three places to dig in, depending on what you need.</p>
 
         <div class="mw-hub-grid">
-            <a href="{{ url_for('tutorial_landing', lang=lang) }}" class="mw-hub-card primary">
+            <a href="{{ url_for('quickstart', lang=lang) }}" class="mw-hub-card primary">
+                <div class="mw-hub-icon"><i class="mdi mdi-rocket-launch"></i></div>
+                <h3>Quickstart</h3>
+                <p>Brand new? Go from download to your first game in ten minutes.</p>
+            </a>
+
+            <a href="{{ url_for('tutorial_landing', lang=lang) }}" class="mw-hub-card">
                 <div class="mw-hub-icon"><i class="mdi mdi-school"></i></div>
                 <h3>Setup guides</h3>
                 <p>Step-by-step guides for each game. Pick your game, get going.</p>

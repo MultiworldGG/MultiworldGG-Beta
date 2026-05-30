@@ -36,6 +36,22 @@
         {% endblock %}
     </main>
 
+    <footer id="site-footer">
+        <div class="footer-links">
+            <a href="https://discord.multiworld.gg" class="footer-icon" aria-label="Discord"
+               target="_blank" rel="noopener noreferrer"><i class="mdi mdi-discord"></i></a>
+            <a href="https://github.com/MultiworldGG/MultiworldGG" class="footer-icon" aria-label="GitHub"
+               target="_blank" rel="noopener noreferrer"><i class="mdi mdi-github"></i></a>
+            <a href="{{ url_for('about') }}" class="footer-about">About us</a>
+        </div>
+        <div class="footer-stats">
+            <a href="{{ url_for('stats') }}">{{ footer_stats.seeds }}</a> games generated and
+            <a href="{{ url_for('stats') }}">{{ footer_stats.rooms }}</a> hosted,
+            <a href="{{ url_for('lobby_list') }}">{{ footer_stats.open_lobbies }}</a>
+            {% if footer_stats.open_lobbies == 1 %}lobby{% else %}lobbies{% endif %} open — in the last 7 days.
+        </div>
+    </footer>
+
 <script type="module" src="{{ url_for('static', filename="assets/cookieconsent-config.js") }}"></script>
 </body>
 </html>

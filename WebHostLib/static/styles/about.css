@@ -1,0 +1,41 @@
+#about-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    max-width: 1100px;
+    margin: 48px auto;
+    padding: 0 22px;
+}
+
+#about-logo {
+    height: 320px;
+    width: auto;
+    flex-shrink: 0;
+}
+
+#about-body {
+    font-family: Inter-Light, sans-serif;
+    font-size: 18px;
+    color: var(--mw-sys-color-white);
+    line-height: 25px;
+    max-width: 720px;
+}
+
+#about-body h1 {
+    color: var(--mw-sys-color-on-surface);
+    margin-bottom: 4px;
+}
+
+#about-body p {
+    margin: 14px 0;
+}
+
+@media (max-width: 768px) {
+    #about-logo {
+        display: none;
+    }
+
+    #about-wrapper {
+        margin: 24px auto;
+    }
+}
