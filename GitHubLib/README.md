@@ -130,7 +130,7 @@ The vitest fixtures under `test/` follow the same convention; do not put real Gi
 
 ## App slugs are immutable
 
-The PR/commit author tag visible on Index PRs is `oliver-multiworld-squirrel[bot]` / `karen-multiworld-bot[bot]` — the **slug** form, not the App's display name. GitHub generates the slug at App-creation time from the original App name (lowercased, dashes), and as of this writing exposes no UI or API to rename it post-creation. Renaming the App's display name does **not** change the slug.
+The PR/commit author tag visible on Index PRs is `oliver-the-multiworld-squirrel[bot]` / `karen-head-of-multiworld-qa[bot]` — the **slug** form, not the App's display name. GitHub generates the slug at App-creation time from the original App name (lowercased, dashes), and as of this writing exposes no UI or API to rename it post-creation. Renaming the App's display name does **not** change the slug.
 
 If a future GitHub release adds a slug rename, do **not** take it without a separate plan. The slug is referenced by:
 - The hardcoded fallbacks in `src/index.ts:38,46`.
