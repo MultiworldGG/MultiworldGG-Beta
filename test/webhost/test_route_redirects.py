@@ -194,6 +194,7 @@ class TestLegacyTutorial:
 # scope (prompt: "Don't create the new /me dashboard page").
 NEW_ROUTES_THAT_SHOULD_EXIST = [
     "/",
+    "/about",
     "/play",
     "/play/new",
     "/play/host",
@@ -203,6 +204,7 @@ NEW_ROUTES_THAT_SHOULD_EXIST = [
     "/learn",
     "/learn/en/faq",
     "/learn/en/glossary",
+    "/learn/en/quickstart",
     "/games",
     "/downloads",
     "/sitemap",

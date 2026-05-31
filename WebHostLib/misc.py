@@ -383,6 +383,25 @@ def glossary(lang: str):
     )
 
 
+@app.route('/learn/<string:lang>/quickstart')
+@cache.cached()
+def quickstart(lang: str):
+    try:
+        document = render_markdown(
+            os.path.join(app.static_folder, "assets", "quickstart", secure_filename(lang)+".md"))
+    except FileNotFoundError:
+        abort(404)
+    return render_template(
+        "markdown_document.html",
+        title="Quickstart Guide",
+        html_from_markdown=document,
+        breadcrumb_crumbs=[
+            ("Learn", url_for("learn_hub", lang=lang)),
+            ("Quickstart", None),
+        ],
+    )
+
+
 @app.route('/play/seed/<suuid:seed>')
 def view_seed(seed: UUID):
     seed = Seed.get(id=seed)

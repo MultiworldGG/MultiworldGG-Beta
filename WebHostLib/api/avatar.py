@@ -13,6 +13,7 @@ import re
 import uuid
 from uuid import UUID
 
+import requests
 from flask import abort, jsonify, request, send_from_directory
 from flask_limiter.util import get_remote_address
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -25,6 +26,19 @@ from . import api_endpoints
 
 PNG_EXTENSION = ".png"
 HEX_ID_RE = re.compile(r"^[0-9a-f]{32}$")
+
+# Exposed-nudity labels emitted by the NudeNet sidecar (deploy/docker-compose.yml
+# `nudenet`). MALE_BREAST_EXPOSED is intentionally absent — ordinary topless
+# photos aren't what we're filtering.
+_NSFW_BLOCKED_CLASSES = frozenset({
+    "FEMALE_GENITALIA_EXPOSED",
+    "MALE_GENITALIA_EXPOSED",
+    "FEMALE_BREAST_EXPOSED",
+    "BUTTOCKS_EXPOSED",
+    "ANUS_EXPOSED",
+})
+_NSFW_SCORE_THRESHOLD = 0.5
+_NSFW_REQUEST_TIMEOUT = 10  # seconds to wait on the moderation sidecar
 
 
 def _bearer_token() -> str:
@@ -113,10 +127,31 @@ def avatar_upload():
     except (UnidentifiedImageError, OSError, ValueError):
         return jsonify({"error": "Could not decode image"}), 400
 
+    nsfw_endpoint = app.config.get("AVATAR_NSFW_ENDPOINT", "")
+    if nsfw_endpoint:
+        try:
+            resp = requests.post(
+                nsfw_endpoint,
+                files={"f1": (upload.filename, raw, upload.mimetype or "application/octet-stream")},
+                timeout=_NSFW_REQUEST_TIMEOUT,
+            )
+            resp.raise_for_status()
+            predictions = resp.json().get("prediction") or []
+        except (requests.RequestException, ValueError):
+            return jsonify({"error": "Content moderation unavailable"}), 503
+        # /infer returns one detection list per uploaded file; we send only f1.
+        detections = predictions[0] if predictions and isinstance(predictions[0], list) else predictions
+        for detection in detections:
+            if not isinstance(detection, dict):
+                continue
+            if (detection.get("class") in _NSFW_BLOCKED_CLASSES
+                    and detection.get("score", 0.0) >= _NSFW_SCORE_THRESHOLD):
+                return jsonify({"error": "Image rejected by content policy"}), 422
+
     try:
         with Image.open(io.BytesIO(raw)) as img:
             img.load()
-            dim = int(app.config.get("AVATAR_OUTPUT_DIM", 512))
+            dim = int(app.config.get("AVATAR_OUTPUT_DIM", 100))
             fitted = ImageOps.fit(img.convert("RGBA"), (dim, dim), method=Image.Resampling.LANCZOS)
     except Image.DecompressionBombError:
         return jsonify({"error": "Image dimensions exceed safety limit"}), 413

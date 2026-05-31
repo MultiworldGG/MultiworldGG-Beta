@@ -72,12 +72,42 @@ if (is_windows() or is_macos()) and sys.version_info < (3, 13, 0):
 elif sys.version_info < (3, 13, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.13.+ is supported.")
 
+def _worlds_venv_is_readonly() -> bool:
+    """True when the worlds venv lives on a read-only mount (e.g. a Docker `:ro`
+    bind mount). Such consumers must never attempt installs — the mwgg_upgrader
+    service is the sole writer of the venv. Only meaningful when use_worlds_venv()
+    is set; always False on a normal dev/user install (writable venv)."""
+    if not use_worlds_venv():
+        return False
+    venv_dir = install_path()
+    try:
+        venv_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(dir=venv_dir):
+            pass
+    except OSError:
+        return True
+    return False
+
+
+# Detected once at import: a read-only worlds venv disables every install path
+# below, exactly like SKIP_ALL_INSTALLS, so a consumer that reaches update()
+# without the env opt-out still can't crash writing the upgrader-owned venv.
+_VENV_READONLY = _worlds_venv_is_readonly()
+if _VENV_READONLY:
+    logger.info("Worlds venv is read-only; installs disabled (mwgg_upgrader owns writes).")
+
+
+def _skip_all_installs() -> bool:
+    """Installs are off via explicit env opt-out or a read-only worlds venv."""
+    return bool(os.environ.get("SKIP_ALL_INSTALLS")) or _VENV_READONLY
+
+
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
 _skip_update = bool(
     (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG")
     or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
-    or os.environ.get("SKIP_ALL_INSTALLS")
+    or _skip_all_installs()
 )
 
 update_ran = _skip_update
@@ -510,7 +540,7 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
 
     Returns True if the install succeeded (or was throttled).
     """
-    if os.environ.get("SKIP_ALL_INSTALLS"):
+    if _skip_all_installs():
         return True
     _resolve_variant()
     if upgrade and not force and _igdb_upgraded_recently():
@@ -823,7 +853,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     Returns:
         List of apworlds that fell back to a custom apworld.
     """
-    if os.environ.get("SKIP_ALL_INSTALLS"):
+    if _skip_all_installs():
         return []
     apworlds: list[str] = []
 
@@ -1176,7 +1206,7 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
 
 
 def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
-    if os.environ.get("SKIP_ALL_INSTALLS"):
+    if _skip_all_installs():
         return
     # Install/refresh mwgg_igdb upfront
     install_mwgg_igdb(upgrade=True)

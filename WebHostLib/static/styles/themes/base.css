@@ -459,6 +459,62 @@ body {
 }
 
 /* ===========================================================
+   Site footer — Discord / GitHub / About + 7-day stats
+   =========================================================== */
+
+#site-footer {
+    background: var(--mw-sys-color-surface-container-low);
+    border-top: 2px solid var(--mw-sys-color-primary);
+    padding: 20px 22px;
+    text-align: center;
+}
+
+#site-footer .footer-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+#site-footer .footer-icon {
+    color: var(--mw-sys-color-on-background);
+    display: inline-flex;
+    transition: color 0.15s ease;
+}
+
+#site-footer .footer-icon .mdi {
+    font-size: 26px;
+}
+
+#site-footer .footer-icon:hover,
+#site-footer .footer-about:hover {
+    color: var(--mw-sys-color-secondary);
+}
+
+#site-footer .footer-about {
+    color: var(--mw-sys-color-on-background);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+#site-footer .footer-stats {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--mw-sys-color-on-surface-variant);
+}
+
+#site-footer .footer-stats a {
+    color: var(--mw-sys-color-on-surface-variant);
+    font-weight: 600;
+}
+
+#site-footer .footer-stats a:hover {
+    color: var(--mw-sys-color-secondary);
+}
+
+/* ===========================================================
    Material Design Icons — shared icon font for the redesign
    ===========================================================
    The font is the FA-compatible MDI webfont shipped at
@@ -513,3 +569,8 @@ body {
 .mdi-content-copy::before        { content: "\F018F"; }
 .mdi-check::before               { content: "\F012C"; }
 .mdi-alert::before               { content: "\F0026"; }
+
+/* Site footer / quickstart icons */
+.mdi-github::before              { content: "\F02A4"; }
+.mdi-discord::before             { content: "\F066F"; }
+.mdi-rocket-launch::before       { content: "\F14DE"; }
