@@ -6,7 +6,8 @@ def test_play_hub_renders(client):
     response = client.get("/play")
     assert response.status_code == 200
     body = response.get_data(as_text=True)
-    assert "What do you want to do?" in body          # hub heading
+    assert "Multiworld Play" in body                  # hub heading
+    assert "New? Click here for Setup Instructions" in body  # quickstart CTA
     assert "Browse lobbies" in body
     assert "Create a lobby" in body
     assert "Generate a new game" in body

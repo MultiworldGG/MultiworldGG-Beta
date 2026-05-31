@@ -28,6 +28,28 @@
     max-width: 520px;
 }
 
+.mw-hub-cta-wrap {
+    text-align: center;
+    margin: 0 auto 36px;
+}
+
+.mw-hub-cta {
+    display: inline-block;
+    background: var(--mw-sys-color-tertiary);
+    color: var(--mw-sys-color-white);
+    font-size: 19px;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: var(--mw-radius-full);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.mw-hub-cta:hover {
+    background: var(--mw-sys-color-tertiary-bright);
+    transform: translateY(-2px);
+}
+
 .mw-hub-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

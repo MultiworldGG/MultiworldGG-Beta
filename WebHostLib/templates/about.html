@@ -1,0 +1,36 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>About · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/about.css") }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([('About', none)]) }}
+
+    <div id="about-wrapper">
+        <img id="about-logo" src="{{ url_for('static', filename='static/branding/landing-logo.png') }}"
+             alt="MultiworldGG Logo" />
+        <div id="about-body">
+            <h1>About MultiworldGG</h1>
+            <h5 style="color: var(--mw-sys-color-accent-text)">A multi-game multiworld randomizer</h5>
+            <p>
+                This is a cross-game system which randomizes different games, then uses the result to
+                build a single unified multi-player game. Items from one game may be present in another, and
+                you will need your fellow players to find items you need in their games to help you complete
+                your own.
+            </p>
+            <p>
+                This project is based on <a href="https://github.com/ArchipelagoMW/Archipelago">Archipelago</a>, a cumulative effort of many
+                <a href="https://github.com/ArchipelagoMW/Archipelago/graphs/contributors">talented people.</a><br />We also link to or include a few amazing third party open source clients and tracking tools created by amazing contributors, like the <a href="https://cheesetrackers.theincrediblewheelofchee.se/">Cheese Trackers</a> by <a href="https://github.com/cdhowie/cheese-trackers">Cheese</a>, the <a href="https://drawesome4333.github.io/ap-tracker/">AP checklist tracker</a> by <a href="https://github.com/DrAwesome4333/ap-tracker">DrAwesome4333</a>, the <a href="https://archipelago.miraheze.org/wiki/Main_Page">AP Wiki</a>  maintained by Flit, Rooby, and others, or the <a href="https://ap-lobby.bananium.fr/">Bananium AP Lobby</a> by <a href="https://github.com/Eijebong/Archipelago-lobby">Eijebong</a>, who inspired our current lobby system.
+            </p>
+            <p>
+                MultiworldGG is a fork, incorporating many tweaks and additional worlds of many 3rd party developers
+                that cannot be part of the original project. We also offer worlds that are still in earlier stages of development.
+                Found a bug? Please contact <b>us</b> first through <a href="https://discord.multiworld.gg">Discord</a> to minimize support load for the developers.
+            </p>
+        </div>
+    </div>
+{% endblock %}

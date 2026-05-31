@@ -1,9 +1,13 @@
 # MultiworldGG — Docker deploy
 
 This directory contains the docker-compose stack and example config files for
-running a MultiworldGG webhost in production. The stack consists of four
+running a MultiworldGG webhost in production. The stack consists of these
 services:
 
+- **mwgg_upgrader** — run-once job that populates the shared worlds venv (the
+  `mwgg_igdb` "ao" index + every world + the worlds' requirements), then
+  exits. It is the *only* writer of the venv; every other service mounts it
+  read-only and waits for this job to finish.
 - **multiworld** — game-hosting process (`python WebHost.py
   --config_override selflaunch.yaml`). Uses host networking for the dynamic
   port range games bind to.
@@ -15,8 +19,9 @@ services:
   Apps. Loopback-only; exposed to the public internet via the host's nginx,
   not this compose stack.
 
-The `multiworld` and `web` services share the same image (built once by the
-`multiworld` service's `build:` block, or pulled from GHCR).
+All app services share the same image (built once by the `multiworld`
+service's `build:` block, or pulled from GHCR). `multiworld` and `web` run as
+pure venv consumers with `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` installs.
 
 ## Host-side prerequisites
 
@@ -25,9 +30,9 @@ your install location.
 
 ### 1. Persistent worlds venv
 
-The webhost installs ~200 world wheels at first boot. To avoid re-downloading
-them on every container recreate, the stack bind-mounts a host directory into
-each container as the canonical `mwgg_venv` location:
+The `mwgg_upgrader` job installs ~200 world wheels at first boot. To avoid
+re-downloading them on every container recreate, the stack bind-mounts a host
+directory into each container as the canonical `mwgg_venv` location:
 
 ```bash
 sudo mkdir -p /var/lib/mwgg/mwgg_venv
@@ -93,21 +98,24 @@ docker compose logs --tail=300 multiworld web
 
 Expected log signature for a healthy cold start:
 
-- `multiworld-1`: `Installing mwgg_igdb (ao) from game_index_ao`, followed by
-  ~200 `Installing world: worlds.<slug>` lines as the worlds venv is populated.
-  Eventually settles.
-- `web-1`: `gunicorn` master starts, runs the same install pipeline once
-  (workers do not re-import because `preload_app = True`), then two
-  `gunicorn: worker` processes boot and stay up.
+- `mwgg_upgrader-1`: `Installing mwgg_igdb (ao)`, then ~200
+  `Installing world: worlds.<slug>` lines as the venv is populated, then
+  `mwgg_venv ready (worlds_updated=3)` and the container exits 0.
+- `multiworld-1` / `web-1`: held until `mwgg_upgrader` exits successfully
+  (`service_completed_successfully`). Neither installs anything
+  (`SKIP_ALL_INSTALLS=1`) — they import worlds from the read-only venv.
+  `web-1` boots the `gunicorn` master then two workers (`preload_app = True`);
+  `multiworld-1` begins hosting.
 - `nginx-1`: ready for startup.
 - `mwgg-github-bot-1`: `Oliver the Multiworld Squirrel is listening … Karen Head 
    of Multiworld QA is running automations on the Index`, `Listening on
   http://0.0.0.0:3000`.
 
-Concurrent installs from multiworld and web are serialized by a POSIX file
-lock at `/var/lib/mwgg/mwgg_venv/.mwgg-install.lock` — the second service to
-arrive blocks until the first completes its `update()` pass, then sees the
-venv already populated and exits the install loop fast.
+Because a single `mwgg_upgrader` job owns all writes to the venv, the old
+multiworld/web install race is gone — the consumers just read the populated,
+read-only venv. (The install lock at
+`/var/lib/mwgg/mwgg_venv/.mwgg-install.lock` still guards concurrent manual
+runs of the upgrader.)
 
 ## Upgrade flow
 
@@ -135,17 +143,37 @@ This is **destructive to `app_volume`** but **not to
 `/var/lib/mwgg/mwgg_venv`** — the latter is a host bind mount, not a managed
 volume. Worlds installed there survive every compose command.
 
+### Refreshing only the worlds venv
+
+To pull the latest `mwgg_igdb` index + world releases into the venv without
+recreating the app services, re-run just the upgrader:
+
+```bash
+docker compose up mwgg_upgrader      # re-runs the populate/refresh, then exits
+# or, without leaving a stopped container behind:
+docker compose run --rm mwgg_upgrader
+```
+
+Each run checks every world and its dependencies for updates and applies them;
+packages already current are left untouched (nothing is force-reinstalled). A
+full `docker compose up -d` also re-runs it (the app services wait for it via
+`service_completed_successfully`).
+
 ## Troubleshooting
 
-- **World installs are slow on first boot.** Expected — ~200 wheels are
-  fetched from GitHub release assets. Subsequent boots should be near-instant
-  because `check_for_updates(worlds_only=True)` short-circuits when the
-  installed version matches the index tag.
-- **`gunicorn: HaltServer 'Worker failed to boot.'`** — workers boot before
-  the install lock releases? No — `preload_app = True` runs the install in
-  the master, before any worker is forked. If you still see this, check the
-  master's logs immediately above the worker error; the worker boot error is
-  usually downstream of a master import failure.
+- **World installs are slow on first boot.** Expected — `mwgg_upgrader`
+  fetches ~200 wheels from GitHub release assets and blocks the app services
+  until it finishes. Re-running it re-checks every world and its dependencies
+  for updates and upgrades only what's outdated (no force-reinstall), so most
+  of the time is spent on network round-trips rather than installs.
+- **`Read-only file system` / venv write errors in `multiworld` or `web`.**
+  Expected and harmless: those services mount the venv read-only and run with
+  `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` may write it. If a world is
+  genuinely missing, re-run `mwgg_upgrader` — don't loosen the mount.
+- **`gunicorn: HaltServer 'Worker failed to boot.'`** — `web` no longer
+  installs anything; `preload_app = True` only imports the app in the master
+  before forking workers. A worker boot error is usually downstream of a master
+  import failure — check the master's logs immediately above it.
 - **`AttributeError: 'str' object has no attribute 'exists'` from
   ModuleUpdate.** Should be fixed; if you see it, a caller is adding a string
   to `ModuleUpdate.requirements_files` instead of a `pathlib.Path`. Grep for

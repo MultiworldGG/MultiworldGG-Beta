@@ -11,8 +11,10 @@
     {{ breadcrumb([('Play', none)]) }}
 
     <div class="mw-hub">
-        <h1>What do you want to do?</h1>
-        <p class="mw-hub-lead">Pick a path. Each one is a quick step away from playing.</p>
+        <h1>Multiworld Play</h1>
+        <div class="mw-hub-cta-wrap">
+            <a href="{{ url_for('quickstart', lang='en') }}" class="mw-hub-cta">New? Click here for Setup Instructions</a>
+        </div>
 
         <div class="mw-hub-grid">
             <a href="{{ url_for('lobby_list') }}" class="mw-hub-card">
