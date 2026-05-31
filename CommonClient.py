@@ -24,7 +24,7 @@ from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, Netwo
                       Permission, SlotType, LocationStore, Hint, HintStatus, MWGGUIHintStatus,JSONtoTextParser,
                       RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes, TEXT_COLORS)
 from ClientState import ClientState
-from ClientBuilder import GameClient
+from ClientBuilder import GameClient, Client
 from multiprocessing import Queue
 
 # GUI-only dialog components are imported lazily at their call sites so
@@ -67,6 +67,26 @@ def _consume_pending_launch_callbacks() -> "typing.Tuple[typing.Optional[typing.
     if pending is None:
         return None, None
     return pending.get("ready_callback"), pending.get("error_callback")
+
+
+_pending_tracker_attach: bool = False
+
+
+def _set_pending_tracker_attach(value: bool) -> None:
+    """Stash a flag asking the next CommonContext to attach the Universal Tracker
+    overlay during its __init__. Called by Utils._perform_module_launch when
+    the launcher's client_type is 'universal_tracker' and a per-game launch
+    function is being deferred."""
+    global _pending_tracker_attach
+    _pending_tracker_attach = bool(value)
+
+
+def _consume_pending_tracker_attach() -> bool:
+    """Pop and return the pending tracker-attach flag."""
+    global _pending_tracker_attach
+    value = _pending_tracker_attach
+    _pending_tracker_attach = False
+    return value
 
 
 def _make_one_shot(callback: "typing.Optional[typing.Callable[[], None]]") -> "typing.Callable[[], None]":
@@ -644,6 +664,23 @@ class CommonContext(InitContext):
         ready_cb, error_cb = _consume_pending_launch_callbacks()
         self._ready_callback = _make_one_shot(ready_cb)
         self._error_callback = _make_one_shot(error_cb)
+
+        # Overlay-feature registry. Phase-1 attach hooks (e.g. the Universal
+        # Tracker overlay) register a Phase-2 activator here; ExtrasBuilder
+        # iterates this list after the per-game UI is wired up.
+        self.client = Client()
+
+        # Universal Tracker overlay: opt-in attach when the launcher set
+        # client_type='universal_tracker' alongside a game module. Runs before
+        # server_task is scheduled by the world's launch(), so the on_package
+        # patch is in place before any Connected packet can arrive. Guarded so
+        # a tracker import failure cannot kill the game client.
+        if _consume_pending_tracker_attach():
+            try:
+                from worlds.tracker.wrap import attach_tracker_overlay
+                attach_tracker_overlay(self)
+            except Exception:
+                logger.exception("Tracker overlay attach failed; continuing without it")
 
         # execution
         self.keep_alive_task = asyncio.create_task(keep_alive(self), name="Bouncy")
