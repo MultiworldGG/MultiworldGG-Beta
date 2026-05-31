@@ -372,8 +372,11 @@ def autohost(config: dict):
                 last_lobby_check = utcnow()
 
                 while not stop_event.wait(0.1):
+                    # Clear finished-shutdown rooms for every hoster and restart
+                    # idle, long-running ones even when no new room arrives
                     for hoster in hosters:
-                        hoster.maintain()
+                        hoster.drain_shutting_down()
+                        hoster.restart_if_idle()
 
                     with Session(_engine) as session:
                         max_timeout = config["MAX_ROOM_TIMEOUT"]
@@ -528,23 +531,29 @@ class MultiworldInstance():
         is_idle = len(self.room_ids) == 0
         return time_for_restart and is_idle
 
-    def drain_shutting_down_rooms(self):
-        while True:
-            try:
-                room_id = self.rooms_shutting_down.get_nowait()
-            except queue.Empty:
-                break
-            self.room_ids.discard(room_id)
+    def drain_shutting_down(self) -> None:
+        """Clear rooms that have finished shutting down from ``room_ids``.
 
-    def maintain(self):
-        self.drain_shutting_down_rooms()
+        Runs every autohost tick for *every* hoster, not only ones receiving a
+        new room. An idle hoster otherwise never clears ``room_ids``, so
+        ``should_restart`` never sees it as idle and the periodic APWorld-reload
+        restart that reclaims this process's memory never fires.
+        """
+        while not self.rooms_shutting_down.empty():
+            # discard, not remove: a duplicate or stale shutdown signal must not
+            # raise KeyError and tear down the autohost loop thread.
+            self.room_ids.discard(self.rooms_shutting_down.get(block=True, timeout=None))
+
+    def restart_if_idle(self) -> None:
+        """Restart a long-running, idle hoster to reload APWorld data and free memory."""
         if self.should_restart():
-            logging.info(f"{self.name} restarting to load fresh APWorld data (process was idle, no rooms were interrupted)")
+            logging.info(f"{self.name} restarting to load fresh APWorld data (process was idle, no rooms were interrupted).")
             self.stop(wait=True)  # Wait for old process to fully terminate before starting new one
             self.start()
 
     def start_room(self, room_id):
-        self.maintain()
+        self.drain_shutting_down()
+        self.restart_if_idle()
 
         if room_id in self.room_ids:
             pass  # should already be hosted currently.
