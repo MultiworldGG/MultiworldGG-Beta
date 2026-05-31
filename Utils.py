@@ -112,7 +112,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             try:
                 dist = importlib.metadata.distribution(f"worlds.{module_name}")
                 if dist:
-                    _unlisted_worlds_names[dist.metadata.json['summary'].strip("MultiWorld: ")] = module_name
+                    _unlisted_worlds_names[dist.metadata.json['summary'].removeprefix("MultiWorld: ")] = module_name
             except importlib.metadata.PackageNotFoundError:
                 # Bundled world with no pip metadata; try the archipelago.json
                 if importlib.util.find_spec(f"worlds.{module_name}") is not None:
@@ -214,7 +214,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 dist = importlib.metadata.distribution(f"worlds.{slug}")
                 summary = dist.metadata.json.get('summary', '') if dist else ''
                 if summary:
-                    served_games.add(summary.strip("MultiWorld: "))
+                    served_games.add(summary.removeprefix("MultiWorld: "))
             except importlib.metadata.PackageNotFoundError:
                 # Bundled monorepo world; read game name from archipelago.json.
                 manifest = get_apworld_manifest(slug)
@@ -239,9 +239,7 @@ def game_names() -> typing.List[str]:
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
-    from mwgg_igdb import GameIndex
     from ModuleUpdate import find_world_modules
-    from BaseUtils import get_apworld_manifest
     
     available_worlds = find_world_modules()
     # Also add worlds from the custom_worlds directory. Resolved (and mkdir'd)
@@ -255,19 +253,6 @@ def get_available_worlds() -> typing.List[str]:
                 available_worlds.add(module_name)
     except Exception as e:
         update_logger.warning(f"Error checking custom worlds location: {e}")
-    game_modules = set(GameIndex.get_all_games().keys())
-
-    # Also check for currently installed world modules not in GameIndex
-    try:
-        for world_name in available_worlds:
-            if world_name not in game_modules:
-                manifest = get_apworld_manifest(world_name)
-                manifest["game_name"] = manifest.pop("game", world_name)
-                manifest["cover_url"] = manifest.pop("cover_url", "")
-                GameIndex.add_game(world_name, manifest)
-
-    except Exception as e:
-        update_logger.warning(f"Error checking installed world modules: {e}")
 
     return list(sorted(available_worlds))
 
@@ -457,14 +442,28 @@ def _defer_cli_launch(launch_function, label: str, server_address,
     loop = asyncio.get_event_loop()
 
     def _deferred_launch():
+        import inspect
         saved_argv = sys.argv[:]
         try:
+            launch_argv: list[str] = []
             if isinstance(server_address, str) and server_address:
-                argv = [sys.argv[0], f"--connect={server_address}"]
+                launch_argv.append(f"--connect={server_address}")
                 if slot_name and label == "universal_tracker":
-                    argv.append(f"--name={slot_name}")
-                sys.argv = argv
-            launch_function()
+                    launch_argv.append(f"--name={slot_name}")
+                sys.argv = [sys.argv[0], *launch_argv]
+            try:
+                accepts_positional = any(
+                    p.kind in (inspect.Parameter.VAR_POSITIONAL,
+                               inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                               inspect.Parameter.POSITIONAL_ONLY)
+                    for p in inspect.signature(launch_function).parameters.values()
+                )
+            except (TypeError, ValueError):
+                accepts_positional = False
+            if accepts_positional:
+                launch_function(*launch_argv)
+            else:
+                launch_function()
         except (ModuleNotFoundError, ImportError) as dep_error:
             if dep_install_module and not already_restarted:
                 update_logger.warning(
@@ -572,6 +571,15 @@ def _perform_module_launch(module_id: str, **kwargs):
                     pass
 
             if launch_function is not None:
+                # When the launcher's Universal Tracker checkbox is set
+                # alongside a game module, ask the next CommonContext to
+                # attach the tracker overlay during its __init__. Only set
+                # this on the game-module path -- the standalone tracker
+                # fallback (below) constructs TrackerGameContext, which
+                # owns its own tracker_core and would get a duplicate from
+                # the wrap during super().__init__.
+                if client_type == "universal_tracker":
+                    CommonClient._set_pending_tracker_attach(True)
                 _defer_cli_launch(
                     launch_function, module_id, server_address, already_restarted,
                     dep_install_module=module_id,

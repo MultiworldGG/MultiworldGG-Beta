@@ -736,8 +736,9 @@ def find_world_modules() -> set[str]:
         if response.returncode == 0:
             for package in json.loads(response.stdout):
                 package_name = package.get("name", "")
-                if package_name.startswith("worlds"):
-                    world_name = package_name[7:]
+                if package_name.startswith("worlds") and len(package_name) > 7:
+                    # uv hyphenates dist names (worlds.dark_souls_3 -> worlds-dark-souls-3); restore the slug.
+                    world_name = package_name[7:].replace("-", "_")
                     if not world_name.startswith("_"):
                         world_modules_set.add(world_name)
         else:

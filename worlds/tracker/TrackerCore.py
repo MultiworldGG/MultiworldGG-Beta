@@ -78,7 +78,7 @@ class TrackerCore():
         self.ignored_locations: set[int] = set()
         self.missing_locations: set[int] = set()
         self.log_lines: dict[int, list[TrackerLogLine]] = {}
-        self.sorting_priorities: dict[str, int] = {}
+        self.sorting_priorities: dict[str, int] = {"error": -1, "other": 0, "ut_status": 1}
         self.sorting_method: str = None
 
     def disconnect(self):
