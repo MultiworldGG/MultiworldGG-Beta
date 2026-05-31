@@ -40,3 +40,13 @@ HOST_ADDRESS: localhost
 #WEBAUTHN_RP_ID: "multiworld.gg"
 #WEBAUTHN_ORIGIN: "https://multiworld.gg"
 #WEBAUTHN_RP_NAME: "MultiworldGG"
+
+# ---------------------------------------------------------------------------
+# Avatar content moderation
+# ---------------------------------------------------------------------------
+# Avatar uploads can be screened for exposed nudity by a NudeNet sidecar
+# (deploy/docker-compose.yml `nudenet` service). Under compose the `web`
+# service already sets this via its `environment:` block. Uncomment here only
+# if you run the webhost outside compose and point it at your own NudeNet
+# `/infer` endpoint. Leave unset to disable screening.
+#AVATAR_NSFW_ENDPOINT: "http://nudenet:8080/infer"

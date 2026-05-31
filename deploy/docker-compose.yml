@@ -44,6 +44,8 @@ services:
     depends_on:
       multiworld:
         condition: service_healthy
+      nudenet:
+        condition: service_started
     # Launch gunicorn targeting WebHost application
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
@@ -67,6 +69,17 @@ services:
     environment:
       # Bind gunicorn on 8000
       - PORT=8000
+      # Screen avatar uploads against the nudenet sidecar before storage.
+      - AVATAR_NSFW_ENDPOINT=http://nudenet:8080/infer
+
+  # NudeNet content-moderation sidecar. Screens avatar uploads for exposed
+  # nudity (see WebHostLib/api/avatar.py). Internal-only: the web service reaches
+  # it as http://nudenet:8080/infer over the compose network; no host port is
+  # published (the host's 8080 belongs to nginx).
+  nudenet:
+    # Registry publishes only a floating `latest` (linux/amd64); no version tags.
+    image: ghcr.io/notai-tech/nudenet:latest
+    restart: unless-stopped
 
   web-warmup:
     image: alpine/curl:latest

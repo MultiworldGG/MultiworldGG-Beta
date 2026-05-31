@@ -113,7 +113,11 @@ app.config["SHARE_BASE_HOST"] = ""
 app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
-app.config["AVATAR_OUTPUT_DIM"] = 512
+app.config["AVATAR_OUTPUT_DIM"] = 100
+# NudeNet moderation sidecar (deploy/docker-compose.yml `nudenet` service).
+# When set, uploads are screened for exposed nudity and rejected on a hit;
+# empty disables screening (local dev without the sidecar).
+app.config["AVATAR_NSFW_ENDPOINT"] = os.environ.get("AVATAR_NSFW_ENDPOINT", "")
 
 # WebAuthn / passkey recovery (see WebHostLib/passkeys.py).
 # Production MUST override RP_ID / ORIGIN in host.yaml. The browser rejects
