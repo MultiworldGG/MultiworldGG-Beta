@@ -23,7 +23,6 @@ try:
 except ImportError:
     gui_enabled = not sys.stdout or "--nogui" not in sys.argv #if we fail to find, just guess it ourselves
 
-from . import TrackerCore
 
 from Generate import main as GMain, mystery_argparse
 
@@ -397,7 +396,7 @@ class TrackerGameContext(CommonContext):
         self.map_id = None
         self.defered_entrance_datastorage_keys = []
         self.defered_entrance_callback = None
-        self.tracker_core = TrackerCore.TrackerCore(logger,print_list,print_count)
+        self.tracker_core = TrackerCore(logger,print_list,print_count)
         self.tracker_core.set_set_page(self.set_page)
         self.tracker_core.set_log_to_tab(self.log_to_tab)
         self.tracker_core.set_clear_page(self.clear_page)
@@ -1432,7 +1431,7 @@ async def main(args):
 
 
 def launch(*args):
-    parser = get_base_parser(description="Gameless {apname} Client, for text interfacing.")
+    parser = get_base_parser(description=f"Gameless {apname} Client, for text interfacing.")
     parser.add_argument('--name', default=None, help="Slot Name to connect as.")
     if sys.stdout:  # If terminal output exists, offer gui-less mode
         parser.add_argument('--count', default=False, action='store_true', help="just return a count of in logic checks")
