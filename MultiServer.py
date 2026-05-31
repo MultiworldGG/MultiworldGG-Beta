@@ -54,12 +54,12 @@ if use_worlds_venv():
 # Hard-require mwgg_igdb
 import ModuleUpdate
 
-# mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
-# Only force the "ao" variant + run update() when MultiServer.py is the actual
-# entry point
-INDEX_VARIANT = "ao"
+# Do NOT pin an mwgg_igdb variant here. MultiServer also runs on end-user
+# clients (and is spawned by the webhost), so it must inherit the installed
+# variant, falling back to the "sixteen" default. Only the webhost pins "ao".
+# Only run update() when MultiServer.py is the actual entry point; when it's
+# imported as a module the importer (webhost) owns the update.
 if __name__ == "__main__":
-    ModuleUpdate.set_variant(INDEX_VARIANT)
     ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \

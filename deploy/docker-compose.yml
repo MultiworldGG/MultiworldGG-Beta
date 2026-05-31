@@ -1,4 +1,19 @@
 services:
+  # Sole writer of the shared worlds venv (mwgg_venv). Installs the mwgg_igdb
+  # "ao" index, every world, and the worlds' requirements into the bind mount,
+  # then exits 0. Every other service mounts the venv read-only, runs with
+  # SKIP_ALL_INSTALLS=1, and waits on this via service_completed_successfully.
+  # Refresh on demand:  docker compose up mwgg_upgrader
+  mwgg_upgrader:
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
+    entrypoint: python tools/mwgg_upgrade.py
+    # Run-once populate/refresh job — not a long-running service.
+    restart: "no"
+    volumes:
+      - app_volume:/app
+      # The ONLY service that mounts the worlds venv read-write.
+      - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+
   multiworld:
     # Default: pull the published image from GHCR. Operator can override the
     # image ref via $MULTIWORLD_IMAGE (set in a .env file or shell env).
@@ -17,15 +32,23 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_selflaunch.yaml:/app/selflaunch.yaml
 
-      # Mount multiworld cache directory
-      - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+      # Worlds venv — read-only; mwgg_upgrader is the sole writer.
+      - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
 
+    # Pure consumer of the venv: never installs, just reads.
+    environment:
+      - SKIP_ALL_INSTALLS=1
+
+    # Don't host until the worlds venv is fully populated.
+    depends_on:
+      mwgg_upgrader:
+        condition: service_completed_successfully
 
     # Expose on host network for access to dynamically mapped ports
     network_mode: host
 
-    # Becomes healthy after WebHost.py finishes installing the worlds into the
-    # shared MultiworldGG user-data bind mount.
+    # The upgrader guarantees worlds_updated == 3 before this starts; this is
+    # just a liveness gate that reads the stamp the upgrader wrote.
     healthcheck:
       test:
         - CMD-SHELL
@@ -40,10 +63,10 @@ services:
     # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
     # `build:` block so `docker compose build` only rebuilds once.
     image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
-    # Wait for multiworld to finish installing all worlds to prevent a race condition
+    # Wait for the worlds venv to be fully populated before serving.
     depends_on:
-      multiworld:
-        condition: service_healthy
+      mwgg_upgrader:
+        condition: service_completed_successfully
       nudenet:
         condition: service_started
     # Launch gunicorn targeting WebHost application
@@ -56,8 +79,8 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_gunicorn.conf.py:/app/gunicorn.conf.py
 
-      # Mount multiworld cache directory
-      - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+      # Worlds venv — read-only; mwgg_upgrader is the sole writer.
+      - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
 
     # Operator must copy example_web.env to web.env (chmod 0600, gitignored)
     # and fill in MWGG_SECRET_KEY (and optionally MWGG_WEBAUTHN_HANDLE_SECRET)
@@ -69,6 +92,8 @@ services:
     environment:
       # Bind gunicorn on 8000
       - PORT=8000
+      # Pure consumer of the venv: never installs, just reads.
+      - SKIP_ALL_INSTALLS=1
       # Screen avatar uploads against the nudenet sidecar before storage.
       - AVATAR_NSFW_ENDPOINT=http://nudenet:8080/infer
 
