@@ -116,9 +116,19 @@ class GameClient(ClientBuilder):
                 self._init_data.get("ui"),
             )
             legacy_result = await legacy_builder.build()
-            
-            return {"legacy_kvui": legacy_result}
-            
+
+            # ExtrasBuilder runs as a sibling of the legacy path -- it operates
+            # on ctx.client.features and doesn't care which UI builder wired
+            # the per-game frontend (legacy kvui, explicit build_gui, future
+            # non-legacy kvui, or TUI).
+            extras_builder = ExtrasBuilder(
+                self.ctx,
+                {"ui": self._init_data.get("ui")},
+            )
+            extras_result = await extras_builder.build()
+
+            return {"legacy_kvui": legacy_result, "extras": extras_result}
+
         except Exception as e:
             self._is_running = False
             raise e
@@ -233,14 +243,61 @@ class LegacyKvuiClientBuilder(ClientBuilder):
     def can_transition_to(self, new_state: ClientState) -> bool:
         return self._is_running and new_state == ClientState.GAME
 
+
+class ExtrasBuilder(ClientBuilder):
+    """Activate opt-in overlay features registered on ``ctx.client``.
+
+    Runs after the per-game UI is wired up. Iterates ``ctx.client.features``
+    and calls each as ``feature(ctx, app)``. Per-feature failures are logged
+    and skipped so one broken overlay can't poison the others. Frontend-
+    agnostic: it does not care whether the per-game UI was wired up by
+    LegacyKvuiClientBuilder, an explicit ``build_gui`` hook, or a future
+    non-legacy frontend.
+    """
+
+    def __init__(self, ctx: 'CommonContext', init_data: Optional[Dict[str, Any]] = None):
+        super().__init__(ctx=ctx)
+        self._init_data = init_data or {}
+
+    async def build(self) -> Dict[str, Any]:
+        self._is_running = True
+        app = self._init_data.get("ui") or getattr(self.ctx, "ui", None)
+        client = getattr(self.ctx, "client", None)
+        features = client.features if client else []
+        for feature in features:
+            try:
+                feature(self.ctx, app)
+            except Exception:
+                logger.exception(
+                    f"Extras feature {getattr(feature, '__name__', feature)!r} failed"
+                )
+        return {"features_run": len(features)}
+
+    async def cleanup(self) -> None:
+        self._is_running = False
+        await asyncio.sleep(0.1)
+
+    def can_transition_to(self, new_state: ClientState) -> bool:
+        return self._is_running
+
+
 class Client():
+    """Per-context registry of opt-in overlay features.
+
+    Each feature is a callable ``feature(ctx, app)`` registered during a
+    feature's Phase-1 attach (e.g. ``attach_tracker_overlay`` appending
+    ``start_overlay_ui_refresh``). ExtrasBuilder iterates and invokes them
+    in registration order after the per-game UI is wired.
+    """
     def __init__(self):
-        self.features = []
-    def add(self, feature: str) -> None:
+        self.features: list = []
+    def add(self, feature) -> None:
         self.features.append(feature)
     def __str__(self) -> str:
-        return "Client with features: " + ", ".join(self.features)
-    
+        names = [getattr(f, "__name__", repr(f)) for f in self.features]
+        return "Client with features: " + ", ".join(names)
+
+
 class ClientDirector():
 
     def __init__(self) -> None:

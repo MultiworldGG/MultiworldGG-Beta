@@ -572,6 +572,15 @@ def _perform_module_launch(module_id: str, **kwargs):
                     pass
 
             if launch_function is not None:
+                # When the launcher's Universal Tracker checkbox is set
+                # alongside a game module, ask the next CommonContext to
+                # attach the tracker overlay during its __init__. Only set
+                # this on the game-module path -- the standalone tracker
+                # fallback (below) constructs TrackerGameContext, which
+                # owns its own tracker_core and would get a duplicate from
+                # the wrap during super().__init__.
+                if client_type == "universal_tracker":
+                    CommonClient._set_pending_tracker_attach(True)
                 _defer_cli_launch(
                     launch_function, module_id, server_address, already_restarted,
                     dep_install_module=module_id,
