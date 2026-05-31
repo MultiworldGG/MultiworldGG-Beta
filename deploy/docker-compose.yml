@@ -24,6 +24,10 @@ services:
       context: ..
     # Launch main process without website hosting (config override)
     entrypoint: python WebHost.py --config_override selflaunch.yaml
+    environment:
+      # Cap glibc malloc arenas for this process and every Generator/MultiHoster
+      # child it spawns (children inherit env), curbing RSS growth/fragmentation.
+      - MALLOC_ARENA_MAX=2
     volumes:
       # Mount application volume
       - app_volume:/app
@@ -105,6 +109,10 @@ services:
     # Registry publishes only a floating `latest` (linux/amd64); no version tags.
     image: ghcr.io/notai-tech/nudenet:latest
     restart: unless-stopped
+      # Cap glibc malloc arenas (gthread workers spawn several). Without this,
+      # freed memory is retained per-arena and RSS climbs/fragments; 2 arenas
+      # keeps the web worker returning memory to the OS.
+      - MALLOC_ARENA_MAX=2
 
   web-warmup:
     image: alpine/curl:latest
