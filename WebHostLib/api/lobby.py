@@ -28,6 +28,7 @@ from WebHostLib.ownership import is_authorized
 from WebHostLib import app, limiter
 
 APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB — leaves headroom under 64 MB global limit
+LOBBY_LOCAL_GENERATION_YAML_LIMIT = 25
 
 def _safe_zip_name(name: str) -> str:
     """Replace characters that are problematic in ZIP entry names."""
@@ -1010,6 +1011,7 @@ def lobby_status(lobby: UUID):
         "timeout_minutes": lobby.timeout_minutes,
         "allow_custom_apworlds": lobby.allow_custom_apworlds,
         "has_custom": has_custom,
+        "force_local_generation": has_custom or total_yamls > LOBBY_LOCAL_GENERATION_YAML_LIMIT,
         "race": lobby.race,
         "server_opts": server_opts,
         "gen_opts": gen_opts,
@@ -1434,6 +1436,43 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
     return jsonify({"success": True})
 
 
+@api_endpoints.route('/lobby/<suuid:lobby>/yamls', methods=['DELETE'])
+def lobby_delete_all_yamls(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    if not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "Only the lobby owner can remove all YAMLs"}), 403
+
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot modify YAMLs in current lobby state"}), 400
+
+    yaml_records = db.session.scalars(
+        select(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id)
+    ).all()
+    deleted_count = len(yaml_records)
+    for yaml_record in yaml_records:
+        _delete_yaml_record(yaml_record)
+
+    if deleted_count:
+        owner_name = db.session.scalar(
+            select(LobbyPlayer.player_name)
+            .where(LobbyPlayer.lobby_id == lobby.id, LobbyPlayer.session_id == lobby.owner)
+            .limit(1)
+        ) or "Host"
+        LobbyMessage(
+            lobby_id=lobby.id,
+            player_id=None,
+            sender_name="System",
+            content=f"All YAMLs were removed by host {owner_name}.",
+        )
+        lobby.last_activity = utcnow()
+        commit()
+
+    return jsonify({"success": True, "deleted_count": deleted_count})
+
+
 @api_endpoints.route('/lobby/<suuid:lobby>/message/<int:message_id>', methods=['DELETE'])
 @limiter.limit("30 per minute")
 def lobby_delete_message(lobby: UUID, message_id: int):
@@ -1584,6 +1623,12 @@ def lobby_generate(lobby: UUID):
     if not all_yamls:
         return jsonify({"error": "No YAMLs uploaded yet"}), 400
 
+    if len(all_yamls) > LOBBY_LOCAL_GENERATION_YAML_LIMIT:
+        return jsonify({
+            "error": f"Lobbies with more than {LOBBY_LOCAL_GENERATION_YAML_LIMIT} YAMLs must be generated locally. "
+                     "Use 'Download Package', generate locally, then upload the result."
+        }), 400
+
     if len(all_yamls) > app.config["MAX_ROLL"]:
         return jsonify({
             "error": f"Too many YAMLs ({len(all_yamls)}). Maximum is {app.config['MAX_ROLL']}."
@@ -1680,7 +1725,7 @@ def lobby_update_settings(lobby: UUID):
 
     if "max_yamls_per_player" in data:
         try:
-            new_max_yamls = max(1, min(int(data["max_yamls_per_player"]), 20))
+            new_max_yamls = max(1, min(int(data["max_yamls_per_player"]), 100))
             counts = db.session.execute(
                 select(LobbyYaml.player_id, func.count(LobbyYaml.id)).where(
                     LobbyYaml.lobby_id == lobby.id,
@@ -1739,7 +1784,7 @@ def lobby_update_settings(lobby: UUID):
 
     if "hint_cost" in data:
         try:
-            server_opts["hint_cost"] = max(0, min(int(data["hint_cost"]), 105))
+            server_opts["hint_cost"] = max(0, min(int(data["hint_cost"]), 100))
         except (ValueError, TypeError):
             pass
 
@@ -2347,6 +2392,9 @@ def lobby_download_package(lobby: UUID):
             LobbyYaml.lobby_id == lobby.id
         ).order_by(LobbyYaml.id)
     ).all()
+    if not yaml_rows:
+        return jsonify({"error": "Cannot download a package without any YAMLs"}), 400
+
     apworlds = db.session.scalars(
         select(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
     ).all()
@@ -2428,7 +2476,7 @@ def lobby_upload_game(lobby: UUID):
     if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can upload the game"}), 403
 
-    if lobby.state != LOBBY_OPEN:
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not in a state to accept a game file"}), 400
 
     if 'file' not in request.files:

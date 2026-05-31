@@ -163,6 +163,20 @@
     color: var(--mw-sys-color-secondary);
 }
 
+.lobby-sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#remove-all-yamls-btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
 #lobby-players {
     list-style: none;
     padding: 7px;
@@ -962,6 +976,23 @@ a.lobby-btn-primary:hover {
     color: var(--mw-sys-color-on-accent-orange-container);
     font-size: 0.9rem;
     text-align: left;
+}
+
+#package-generation-notice {
+    margin-top: 4px;
+    text-align: center;
+}
+
+#package-generation-notice ul {
+    display: inline-block;
+    text-align: left;
+}
+
+.custom-disclaimer.package-alternative {
+    border: 0;
+    background: transparent;
+    padding: 0;
+    color: inherit;
 }
 
 .drop-zone-label {
