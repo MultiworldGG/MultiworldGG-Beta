@@ -1,5 +1,104 @@
 let presets = {};
 
+const setChecked = (checkbox, checked) => {
+  if (!checkbox) {
+    return;
+  }
+  checkbox.checked = checked;
+  if (checked) {
+    checkbox.setAttribute("checked", "1");
+  } else {
+    checkbox.removeAttribute("checked");
+  }
+};
+
+const setRangeValue = (optionName, value) => {
+  const rangeValue = document.getElementById(`${optionName}-value`);
+  if (rangeValue) {
+    if (rangeValue.tagName === "INPUT") rangeValue.value = value;
+    else rangeValue.innerText = value;
+  }
+};
+
+const hasSelectValue = (select, value) => {
+  return Array.from(select.options).some((option) => option.value === String(value));
+};
+
+const decimalPlaces = (value) => {
+  const text = String(value);
+  if (text.includes("e-")) return parseInt(text.split("e-")[1], 10);
+  return text.includes(".") ? text.split(".")[1].length : 0;
+};
+
+const sanitizeStoredValue = (input, value) => {
+  if (input.tagName === "SELECT") {
+    return hasSelectValue(input, value) ? value : input.value;
+  }
+
+  if (input.type === "number" || input.type === "range") {
+    let numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) {
+      numericValue = Number(input.defaultValue || input.value || input.min || 0);
+    }
+
+    const min = input.min === "" ? null : Number(input.min);
+    const max = input.max === "" ? null : Number(input.max);
+    if (Number.isFinite(min)) numericValue = Math.max(min, numericValue);
+    if (Number.isFinite(max)) numericValue = Math.min(max, numericValue);
+
+    if (input.step !== "any") {
+      const step = input.step === "" ? 1 : Number(input.step);
+      if (Number.isFinite(step) && step > 0) {
+        const base = Number.isFinite(min) ? min : 0;
+        numericValue = base + Math.round((numericValue - base) / step) * step;
+        if (Number.isFinite(min)) numericValue = Math.max(min, numericValue);
+        if (Number.isFinite(max)) numericValue = Math.min(max, numericValue);
+        numericValue = Number(numericValue.toFixed(decimalPlaces(step)));
+      }
+    }
+
+    return String(numericValue);
+  }
+
+  return value;
+};
+
+const restoreCollection = (optionName, values) => {
+  const selectedValues = new Set(values.map(String));
+  let found = false;
+  document.querySelectorAll(".multi-selector").forEach((container) => {
+    if (container.dataset.optionName === optionName && typeof container.restoreValues === "function") {
+      container.restoreValues(values);
+      found = true;
+    }
+  });
+  document.querySelectorAll("input[type=checkbox]").forEach((checkbox) => {
+    if (checkbox.name === optionName) {
+      setChecked(checkbox, selectedValues.has(checkbox.value));
+      found = true;
+    }
+  });
+  return found;
+};
+
+const restoreCounter = (optionName, values) => {
+  let found = false;
+  document.querySelectorAll(".multi-counter").forEach((container) => {
+    if (container.dataset.optionName === optionName && typeof container.restoreValues === "function") {
+      container.restoreValues(values);
+      found = true;
+    }
+  });
+  document.querySelectorAll("input[type=number]").forEach((input) => {
+    if (input.getAttribute("data-option-name") === optionName) {
+      const itemName = input.getAttribute("data-item-name") || input.getAttribute("data-name");
+      input.value = Object.prototype.hasOwnProperty.call(values, itemName) ? values[itemName] : 0;
+      found = true;
+    }
+  });
+  return found;
+};
+
 window.addEventListener("load", async () => {
   // Load settings from localStorage, if available
   loadSettings();
@@ -159,7 +258,7 @@ const saveSettings = () => {
     checkboxes: {},
   };
   document.querySelectorAll("#options-form input, #options-form select").forEach((input) => {
-    if (input.type === "submit" || input.type === "button") {
+    if (!input.id || input.type === "submit" || input.type === "button") {
       // ignore and do not save
     } else if (input.type === "checkbox") {
       options.checkboxes[input.id] = input.checked;
@@ -194,37 +293,40 @@ const loadSettings = (importObj = null) => {
     //console.log(options);
     // Restore value-based inputs and selects
     Object.keys(options.inputs).forEach((key) => {
-      try {
-        document.getElementById(key).value = options.inputs[key];
-        const rangeValue = document.getElementById(`${key}-value`);
-        if (rangeValue) {
-          if (rangeValue.tagName === "INPUT") rangeValue.value = options.inputs[key];
-          else rangeValue.innerText = options.inputs[key];
+      const value = options.inputs[key];
+      const input = document.getElementById(key);
+      if (!input) {
+        if (Array.isArray(value)) {
+          restoreCollection(key, value);
+        } else if (value && typeof value === "object") {
+          restoreCounter(key, value);
         }
-      } catch (err) {
-        console.error(`Unable to restore value to input with id ${key}`);
+        return;
       }
+
+      const sanitizedValue = sanitizeStoredValue(input, value);
+      input.value = sanitizedValue;
+      setRangeValue(key, sanitizedValue);
     });
 
     // Restore checkboxes
     Object.keys(options.checkboxes).forEach((key) => {
-      try {
-        if (options.checkboxes[key] && !key.startsWith("random-")) {
-          document.getElementById(key).setAttribute("checked", "1");
-        } else {
-          if (key.startsWith("random-")) {
-            let optionName = key.split("random-")[1];
-            let randomCheckbox = document.querySelector(
-              'input[data-option-name="' + optionName + '"]'
-            );
+      const checked = Boolean(options.checkboxes[key]);
+      if (key.startsWith("random-")) {
+        let optionName = key.split("random-")[1];
+        let randomCheckbox = document.querySelector(
+          'input[data-option-name="' + optionName + '"]'
+        );
 
-            if (randomCheckbox) {
-              randomCheckbox.checked = options.checkboxes[key];
-            }
-          }
+        if (randomCheckbox) {
+          setChecked(randomCheckbox, checked);
         }
-      } catch (err) {
-        console.error(`Unable to restore value to input with id ${key}`);
+        return;
+      }
+
+      const checkbox = document.getElementById(key);
+      if (checkbox) {
+        setChecked(checkbox, checked);
       }
     });
   }
@@ -234,12 +336,20 @@ const loadSettings = (importObj = null) => {
     const optionName = checkbox.getAttribute("data-option-name");
     if (checkbox.checked) {
       const input = document.getElementById(optionName);
+      const namedRangeSelect = document.querySelector(
+        `select[data-option-name=${optionName}]`
+      );
       if (input) {
         input.setAttribute("disabled", "1");
       }
+      namedRangeSelect?.setAttribute("disabled", "1");
       const customInput = document.getElementById(`${optionName}-custom`);
       if (customInput) {
         customInput.setAttribute("disabled", "1");
+      }
+      const valueInput = document.getElementById(`${optionName}-value`);
+      if (valueInput && valueInput.tagName === "INPUT") {
+        valueInput.setAttribute("disabled", "1");
       }
     }
   });
@@ -324,29 +434,13 @@ const applyPresets = (presetName) => {
 
     // Handle List and Set options
     if (Array.isArray(optionValue)) {
-      document
-        .querySelectorAll(`input[type=checkbox][name=${optionName}]`)
-        .forEach((checkbox) => {
-          if (optionValue.includes(checkbox.value)) {
-            checkbox.setAttribute("checked", "1");
-          } else {
-            checkbox.removeAttribute("checked");
-          }
-        });
+      restoreCollection(optionName, optionValue);
       return;
     }
 
     // Handle Dict options
     if (typeof optionValue === "object" && optionValue !== null) {
-      const itemNames = Object.keys(optionValue);
-      document
-        .querySelectorAll(`input[type=number][data-option-name=${optionName}]`)
-        .forEach((input) => {
-          const itemName = input.getAttribute("data-item-name");
-          input.value = itemNames.includes(itemName)
-            ? optionValue[itemName]
-            : 0;
-        });
+      restoreCounter(optionName, optionValue);
       return;
     }
 
@@ -375,7 +469,7 @@ const applyPresets = (presetName) => {
     // Handle options whose presets are "random"
     if (optionValue === "random") {
       normalInput.setAttribute("disabled", "1");
-      randomizeInput.setAttribute("checked", "1");
+      setChecked(randomizeInput, true);
       if (customInput) {
         customInput.setAttribute("disabled", "1");
       }
@@ -392,7 +486,7 @@ const applyPresets = (presetName) => {
     // Handle normal (text, number, select, etc.) and custom inputs (custom inputs exist with TextChoice only)
     normalInput.value = trueValue;
     normalInput.removeAttribute("disabled");
-    randomizeInput.removeAttribute("checked");
+    setChecked(randomizeInput, false);
     if (customInput) {
       document
         .getElementById(`${optionName}-custom`)

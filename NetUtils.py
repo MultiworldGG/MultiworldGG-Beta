@@ -636,6 +636,7 @@ class MultiData(typing.TypedDict):
     spheres: list[dict[int, set[int]]]
     datapackage: dict[str, GamesPackage]
     race_mode: int
+    allow_collecting_from: dict[int, bool]
 
 
 if typing.TYPE_CHECKING:  # type-check with pure python implementation until we have a typing stub
@@ -655,7 +656,11 @@ else:
         except ImportError:
             pyximport = None
         try:
+            import logging
+            logger = logging.getLogger()
+            old_level = logger.level
             from _speedups import LocationStore
+            logger.setLevel(old_level)
         except ImportError:
             warnings.warn("_speedups not available. Falling back to pure python LocationStore. "
                           "Install a matching C++ compiler for your platform to compile _speedups.")

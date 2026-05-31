@@ -9,7 +9,7 @@ from typing import Optional, Union
 
 from NetUtils import DataPackage
 from BaseUtils import (local_path, user_path, Version, version_tuple, tuplize_version,
-                       get_archipelago_json, mwgg_venv_site_packages, use_worlds_venv)
+                       get_archipelago_json, get_apworld_manifest, mwgg_venv_site_packages, use_worlds_venv)
 from APContainer import APWorldContainer
 from pathlib import Path
 
@@ -90,11 +90,19 @@ for world_source in world_sources:
     world_source.load()
 
 from .AutoWorld import AutoWorldRegister
-# Add version for each world.
+# Add version + manifest for each world.
 for world in AutoWorldRegister.world_types.values():
     if world.game not in ["Archipelago"]:
-        world_name, author, minimum_ap_version, version = get_archipelago_json(world.__module__.split(".")[1])
+        module_slug = world.__module__.split(".")[1]
+        world_name, author, minimum_ap_version, version = get_archipelago_json(module_slug)
         AutoWorldRegister.world_types[world.game].world_version = tuplize_version(version)
+        manifest = get_apworld_manifest(module_slug)
+        if manifest:
+            # version/compatible_version aren't world-facing; match the folder-load behavior
+            manifest.pop("version", None)
+            manifest.pop("compatible_version", None)
+            AutoWorldRegister.world_types[world.game].manifest = manifest
+
 
 # Build the data package for each game.
 network_data_package: DataPackage = {

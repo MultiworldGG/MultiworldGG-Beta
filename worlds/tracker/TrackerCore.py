@@ -1,8 +1,7 @@
 
 import logging
 import inspect
-import os
-import shutil
+import pathlib
 import tempfile
 from typing import Union, Any, TYPE_CHECKING, NamedTuple
 from enum import StrEnum
@@ -13,7 +12,7 @@ from worlds import AutoWorld
 from collections import Counter, defaultdict
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode
 import sys
-from Utils import __version__, output_path, open_filename
+from Utils import __version__, output_path, open_filename, cache_path
 
 from Generate import main as GMain, mystery_argparse
 from worlds.generic.Rules import exclusion_rules
@@ -335,9 +334,16 @@ class TrackerCore():
                         TrackerLogLineGroup.UT_STATUS,
                     ))
                     return
-                picker_tempdir = tempfile.mkdtemp(prefix="ut_picked_yaml_")
-                shutil.copy2(picked, os.path.join(picker_tempdir, os.path.basename(picked)))
-                args.player_files_path = picker_tempdir
+                # Generate scans a folder, not a single file, so copy the picked
+                # yaml into one stable cache dir. Clearing it first keeps re-picks
+                # from accumulating and avoids leaking a fresh temp dir each time.
+                picker_dir = pathlib.Path(cache_path("ut_picked_yaml"))
+                picker_dir.mkdir(parents=True, exist_ok=True)
+                for stale in picker_dir.iterdir():
+                    stale.unlink()
+                src = pathlib.Path(picked)
+                (picker_dir / src.name).write_bytes(src.read_bytes())
+                args.player_files_path = str(picker_dir)
             self.player_folder_override = args.player_files_path
             args.skip_output = True
             args.multi = 0
@@ -454,7 +460,7 @@ class TrackerCore():
         for item_name, item_flags, item_loc, item_player in [(item_id_to_name[item.item],item.flags,item.location, item.player) for item in self.tracker_items_received if item.item > 0] + [(name,ItemClassification.progression,-1,-1) for name in self.manual_items]:
             try:
                 world_item = self.multiworld.create_item(item_name, self.player_id)
-                if item_loc>0 and item_player == self.slot and item_loc in location_id_to_name:
+                if item_loc>0 and item_player == self.slot and item_loc in location_id_to_name and location_id_to_name[item_loc] in self.multiworld.regions.location_cache[self.player_id]:
                     world_item.location = self.multiworld.get_location(location_id_to_name[item_loc],self.player_id)
                 world_item.classification = world_item.classification | item_flags
                 state.collect(world_item, True)

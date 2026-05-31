@@ -4,6 +4,7 @@ import json
 import logging
 import multiprocessing
 import os
+import queue
 import shutil
 import typing
 from datetime import timedelta, datetime
@@ -372,9 +373,7 @@ def autohost(config: dict):
 
                 while not stop_event.wait(0.1):
                     # Clear finished-shutdown rooms for every hoster and restart
-                    # idle, long-running ones even when no new room arrives this
-                    # tick — this is what lets the 12h APWorld-reload restart
-                    # actually reclaim a hoster process's memory.
+                    # idle, long-running ones even when no new room arrives
                     for hoster in hosters:
                         hoster.drain_shutting_down()
                         hoster.restart_if_idle()

@@ -1469,7 +1469,7 @@ class NonLocalItems(ItemSet):
 
 
 class StartInventory(ItemDict):
-    """Start with the specified amount of these items. Example: "Bomb: 1" """
+    """Start with the specified amount of these items. Example: {Bomb: 1, Arrow: 3} """
     verify_item_name = True
     display_name = "Start Inventory"
     rich_text_doc = True
@@ -1477,7 +1477,7 @@ class StartInventory(ItemDict):
 
 
 class StartInventoryPool(StartInventory):
-    """Start with the specified amount of these items and don't place them in the world. Example: "Bomb: 1"
+    """Start with the specified amount of these items and don't place them in the world. Example: {Bomb: 1, Arrow: 3}
 
     The game decides what the replacement items will be.
     """
@@ -1518,6 +1518,12 @@ class PriorityLocations(LocationSet):
 class DeathLink(Toggle):
     """When you die, everyone who enabled death link dies. Of course, the reverse is true too."""
     display_name = "Death Link"
+    rich_text_doc = True
+
+
+class AllowCollectingFrom(DefaultOnToggle):
+    """If other players are allowed to '!collect' items from your world."""
+    display_name = "Allow Collecting"
     rich_text_doc = True
 
 
@@ -1744,6 +1750,7 @@ class PerGameCommonOptions(CommonOptions):
     priority_locations: PriorityLocations
     item_links: ItemLinks
     plando_items: PlandoItems
+    allow_collecting_from: AllowCollectingFrom
 
 
 @dataclass
