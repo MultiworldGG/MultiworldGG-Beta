@@ -457,14 +457,28 @@ def _defer_cli_launch(launch_function, label: str, server_address,
     loop = asyncio.get_event_loop()
 
     def _deferred_launch():
+        import inspect
         saved_argv = sys.argv[:]
         try:
+            launch_argv: list[str] = []
             if isinstance(server_address, str) and server_address:
-                argv = [sys.argv[0], f"--connect={server_address}"]
+                launch_argv.append(f"--connect={server_address}")
                 if slot_name and label == "universal_tracker":
-                    argv.append(f"--name={slot_name}")
-                sys.argv = argv
-            launch_function()
+                    launch_argv.append(f"--name={slot_name}")
+                sys.argv = [sys.argv[0], *launch_argv]
+            try:
+                accepts_positional = any(
+                    p.kind in (inspect.Parameter.VAR_POSITIONAL,
+                               inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                               inspect.Parameter.POSITIONAL_ONLY)
+                    for p in inspect.signature(launch_function).parameters.values()
+                )
+            except (TypeError, ValueError):
+                accepts_positional = False
+            if accepts_positional:
+                launch_function(*launch_argv)
+            else:
+                launch_function()
         except (ModuleNotFoundError, ImportError) as dep_error:
             if dep_install_module and not already_restarted:
                 update_logger.warning(
