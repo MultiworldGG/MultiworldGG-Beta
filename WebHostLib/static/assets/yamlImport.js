@@ -46,9 +46,7 @@ function parseYML(yaml) {
                 return;
 
             if (Array.isArray(settingValue)) {
-                settingValue.forEach(elem => {
-                    storageObj.checkboxes[`${key}-${elem}`] = true;
-                })
+                storageObj.inputs[key] = settingValue;
             }
             else if (settingValue == "random" && key != "map_shuffle_seed") //exception for FFMQ
                 storageObj.checkboxes["random-" + key] = true;

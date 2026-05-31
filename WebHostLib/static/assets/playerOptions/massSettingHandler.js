@@ -138,6 +138,12 @@
         }
       }
 
+      container.restoreValues = (values) => {
+        selectedSet.clear();
+        values.forEach((value) => selectedSet.add(String(value)));
+        render(searchInput.value);
+      };
+
       render();
     });
   }
@@ -218,9 +224,18 @@
         unselected.slice(0, currentLimit).forEach((n) => listContainer.appendChild(createEntry(n)));
 
         if (unselected.length > currentLimit) {
-            listContainer.appendChild(createAppendElement());
+          listContainer.appendChild(createAppendElement());
         }
       }
+
+      container.restoreValues = (values) => {
+        allNames.forEach((name) => {
+          const value = parseInt(values[name], 10);
+          current[name] = isNaN(value) ? 0 : value;
+        });
+        render(searchInput.value);
+      };
+
       render();
     });
   }
