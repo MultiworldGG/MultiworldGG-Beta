@@ -11,6 +11,17 @@ from worlds.AutoWorld import call_all
 from worlds.generic.Rules import add_item_rule
 
 
+# Proportional progression placement tuning (see distribute_items_restrictive / fill_restrictive).
+# Worlds contributing fewer than BYPASS_THRESHOLD progression items skip target enforcement, since
+# strict per-world targets are too tight when the contribution is small.
+BYPASS_THRESHOLD: int = 10
+# Each targeted world has an acceptance window of [target * (1 - PLACEMENT_MARGIN),
+# target * (1 + PLACEMENT_MARGIN)]. Inside the window, placement is random (variance preserved).
+# Outside the window, the player's bucket is pulled to the front (undersaturated) or pushed to the
+# back (oversaturated) of the scan order. Never forbidden, so logic constraints still resolve.
+PLACEMENT_MARGIN: float = 0.25
+
+
 class FillError(RuntimeError):
     def __init__(self, *args: typing.Union[str, typing.Any], **kwargs) -> None:
         if "multiworld" in kwargs and isinstance(args[0], str):
@@ -37,7 +48,8 @@ def fill_restrictive(multiworld: MultiWorld, base_state: CollectionState, locati
                      item_pool: typing.List[Item], single_player_placement: bool = False, lock: bool = False,
                      swap: bool = True, on_place: typing.Optional[typing.Callable[[Location], None]] = None,
                      allow_partial: bool = False, allow_excluded: bool = False, one_item_per_player: bool = True,
-                     name: str = "Unknown") -> None:
+                     name: str = "Unknown",
+                     placement_targets: typing.Optional[typing.Dict[int, float]] = None) -> None:
     """
     :param multiworld: Multiworld to be filled.
     :param base_state: State assumed before fill.
@@ -50,6 +62,9 @@ def fill_restrictive(multiworld: MultiWorld, base_state: CollectionState, locati
     :param allow_partial: only place what is possible. Remaining items will be in the item_pool list.
     :param allow_excluded: if true and placement fails, it is re-attempted while ignoring excluded on Locations
     :param name: name of this fill step for progress logging purposes
+    :param placement_targets: optional dict[player_id, target_count] of how many items each player's world should host
+        from this fill. When provided, locations are bucketed by player and scanned with a corrective bias for
+        any player outside a ±PLACEMENT_MARGIN window. Players absent from this dict are bypassed (no bias).
     """
     unplaced_items: typing.List[Item] = []
     placements: typing.List[Location] = []
@@ -58,6 +73,22 @@ def fill_restrictive(multiworld: MultiWorld, base_state: CollectionState, locati
     reachable_items: typing.Dict[int, typing.Deque[Item]] = {}
     for item in item_pool:
         reachable_items.setdefault(item.player, deque()).append(item)
+
+    # Per-player location bucketing for proportional progression placement.
+    # Active only when placement_targets is supplied (the progression fill step). All other callers
+    # (priority fill, early items, remaining fill via fill_restrictive) fall through to the original
+    # linear scan and behave identically to before.
+    use_bucketed_scan: bool = placement_targets is not None and len(locations) > 0
+    locations_by_player: typing.Dict[int, typing.List[Location]] = {}
+    placements_per_player: typing.Counter[int] = Counter()
+    margin_low: typing.Dict[int, float] = {}
+    margin_high: typing.Dict[int, float] = {}
+    if use_bucketed_scan:
+        for loc in locations:
+            locations_by_player.setdefault(loc.player, []).append(loc)
+        for p, target in placement_targets.items():
+            margin_low[p] = target * (1.0 - PLACEMENT_MARGIN)
+            margin_high[p] = target * (1.0 + PLACEMENT_MARGIN)
 
     # for progress logging
     total = min(len(item_pool), len(locations))
@@ -105,15 +136,52 @@ def fill_restrictive(multiworld: MultiWorld, base_state: CollectionState, locati
             else:
                 perform_access_check = True
 
-            for i, location in enumerate(locations):
-                if (not single_player_placement or location.player == item_to_place.player) \
-                        and location.can_fill(maximum_exploration_state, item_to_place, perform_access_check):
-                    # popping by index is faster than removing by content,
-                    spot_to_fill = locations.pop(i)
-                    # skipping a scan for the element
-                    break
-
+            if use_bucketed_scan:
+                # Classify players by where they currently sit relative to their margin window.
+                # Players not in placement_targets (bypassed small worlds) ride along with in-margin players.
+                under_players: typing.List[int] = []
+                in_margin_players: typing.List[int] = []
+                over_players: typing.List[int] = []
+                for p, bucket in locations_by_player.items():
+                    if not bucket:
+                        continue
+                    if p in placement_targets:
+                        count = placements_per_player[p]
+                        if count < margin_low[p]:
+                            under_players.append(p)
+                        elif count >= margin_high[p]:
+                            over_players.append(p)
+                        else:
+                            in_margin_players.append(p)
+                    else:
+                        in_margin_players.append(p)
+                # Shuffle within each tier so placement is random inside the margin and between equal-deficit players.
+                multiworld.random.shuffle(under_players)
+                multiworld.random.shuffle(in_margin_players)
+                multiworld.random.shuffle(over_players)
+                # Under first (corrective pull), in-margin next (random), over last (deferred but legal).
+                for player in itertools.chain(under_players, in_margin_players, over_players):
+                    bucket = locations_by_player[player]
+                    for i, location in enumerate(bucket):
+                        if (not single_player_placement or location.player == item_to_place.player) \
+                                and location.can_fill(maximum_exploration_state, item_to_place, perform_access_check):
+                            spot_to_fill = bucket.pop(i)
+                            # Master `locations` list is consulted elsewhere (empty check, swap pool, etc.) so keep it in sync.
+                            locations.remove(spot_to_fill)
+                            placements_per_player[player] += 1
+                            break
+                    if spot_to_fill is not None:
+                        break
             else:
+                for i, location in enumerate(locations):
+                    if (not single_player_placement or location.player == item_to_place.player) \
+                            and location.can_fill(maximum_exploration_state, item_to_place, perform_access_check):
+                        # popping by index is faster than removing by content,
+                        spot_to_fill = locations.pop(i)
+                        # skipping a scan for the element
+                        break
+
+            if spot_to_fill is None:
                 # we filled all reachable spots.
                 if swap:
                     # Keep a cache of previous safe swap states that might be usable to sweep from to produce the next
@@ -586,15 +654,35 @@ def distribute_items_restrictive(multiworld: MultiWorld,
     if progitempool:
         # "advancement/progression fill"
         maximum_exploration_state = sweep_from_pool(multiworld.state)
+
+        # Proportional progression placement targets: each world's hosted-progression-item count is
+        # steered toward the number of progression items that world contributes to the pool, within
+        # a PLACEMENT_MARGIN window. Worlds contributing fewer than BYPASS_THRESHOLD items are
+        # omitted (no enforcement; they receive whatever falls to them). Disabled for single-player
+        # generation since there is nothing to balance across.
+        placement_targets: typing.Optional[typing.Dict[int, float]] = None
+        if not single_player:
+            own_prog = Counter(item.player for item in progitempool)
+            computed_targets = {
+                p: float(contributed)
+                for p, contributed in own_prog.items()
+                if contributed >= BYPASS_THRESHOLD
+            }
+            if computed_targets:
+                placement_targets = computed_targets
+
         if panic_method == "swap":
             fill_restrictive(multiworld, maximum_exploration_state, defaultlocations, progitempool, swap=True,
-                             name="Progression", single_player_placement=single_player)
+                             name="Progression", single_player_placement=single_player,
+                             placement_targets=placement_targets)
         elif panic_method == "raise":
             fill_restrictive(multiworld, maximum_exploration_state, defaultlocations, progitempool, swap=False,
-                             name="Progression", single_player_placement=single_player)
+                             name="Progression", single_player_placement=single_player,
+                             placement_targets=placement_targets)
         elif panic_method == "start_inventory":
             fill_restrictive(multiworld, maximum_exploration_state, defaultlocations, progitempool, swap=False,
-                             allow_partial=True, name="Progression", single_player_placement=single_player)
+                             allow_partial=True, name="Progression", single_player_placement=single_player,
+                             placement_targets=placement_targets)
             if progitempool:
                 for item in progitempool:
                     logging.debug(f"Moved {item} to start_inventory to prevent fill failure.")
