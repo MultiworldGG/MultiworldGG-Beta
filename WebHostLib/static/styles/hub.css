@@ -29,8 +29,24 @@
 }
 
 .mw-hub-cta-wrap {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
     margin: 0 auto 36px;
+}
+
+.mw-hub-cta-label {
+    font-size: 21px;
+    font-weight: 500;
+    color: var(--mw-sys-color-on-surface);
+}
+
+.mw-hub-cta-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
 }
 
 .mw-hub-cta {

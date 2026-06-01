@@ -536,6 +536,7 @@ body {
     font-weight: normal;
     display: inline-block;
     line-height: 1;
+    transform: translateX(var(--mdi-dx, 0));
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -572,3 +573,33 @@ body {
 .mdi-github::before              { content: "\F02A4"; }
 .mdi-discord::before             { content: "\F1FF"; }
 .mdi-rocket-launch::before       { content: "\F14DE"; }
+
+/* Per-icon horizontal re-center.
+   This Nerd Font draws each icon wider than its 0.62em advance box, overflowing
+   rightward by a glyph-specific amount, so no single rule can center them. The
+   --mdi-dx value (em, scales with font-size) shifts each glyph's ink to its box
+   center; values are computed from the font's glyph metrics. Vertical needs no
+   correction — the font's typo metrics already center it. Regenerate these if the
+   icon font is replaced. */
+/* /me dashboard */
+.mdi-monitor                    { --mdi-dx: -0.149em; }
+.mdi-arrow-right                { --mdi-dx: -0.02em; }
+.mdi-account-multiple           { --mdi-dx: -0.106em; }
+.mdi-key                        { --mdi-dx: -0.149em; }
+.mdi-gamepad                    { --mdi-dx: -0.106em; }
+.mdi-information                { --mdi-dx: -0.106em; }
+/* /play and /learn hub */
+.mdi-account-group              { --mdi-dx: -0.19em; }
+.mdi-plus-circle                { --mdi-dx: -0.106em; }
+.mdi-check-all                  { --mdi-dx: -0.1745em; }
+.mdi-school                     { --mdi-dx: -0.149em; }
+.mdi-help-circle                { --mdi-dx: -0.106em; }
+.mdi-book-open-variant          { --mdi-dx: -0.149em; }
+/* Move-to-another-device modal */
+.mdi-content-copy               { --mdi-dx: -0.0855em; }
+.mdi-check                      { --mdi-dx: -0.0542em; }
+.mdi-alert                      { --mdi-dx: -0.149em; }
+/* Site footer / quickstart */
+.mdi-github                     { --mdi-dx: -0.106em; }
+.mdi-discord                    { --mdi-dx: -0.2285em; }
+.mdi-rocket-launch              { --mdi-dx: -0.1108em; }
