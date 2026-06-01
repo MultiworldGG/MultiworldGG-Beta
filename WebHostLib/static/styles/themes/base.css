@@ -517,14 +517,14 @@ body {
 /* ===========================================================
    Material Design Icons — shared icon font for the redesign
    ===========================================================
-   The font is the FA-compatible MDI webfont shipped at
-   data/fonts/MaterialDesignIcons-Webfont.ttf and mirrored into
-   WebHostLib/static/static/fonts/ for the webhost
+   The font is the Monaspace Nerd Font (MDI codepoints) shipped at
+   data/fonts/MonaspiceAgNerdFont-Regular.otf and mirrored as
+   WebHostLib/static/static/fonts/MonaspiceAgNerdFont-Regular.ttf for the webhost
    =========================================================== */
 
 @font-face {
     font-family: "MDIcons";
-    src: url('../../static/fonts/MaterialDesignIcons-Webfont.ttf') format('truetype');
+    src: url('../../static/fonts/MonaspiceAgNerdFont-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: block;
