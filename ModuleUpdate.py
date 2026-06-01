@@ -757,7 +757,7 @@ def _venv_worlds_dir() -> Path:
     (multiprocessing.spawn in child processes needs disk-based modules; zipimport-
     only modules can't be re-imported in the spawned child).
     """
-    if is_frozen():
+    if use_worlds_venv():
         return Path(mwgg_venv_site_packages("worlds"))
     # Dev: matches the hardcoded path in src/worlds/__init__.py
     from sysconfig import get_path
