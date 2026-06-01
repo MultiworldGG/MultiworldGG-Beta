@@ -551,7 +551,7 @@ body {
 .mdi-arrow-right::before         { content: "\F0054"; }
 .mdi-account-multiple::before    { content: "\F000E"; }
 .mdi-key::before                 { content: "\F0306"; }
-.mdi-dice-6::before              { content: "\F01CF"; }
+.mdi-gamepad::before             { content: "\F02B4"; }
 .mdi-information::before         { content: "\F02FC"; }
 
 /* /play and /learn hub icons (Phase 7) */
@@ -572,5 +572,5 @@ body {
 
 /* Site footer / quickstart icons */
 .mdi-github::before              { content: "\F02A4"; }
-.mdi-discord::before             { content: "\F066F"; }
+.mdi-discord::before             { content: "\F1FF"; }
 .mdi-rocket-launch::before       { content: "\F14DE"; }
