@@ -911,7 +911,6 @@ class Settings(Group):
 
 def get_settings() -> Settings:
     """Returns settings from the default host.yaml"""
-    save_location: str | None = None
     with _lock:  # make sure we only have one instance
         res = getattr(get_settings, "_cache", None)
         if not res:
@@ -930,16 +929,6 @@ def get_settings() -> Settings:
             else:
                 warnings.warn(f"Could not find {filenames[1]} to load options. Creating a new one.")
                 res = Settings(None)
-                save_location = user_path(filenames[1])
+                res.save(user_path(filenames[1]))
             setattr(get_settings, "_cache", res)
-
-    if save_location:
-        try:
-            res.save(save_location, write_launcher_cache=not no_gui)
-        except Exception:
-            with _lock:
-                if getattr(get_settings, "_cache", None) is res:
-                    delattr(get_settings, "_cache")
-            raise
-
-    return res
+        return res
