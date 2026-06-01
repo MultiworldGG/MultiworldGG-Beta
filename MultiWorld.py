@@ -82,9 +82,23 @@ def _ensure_writable_kivy_data(src: str) -> str:
         and os.path.getmtime(src_marker) > os.path.getmtime(dst_marker)
     )
     if needs_copy:
-        if os.path.exists(dst):
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst)
+        # Overlay-copy instead of rmtree+copytree. On Windows a font in `dst`
+        # may be locked by another MWGG process or the Windows Font Cache
+        # service, and rmtree/overwrite of an open file raises PermissionError
+        # [WinError 32]. POSIX read-only mounts (AppImage/.app) tolerate
+        # unlinking open files; Windows does not. Skipping a locked file is
+        # safe — bundled fonts are byte-identical to the in-use copy; only
+        # defaulttheme-0.png actually changes.
+        os.makedirs(dst, exist_ok=True)
+        for root, _dirs, files in os.walk(src):
+            rel = os.path.relpath(root, src)
+            dst_root = dst if rel == "." else os.path.join(dst, rel)
+            os.makedirs(dst_root, exist_ok=True)
+            for name in files:
+                try:
+                    shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
+                except PermissionError:
+                    pass  # in use by another process; bundled copy is identical
     return dst
 
 
