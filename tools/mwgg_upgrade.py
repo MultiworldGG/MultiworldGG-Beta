@@ -18,6 +18,7 @@ so a failed run blocks the consumers from starting against a broken venv.
 import logging
 import os
 import sys
+from pathlib import Path
 
 # This service is the sole writer of the venv, so installs must run here no
 # matter what the image/runtime env sets for the consumer services.
@@ -27,6 +28,11 @@ os.environ.pop("SKIP_REQUIREMENTS_UPDATE", None)
 # Configure logging before importing ModuleUpdate, which otherwise forces DEBUG.
 logging.basicConfig(format="[%(asctime)s] %(message)s", level=logging.INFO, stream=sys.stdout)
 logger = logging.getLogger("mwgg_upgrade")
+
+# Run from a subdir as `python tools/mwgg_upgrade.py`, so the repo root isn't on
+# sys.path; add it before importing repo-root modules (ModuleUpdate, BaseUtils).
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ModuleUpdate
 from BaseUtils import WORLDS_EXIST

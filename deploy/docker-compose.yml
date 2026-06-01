@@ -28,6 +28,8 @@ services:
       # Cap glibc malloc arenas for this process and every Generator/MultiHoster
       # child it spawns (children inherit env), curbing RSS growth/fragmentation.
       - MALLOC_ARENA_MAX=2
+      # Pure consumer of the venv: never installs, just reads.
+      - SKIP_ALL_INSTALLS=1
     volumes:
       # Mount application volume
       - app_volume:/app
@@ -38,10 +40,6 @@ services:
 
       # Worlds venv — read-only; mwgg_upgrader is the sole writer.
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
-
-    # Pure consumer of the venv: never installs, just reads.
-    environment:
-      - SKIP_ALL_INSTALLS=1
 
     # Don't host until the worlds venv is fully populated.
     depends_on:
@@ -109,6 +107,7 @@ services:
     # Registry publishes only a floating `latest` (linux/amd64); no version tags.
     image: ghcr.io/notai-tech/nudenet:latest
     restart: unless-stopped
+    environment:
       # Cap glibc malloc arenas (gthread workers spawn several). Without this,
       # freed memory is retained per-arena and RSS climbs/fragments; 2 arenas
       # keeps the web worker returning memory to the OS.
