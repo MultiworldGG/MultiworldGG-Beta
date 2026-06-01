@@ -8,8 +8,8 @@ MultiworldGG's build pipeline produces three things:
 2. **Per-platform distributables** (Windows installer, Linux AppImage, macOS .app) on each tagged
    release.
 3. **Two docker images** — the webhost (`ghcr.io/<owner>/<repo>`) and the GitHub-bot service
-   (`ghcr.io/<owner>/mwgg-github-bot`) — on each push to `main` (as `:nightly`) and on version tags
-   (as `:latest` + semver). See "Docker images" below.
+   (`ghcr.io/<owner>/mwgg-github-bot`) — `:dev` on every `docker.yml` build and `:latest` + semver
+   on version tags. See "Docker images" below.
 
 Per-game worlds **are not built here**. Each game's upstream repo publishes itself via
 `MultiworldGG/gen-pymod-release`, which builds a `.whl` and uploads it as an asset on the
@@ -94,7 +94,7 @@ fetches these URLs into `mwgg_venv` at first run.
 | `ghcr.io/<owner>/<repo>` | `./Dockerfile` | `deploy/docker-compose.yml` services `multiworld` + `web` (Flask app via gunicorn, generator/server processes) |
 | `ghcr.io/<owner>/mwgg-github-bot` | `./GitHubLib/Dockerfile` | `deploy/docker-compose.yml` service `mwgg-github-bot` (Probot/Oliver+Karen) |
 
-**Tag scheme** (both images): `:nightly` on every push to `main`; `{major}.{minor}.{patch}`,
+**Tag scheme** (both images): `:dev` on every `docker.yml` build; `{major}.{minor}.{patch}`,
 `{major}.{minor}`, and `:latest` on each `v?.?.?` tag.
 
 **Operator workflow:** `docker compose pull && docker compose up -d` to deploy the published images.
@@ -105,8 +105,8 @@ The image refs in `docker-compose.yml` are env-overridable (`MULTIWORLD_IMAGE`,
 ## Branch model
 
 - **Development branch** — current focus of CI.
-- **`main`** — release target; tags here trigger `release.yml`. `docker.yml` also fires on every
-  push to `main` (publishing `:nightly`) and on version tags (publishing `:latest` + semver).
+- **`main`** — release target; tags here trigger `release.yml`. `docker.yml` publishes `:dev` on
+  every build and `:latest` + semver on version tags.
 - Long-running feature branches OK; CI runs on PR to dev branch.
 
 ## GitHub bot service
@@ -130,7 +130,8 @@ gives the architectural overview.
   CODEOWNERS gets a line appended for new worlds.
 - **Image build.** `docker.yml` jobs `prepare-bot` → `build-bot` (matrix amd64 + arm64) →
   `manifest-bot` push to `ghcr.io/<owner>/mwgg-github-bot`. Multi-arch manifest stitched in
-  `manifest-bot`. Triggers: push to `main` (`:nightly`), version tags (`:latest` + semver).
+  `manifest-bot`. Triggers: push to `main`, version tags, manual dispatch; `:dev` on every build,
+  `:latest` + semver on version tags.
 - **Deploy footprint.** `deploy/docker-compose.yml` service `mwgg-github-bot` exposes only loopback
   `127.0.0.1:3000`; host-side nginx (`deploy/example_github-bot_nginx.conf`) terminates TLS and
   runs `deploy/github-bot-nginx-njs/hmac.js` to validate `X-Hub-Signature-256` at the edge before
