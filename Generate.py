@@ -64,7 +64,7 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument('--outputpath', default=settings.general_options.output_path,
                         help="Path to output folder. Absolute or relative to cwd.")  # absolute or relative to cwd
     parser.add_argument('--outputname', help="Name for the output files.")
-    parser.add_argument('--allow_quantity', action="store_true", default=defaults.allow_quantity,
+    parser.add_argument('--allow-quantity', action="store_true", default=defaults.allow_quantity,
                         help='Allows the use of the quantity option in yamls. Default is the set value in the host.yaml.')
     parser.add_argument('--race', action='store_true', default=defaults.race)
     parser.add_argument('--meta-file-path', default=defaults.meta_file_path)
@@ -161,7 +161,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     player_id: int = 1
     player_files: dict[int, str] = {}
     player_errors: list[str] = []
-    allow_quantity = args.allow_quantity
+    allow_quantity: bool = args.allow_quantity or False
     for file in os.scandir(args.player_files_path):
         fname = file.name
         if file.is_file() and not fname.startswith(".") and not fname.lower().endswith(".ini") and \
