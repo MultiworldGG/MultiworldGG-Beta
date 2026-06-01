@@ -518,15 +518,13 @@ body {
    Material Design Icons — shared icon font for the redesign
    ===========================================================
    The font is the FA-compatible MDI webfont shipped at
-   data/fonts/MaterialDesignIcons-Webfont.otf and mirrored into
-   WebHostLib/static/static/fonts/ for the webhost. To add a new icon
-   look up its codepoint at https://pictogrammers.com/library/mdi/
-   (or via kivymd.icon_definitions.md_icons) and add one line below.
+   data/fonts/MaterialDesignIcons-Webfont.ttf and mirrored into
+   WebHostLib/static/static/fonts/ for the webhost
    =========================================================== */
 
 @font-face {
     font-family: "MDIcons";
-    src: url('../../static/fonts/MaterialDesignIcons-Webfont.otf') format('opentype');
+    src: url('../../static/fonts/MaterialDesignIcons-Webfont.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: block;
