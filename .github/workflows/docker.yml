@@ -52,7 +52,7 @@ jobs:
             type=ref,event=branch,enable={{is_not_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=nightly,enable={{is_default_branch}}
+            type=raw,value=dev
 
       - name: Compute final tags
         id: final-tags
@@ -161,7 +161,7 @@ jobs:
   prepare-bot:
     runs-on: ubuntu-latest
     outputs:
-      tags: ${{ steps.meta.outputs.tags }}
+      tags: ${{ steps.final-tags.outputs.tags }}
       labels: ${{ steps.meta.outputs.labels }}
     steps:
       - name: Checkout repository
@@ -187,7 +187,28 @@ jobs:
             type=ref,event=branch,enable={{is_not_default_branch}}
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=nightly,enable={{is_default_branch}}
+            type=raw,value=dev
+
+      - name: Compute final tags
+        id: final-tags
+        run: |
+          readarray -t tags <<< "${{ steps.meta.outputs.tags }}"
+
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            tag="${{ github.ref_name }}"
+            if [[ "$tag" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              full_latest="${{ env.REGISTRY }}/${{ steps.image-bot.outputs.name }}:latest"
+              # Check if latest is already in tags to avoid duplicates
+              if ! printf '%s\n' "${tags[@]}" | grep -q "^$full_latest$"; then
+                tags+=("$full_latest")
+              fi
+            fi
+          fi
+
+          # Set multiline output
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          printf '%s\n' "${tags[@]}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   build-bot:
     needs: prepare-bot
