@@ -244,24 +244,15 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
 
 
 def venv_is_healthy(venv_path: Path) -> bool:
-    """True if the venv at venv_path is still usable
-    TODO: rewrite this, it's overengineered."""
-    cfg = venv_path / "pyvenv.cfg"
-    if not cfg.exists():
-        return False
-    home_dir: Optional[Path] = None
-    for line in cfg.read_text().splitlines():
-        if line.startswith("home"):
-            _, _, val = line.partition("=")
-            home_dir = Path(val.strip())
-            break
-    # If pyvenv.cfg's `home = ` points at a directory that no longer exists (e.g. user
-    # uninstalled the Python that originally created the venv), the venv is dead.
-    if home_dir is None or not home_dir.exists():
-        return False
+    """True if the venv's interpreter actually runs.
+
+    No `.exists()` pre-probes: stat()-ing the venv's `home =` (a uv-managed
+    python) raises OSError on untraversable mount points (WinError 448) and
+    tells us nothing that running the interpreter doesn't. We just invoke it —
+    a missing exe, a dead base python, an untraversable path, or a timeout all
+    surface as a failure, which means "unhealthy" and the caller recreates.
+    """
     venv_python = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
-    if not venv_python.exists():
-        return False
     try:
         return subprocess.run([str(venv_python), "--version"], capture_output=True, timeout=10).returncode == 0
     except (subprocess.TimeoutExpired, OSError):
@@ -279,19 +270,26 @@ if use_worlds_venv():
     venv_path = install_path()
     venv_ready = True
     if not venv_is_healthy(venv_path):
-        venv_path.mkdir(parents=True, exist_ok=True)
-        if any(venv_path.iterdir()):
-            logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
-        else:
-            logger.info(f"Creating venv at {venv_path} via uv.")
-        # uv reuses an existing system Python 3.13 if one is present; otherwise it
-        # downloads python-build-standalone.
-        venv_result = _uv_run(
-            ["venv", str(venv_path), "--allow-existing", "--python", "3.13"],
-            timeout=600,
-        )
-        if venv_result.returncode != 0:
+        # Any failure here (uv missing/timeout, unwritable dir, untraversable
+        # mount point) must degrade to "install on demand later", never crash
+        # the import — this runs at module load for every consumer.
+        try:
+            venv_path.mkdir(parents=True, exist_ok=True)
+            if any(venv_path.iterdir()):
+                logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
+            else:
+                logger.info(f"Creating venv at {venv_path} via uv.")
+            # uv reuses an existing system Python 3.13 if one is present; otherwise it
+            # downloads python-build-standalone.
+            venv_result = _uv_run(
+                ["venv", str(venv_path), "--allow-existing", "--python", "3.13"],
+                timeout=600,
+            )
+            venv_ready = venv_result.returncode == 0
+        except Exception as e:
+            logger.debug(f"Worlds venv setup failed: {e!r}")
             venv_ready = False
+        if not venv_ready:
             logger.warning(
                 "Could not create the worlds venv. Worlds will be installed on demand "
                 "the next time uv is available."

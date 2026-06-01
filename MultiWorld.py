@@ -198,8 +198,21 @@ if __name__ == "__main__":
         args = parser.parse_args(sys.argv[1:])
 
         if args.update_modules:
-            import ModuleUpdate
-            ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+            # Inno's predownload step. Worlds also install on demand at first
+            # launch, so any failure here is non-fatal: show a friendly note and
+            # exit 0 rather than letting a traceback escape to the installer.
+            try:
+                import ModuleUpdate
+                ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+            except Exception:
+                import traceback, tempfile, os
+                try:
+                    with open(os.path.join(tempfile.gettempdir(), "mwgg_predownload_error.log"),
+                              "w", encoding="utf-8") as f:
+                        traceback.print_exc(file=f)
+                except OSError:
+                    pass
+                print("Unable to predownload packages, please start the MultiworldGG Client from your Start Menu")
             sys.exit(0)
     else:
         args = parser.parse_args([])
