@@ -19,7 +19,7 @@ from typing import Any
 # root logger to stdout — because the GUI captures a single JSON object from
 # stdout, so every other byte of output must be diverted to stderr. The real
 # stdout is preserved in _JSON_OUT for the final emit.
-_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv
+_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv or "--yaml_options" in sys.argv
 _JSON_OUT = sys.stdout
 if _YAML_OPTIONS_MODE:
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
@@ -46,12 +46,27 @@ from BaseClasses import seeddigits, get_seed, PlandoOptions
 from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
 from mwgg_igdb import GameIndex
 
+class _HyphenUnderscoreArgumentParser(argparse.ArgumentParser):
+    """Accepts both the hyphen and underscore form of any multi-word long option,
+    so e.g. --player-files-path and --player_files_path both parse. The hyphen form
+    stays canonical (first option string) for help text and dest derivation."""
+
+    def add_argument(self, *names: str, **kwargs):
+        aliased = list(names)
+        for name in names:
+            if name.startswith("--") and "-" in name[2:]:
+                underscored = "--" + name[2:].replace("-", "_")
+                if underscored not in aliased:
+                    aliased.append(underscored)
+        return super().add_argument(*aliased, **kwargs)
+
+
 def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     from settings import get_settings
     settings = get_settings()
     defaults = settings.generator
 
-    parser = argparse.ArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
+    parser = _HyphenUnderscoreArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
     parser.add_argument('--weights-file-path', default=defaults.weights_file_path,
                         help='Path to the weights file to use for rolling game options, urls are also valid')
     parser.add_argument('--sameoptions', help='Rolls options per weights file rather than per player',
