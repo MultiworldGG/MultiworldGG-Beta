@@ -102,17 +102,6 @@ services:
       # keeps the web worker returning memory to the OS.
       - MALLOC_ARENA_MAX=2
 
-  web-warmup:
-    image: alpine/curl:latest
-    depends_on:
-      web:
-        condition: service_started
-    restart: "no"
-    network_mode: host
-    command: >-
-      sh -c "until curl -sf http://localhost:8000/datapackage > /dev/null; do
-        sleep 2; done; echo 'web warmup complete'"
-
   nginx:
     image: nginx:stable-alpine
     volumes:
