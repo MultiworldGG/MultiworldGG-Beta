@@ -67,7 +67,34 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker"] 
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker"]
+
+def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
+    """Flatten raw YAML ``game`` values into candidate game-name strings.
+
+    A ``game`` entry can be a plain string, a list of names, or a
+    ``{name: weight}`` weighted mapping. The actual game is chosen later in
+    Generate.roll_settings via get_choice(), so every candidate world must be
+    queued here — the pick isn't known yet. Mirror get_choice's weight
+    handling: a weighted name is a candidate only when its weight is positive
+    (non-positive weights can never be selected), while list/string forms have
+    no weights and contribute every name. Order-preserving and deduplicated.
+    """
+    expanded: typing.List[str] = []
+    for entry in game_names:
+        if isinstance(entry, dict):
+            for name, weight in entry.items():
+                try:
+                    selectable = int(weight) > 0
+                except (TypeError, ValueError):
+                    selectable = True  # unparseable weight: keep the candidate
+                if selectable:
+                    expanded.append(name)
+        elif isinstance(entry, (list, tuple)):
+            expanded.extend(_expand_game_choices(entry))
+        else:
+            expanded.append(entry)
+    return list(dict.fromkeys(expanded))
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
@@ -79,6 +106,9 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
     from BaseUtils import get_apworld_manifest
+    # Weighted/list `game:` specs arrive as dicts/lists; expand to the candidate
+    # game-name strings so every path below has hashable names to key on.
+    game_names = _expand_game_choices(game_names)
     _worlds_to_install = {game: "" for game in game_names}
     _unknown_worlds = []
     custom_worlds_dir = Path(local_path("custom_worlds"))
