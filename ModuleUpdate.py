@@ -6,6 +6,7 @@ import warnings
 import json
 import shutil
 import time
+import datetime
 import zipfile
 import re
 import shutil
@@ -25,7 +26,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, write_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, WORLDS_EXIST
+from BaseUtils import tuplize_version, Version, local_path, write_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -39,8 +40,6 @@ MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
-MWGG_IGDB_UPGRADE_INTERVAL_SECONDS = 86400  # once-daily throttle for upgrade pulls
-_worlds_updated_state = WORLDS_EXIST.NOT_INSTALLED
 
 def is_frozen() -> bool:
     return getattr(sys, 'frozen', False)
@@ -244,24 +243,15 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
 
 
 def venv_is_healthy(venv_path: Path) -> bool:
-    """True if the venv at venv_path is still usable
-    TODO: rewrite this, it's overengineered."""
-    cfg = venv_path / "pyvenv.cfg"
-    if not cfg.exists():
-        return False
-    home_dir: Optional[Path] = None
-    for line in cfg.read_text().splitlines():
-        if line.startswith("home"):
-            _, _, val = line.partition("=")
-            home_dir = Path(val.strip())
-            break
-    # If pyvenv.cfg's `home = ` points at a directory that no longer exists (e.g. user
-    # uninstalled the Python that originally created the venv), the venv is dead.
-    if home_dir is None or not home_dir.exists():
-        return False
+    """True if the venv's interpreter actually runs.
+
+    No `.exists()` pre-probes: stat()-ing the venv's `home =` (a uv-managed
+    python) raises OSError on untraversable mount points (WinError 448) and
+    tells us nothing that running the interpreter doesn't. We just invoke it —
+    a missing exe, a dead base python, an untraversable path, or a timeout all
+    surface as a failure, which means "unhealthy" and the caller recreates.
+    """
     venv_python = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
-    if not venv_python.exists():
-        return False
     try:
         return subprocess.run([str(venv_python), "--version"], capture_output=True, timeout=10).returncode == 0
     except (subprocess.TimeoutExpired, OSError):
@@ -279,19 +269,26 @@ if use_worlds_venv():
     venv_path = install_path()
     venv_ready = True
     if not venv_is_healthy(venv_path):
-        venv_path.mkdir(parents=True, exist_ok=True)
-        if any(venv_path.iterdir()):
-            logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
-        else:
-            logger.info(f"Creating venv at {venv_path} via uv.")
-        # uv reuses an existing system Python 3.13 if one is present; otherwise it
-        # downloads python-build-standalone.
-        venv_result = _uv_run(
-            ["venv", str(venv_path), "--allow-existing", "--python", "3.13"],
-            timeout=600,
-        )
-        if venv_result.returncode != 0:
+        # Any failure here (uv missing/timeout, unwritable dir, untraversable
+        # mount point) must degrade to "install on demand later", never crash
+        # the import — this runs at module load for every consumer.
+        try:
+            venv_path.mkdir(parents=True, exist_ok=True)
+            if any(venv_path.iterdir()):
+                logger.info(f"Repairing stale venv at {venv_path} via uv (site-packages preserved).")
+            else:
+                logger.info(f"Creating venv at {venv_path} via uv.")
+            # uv reuses an existing system Python 3.13 if one is present; otherwise it
+            # downloads python-build-standalone.
+            venv_result = _uv_run(
+                ["venv", str(venv_path), "--allow-existing", "--python", "3.13"],
+                timeout=600,
+            )
+            venv_ready = venv_result.returncode == 0
+        except Exception as e:
+            logger.debug(f"Worlds venv setup failed: {e!r}")
             venv_ready = False
+        if not venv_ready:
             logger.warning(
                 "Could not create the worlds venv. Worlds will be installed on demand "
                 "the next time uv is available."
@@ -403,44 +400,20 @@ def _parse_custom_pep508_requirement(line: str) -> str:
     return result
 
 
-def _igdb_stamp_path() -> Path:
-    return install_path().parent / ".mwgg_igdb_last_upgrade"
-
-
-def _record_worlds_state(state: object) -> WORLDS_EXIST:
-    global _worlds_updated_state
-    try:
-        _worlds_updated_state |= WORLDS_EXIST(int(state))
-    except (TypeError, ValueError):
-        pass
-    return _worlds_updated_state
-
-
-def _read_igdb_stamp() -> dict[str, object] | None:
-    try:
-        path = _igdb_stamp_path()
-        if not path.exists():
-            return None
-        igdb_stamp = json.loads(path.read_text())
-        if isinstance(igdb_stamp, dict):
-            _record_worlds_state(igdb_stamp.get("worlds_updated", WORLDS_EXIST.NOT_INSTALLED))
-            return igdb_stamp
-    except (OSError, TypeError, ValueError, RuntimeError):
-        pass
-    return None
-
 def _detect_installed_variant() -> Optional[str]:
     """Return the variant currently installed locally, or None if undetectable.
 
-    Only trusts the stamp when `mwgg_igdb` is actually importable — a stale stamp
-    left behind by an uninstall must not be treated as authoritative.
+    Reads the `__variant__` constant the Index build bakes into the generated
+    `mwgg_igdb` module. Absent (pre-`__variant__` build) or unimportable → None,
+    and callers fall back to DEFAULT_MWGG_IGDB_VARIANT.
     """
     if importlib.util.find_spec("mwgg_igdb") is None:
         return None
-    igdb_stamp = _read_igdb_stamp()
-    if not igdb_stamp:
+    try:
+        import mwgg_igdb
+    except ImportError:
         return None
-    variant = igdb_stamp.get("variant")
+    variant = getattr(mwgg_igdb, "__variant__", None)
     if isinstance(variant, str) and variant in _VARIANTS:
         return variant
     return None
@@ -462,18 +435,26 @@ def _resolve_variant() -> str:
     return variant
 
 
-def _igdb_stamp_is_recent(igdb_stamp: dict[str, object]) -> bool:
-    try:
-        last = float(igdb_stamp["last_upgrade"])
-        variant = str(igdb_stamp["variant"])
-    except (KeyError, TypeError, ValueError):
-        return False
-    return variant == _resolve_variant() and last >= time.time() - MWGG_IGDB_UPGRADE_INTERVAL_SECONDS
+def _igdb_install_date() -> Optional[datetime.date]:
+    """Local date `mwgg_igdb` was last written to disk, or None if not installed.
+
+    The module file's mtime is the package's own install datestamp — set fresh
+    every time uv (re)installs it — so no separate stamp file is needed.
+    """
+    spec = importlib.util.find_spec("mwgg_igdb")
+    if spec is None or not spec.origin or not os.path.exists(spec.origin):
+        return None
+    return datetime.date.fromtimestamp(os.path.getmtime(spec.origin))
 
 
 def _igdb_upgraded_recently() -> bool:
-    igdb_stamp = _read_igdb_stamp()
-    return bool(igdb_stamp and _igdb_stamp_is_recent(igdb_stamp))
+    """True when an upgrade pull would be a no-op: `mwgg_igdb` was installed
+    today. Variant switches do NOT rely on this throttle — they go through the
+    callers that pass force=True (the `mwgg_igdb_<variant>` token path in
+    install_worlds and the mwgg_upgrader), which bypass it entirely.
+    """
+    install_date = _igdb_install_date()
+    return install_date is not None and install_date == datetime.date.today()
 
 
 def _venv_has_worlds() -> bool:
@@ -482,45 +463,6 @@ def _venv_has_worlds() -> bool:
         return worlds_dir.exists() and any(worlds_dir.iterdir())
     except OSError:
         return False
-
-
-def _stored_worlds_state() -> WORLDS_EXIST:
-    igdb_stamp = _read_igdb_stamp()
-    if not igdb_stamp or not _igdb_stamp_is_recent(igdb_stamp):
-        return WORLDS_EXIST.NOT_INSTALLED
-    return _worlds_updated_state & WORLDS_EXIST.UPDATED
-
-
-def _write_igdb_stamp(last_upgrade: float | None, worlds_updated: WORLDS_EXIST) -> None:
-    try:
-        path = _igdb_stamp_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        igdb_stamp = json.dumps(
-            {
-                "last_upgrade": time.time() if last_upgrade is None else last_upgrade,
-                "worlds_updated": int(worlds_updated),
-                "variant": MWGG_IGDB_VARIANT,
-            }
-        )
-        path.write_text(igdb_stamp)
-    except (OSError, RuntimeError) as e:
-        logger.debug(f"Could not write mwgg_igdb upgrade stamp: {e}")
-
-
-def record_worlds_update() -> WORLDS_EXIST:
-    igdb_stamp = _read_igdb_stamp()
-    try:
-        last_upgrade = float(igdb_stamp["last_upgrade"]) if igdb_stamp else None
-    except (KeyError, TypeError, ValueError):
-        last_upgrade = None
-    state = _record_worlds_state(WORLDS_EXIST.HAS_WORLDS if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
-    _write_igdb_stamp(last_upgrade, state)
-    return state
-
-
-def _record_igdb_upgrade() -> None:
-    state = _record_worlds_state(WORLDS_EXIST.UPDATED if _venv_has_worlds() else WORLDS_EXIST.NOT_INSTALLED)
-    _write_igdb_stamp(time.time(), state)
 
 
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
@@ -544,13 +486,14 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
         return True
     _resolve_variant()
     if upgrade and not force and _igdb_upgraded_recently():
-        logger.debug(
-            f"mwgg_igdb upgrade attempted within {MWGG_IGDB_UPGRADE_INTERVAL_SECONDS}s; skipping"
-        )
+        logger.debug("mwgg_igdb already installed today; skipping upgrade pull")
         return True
     args = _uv_pip("install", MWGG_IGDB_GIT_URL, "--no-cache")
     if upgrade:
-        args.append("--upgrade")
+        # --reinstall rewrites the tiny package even when the branch HEAD is
+        # unchanged, so the module's install date (its mtime) advances to today
+        # and the once-daily throttle above stays satisfied until tomorrow.
+        args.append("--reinstall")
     logger.info(f"Installing mwgg_igdb ({MWGG_IGDB_VARIANT}) from {MWGG_IGDB_BRANCH}")
     try:
         result = _uv_run(args, timeout=300)
@@ -560,8 +503,6 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     if result.returncode != 0:
         logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
         return False
-    if upgrade:
-        _record_igdb_upgrade()
     return True
 
 
@@ -650,12 +591,6 @@ def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> b
 
 
 def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, object]]) -> list[str]:
-    state = _stored_worlds_state()
-    if state == WORLDS_EXIST.INSTALLED:
-        logger.debug("Selected worlds were already checked against the current mwgg_igdb stamp.")
-    elif state == WORLDS_EXIST.UPDATED:
-        logger.debug("mwgg_igdb was refreshed after worlds were installed; checking for missing worlds.")
-
     return [world for world in worlds if _world_requires_install(_world_slug(world), games)]
 
 
@@ -889,7 +824,6 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         if skipped_worlds:
             logger.debug(f"Skipping already-installed worlds: {skipped_worlds}")
         if not worlds_to_install:
-            record_worlds_update()
             _prune_stale_apworld_extractions()
             invalidate_caches()
             return apworlds
@@ -953,7 +887,6 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
     _prune_stale_apworld_extractions()
     invalidate_caches()
-    record_worlds_update()
     return apworlds
 
 def update_world_from_package() -> None:
@@ -1202,6 +1135,8 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
     Returns:
         None
     """
+    if _skip_all_installs():
+        return
     with _install_lock():
         _update_locked(yes=yes, force=force, worlds=worlds)
 

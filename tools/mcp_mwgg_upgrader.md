@@ -4,15 +4,15 @@ A small, user-owned [MCP](https://modelcontextprotocol.io) server (stdio) that l
 an operator trigger and inspect the MultiworldGG webhost's **worlds venv** refresh
 from an MCP client (e.g. Claude) instead of SSHing in.
 
-It does not import the upgrader — it only shells out to `docker compose` and reads
-the install stamp, so it can run anywhere the deploy lives.
+It does not import the upgrader — it only shells out to `docker compose` and calls
+ModuleUpdate helpers, so it can run anywhere the deploy lives.
 
 ## Tools
 
 | Tool | What it does |
 |---|---|
 | `refresh_worlds_venv(use_up=False, timeout=None, tail_lines=80)` | Runs the `mwgg_upgrader` service — the sole writer of the shared venv. Default `docker compose run --rm mwgg_upgrader`; pass `use_up=true` for `up --no-deps`. Returns `ok`, `returncode`, `duration_seconds`, `timed_out`, `lines_total`, and a `log_tail`. |
-| `worlds_venv_status()` | Reads `/var/lib/mwgg/.mwgg_igdb_last_upgrade` and decodes `worlds_updated` (0 = not installed · 1 = worlds · 2 = index · 3 = fully installed), plus `variant`, `last_upgrade_iso` and `age_seconds`. |
+| `worlds_venv_status()` | Reports the current venv state from runtime: `mwgg_igdb_version`, `igdb_install_date`, `variant`, `has_worlds`, and `worlds_state` ("installed" or "not installed"). No stamp file is read. |
 
 A cold refresh fetches ~200 wheels and can take many minutes; the default timeout
 is **1800s** and only a bounded log tail is returned.
@@ -32,7 +32,6 @@ CLI flag overrides env var overrides default. Defaults match `deploy/docker-comp
 |---|---|---|
 | `--compose-file` | `MWGG_COMPOSE_FILE` | `<repo>/deploy/docker-compose.yml` |
 | `--deploy-dir` | `MWGG_DEPLOY_DIR` | (alternative to `--compose-file`) |
-| `--stamp` | `MWGG_STAMP_PATH` | `/var/lib/mwgg/.mwgg_igdb_last_upgrade` |
 | `--service` | `MWGG_UPGRADER_SERVICE` | `mwgg_upgrader` |
 | `--timeout` | `MWGG_UPGRADE_TIMEOUT` | `1800` |
 | `--docker-compose` | `MWGG_DOCKER_COMPOSE` | `docker compose` |

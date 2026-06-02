@@ -100,7 +100,7 @@ Expected log signature for a healthy cold start:
 
 - `mwgg_upgrader-1`: `Installing mwgg_igdb (ao)`, then ~200
   `Installing world: worlds.<slug>` lines as the venv is populated, then
-  `mwgg_venv ready (worlds_updated=3)` and the container exits 0.
+  `mwgg_venv ready` and the container exits 0.
 - `multiworld-1` / `web-1`: held until `mwgg_upgrader` exits successfully
   (`service_completed_successfully`). Neither installs anything
   (`SKIP_ALL_INSTALLS=1`) — they import worlds from the read-only venv.

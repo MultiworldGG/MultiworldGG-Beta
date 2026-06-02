@@ -2,13 +2,13 @@
 {% from 'header/breadcrumb.html' import breadcrumb %}
 
 {% block head %}
-    <title>Your MultiworldGG</title>
+    <title>Games Hub</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
 {% endblock %}
 
 {% block body %}
     {% include 'header/baseHeader.html' %}
-    {{ breadcrumb([('Your MultiworldGG', none)]) }}
+    {{ breadcrumb([('Games Hub', none)]) }}
 
     <div class="mw-me-empty">
         <div class="mw-empty-hero">

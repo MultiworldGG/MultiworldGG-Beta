@@ -1106,7 +1106,10 @@ def lobby_upload_yaml(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
+    old_state = lobby.state
     _expire_lobby_if_needed(lobby)
+    if lobby.state != old_state:
+        commit()
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not accepting uploads"}), 400
 

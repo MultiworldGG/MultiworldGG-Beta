@@ -82,9 +82,23 @@ def _ensure_writable_kivy_data(src: str) -> str:
         and os.path.getmtime(src_marker) > os.path.getmtime(dst_marker)
     )
     if needs_copy:
-        if os.path.exists(dst):
-            shutil.rmtree(dst)
-        shutil.copytree(src, dst)
+        # Overlay-copy instead of rmtree+copytree. On Windows a font in `dst`
+        # may be locked by another MWGG process or the Windows Font Cache
+        # service, and rmtree/overwrite of an open file raises PermissionError
+        # [WinError 32]. POSIX read-only mounts (AppImage/.app) tolerate
+        # unlinking open files; Windows does not. Skipping a locked file is
+        # safe — bundled fonts are byte-identical to the in-use copy; only
+        # defaulttheme-0.png actually changes.
+        os.makedirs(dst, exist_ok=True)
+        for root, _dirs, files in os.walk(src):
+            rel = os.path.relpath(root, src)
+            dst_root = dst if rel == "." else os.path.join(dst, rel)
+            os.makedirs(dst_root, exist_ok=True)
+            for name in files:
+                try:
+                    shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
+                except PermissionError:
+                    pass  # in use by another process; bundled copy is identical
     return dst
 
 
@@ -198,8 +212,21 @@ if __name__ == "__main__":
         args = parser.parse_args(sys.argv[1:])
 
         if args.update_modules:
-            import ModuleUpdate
-            ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+            # Inno's predownload step. Worlds also install on demand at first
+            # launch, so any failure here is non-fatal: show a friendly note and
+            # exit 0 rather than letting a traceback escape to the installer.
+            try:
+                import ModuleUpdate
+                ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
+            except Exception:
+                import traceback, tempfile, os
+                try:
+                    with open(os.path.join(tempfile.gettempdir(), "mwgg_predownload_error.log"),
+                              "w", encoding="utf-8") as f:
+                        traceback.print_exc(file=f)
+                except OSError:
+                    pass
+                print("Unable to predownload packages, please start the MultiworldGG Client from your Start Menu")
             sys.exit(0)
     else:
         args = parser.parse_args([])

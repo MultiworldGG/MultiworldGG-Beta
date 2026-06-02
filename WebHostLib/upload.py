@@ -189,9 +189,10 @@ def uploads():
                         except Exception as e:
                             flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})")
                         else:
-                            if res is str:
+                            if isinstance(res, str):
                                 return res
                             elif res:
+                                commit()
                                 return redirect(url_for("view_seed", seed=res.id))
                 else:
                     uploaded_file.seek(0)  # offset from is_zipfile check
@@ -206,6 +207,7 @@ def uploads():
                         flush()  # place into DB and generate IDs
                         for slot in slots:
                             slot.seed_id = seed.id
+                        commit()
                         return redirect(url_for("view_seed", seed=seed.id))
             else:
                 flash("Not recognized file format. Awaiting a .archipelago/.mwgg file or .zip containing one.")

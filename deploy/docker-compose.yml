@@ -49,17 +49,6 @@ services:
     # Expose on host network for access to dynamically mapped ports
     network_mode: host
 
-    # The upgrader guarantees worlds_updated == 3 before this starts; this is
-    # just a liveness gate that reads the stamp the upgrader wrote.
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - jq -e '(.worlds_updated // 0 | tonumber) == 3' /root/.local/share/MultiworldGG/.mwgg_igdb_last_upgrade
-      interval: 10s
-      timeout: 3s
-      retries: 3
-      # Generous start window in the event we're downloading *everything*
-      start_period: 600s
   web:
     # Same image as multiworld service — both pull from GHCR by default, both
     # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
