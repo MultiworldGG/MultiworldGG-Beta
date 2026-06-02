@@ -13,7 +13,8 @@ ModuleUpdate.requirements_files.add(Path(local_path("WebHostLib", "requirements.
 # mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
 INDEX_VARIANT = "ao"
 ModuleUpdate.set_variant(INDEX_VARIANT)
-ModuleUpdate.update()
+# No install here: the mwgg_upgrader service is the sole writer of the shared
+# worlds venv. The web/multiworld containers mount it read-only and only read.
 
 # in case app gets imported by something like gunicorn
 import Utils
@@ -205,8 +206,6 @@ if __name__ == "__main__":
     app = get_app()
 
     from worlds import AutoWorldRegister, network_data_package
-    # Update to only valid WebHost worlds
-    ModuleUpdate.record_worlds_update()
 
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}

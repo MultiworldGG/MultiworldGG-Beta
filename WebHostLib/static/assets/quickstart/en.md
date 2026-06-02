@@ -5,25 +5,10 @@ about ten minutes. If you get stuck at any point, the [Learn hub](/learn/en) has
 deeper guides, and the community on [Discord](https://discord.multiworld.gg) is
 happy to help.
 
-## 1. Download and install MultiworldGG
-
-You only need to install the software once.
-
-1. Open the [Downloads page](/downloads) and grab the installer for your operating
-   system. You can also download the latest build directly from the
-   [GitHub releases page](https://github.com/MultiworldGG/MultiworldGG/releases/latest).
-2. Run the installer and follow the prompts.
-3. Launch **MultiworldGG** when it finishes. The launcher is your home base for
-   patching games, opening clients, and generating locally.
-
-> Just want to watch or join someone else's game? You can do a lot from this
-> website without installing anything — but to actually play, you'll want the
-> software above.
-
-## 2. Choose a game
+## 1. Choose a game
 
 MultiworldGG randomizes dozens of games and links them into a single shared
-multiworld.
+multiworld.  Many of them can be played without downloading the software!
 
 1. Browse the [supported games list](/games) and pick something you own and want
    to play.
@@ -32,14 +17,30 @@ multiworld.
    your difficulty.
 3. Save the YAML somewhere you'll find it again. You'll need it in the next step.
 
-## 3. Read the game's setup guide
+## 2. Read the game's setup guide
 
-Every game has its own setup steps — which ROM or files you need, which client to
-use, and how to connect.
+Every game has its own setup steps — which legally obtained copy of the game or
+additional software you need, which client to use, and how to connect.
 
 - Open the [Setup guides](/learn/en/tutorials) and find your game.
 - Follow it once end to end. Most guides take only a few minutes and save you a
   lot of confusion later.
+- It may mention needing the MultiworldGG Client, which is the next step.  You
+  may want to download the MultiWorldGG Client anyway - it has access to hints
+  and a console window so you can follow along, even if your game has its own
+  method of connecting.
+
+## 3. Download and install MultiworldGG
+
+1. Open the [Downloads page](/downloads) and grab the installer for your operating
+   system. You can also download the latest build directly from the
+   [GitHub releases page](https://github.com/MultiworldGG/MultiworldGG-Beta/releases/latest).
+2. Run the installer and follow the prompts.
+3. Launch **MultiworldGG** when it finishes. This is where you can connect to the server,
+   patch, or generate & host if you want to do that, too!
+
+> Just want to watch or join someone else's game? You can do a lot from this
+> website without installing anything, but the client sure is convenient!
 
 ## 4. Start playing
 
@@ -47,13 +48,16 @@ Once you have the software installed and a YAML ready, you have three ways to ge
 into a game from this site:
 
 - **[Browse lobbies](/play/lobbies)** — join a group that's already forming.
-- **[Create a lobby](/play)** — start your own and invite friends; it generates a
+- **[Create a lobby](/play/create)** — start your own and invite friends; it generates a
   game once everyone has uploaded their YAML.
 - **[Generate a game](/play/new)** — skip the lobby and generate directly if you
   already have everyone's YAML files.
 
-When a game is generated you'll get a patch file for each player. Patch it with the
-launcher, open the matching client, and connect to the room.
+When a game is generated many players will get patch files, some will get nothing, and 
+some will receive links to web-based games. If you're hosting on the website, you'll also
+get trackers to follow what's left in the game, and who needs what to proceed. Your game 
+guide will tell you the best way to proceed from here, but you can always join via the
+client and chat.
 
 ## Where to go next
 

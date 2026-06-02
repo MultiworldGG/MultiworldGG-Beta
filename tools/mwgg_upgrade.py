@@ -35,7 +35,6 @@ if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import ModuleUpdate
-from BaseUtils import WORLDS_EXIST
 
 VARIANT = "ao"
 
@@ -64,12 +63,11 @@ def main() -> int:
     # leaving their deps unchecked.)
     ModuleUpdate.install_worlds(slugs, with_deps=True)
 
-    state = ModuleUpdate.record_worlds_update()
-    if not state & WORLDS_EXIST.HAS_WORLDS:
+    if not ModuleUpdate._venv_has_worlds():
         logger.error("Worlds venv is empty after install; aborting")
         return 1
 
-    logger.info("mwgg_venv ready (worlds_updated=%d)", int(state))
+    logger.info("mwgg_venv ready")
     return 0
 
 
