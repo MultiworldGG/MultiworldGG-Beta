@@ -9,7 +9,7 @@
 {% block body %}
     {% include 'header/baseHeader.html' %}
     {{ breadcrumb([
-        ('Your MultiworldGG', url_for('me')),
+        ('Games Hub', url_for('me')),
         (kind|capitalize + 's', url_for('my_rooms') if kind == 'room' else url_for('my_lobbies')),
         ('Share access — ' ~ display_name, none),
     ]) }}

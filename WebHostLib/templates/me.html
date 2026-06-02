@@ -2,20 +2,20 @@
 {% from 'header/breadcrumb.html' import breadcrumb %}
 
 {% block head %}
-    <title>Your MultiworldGG</title>
+    <title>Games Hub</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
 {% endblock %}
 
 {% block body %}
     {% include 'header/baseHeader.html' %}
-    {{ breadcrumb([('Your MultiworldGG', none)]) }}
+    {{ breadcrumb([('Games Hub', none)]) }}
 
     <div class="mw-me-page">
 
         {# Page header with greeting + CTA #}
         <div class="mw-me-header">
             <div>
-                <h1>Your MultiworldGG</h1>
+                <h1>Games Hub</h1>
                 <p class="mw-me-subtitle">
                     <i class="mdi mdi-monitor"></i>
                     Saved on this browser
@@ -105,6 +105,5 @@
 
     </div>
 
-    {# Phase 8 will add the move-device modal; ignore missing keeps this safe today #}
     {% include 'partials/move_device_modal.html' ignore missing %}
 {% endblock %}
