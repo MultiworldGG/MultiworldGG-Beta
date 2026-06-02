@@ -19,7 +19,7 @@ from typing import Any
 # root logger to stdout — because the GUI captures a single JSON object from
 # stdout, so every other byte of output must be diverted to stderr. The real
 # stdout is preserved in _JSON_OUT for the final emit.
-_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv
+_YAML_OPTIONS_MODE = "--yaml-options" in sys.argv or "--yaml_options" in sys.argv
 _JSON_OUT = sys.stdout
 if _YAML_OPTIONS_MODE:
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
@@ -46,12 +46,27 @@ from BaseClasses import seeddigits, get_seed, PlandoOptions
 from Utils import parse_yamls, version_tuple, __version__, tuplize_version, set_game_names
 from mwgg_igdb import GameIndex
 
+class _HyphenUnderscoreArgumentParser(argparse.ArgumentParser):
+    """Accepts both the hyphen and underscore form of any multi-word long option,
+    so e.g. --player-files-path and --player_files_path both parse. The hyphen form
+    stays canonical (first option string) for help text and dest derivation."""
+
+    def add_argument(self, *names: str, **kwargs):
+        aliased = list(names)
+        for name in names:
+            if name.startswith("--") and "-" in name[2:]:
+                underscored = "--" + name[2:].replace("-", "_")
+                if underscored not in aliased:
+                    aliased.append(underscored)
+        return super().add_argument(*aliased, **kwargs)
+
+
 def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     from settings import get_settings
     settings = get_settings()
     defaults = settings.generator
 
-    parser = argparse.ArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
+    parser = _HyphenUnderscoreArgumentParser(description="CMD Generation Interface, defaults come from host.yaml.")
     parser.add_argument('--weights-file-path', default=defaults.weights_file_path,
                         help='Path to the weights file to use for rolling game options, urls are also valid')
     parser.add_argument('--sameoptions', help='Rolls options per weights file rather than per player',
@@ -113,6 +128,36 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
 
 def get_seed_name(random_source) -> str:
     return f"{random_source.randint(0, pow(10, seeddigits) - 1)}".zfill(seeddigits)
+
+
+def _installed_worlds_count() -> int:
+    """Number of pip-installed `worlds*` distributions, read from dist metadata only so it
+    never imports the `worlds` package (which would prematurely run its one-shot load loop).
+    A jump across set_game_names means a world was installed mid-run."""
+    import importlib.metadata
+    return sum(1 for dist in importlib.metadata.distributions()
+               if (dist.name or "").startswith("worlds"))
+
+
+def _reexec_for_clean_world_load() -> int:
+    """Re-run this generator in a fresh process and return its exit code.
+
+    set_game_names imports the `worlds` package (via find_spec) while probing for
+    worlds that aren't installed yet, so this process's one-shot world load loop runs
+    before the freshly-installed worlds are queued and can never load them. They are
+    on disk now, so a clean process loads them on its first `import worlds`. Stdio is
+    inherited so output keeps streaming to the caller; the MWGG_GENERATE_RELOADED env
+    guard prevents a reload loop. Frozen cx_Freeze argv[0] is the exe (== sys.executable),
+    so drop it; a script run keeps argv[0] (the .py path).
+    """
+    import subprocess
+    env = dict(os.environ)
+    env["MWGG_GENERATE_RELOADED"] = "1"
+    cmd = [sys.executable, *(sys.argv[1:] if ModuleUpdate.is_frozen() else sys.argv)]
+    logging.info("Worlds were installed mid-run; reloading in a fresh process to load them cleanly.")
+    for handler in logging.root.handlers:
+        handler.flush()
+    return subprocess.run(cmd, env=env).returncode
 
 
 def main(args=None) -> tuple[argparse.Namespace, int]:
@@ -235,7 +280,19 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
             logging.info(f"Adding custom module to game index: {game_module} -> {game_name}")
             GameIndex.add_game(game_module, {"game_name": game_name})
 
+    worlds_installed_before = _installed_worlds_count()
     set_game_names(games_to_load)
+    if (__name__ == "__main__" and not os.environ.get("MWGG_GENERATE_RELOADED")
+            and _installed_worlds_count() > worlds_installed_before):
+        # set_game_names pip-installed a world that wasn't present yet, but its find_spec
+        # probe imported `worlds` before the new world was queued, so this process's
+        # one-shot load loop missed it and roll_settings can't find it. It's installed
+        # now — hand off to a fresh process that loads it cleanly, silently retrying
+        # instead of erroring out. (Worlds already on disk never reach here, so dev runs
+        # and post-install retries proceed in-process unchanged.)
+        import atexit
+        atexit.unregister(input)  # this proxy process must not prompt "Press enter to close."
+        sys.exit(_reexec_for_clean_world_load())
     from worlds.AutoWorld import AutoWorldRegister
     """ Load worlds *after* setting the game names
     """

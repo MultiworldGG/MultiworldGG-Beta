@@ -9,7 +9,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import Generate
-import Main
+# NOTE: `import Main` is deferred into each test (after Generate.main()) on purpose.
+# Main imports the `worlds` package, which runs its one-shot world-load loop over
+# Utils._worlds_to_load. Generate.main() -> set_game_names() queues the player files'
+# worlds; importing Main before that runs the loop too early and those worlds never load.
 
 
 class TestGenerateMain(unittest.TestCase):
@@ -59,7 +62,9 @@ class TestGenerateMain(unittest.TestCase):
                     '--player_files_path', str(self.abs_input_dir),
                     '--outputpath', self.output_tempdir.name]
         print(f'Testing Generate.py {sys.argv} in {os.getcwd()}')
-        Main.main(*Generate.main())
+        erargs = Generate.main()
+        import Main  # deferred: see top-of-file note
+        Main.main(*erargs)
 
         self.assertOutput(self.output_tempdir.name)
 
@@ -68,7 +73,9 @@ class TestGenerateMain(unittest.TestCase):
                     '--player_files_path', str(self.rel_input_dir),
                     '--outputpath', self.output_tempdir.name]
         print(f'Testing Generate.py {sys.argv} in {os.getcwd()}')
-        Main.main(*Generate.main())
+        erargs = Generate.main()
+        import Main  # deferred: see top-of-file note
+        Main.main(*erargs)
 
         self.assertOutput(self.output_tempdir.name)
 
@@ -87,7 +94,9 @@ class TestGenerateMain(unittest.TestCase):
             sys.argv = [sys.argv[0], '--seed', '0',
                         '--outputpath', self.output_tempdir.name]
             print(f'Testing Generate.py {sys.argv} in {os.getcwd()}, player_files_path={self.yaml_input_dir}')
-            Main.main(*Generate.main())
+            erargs = Generate.main()
+            import Main  # deferred: see top-of-file note
+            Main.main(*erargs)
         finally:
             user_path.cached_path = user_path_backup
 
@@ -137,3 +146,19 @@ class TestGenerateWeights(TestGenerateMain):
                     result, getattr(namespace, option_name)[player].value,
                     "Generated results from weights file did not match expected value."
                 )
+
+
+class TestGenerateArgAliases(unittest.TestCase):
+    """Multi-word generator CLI flags accept both the hyphen and underscore form."""
+
+    def test_hyphen_and_underscore_parse_equally(self):
+        hyphen = Generate.mystery_argparse(
+            ['--player-files-path', 'pfp', '--weights-file-path', 'w', '--meta-file-path', 'm',
+             '--allow-quantity', '--skip-output', '--csv-output', '--skip-prog-balancing'])
+        underscore = Generate.mystery_argparse(
+            ['--player_files_path', 'pfp', '--weights_file_path', 'w', '--meta_file_path', 'm',
+             '--allow_quantity', '--skip_output', '--csv_output', '--skip_prog_balancing'])
+        self.assertEqual(vars(hyphen), vars(underscore))
+        self.assertEqual(underscore.player_files_path, 'pfp')
+        self.assertTrue(underscore.allow_quantity)
+        self.assertTrue(underscore.skip_output)
