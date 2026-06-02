@@ -19,27 +19,27 @@
 }
 
 @font-face {
-  font-family: Xenon Monaspace;
+  font-family: Xenon-Monaspace;
   src: url("../../static/static/fonts/MonaspaceXenonFrozen-Regular.ttf");
 }
 
 @font-face {
-  font-family: Argon Monaspace;
+  font-family: Argon-Monaspace;
   src: url("../../static/static/fonts/MonaspaceArgonFrozen-Regular.ttf");
 }
 
 @font-face {
-  font-family: Neon Monaspace;
+  font-family: Neon-Monaspace;
   src: url("../../static/static/fonts/MonaspaceNeonFrozen-Regular.ttf");
 }
 
 @font-face {
-  font-family: Radon Monaspace;
+  font-family: Radon-Monaspace;
   src: url("../../static/static/fonts/MonaspaceRadonFrozen-Regular.ttf");
 }
 
 @font-face {
-  font-family: Krypton Monaspace;
+  font-family: Krypton-Monaspace;
   src: url("../../static/static/fonts/MonaspaceKryptonFrozen-Regular.ttf");
 }
 

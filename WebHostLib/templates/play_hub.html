@@ -13,7 +13,11 @@
     <div class="mw-hub">
         <h1>Multiworld Play</h1>
         <div class="mw-hub-cta-wrap">
-            <a href="{{ url_for('quickstart', lang='en') }}" class="mw-hub-cta">New? Click here for Setup Instructions</a>
+            <span class="mw-hub-cta-label">New here?</span>
+            <div class="mw-hub-cta-buttons">
+                <a href="{{ url_for('quickstart', lang='en') }}" class="mw-hub-cta">Click here for Setup Instructions</a>
+                <a href="{{ url_for('about') }}" class="mw-hub-cta">What is MultiworldGG?</a>
+            </div>
         </div>
 
         <div class="mw-hub-grid">
@@ -30,7 +34,7 @@
             </a>
 
             <a href="{{ url_for('generate') }}" class="mw-hub-card primary">
-                <div class="mw-hub-icon"><i class="mdi mdi-dice-6"></i></div>
+                <div class="mw-hub-icon"><i class="mdi mdi-gamepad"></i></div>
                 <h3>Generate a new game</h3>
                 <p>Skip the lobby. Generate a seed directly from your YAML.</p>
             </a>
