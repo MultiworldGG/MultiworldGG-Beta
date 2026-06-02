@@ -1,6 +1,6 @@
 name: Player{number}
-game: MultiworldGG # we only need to test options work and this "supports" all the base options
-MultiworldGG:
+game: Archipelago # we only need to test options work and this "supports" all the base options
+Archipelago:
   progression_balancing:
     0: 50
     50: 50
