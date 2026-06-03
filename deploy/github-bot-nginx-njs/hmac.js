@@ -6,39 +6,54 @@
 // then invoked from the request location with `js_content hmac.validate`.
 //
 // What this does:
-//   - On POST / (the GitHub webhook URL), reads the request body, computes
-//     HMAC-SHA256 with the secret loaded from SECRET_FILE, compares to
-//     X-Hub-Signature-256 in constant time. On mismatch, returns 401 *before*
-//     nginx ever proxies to the bot container.
+//   - The bot serves TWO signed webhooks, each with its own secret:
+//       POST /        → Oliver (GitHub App events), secret OLIVER_SECRET_FILE.
+//       POST /karen…  → Karen (repository_dispatch / karen-fuzz), secret
+//                       KAREN_SECRET_FILE. Any path starting with "/karen"
+//                       (the bot mounts its verifier at the /karen router root).
+//     We pick the secret by request path, read the body, compute HMAC-SHA256,
+//     and compare to X-Hub-Signature-256 in constant time. On mismatch, returns
+//     401 *before* nginx ever proxies to the bot container.
 //   - On GET /probot or /status, lets the request through unauthenticated —
 //     Probot's built-in info page and the bot's failure-log status page.
 //   - All other methods → 405; missing/malformed signatures → 401.
 //
-// Probot inside the container ALSO validates HMAC. This nginx layer is
-// defense-in-depth: bogus traffic is rejected at the edge without spinning
-// up an event-loop tick in the app.
+// Probot/Octokit inside the container ALSO validate HMAC (each against its own
+// secret). This nginx layer is defense-in-depth: bogus traffic is rejected at
+// the edge without spinning up an event-loop tick in the app.
 
 import crypto from "crypto";
 import fs from "fs";
 
-// Operator: place the webhook secret here, mode 0640, owner root, group
+// Operator: place each webhook secret here, mode 0640, owner root, group
 // www-data (or whichever user nginx runs as on this host).
 //   sudo mkdir -p /etc/github-bot
 //   sudo cp deploy/github-bot-secrets/oliver_webhook_secret /etc/github-bot/webhook_secret
-//   sudo chgrp www-data /etc/github-bot/webhook_secret
-//   sudo chmod 0640 /etc/github-bot/webhook_secret
-const SECRET_FILE = "/etc/github-bot/webhook_secret";
+//   sudo cp deploy/github-bot-secrets/karen_webhook_secret  /etc/github-bot/karen_webhook_secret
+//   sudo chgrp www-data /etc/github-bot/webhook_secret /etc/github-bot/karen_webhook_secret
+//   sudo chmod 0640 /etc/github-bot/webhook_secret /etc/github-bot/karen_webhook_secret
+const OLIVER_SECRET_FILE = "/etc/github-bot/webhook_secret";
+const KAREN_SECRET_FILE = "/etc/github-bot/karen_webhook_secret";
 
-let cachedSecret = null;
+// One cache slot per secret file; each is read once on first use.
+const secretCache = {};
 
-function getSecret() {
-    if (cachedSecret !== null) return cachedSecret;
+function readSecretFile(file) {
+    if (secretCache[file] !== undefined) return secretCache[file];
+    let value;
     try {
-        cachedSecret = fs.readFileSync(SECRET_FILE).toString().replace(/\s+$/, "");
+        value = fs.readFileSync(file).toString().replace(/\s+$/, "");
     } catch (err) {
-        return null;
+        value = null;
     }
-    return cachedSecret;
+    secretCache[file] = value;
+    return value;
+}
+
+// Select the secret file by request path: /karen… → Karen, everything else
+// (i.e. the "/" webhook) → Oliver.
+function secretFileForPath(uri) {
+    return uri.startsWith("/karen") ? KAREN_SECRET_FILE : OLIVER_SECRET_FILE;
 }
 
 function constantTimeEqual(a, b) {
@@ -66,9 +81,10 @@ function validate(r) {
         return;
     }
 
-    const secret = getSecret();
+    const secretFile = secretFileForPath(r.uri);
+    const secret = readSecretFile(secretFile);
     if (!secret) {
-        r.error("oliver_hmac: webhook secret unreadable at " + SECRET_FILE);
+        r.error("oliver_hmac: webhook secret unreadable at " + secretFile);
         r.return(503, "service misconfigured\n");
         return;
     }
