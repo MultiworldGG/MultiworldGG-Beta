@@ -657,6 +657,11 @@ class CommonContext(InitContext):
         self.location_names = self.NameLookupDict(self, "location")
         self.checksums = {}
 
+        # Seed the bundled/local data package so Archipelago base lookups (e.g. item -1 -> "Nothing",
+        # location -1 -> "Cheat Console") and our own games resolve before connecting to a server.
+        local_network_data_package, _ = set_local_network_data_package()
+        self.update_data_package(local_network_data_package)
+
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
