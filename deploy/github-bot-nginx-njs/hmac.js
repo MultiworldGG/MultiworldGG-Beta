@@ -6,21 +6,21 @@
 // then invoked from the request location with `js_content hmac.validate`.
 //
 // What this does:
-//   - The bot serves TWO signed webhooks, each with its own secret:
-//       POST /        → Oliver (GitHub App events), secret OLIVER_SECRET_FILE.
-//       POST /karen…  → Karen (repository_dispatch / karen-fuzz), secret
-//                       KAREN_SECRET_FILE. Any path starting with "/karen"
-//                       (the bot mounts its verifier at the /karen router root).
-//     We pick the secret by request path, read the body, compute HMAC-SHA256,
-//     and compare to X-Hub-Signature-256 in constant time. On mismatch, returns
-//     401 *before* nginx ever proxies to the bot container.
-//   - On GET /probot or /status, lets the request through unauthenticated —
-//     Probot's built-in info page and the bot's failure-log status page.
+//   - The bot fronts TWO signed webhooks, one per GitHub App, each on its OWN
+//     hostname with its OWN secret:
+//       oliver.multiworld.gg    → Oliver, secret OLIVER_SECRET_FILE → @bot_backend
+//       karen.prismativerse.com → Karen,  secret KAREN_SECRET_FILE  → @karen_backend
+//     Each server sets `$webhook_app` ("oliver" | "karen"); we pick the secret
+//     + the internal backend from THAT (not the path, since both arrive at "/").
+//     We read the body, compute HMAC-SHA256, and compare to X-Hub-Signature-256
+//     in constant time. On mismatch, returns 401 *before* any proxy_pass.
+//   - On Oliver's GET /probot or /status, lets the request through
+//     unauthenticated — Probot's info page and the bot's failure-log status page.
 //   - All other methods → 405; missing/malformed signatures → 401.
 //
-// Probot/Octokit inside the container ALSO validate HMAC (each against its own
-// secret). This nginx layer is defense-in-depth: bogus traffic is rejected at
-// the edge without spinning up an event-loop tick in the app.
+// Probot/@octokit/webhooks inside the container ALSO validate HMAC (each against
+// its own secret). This nginx layer is defense-in-depth: bogus traffic is
+// rejected at the edge without spinning up an event-loop tick in the app.
 
 import crypto from "crypto";
 import fs from "fs";
@@ -50,10 +50,14 @@ function readSecretFile(file) {
     return value;
 }
 
-// Select the secret file by request path: /karen… → Karen, everything else
-// (i.e. the "/" webhook) → Oliver.
-function secretFileForPath(uri) {
-    return uri.startsWith("/karen") ? KAREN_SECRET_FILE : OLIVER_SECRET_FILE;
+// Per-server identity, set via `set $webhook_app …;` ahead of js_content.
+// Karen → her secret + the @karen_backend (which rewrites "/" → "/karen");
+// anything else (default) → Oliver's secret + @bot_backend.
+function configForApp(r) {
+    if (r.variables.webhook_app === "karen") {
+        return { app: "karen", secretFile: KAREN_SECRET_FILE, backend: "@karen_backend" };
+    }
+    return { app: "oliver", secretFile: OLIVER_SECRET_FILE, backend: "@bot_backend" };
 }
 
 function constantTimeEqual(a, b) {
@@ -66,13 +70,15 @@ function constantTimeEqual(a, b) {
 }
 
 function validate(r) {
-    // Allow these GET path prefixes through unauthenticated:
-    //   /status, /status/, /status/.json — bot's identity + failure-log page
-    if (r.method === "GET" && (
+    const cfg = configForApp(r);
+
+    // Oliver's info/status pages are GET and unauthenticated:
+    //   /status, /status/, /status/.json — bot's identity + failure-log page.
+    if (cfg.app === "oliver" && r.method === "GET" && (
         r.uri === "/status" ||
         r.uri.startsWith("/status/")
     )) {
-        r.internalRedirect("@bot_backend");
+        r.internalRedirect(cfg.backend);
         return;
     }
 
@@ -81,10 +87,9 @@ function validate(r) {
         return;
     }
 
-    const secretFile = secretFileForPath(r.uri);
-    const secret = readSecretFile(secretFile);
+    const secret = readSecretFile(cfg.secretFile);
     if (!secret) {
-        r.error("oliver_hmac: webhook secret unreadable at " + secretFile);
+        r.error("mwgg_hmac: " + cfg.app + " webhook secret unreadable at " + cfg.secretFile);
         r.return(503, "service misconfigured\n");
         return;
     }
@@ -115,7 +120,7 @@ function validate(r) {
         return;
     }
 
-    r.internalRedirect("@bot_backend");
+    r.internalRedirect(cfg.backend);
 }
 
 export default { validate };

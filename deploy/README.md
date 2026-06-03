@@ -117,7 +117,9 @@ comment. To enable it:
    #   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC1918);
    #   169.254.169.254 (cloud metadata); and the host's own IPs.
    ```
-4. **Karen App config:** Webhook URL `https://oliver.multiworld.gg/karen`,
+4. **Karen App config:** Webhook URL `https://karen.prismativerse.com/` (Karen's
+   own subdomain — needs a DNS A record + its own Let's Encrypt cert; the host
+   nginx validates the Karen HMAC and maps it to the bot's internal `/karen`),
    subscribe to `repository_dispatch`, permissions Checks:Write +
    Pull-requests:Write (plus the existing Contents:Write + Metadata:Read). Put
    `karen_webhook_secret` in `./github-bot-secrets` *and* on the host nginx at
