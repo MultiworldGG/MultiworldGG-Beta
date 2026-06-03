@@ -39,6 +39,7 @@ _NSFW_BLOCKED_CLASSES = frozenset({
 })
 _NSFW_SCORE_THRESHOLD = 0.5
 _NSFW_REQUEST_TIMEOUT = 10  # seconds to wait on the moderation sidecar
+_NSFW_SAMPLE_MAX_DIM = 1024  # max edge of the re-encoded moderation sample
 
 
 def _bearer_token() -> str:
@@ -127,12 +128,35 @@ def avatar_upload():
     except (UnidentifiedImageError, OSError, ValueError):
         return jsonify({"error": "Could not decode image"}), 400
 
+    # Decode once with Pillow, then derive both the moderation sample and the
+    # stored avatar from it. We never forward the raw upload to the sidecar:
+    # NudeNet decodes with OpenCV, whose format support differs from Pillow's,
+    # and an image Pillow accepts but OpenCV can't decode (returns None) crashes
+    # the sidecar's inference loop. Re-encoding to a baseline JPEG guarantees an
+    # OpenCV-decodable sample.
+    try:
+        with Image.open(io.BytesIO(raw)) as img:
+            img.load()
+            moderation_sample = img.convert("RGB")
+            moderation_sample.thumbnail(
+                (_NSFW_SAMPLE_MAX_DIM, _NSFW_SAMPLE_MAX_DIM),
+                Image.Resampling.LANCZOS,
+            )
+            dim = int(app.config.get("AVATAR_OUTPUT_DIM", 100))
+            fitted = ImageOps.fit(img.convert("RGBA"), (dim, dim), method=Image.Resampling.LANCZOS)
+    except Image.DecompressionBombError:
+        return jsonify({"error": "Image dimensions exceed safety limit"}), 413
+    except (UnidentifiedImageError, OSError, ValueError):
+        return jsonify({"error": "Could not decode image"}), 400
+
     nsfw_endpoint = app.config.get("AVATAR_NSFW_ENDPOINT", "")
     if nsfw_endpoint:
+        sample_buf = io.BytesIO()
+        moderation_sample.save(sample_buf, format="JPEG", quality=90)
         try:
             resp = requests.post(
                 nsfw_endpoint,
-                files={"f1": (upload.filename, raw, upload.mimetype or "application/octet-stream")},
+                files={"f1": ("avatar.jpg", sample_buf.getvalue(), "image/jpeg")},
                 timeout=_NSFW_REQUEST_TIMEOUT,
             )
             resp.raise_for_status()
@@ -147,16 +171,6 @@ def avatar_upload():
             if (detection.get("class") in _NSFW_BLOCKED_CLASSES
                     and detection.get("score", 0.0) >= _NSFW_SCORE_THRESHOLD):
                 return jsonify({"error": "Image rejected by content policy"}), 422
-
-    try:
-        with Image.open(io.BytesIO(raw)) as img:
-            img.load()
-            dim = int(app.config.get("AVATAR_OUTPUT_DIM", 100))
-            fitted = ImageOps.fit(img.convert("RGBA"), (dim, dim), method=Image.Resampling.LANCZOS)
-    except Image.DecompressionBombError:
-        return jsonify({"error": "Image dimensions exceed safety limit"}), 413
-    except (UnidentifiedImageError, OSError, ValueError):
-        return jsonify({"error": "Could not decode image"}), 400
 
     upload_dir = os.path.abspath(app.config["AVATAR_UPLOAD_FOLDER"])
     os.makedirs(upload_dir, exist_ok=True)
