@@ -821,6 +821,8 @@ class CommonContext(InitContext):
         """ `msgs` JSON serializable """
         if not self.server or not self.server.socket or self.server.socket.state is not State.OPEN:
             return
+        if not msgs:
+            return
         if msgs[0]["cmd"] == "LocationChecks":
             self.update_timer()
         await self.server.socket.send(encode(msgs))
