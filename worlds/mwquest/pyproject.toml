@@ -1,0 +1,20 @@
+[build-system]
+requires = [ "setuptools",]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "worlds.mwquest"
+version = "2.0.0"
+description = "MultiWorld: MWQuest"
+classifiers = [ "Private :: Do Not Upload",]
+requires-python = ">=3.13"
+[[project.authors]]
+name = "NewSoupVi"
+
+[project.entry-points."mwgg.client"]
+"worlds.mwquest.Client" = "worlds.mwquest._whl_bld_iface:CLIENT_FUNCTION"
+
+[tool.setuptools.packages.find]
+where = [ "src",]
+include = [ "worlds.mwquest",]
+namespaces = true
