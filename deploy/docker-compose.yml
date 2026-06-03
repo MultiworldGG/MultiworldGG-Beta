@@ -59,7 +59,7 @@ services:
       mwgg_upgrader:
         condition: service_completed_successfully
       nudenet:
-        condition: service_started
+        condition: service_healthy
     # Launch gunicorn targeting WebHost application
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
@@ -96,11 +96,34 @@ services:
     # Registry publishes only a floating `latest` (linux/amd64); no version tags.
     image: ghcr.io/notai-tech/nudenet:latest
     restart: unless-stopped
+    # The image CMD is `ulimit -n 1000000 && <loop worker> & <rest server>`.
+    # In sh, `&&` binds tighter than `&`, so a failed `ulimit` short-circuits
+    # and the inference loop never starts — the REST server stays up with no
+    # worker behind it, /infer hangs, and the web caller times out at 10s
+    # ("Content moderation unavailable"). Grant a high nofile limit (the daemon
+    # can raise the hard limit) so the in-container `ulimit -n 1000000` succeeds
+    # and the loop actually launches.
+    ulimits:
+      nofile:
+        soft: 1048576
+        hard: 1048576
     environment:
       # Cap glibc malloc arenas (gthread workers spawn several). Without this,
       # freed memory is retained per-arena and RSS climbs/fragments; 2 arenas
       # keeps the web worker returning memory to the OS.
       - MALLOC_ARENA_MAX=2
+    # fastDeploy binds :8080 only after the loop worker finishes warmup / its
+    # batch-size search — the REST app blocks on import until then (see
+    # __main__.py `rest()` -> `from ._app import app`), so a successful TCP
+    # connect is an honest "ready to moderate" signal. The image base is
+    # python:3.10-slim (python3 present; no curl/wget). start_period is generous
+    # to cover slow CPU warmup without flapping to unhealthy.
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 8080), 2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 300s
 
   nginx:
     image: nginx:stable-alpine
