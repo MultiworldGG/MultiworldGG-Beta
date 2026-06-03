@@ -846,16 +846,27 @@ class Settings(Group):
                 try:
                     options = parse_yaml(f.read())
                 except MarkedYAMLError as ex:
+                    # A malformed host.yaml must not take down everything that reads
+                    # settings (tracker, settings UI, generation). Warn with the
+                    # offending line, then fall back to defaults and leave the file
+                    # untouched (no _filename) so the user can repair it by hand.
+                    import logging
+                    detail = ""
                     if ex.problem_mark:
                         f.seek(0)
                         lines = f.readlines()
-                        problem_line = lines[ex.problem_mark.line]
-                        error_line = " " * ex.problem_mark.column + "^"
-                        raise Exception(f"{ex.context} {ex.problem}\n{problem_line}{error_line}")
-                    raise ex
-                # TODO: detect if upgrade is required
-                self.update(options or {})
-            self._filename = location
+                        if 0 <= ex.problem_mark.line < len(lines):
+                            problem_line = lines[ex.problem_mark.line].rstrip("\n")
+                            error_line = " " * ex.problem_mark.column + "^"
+                            detail = f"\n{problem_line}\n{error_line}"
+                    logging.error(
+                        f"Could not parse {location}: {ex.context} {ex.problem}{detail}\n"
+                        f"Using default settings; fix the file and restart to restore your configuration."
+                    )
+                else:
+                    # TODO: detect if upgrade is required
+                    self.update(options or {})
+                    self._filename = location
 
         def autosave() -> None:
             if __debug__:
