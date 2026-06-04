@@ -58,7 +58,7 @@ def generate_remote(app_client: "FlaskClient", games: Iterable[str]) -> str:
                 "description": f"generate_remote slot {n} ('Player{n}'): {game}",
             }))
     data.seek(0)
-    response = app_client.post("/generate", content_type="multipart/form-data", data={
+    response = app_client.post("/play/new", content_type="multipart/form-data", data={
         "file": (data, "yamls.zip"),
     })
     assert response.status_code < 400, f"Starting gen failed: status {response.status_code}"
@@ -71,22 +71,22 @@ def generate_remote(app_client: "FlaskClient", games: Iterable[str]) -> str:
         if "Location" in response.headers:
             location = response.headers["Location"]
             assert isinstance(location, str)
-            assert location.startswith("/seed/"), f"Finishing WebHost gen failed: unexpected redirect to {location}"
-            return location[6:]
+            assert location.startswith("/play/seed/"), f"Finishing WebHost gen failed: unexpected redirect to {location}"
+            return location.rsplit("/", 1)[-1]
         time.sleep(1)
     raise TimeoutError("WebHost gen did not finish")
 
 
 def upload_multidata(app_client: "FlaskClient", multidata: Path) -> str:
-    response = app_client.post("/uploads", data={
+    response = app_client.post("/play/host", data={
         "file": multidata.open("rb"),
     })
     assert response.status_code < 400, f"Upload of {multidata} failed: status {response.status_code}"
     assert "Location" in response.headers, f"Upload of {multidata} failed: no redirect"
     location = response.headers["Location"]
     assert isinstance(location, str)
-    assert location.startswith("/seed/"), f"Upload of {multidata} failed: unexpected redirect"
-    return location[6:]
+    assert location.startswith("/play/seed/"), f"Upload of {multidata} failed: unexpected redirect"
+    return location.rsplit("/", 1)[-1]
 
 
 def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) -> str:
@@ -95,8 +95,8 @@ def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) 
     assert "Location" in response.headers, f"Creating room for {seed} failed: no redirect"
     location = response.headers["Location"]
     assert isinstance(location, str)
-    assert location.startswith("/room/"), f"Creating room for {seed} failed: unexpected redirect"
-    room_id = location[6:]
+    assert "/room/" in location, f"Creating room for {seed} failed: unexpected redirect to {location}"
+    room_id = location.rsplit("/room/", 1)[-1]
 
     if not auto_start:
         # by default, creating a room will auto-start it, so we update last activity here
@@ -114,7 +114,9 @@ def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> 
     no_timeout = timeout <= 0
     while no_timeout or timeout > 0:
         try:
-            response = app_client.get(f"/room/{room_id}")
+            # /room/<id> now 301-redirects to /play/seed/<seed>/room/<id>; follow it
+            # so we land on the 200 host_room page that renders the /connect address.
+            response = app_client.get(f"/room/{room_id}", follow_redirects=True)
         except Exception:
             # hoster wrote to room during our transaction — retry
             continue
