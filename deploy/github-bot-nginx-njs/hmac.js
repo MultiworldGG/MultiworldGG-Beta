@@ -6,39 +6,58 @@
 // then invoked from the request location with `js_content hmac.validate`.
 //
 // What this does:
-//   - On POST / (the GitHub webhook URL), reads the request body, computes
-//     HMAC-SHA256 with the secret loaded from SECRET_FILE, compares to
-//     X-Hub-Signature-256 in constant time. On mismatch, returns 401 *before*
-//     nginx ever proxies to the bot container.
-//   - On GET /probot or /status, lets the request through unauthenticated —
-//     Probot's built-in info page and the bot's failure-log status page.
+//   - The bot fronts TWO signed webhooks, one per GitHub App, each on its OWN
+//     hostname with its OWN secret:
+//       oliver.multiworld.gg    → Oliver, secret OLIVER_SECRET_FILE → @bot_backend
+//       karen.prismativerse.com → Karen,  secret KAREN_SECRET_FILE  → @karen_backend
+//     Each server sets `$webhook_app` ("oliver" | "karen"); we pick the secret
+//     + the internal backend from THAT (not the path, since both arrive at "/").
+//     We read the body, compute HMAC-SHA256, and compare to X-Hub-Signature-256
+//     in constant time. On mismatch, returns 401 *before* any proxy_pass.
+//   - On Oliver's GET /probot or /status, lets the request through
+//     unauthenticated — Probot's info page and the bot's failure-log status page.
 //   - All other methods → 405; missing/malformed signatures → 401.
 //
-// Probot inside the container ALSO validates HMAC. This nginx layer is
-// defense-in-depth: bogus traffic is rejected at the edge without spinning
-// up an event-loop tick in the app.
+// Probot/@octokit/webhooks inside the container ALSO validate HMAC (each against
+// its own secret). This nginx layer is defense-in-depth: bogus traffic is
+// rejected at the edge without spinning up an event-loop tick in the app.
 
 import crypto from "crypto";
 import fs from "fs";
 
-// Operator: place the webhook secret here, mode 0640, owner root, group
+// Operator: place each webhook secret here, mode 0640, owner root, group
 // www-data (or whichever user nginx runs as on this host).
 //   sudo mkdir -p /etc/github-bot
 //   sudo cp deploy/github-bot-secrets/oliver_webhook_secret /etc/github-bot/webhook_secret
-//   sudo chgrp www-data /etc/github-bot/webhook_secret
-//   sudo chmod 0640 /etc/github-bot/webhook_secret
-const SECRET_FILE = "/etc/github-bot/webhook_secret";
+//   sudo cp deploy/github-bot-secrets/karen_webhook_secret  /etc/github-bot/karen_webhook_secret
+//   sudo chgrp www-data /etc/github-bot/webhook_secret /etc/github-bot/karen_webhook_secret
+//   sudo chmod 0640 /etc/github-bot/webhook_secret /etc/github-bot/karen_webhook_secret
+const OLIVER_SECRET_FILE = "/etc/github-bot/webhook_secret";
+const KAREN_SECRET_FILE = "/etc/github-bot/karen_webhook_secret";
 
-let cachedSecret = null;
+// One cache slot per secret file; each is read once on first use.
+const secretCache = {};
 
-function getSecret() {
-    if (cachedSecret !== null) return cachedSecret;
+function readSecretFile(file) {
+    if (secretCache[file] !== undefined) return secretCache[file];
+    let value;
     try {
-        cachedSecret = fs.readFileSync(SECRET_FILE).toString().replace(/\s+$/, "");
+        value = fs.readFileSync(file).toString().replace(/\s+$/, "");
     } catch (err) {
-        return null;
+        value = null;
     }
-    return cachedSecret;
+    secretCache[file] = value;
+    return value;
+}
+
+// Per-server identity, set via `set $webhook_app …;` ahead of js_content.
+// Karen → her secret + the @karen_backend (which rewrites "/" → "/karen");
+// anything else (default) → Oliver's secret + @bot_backend.
+function configForApp(r) {
+    if (r.variables.webhook_app === "karen") {
+        return { app: "karen", secretFile: KAREN_SECRET_FILE, backend: "@karen_backend" };
+    }
+    return { app: "oliver", secretFile: OLIVER_SECRET_FILE, backend: "@bot_backend" };
 }
 
 function constantTimeEqual(a, b) {
@@ -51,13 +70,15 @@ function constantTimeEqual(a, b) {
 }
 
 function validate(r) {
-    // Allow these GET path prefixes through unauthenticated:
-    //   /status, /status/, /status/.json — bot's identity + failure-log page
-    if (r.method === "GET" && (
+    const cfg = configForApp(r);
+
+    // Oliver's info/status pages are GET and unauthenticated:
+    //   /status, /status/, /status/.json — bot's identity + failure-log page.
+    if (cfg.app === "oliver" && r.method === "GET" && (
         r.uri === "/status" ||
         r.uri.startsWith("/status/")
     )) {
-        r.internalRedirect("@bot_backend");
+        r.internalRedirect(cfg.backend);
         return;
     }
 
@@ -66,9 +87,9 @@ function validate(r) {
         return;
     }
 
-    const secret = getSecret();
+    const secret = readSecretFile(cfg.secretFile);
     if (!secret) {
-        r.error("oliver_hmac: webhook secret unreadable at " + SECRET_FILE);
+        r.error("mwgg_hmac: " + cfg.app + " webhook secret unreadable at " + cfg.secretFile);
         r.return(503, "service misconfigured\n");
         return;
     }
@@ -99,7 +120,7 @@ function validate(r) {
         return;
     }
 
-    r.internalRedirect("@bot_backend");
+    r.internalRedirect(cfg.backend);
 }
 
 export default { validate };
