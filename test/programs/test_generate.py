@@ -51,11 +51,30 @@ class TestGenerateMain(unittest.TestCase):
         Generate.Utils.user_path.cached_path = self.original_user_path
 
     def test_paths(self):
-        self.assertTrue(os.path.exists(self.generate_dir))
-        self.assertTrue(os.path.exists(self.run_dir))
-        self.assertTrue(os.path.exists(self.abs_input_dir))
-        self.assertTrue(os.path.exists(self.rel_input_dir))
+        # setUp has chdir'd to run_dir and forced user_path == local_path == generate_dir.
+        # Pin the path-resolution contract the relative-path tests below depend on, not just
+        # "these strings happen to exist".
+        self.assertEqual(os.getcwd(), str(self.run_dir))
+        self.assertEqual(Generate.Utils.user_path(), str(self.generate_dir))
+
+        # rel_input_dir is a cwd-relative path: it must be relative and, resolved against the
+        # current cwd (run_dir), point back at abs_input_dir. This is how --player_files_path
+        # with a relative value is consumed (Generate.main -> os.scandir(args.player_files_path)).
+        self.assertFalse(os.path.isabs(self.rel_input_dir))
+        self.assertEqual(Path(self.rel_input_dir).resolve(), self.abs_input_dir)
+
+        # yaml_input_dir is a user_path-relative path (how host.yaml's player_files_path is read).
+        # It must be relative, must NOT resolve against cwd (the documented trap that forces the
+        # yaml tests to override user_path), and must round-trip through the real product resolver
+        # settings.PlayerFilesPath.resolve(), which roots a relative value under user_path.
+        self.assertFalse(os.path.isabs(self.yaml_input_dir))
+        self.assertNotEqual(Path(self.yaml_input_dir).resolve(), self.abs_input_dir)
         self.assertFalse(os.path.exists(self.yaml_input_dir))  # relative to user_path, not cwd
+
+        from settings import get_settings
+        resolved = get_settings().generator.PlayerFilesPath(str(self.yaml_input_dir)).resolve()
+        self.assertEqual(Path(resolved), self.abs_input_dir)
+        self.assertTrue(os.path.exists(resolved))
 
     def test_generate_absolute(self):
         sys.argv = [sys.argv[0], '--seed', '0',

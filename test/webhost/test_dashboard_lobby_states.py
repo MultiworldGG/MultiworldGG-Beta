@@ -17,20 +17,43 @@ def _make_lobby(session, state):
 
 
 class TestDashboardLobbyStates:
-    def test_active_states_are_open_generating_done_locked(self):
+    def test_active_states_are_open_generating_done_locked(self, app):
+        """Each named active state survives the dashboard filter; CLOSED does not.
+
+        Drives ``get_dashboard_data`` with one lobby per named state and pins
+        the kept-states set behaviorally, so a bug in ``_ACTIVE_LOBBY_STATES``
+        (or in the filter that consumes it) would fail this test — not just a
+        constant-vs-constant comparison.
+        """
         from WebHostLib.models import (
             LOBBY_OPEN,
             LOBBY_GENERATING,
             LOBBY_DONE,
             LOBBY_LOCKED,
+            LOBBY_CLOSED,
+            commit,
         )
 
-        assert _ACTIVE_LOBBY_STATES == (
+        session = uuid4()
+        all_states = (
             LOBBY_OPEN,
             LOBBY_GENERATING,
             LOBBY_DONE,
             LOBBY_LOCKED,
+            LOBBY_CLOSED,
         )
+        with app.app_context():
+            for state in all_states:
+                _make_lobby(session, state)
+            commit()
+            data = get_dashboard_data(session, max_per_section=len(all_states))
+
+        kept_states = {lobby.state for lobby in data.my_lobbies}
+        # Exactly the four active states are kept; CLOSED is excluded.
+        assert kept_states == {LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_LOCKED}
+        assert LOBBY_CLOSED not in kept_states
+        # The dashboard's active-states tuple must agree with what it keeps.
+        assert set(_ACTIVE_LOBBY_STATES) == kept_states
 
     def test_every_non_closed_state_counts_as_open_lobby(self, app):
         from WebHostLib.models import (

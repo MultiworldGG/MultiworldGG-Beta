@@ -156,14 +156,23 @@ class Base:
             self.assertEqual(self.store.get_remaining(empty_state, 0, 3), [(4, 99)])
 
         def test_get_remaining_exception(self) -> None:
+            # Slot absent from both the store and the state dict.
             with self.assertRaises(KeyError):
                 self.store.get_remaining(empty_state, 0, 9999)
+            # Slot present in the state dict with a non-empty checked set, but
+            # absent from the store: the per-slot location lookup must raise and
+            # report the missing slot. (Previously this case erroneously called
+            # get_missing, so get_remaining's missing-slot path went untested.)
             bad_state = {(0, 6): {1}}
-            with self.assertRaises(KeyError):
-                self.store.get_missing(bad_state, 0, 6)
+            with self.assertRaises(KeyError) as cm:
+                self.store.get_remaining(bad_state, 0, 6)
+            self.assertEqual(cm.exception.args, (6,))
+            # Slot present in the state dict with an empty checked set, but
+            # absent from the store: still raises and reports the missing slot.
             bad_state = {(0, 9999): set()}
-            with self.assertRaises(KeyError):
+            with self.assertRaises(KeyError) as cm:
                 self.store.get_remaining(bad_state, 0, 9999)
+            self.assertEqual(cm.exception.args, (9999,))
 
         def test_location_set_intersection(self) -> None:
             locations = {10, 11, 12}

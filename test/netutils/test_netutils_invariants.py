@@ -138,12 +138,21 @@ class PermissionFromTextTest(unittest.TestCase):
         # goal + enabled combine to 0b011
         self.assertEqual(int(Permission.from_text("goal_enabled")), 0b011)
 
-    def test_permission_member_values(self) -> None:
-        self.assertEqual(int(Permission.disabled), 0)
-        self.assertEqual(int(Permission.enabled), 1)
-        self.assertEqual(int(Permission.goal), 2)
-        self.assertEqual(int(Permission.auto), 6)
-        self.assertEqual(int(Permission.auto_enabled), 7)
+    def test_permission_flag_composition_contracts(self) -> None:
+        # disabled is the empty flag; it grants nothing.
+        self.assertEqual(Permission.disabled, Permission(0))
+        self.assertNotIn(Permission.enabled, Permission.disabled)
+        # auto is goal-gated: it must carry the goal bit (this is why from_text's
+        # elif is safe and why "auto implies goal" holds), but not the enabled bit.
+        self.assertIn(Permission.goal, Permission.auto)
+        self.assertNotIn(Permission.enabled, Permission.auto)
+        self.assertEqual(Permission.auto & Permission.goal, Permission.goal)
+        # auto_enabled is the full composition: auto plus manual (enabled) use.
+        self.assertEqual(Permission.auto | Permission.enabled, Permission.auto_enabled)
+        self.assertIn(Permission.enabled, Permission.auto_enabled)
+        self.assertIn(Permission.goal, Permission.auto_enabled)
+        # enabled (manual only) must not imply goal-completion access.
+        self.assertNotIn(Permission.goal, Permission.enabled)
 
 
 class ObjectHookDecodeTest(unittest.TestCase):

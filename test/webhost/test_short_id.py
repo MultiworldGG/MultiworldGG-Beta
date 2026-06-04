@@ -68,8 +68,16 @@ from WebHostLib.short_id import (
 # ---------------------------------------------------------------------------
 
 class TestAlphabet:
-    def test_alphabet_is_32_chars(self):
+    def test_alphabet_is_canonical_crockford_base32(self):
+        """The alphabet must be exactly the 32-symbol Crockford base32 set,
+        in order: digits 0-9 then A-Z minus I, L, O, U. A base32 alphabet is
+        only correct if all 32 symbols are distinct, so also pin the distinct
+        count (a duplicated symbol would keep ``len`` at 32 yet break decoding).
+        """
+        expected = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+        assert ALPHABET == expected
         assert len(ALPHABET) == 32
+        assert len(set(ALPHABET)) == 32
 
     def test_alphabet_excludes_i_l_o_u(self):
         """Crockford convention: I, L, O, U are excluded."""
@@ -79,8 +87,19 @@ class TestAlphabet:
     def test_alphabet_uppercase_only(self):
         assert ALPHABET == ALPHABET.upper()
 
-    def test_short_id_length_is_six(self):
+    def test_short_id_length_is_six_and_is_enforced(self):
+        """The configured length is 6, and that length is actually the one
+        the behavior enforces: ``generate_short_id`` emits 6-char IDs and
+        ``is_well_formed`` accepts exactly 6 chars while rejecting 5 and 7.
+        Ties the named constant to the concrete value *and* to observable
+        behavior, so changing the length (or the generation loop) is caught.
+        """
         assert SHORT_ID_LENGTH == 6
+        assert len(generate_short_id()) == 6
+        sample = generate_short_id()
+        assert is_well_formed(sample)
+        assert not is_well_formed(sample[:5])
+        assert not is_well_formed(sample + "A")
 
 
 # ---------------------------------------------------------------------------
