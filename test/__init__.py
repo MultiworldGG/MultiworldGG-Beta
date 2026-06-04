@@ -1,7 +1,17 @@
 import pathlib
+import sys
 import warnings
 import os
 import json
+
+# Mount the in-repo mwgg_igdb stub for EVERY entrypoint that imports this package
+# (pytest collection AND a direct `python test/...` run such as the hosting job,
+# which never loads the pytest-only rootdir conftest.py). Must run before any
+# `from mwgg_igdb import ...` below or in settings/Utils/WebHost imports. Mirrors
+# (and supersedes) conftest.py; both guards are idempotent. See test/_stubs/mwgg_igdb.py.
+_stub_dir = str(pathlib.Path(__file__).parent / "_stubs")
+if _stub_dir not in sys.path:
+    sys.path.insert(0, _stub_dir)
 
 # Set Kivy environment variables before any imports to prevent GUI initialization
 os.environ["KIVY_NO_CONSOLELOG"] = "1"
