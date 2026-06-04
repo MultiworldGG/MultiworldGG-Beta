@@ -218,28 +218,13 @@ def pre_build_setup():
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
-    # Players/ still lives next to the executable. custom_worlds/ has moved
-    # to the user-data dir (write_path) so AppImage installs can write to it;
-    # the in-bundle README is just a redirect breadcrumb in case anyone goes
-    # looking for it in the old place.
-    _user_custom_worlds_hint = {
-        "Linux":   "~/.local/share/MultiworldGG/custom_worlds",
-        "Darwin":  "~/Library/Application Support/MultiworldGG/custom_worlds",
-        "Windows": "%LOCALAPPDATA%\\MultiworldGG\\custom_worlds",
-    }.get(platform.system(), "<your user data dir>/MultiworldGG/custom_worlds")
-    _dir_readmes = {
-        "Players": "Drop your generated YAML config files here.\n",
-        "custom_worlds": (
-            "Custom worlds are loaded from your user data dir, not from here.\n"
-            f"Drop .apworld / .whl files into:\n  {_user_custom_worlds_hint}\n"
-            "(MultiworldGG auto-creates that directory on first launch.)\n"
-        ),
-    }
-    for subdir, body in _dir_readmes.items():
-        path = os.path.join(build_exe_dir, subdir)
-        os.makedirs(path, exist_ok=True)
-        with open(os.path.join(path, "README.txt"), "w") as f:
-            f.write(body)
+    # Ship empty Players/ and custom_worlds/ dirs in the bundle so they exist out
+    # of the box. No README breadcrumb: a stray .txt in these dirs gets picked up
+    # by the player-file / custom-world scanners. Both dirs are also created on
+    # demand at runtime (custom_worlds in ModuleUpdate, Players in Generate), so
+    # this is purely a convenience for users browsing the install folder.
+    for subdir in ("Players", "custom_worlds"):
+        os.makedirs(os.path.join(build_exe_dir, subdir), exist_ok=True)
 
     # Linux: copy libmtdev.so.1 to the bundle root (next to the executable).
     # `include_files` and `bin_includes` both proved unreliable for this lib

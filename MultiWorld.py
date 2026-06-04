@@ -278,5 +278,14 @@ if __name__ == "__main__":
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
         
+    # Scan custom_worlds/ on launch and register each into the in-memory index
+    # (GameIndex.add_game per world) so locally-dropped apworlds are selectable.
+    # The apworlds are zip files; only their manifest is read — nothing is imported.
+    try:
+        from Utils import register_custom_worlds
+        register_custom_worlds()
+    except Exception as e:
+        logger.warning(f"Could not scan custom_worlds on launch: {e}")
+
     # Run the main client in the current process
     run_client(args, queue=splash_queue)
