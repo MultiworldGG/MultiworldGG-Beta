@@ -84,6 +84,14 @@ class TestWorld(World):
 # add our test world to the data package, so we can test it later
 network_data_package["games"][TestWorld.game] = TestWorld.get_data_package_data()
 
+# Register the fixture with the stub GameIndex so Generate.roll_settings can
+# resolve "Test Game" to a module. The fixture lives at test.general rather than
+# under worlds/, so alias it under the worlds.* name the index resolves to.
+import sys
+from mwgg_igdb import GameIndex
+GameIndex.add_game("general", {"game_name": TestWorld.game})
+sys.modules.setdefault("worlds.general", sys.modules[TestWorld.__module__])
+
 
 def generate_test_multiworld(players: int = 1) -> MultiWorld:
     """

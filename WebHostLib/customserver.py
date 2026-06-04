@@ -238,7 +238,11 @@ class WebHostContext(Context):
         engine = WebHostContext._db_engine
         with Session(engine) as session:
             room = session.get(Room, room_id)
-            if room.last_port:
+            # last_port is -1 (sentinel set when a prior host crashed) or 0/None when the
+            # room was never hosted. -1 is truthy, so guard on a real in-range port;
+            # otherwise pick a fresh random one (binding to -1 raises OverflowError and
+            # would permanently wedge the room on every restart).
+            if room.last_port and room.last_port > 0:
                 self.port = room.last_port
             else:
                 self.port = get_random_port()

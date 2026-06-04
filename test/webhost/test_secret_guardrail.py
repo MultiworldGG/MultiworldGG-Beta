@@ -39,9 +39,10 @@ def test_get_app_allows_hostname_secret_when_testing(monkeypatch):
     # about the return value; if it returns, the guardrail didn't trip.
     try:
         WebHost.get_app()
-    except AssertionError as e:
-        # get_app() raises an AssertionError on duplicate blueprint registration
-        # when called more than once in the same process — that's fine for this
-        # test (we only care that RuntimeError isn't raised by the guardrail).
-        if "register_blueprint" not in str(e):
+    except (AssertionError, ValueError) as e:
+        # get_app() raises on duplicate blueprint registration when called more than once
+        # in the same process (AssertionError on older Flask, ValueError on Flask 3.x) —
+        # that's fine for this test (we only care that RuntimeError isn't raised by the guardrail).
+        message = e.args[0] if e.args else str(e)
+        if "register_blueprint" not in message and "already registered" not in message:
             raise
