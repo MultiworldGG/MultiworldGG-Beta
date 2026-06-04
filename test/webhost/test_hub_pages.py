@@ -7,7 +7,7 @@ def test_play_hub_renders(client):
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Multiworld Play" in body                  # hub heading
-    assert "New? Click here for Setup Instructions" in body  # quickstart CTA
+    assert "Click here for Setup Instructions" in body  # quickstart CTA
     assert "Browse lobbies" in body
     assert "Create a lobby" in body
     assert "Generate a new game" in body
@@ -17,17 +17,19 @@ def test_play_hub_renders(client):
 
 
 def test_learn_hub_renders(client):
-    response = client.get("/learn")
+    # /learn is a legacy 301 to the locale-prefixed canonical hub (/learn/en).
+    response = client.get("/learn", follow_redirects=True)
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     assert "Learn MultiworldGG" in body               # hub heading
-    assert "Setup tutorials" in body
+    assert "Setup guides" in body
     assert "FAQ" in body
     assert "Glossary" in body
 
 
 def test_tutorial_landing_renders(client):
-    response = client.get("/learn/tutorials")
+    # /learn/tutorials is a legacy 301 to /learn/en/tutorials.
+    response = client.get("/learn/tutorials", follow_redirects=True)
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     # The legacy tutorial-list page has this heading.
@@ -37,4 +39,4 @@ def test_tutorial_landing_renders(client):
 def test_tutorial_legacy_redirect_lands_on_tutorial_landing(client):
     response = client.get("/tutorial", follow_redirects=False)
     assert response.status_code == 301
-    assert response.headers["Location"].endswith("/learn/tutorials")
+    assert response.headers["Location"].endswith("/learn/en/tutorials")

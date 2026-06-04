@@ -31,8 +31,12 @@ def app():
     })
     try:
         return get_app()
-    except AssertionError as e:
-        if "register_blueprint" not in e.args[0]:
+    except (AssertionError, ValueError) as e:
+        # get_app() re-registers blueprints on the import-time WebHostLib.app; a second
+        # call raises (AssertionError on older Flask, ValueError on newer). Either way the
+        # already-configured raw_app is the app we want.
+        message = e.args[0] if e.args else ""
+        if "register_blueprint" not in message and "already registered" not in message:
             raise
         return raw_app
 
