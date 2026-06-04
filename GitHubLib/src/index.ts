@@ -24,6 +24,9 @@ async function main(): Promise<void> {
 
   const karenAppId = loadSecret("KAREN_APP_ID");
   const karenPrivateKey = loadSecret("KAREN_PRIVATE_KEY", { trim: false }).replace(/\\n/g, "\n");
+  // Karen's webhook secret (distinct from Oliver's). Signs the repository_dispatch
+  // (karen-fuzz) deliveries the bot receives on /karen.
+  const karenWebhookSecret = loadSecret("KAREN_WEBHOOK_SECRET");
 
   const port = parseInt(process.env.PORT ?? "3000", 10);
 
@@ -60,7 +63,7 @@ async function main(): Promise<void> {
     webhookPath: "/",
   });
 
-  await server.load(makeApp(karenProbot, oliverData, karenData));
+  await server.load(makeApp(karenProbot, oliverData, karenData, karenWebhookSecret));
   await server.start();
 }
 

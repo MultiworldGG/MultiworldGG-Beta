@@ -87,6 +87,56 @@ Place these files under it, then point the `*_FILE` env vars in
 | `oliver_webhook_secret` | One-line hex string used as the webhook HMAC secret. |
 | `karen_app_id` | One-line numeric App ID for the Karen GitHub App. |
 | `karen_private_key.pem` | Full PEM private key for the Karen App. |
+| `karen_webhook_secret` | One-line hex string — HMAC secret for Karen's `/karen` webhook (`openssl rand -hex 32`). |
+
+### 4. Karen fuzz sandbox (optional, for the Index PR fuzzer)
+
+The Karen App's `/karen` webhook receives `repository_dispatch` (`karen-fuzz`)
+events from the Index PR workflow and, per proposed world, spawns a short-lived
+hardened container that downloads + sha256-verifies the wheel, runs the
+security/quality scan (bandit, pip-audit, ruff, size/ROM/import), and fuzzes
+generation — reporting back via a `Karen / fuzz` Check Run + the sticky PR
+comment. To enable it:
+
+1. **Fuzz scratch dir** (bind-mounted into the bot at the *same* host path so the
+   inner `docker run -v` resolves on the host daemon):
+   ```bash
+   sudo mkdir -p /var/lib/mwgg-fuzz
+   sudo chmod 700 /var/lib/mwgg-fuzz
+   ```
+2. **Build/publish the fuzz image** referenced by `FUZZ_IMAGE`:
+   ```bash
+   docker build -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest ../GitHubLib/fuzz-image
+   ```
+3. **Egress-restricted bridge** the fuzz containers attach to (`FUZZ_NET`). They
+   run untrusted world code, so the bridge MUST be firewalled off from the host
+   and the private network — it only needs `FUZZ_WHEEL_HOSTS` + GitHub/PyPI:
+   ```bash
+   docker network create mwgg-fuzz-egress
+   # then, on the host firewall, DROP from this bridge's subnet to:
+   #   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC1918);
+   #   169.254.169.254 (cloud metadata); and the host's own IPs.
+   ```
+4. **Karen App config:** Webhook URL `https://karen.prismativerse.com/` (Karen's
+   own subdomain — needs a DNS A record + its own Let's Encrypt cert; the host
+   nginx validates the Karen HMAC and maps it to the bot's internal `/karen`),
+   subscribe to `repository_dispatch`, permissions Checks:Write +
+   Pull-requests:Write (plus the existing Contents:Write + Metadata:Read). Put
+   `karen_webhook_secret` in `./github-bot-secrets` *and* on the host nginx at
+   `/etc/github-bot/karen_webhook_secret` (see `example_github-bot_nginx.conf`).
+5. **Docker access:** the `docker-socket-proxy` sidecar fronts
+   `/var/run/docker.sock` (mounted read-only into the proxy only); the bot
+   reaches it via `DOCKER_HOST`. Never mount the raw socket into the bot.
+6. **Optional ROMs:** ROM-dependent worlds only generate if their base ROMs are
+   present. Set `FUZZ_ROM_DIR` (host dir, mounted read-only at `/roms`) and
+   `FUZZ_HOST_YAML` (a `host.yaml` whose `<world>_options.rom_file` entries point
+   at `/roms/<file>`); both must be readable by uid 65532. Untrusted world code
+   can READ (not write) the ROMs and the container has egress, so only expose
+   ROMs you accept could be exfiltrated. Unset → ROM worlds warn (no-op).
+
+Capacity note: each fuzz container clones core + builds a venv + generates
+(~2-4 GB / 1-2 CPU, minutes). `FUZZ_MAX_CONCURRENCY=1` keeps it gentle on a
+shared host; raise it only with headroom.
 
 ## First-run flow
 
