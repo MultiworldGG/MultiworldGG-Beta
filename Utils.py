@@ -272,31 +272,58 @@ def get_available_worlds() -> typing.List[str]:
     from ModuleUpdate import find_world_modules
     
     available_worlds = find_world_modules()
-    # Also add worlds from the custom_worlds directory. Resolved (and mkdir'd)
-    # once in ModuleUpdate so frozen builds point at the user-writable
-    # write_path location and dev mode points at the in-repo dir.
-    from ModuleUpdate import custom_worlds_dir
-    try:
-        for world_file in custom_worlds_dir.iterdir():
-            module_name = discover_custom_world_module(world_file)
-            if module_name and module_name not in available_worlds:
-                available_worlds.add(module_name)
-    except Exception as e:
-        update_logger.warning(f"Error checking custom worlds location: {e}")
-
+    # Register worlds from the custom_worlds directory so they show up in the
+    # index and as selectable. register_custom_worlds() skips non-world files
+    # (README.txt, etc.) and never lets one bad file abort the whole scan.
+    available_worlds.update(register_custom_worlds())
     return list(sorted(available_worlds))
 
+
+def register_custom_worlds() -> typing.List[str]:
+    """Scan the custom_worlds directory and register each world's manifest in the
+    in-memory GameIndex so it is selectable. Idempotent and import-free: only the
+    apworld/zip manifest is read, never the Python module (they're zip files).
+    Files that aren't a recognized world archive (README.txt, stray files) are
+    skipped, and a single unreadable file never aborts the rest of the scan.
+    Returns the module names that were found.
+
+    custom_worlds_dir is resolved (and mkdir'd) once in ModuleUpdate so frozen
+    builds point at the user-writable write_path location and dev mode points at
+    the in-repo dir.
+    """
+    from ModuleUpdate import custom_worlds_dir
+    found: typing.List[str] = []
+    if not custom_worlds_dir.exists():
+        return found
+    for world_file in custom_worlds_dir.iterdir():
+        try:
+            module_name = discover_custom_world_module(world_file)
+        except Exception as e:
+            update_logger.warning(f"Skipping custom world {world_file.name}: {e}")
+            continue
+        if module_name and module_name not in found:
+            found.append(module_name)
+    return found
+
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
-    """Add worlds from the custom_worlds directory to the game index."""
+    """Register a single custom world's manifest in the in-memory GameIndex and
+    return its module name. Returns None for anything that isn't a recognized
+    world archive (e.g. a README.txt), so callers can scan a directory without
+    tripping over stray files. No Python import happens — only the zip manifest
+    is read."""
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
-    
+
+    if not custom_world.is_file():
+        return None
+
     if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
         with zipfile.ZipFile(custom_world, 'r') as zipf:
-            for name in zipf.infolist():
-                if name.filename.endswith("archipelago.json"):
-                    apmanifest_path = name
-                    break
+            apmanifest_path = next(
+                (name for name in zipf.infolist()
+                 if name.filename.endswith("archipelago.json")), None)
+            if apmanifest_path is None:
+                return None
             module_name = apmanifest_path.filename.split("/")[1].replace("-", "_")
             metadata = json.loads(zipf.read(apmanifest_path))
             metadata["game_name"] = metadata.pop("game", module_name)
@@ -307,6 +334,7 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
                 # still see it as a discovered world.
                 return module_name
             GameIndex.add_game(module_name, metadata)
+            return module_name
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
             module_name = custom_world.stem
@@ -319,7 +347,9 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
                 # still see it as a discovered world.
                 return module_name
             GameIndex.add_game(module_name, manifest)
-    return module_name if module_name else None
+            return module_name
+    # Not a recognized world archive (e.g. a README.txt or stray file).
+    return None
 
 
 def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
