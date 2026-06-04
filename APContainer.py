@@ -114,7 +114,6 @@ class APContainer:
 
     def get_manifest(self) -> dict[str, Any]:
         return {
-            # minimum version of patch system expected for patching to be successful
             "compatible_version": 5,
             "version": container_version,
         }
@@ -198,7 +197,7 @@ class APPlayerContainer(APContainer):
     def get_manifest(self) -> dict[str, Any]:
         manifest = super().get_manifest()
         manifest.update({
-            "server": self.server,  # allow immediate connection to server in multiworld. Empty string otherwise
+            "server": self.server,
             "player": self.player,
             "player_name": self.player_name,
             "game": self.game,

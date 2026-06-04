@@ -145,7 +145,7 @@ class Group:
 
         for k in self.__annotations__:
             if not k.startswith("_") and k not in dct:
-                self._changed = True  # key missing from host.yaml
+                self._changed = True
 
         for k, v in dct.items():
             # don't do getattr to stay lazy with world group init/loading
@@ -186,19 +186,15 @@ class Group:
                 for cls in candidates:
                     assert isinstance(cls, type), f"{self.__class__.__name__}.{k}: type {cls} not supported in settings"
                     if v is None and cls is none_type:
-                        # assign None, i.e. from Optional
                         setattr(self, k, v)
                         break
                     if cls is bool and isinstance(v, bool):
-                        # assign bool - special handling because issubclass(int, bool) is True
                         setattr(self, k, v)
                         break
                     if cls is not bool and issubclass(cls, type(v)):
-                        # upcast, i.e. int -> IntEnum, str -> APPathLib
                         setattr(self, k, cls.__call__(v))
                         break
                     if issubclass(cls, (tuple, set)) and isinstance(v, list):
-                        # convert or upcast from list
                         setattr(self, k, cls.__call__(v))
                         break
                 else:

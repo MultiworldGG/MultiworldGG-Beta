@@ -62,11 +62,11 @@ class SlotType(ByValue, enum.IntFlag):
 
 
 class Permission(ByValue, enum.IntFlag):
-    disabled = 0b000  # 0, completely disables access
-    enabled = 0b001  # 1, allows manual use
-    goal = 0b010  # 2, allows manual use after goal completion
-    auto = 0b110  # 6, forces use after goal completion, only works for release
-    auto_enabled = 0b111  # 7, forces use after goal completion, allows manual use any time
+    disabled = 0b000
+    enabled = 0b001
+    goal = 0b010
+    auto = 0b110
+    auto_enabled = 0b111
 
     @staticmethod
     def from_text(text: str):
@@ -93,7 +93,7 @@ class NetworkSlot(typing.NamedTuple):
     name: str
     game: str
     type: SlotType
-    group_members: Sequence[int] = ()  # only populated if type == group
+    group_members: Sequence[int] = ()
 
 
 class NetworkItem(typing.NamedTuple):
@@ -128,7 +128,6 @@ def convert_to_base_types(obj: typing.Any) -> _base_types:
         return {convert_to_base_types(key): convert_to_base_types(value) for key, value in obj.items()}
     elif obj is None or type(obj) in (str, int, float, bool):
         return obj
-    # unwrap simple types to their base, such as StrEnum
     elif isinstance(obj, str):
         return str(obj)
     elif isinstance(obj, int):
@@ -282,12 +281,12 @@ class JSONtoTextParser(metaclass=HandlerMeta):
     def _handle_item_name(self, node: JSONMessagePart):
         flags = node.get("flags", 0)
         if flags == 0:
-            node["color"] = 'regular_item_color' # filler
+            node["color"] = 'regular_item_color'
         elif flags & 0b00010:  # useful
             node["color"] = 'useful_item_color'  # lime for useful items
-        if flags & 0b00100:  # "useful trap" gets marked trap
+        if flags & 0b00100:
             node["color"] = 'trap_item_color'  # salmon for traps
-        elif flags & 0b00001:  # progression is the third flag checked, so it can overwrite. 
+        elif flags & 0b00001:
             # "useful progression" gets marked progression
             node["color"] = 'progression_item_color'  # "dulled" gold for regular progression
             if flags & 0b10000:  # deprioritized, but still progression (skulls etc)

@@ -124,10 +124,8 @@ class UIHint:
         flag_enum = MWGGUIHintStatus(flag) if not isinstance(flag, MWGGUIHintStatus) else flag
 
         if value:
-            # Set the flag by combining with existing flags using bitwise OR
             self.mwgg_hint_status = self.mwgg_hint_status | flag_enum
         else:
-            # Clear the flag by using bitwise AND with the inverted flag
             self.mwgg_hint_status = self.mwgg_hint_status & ~flag_enum
 
         # Update the individual boolean properties
@@ -174,7 +172,7 @@ class UIHint:
             return HintStatus.HINT_PRIORITY
         elif self.item_flags & ItemClassification.trap:
             return HintStatus.HINT_AVOID
-        else:  # useful or filler
+        else:
             return HintStatus.HINT_NO_PRIORITY
 
     @staticmethod
@@ -188,17 +186,17 @@ class UIHint:
         Returns:
             A string describing the item's classification (Progression, Useful, Trap, or Filler)
         """
-        if flags & ItemClassification.progression:  # Check for progression flag first!
+        if flags & ItemClassification.progression:
             # "useful progression" gets marked progression
-            if flags & ItemClassification.deprioritized:  # deprioritized, but still progression (skulls etc)
+            if flags & ItemClassification.deprioritized:
                 return "Progression - Logically Relevant"
-            elif flags & ItemClassification.skip_balancing:  # skip_balancing bit set on a priority item: macguffin
+            elif flags & ItemClassification.skip_balancing:
                 return "Progression - Requried for Goal"
             else:
                 return "Progression"
-        elif flags & ItemClassification.useful:  # useful
+        elif flags & ItemClassification.useful:
             return "Useful"
-        elif flags & ItemClassification.trap:  # "useful trap" gets marked trap
+        elif flags & ItemClassification.trap:
             return "Trap"
         else:
             return "Filler"

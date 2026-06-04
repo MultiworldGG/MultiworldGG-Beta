@@ -131,7 +131,7 @@ modify_functions = {
     "replace": lambda old, new: new,
     "default": lambda old, new: old,
     # numeric:
-    "add": operator.add,  # add together two objects, using python's "+" operator (works on strings and lists as append)
+    "add": operator.add,
     "mul": operator.mul,
     "pow": operator.pow,
     "mod": operator.mod,
@@ -1205,7 +1205,7 @@ def register_location_checks(ctx: Context, team: int, slot: int, locations: typi
                              count_activity: bool = True):
     slot_locations = ctx.locations[slot]
     new_locations = set(locations) - ctx.location_checks[team, slot]
-    new_locations.intersection_update(slot_locations)  # ignore location IDs unknown to this multidata
+    new_locations.intersection_update(slot_locations)
     if new_locations:
         if count_activity:
             ctx.client_activity_timers[team, slot] = datetime.datetime.now(datetime.timezone.utc)

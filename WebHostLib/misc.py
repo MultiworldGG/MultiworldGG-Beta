@@ -51,7 +51,6 @@ def format_authors_string(authors: list[str]) -> str:
         return authors[0]
     if len(authors) == 2:
         return f"{authors[0]} & {authors[1]}"
-    # For 3+ authors: "Author1, Author2, Author3 & Author4"
     return f"{', '.join(authors[:-1])} & {authors[-1]}"
 
 
@@ -437,7 +436,7 @@ def legal():
 
 
 def _read_log(log: IO[Any], offset: int = 0) -> Iterator[bytes]:
-    marker = log.read(3)  # skip optional BOM
+    marker = log.read(3)
     if marker != b'\xEF\xBB\xBF':
         log.seek(0, os.SEEK_SET)
     log.seek(offset, os.SEEK_CUR)

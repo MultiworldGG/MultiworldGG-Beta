@@ -87,7 +87,7 @@ def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
                 try:
                     selectable = int(weight) > 0
                 except (TypeError, ValueError):
-                    selectable = True  # unparseable weight: keep the candidate
+                    selectable = True
                 if selectable:
                     expanded.append(name)
         elif isinstance(entry, (list, tuple)):
@@ -1161,7 +1161,6 @@ class RestrictedUnpickler(pickle.Unpickler):
             if issubclass(obj, (self.options_module.Option, self.options_module.PlandoConnection,
                                 self.options_module.PlandoItem, self.options_module.PlandoText)):
                 return obj
-        # Forbid everything else.
         raise pickle.UnpicklingError(f"global '{module}.{name}' is forbidden")
 
 
@@ -1283,7 +1282,7 @@ def get_fuzzy_results(input_word: str, word_list: typing.Collection[str], limit:
     limit = limit if limit else len(word_list)
     return list(
         map(
-            lambda container: (container[0], int(container[1]*100)),  # convert up to limit to int %
+            lambda container: (container[0], int(container[1]*100)),
             sorted(
                 map(lambda candidate: (candidate, get_fuzzy_ratio(input_word, candidate)), word_list),
                 key=lambda element: element[1],

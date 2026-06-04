@@ -64,7 +64,6 @@ class Base(DeclarativeBase):
                 original_init(self, *args, **kw)
             else:
                 super(cls, self).__init__(*args, **kw)
-            # Auto-add to session so callers don't need an explicit session.add()
             try:
                 session = _get_session()
                 session.add(self)
