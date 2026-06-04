@@ -76,6 +76,35 @@ def test_cleanup_keeps_real_owner_room_and_seed(app, cleanup_on_test_db):
         assert db.session.get(Seed, seed_id) is not None, "real-owner Seed was wrongly deleted"
 
 
+def test_cleanup_deletes_sentinel_owned_room_and_seed(app, cleanup_on_test_db):
+    """A Room/Seed owned by the UUID(int=0) "null owner" sentinel IS deleted.
+
+    This is the deletion half of cleanup()'s contract. It could not be tested
+    until the owner columns moved to sqlalchemy.Uuid: the legacy UUID type stored
+    the all-zero sentinel as integer 0 under SQLite and crashed on read-back, so
+    cleanup() threw before it could delete anything. A regression of
+    ``Room.owner == UUID(int=0)`` to a falsiness guard (which never matches the
+    truthy sentinel) would leave these rows behind.
+    """
+    from WebHostLib.models import db, commit, Room, Seed
+
+    null_owner = UUID(int=0)
+    with app.app_context():
+        seed = Seed(multidata=b"", owner=null_owner)
+        db.session.flush()
+        room = Room(seed_id=seed.id, owner=null_owner, tracker=uuid4())
+        db.session.flush()
+        room_id, seed_id = room.id, seed.id
+        commit()
+
+    cleanup_on_test_db()
+
+    with app.app_context():
+        db.session.expire_all()
+        assert db.session.get(Room, room_id) is None, "sentinel-owned Room was not deleted"
+        assert db.session.get(Seed, seed_id) is None, "sentinel-owned Seed was not deleted"
+
+
 def test_cleanup_deletes_orphan_slot_keeps_attached_slot(app, cleanup_on_test_db):
     """cleanup() deletes only Slots with ``seed_id IS NULL``; attached slots stay.
 
