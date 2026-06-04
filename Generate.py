@@ -207,9 +207,14 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     player_files: dict[int, str] = {}
     player_errors: list[str] = []
     allow_quantity: bool = args.allow_quantity or False
+    # Create the player-files dir on demand (PlayerFilesPath is an optional
+    # folder) and skip documentation/non-config files so a stray README.txt
+    # can't break the whole scan.
+    os.makedirs(args.player_files_path, exist_ok=True)
+    _non_player_suffixes = (".ini", ".txt", ".md")
     for file in os.scandir(args.player_files_path):
         fname = file.name
-        if file.is_file() and not fname.startswith(".") and not fname.lower().endswith(".ini") and \
+        if file.is_file() and not fname.startswith(".") and not fname.lower().endswith(_non_player_suffixes) and \
                 os.path.join(args.player_files_path, fname) not in {args.meta_file_path, args.weights_file_path}:
             path = os.path.join(args.player_files_path, fname)
             try:
