@@ -436,7 +436,7 @@ def legal():
 
 
 def _read_log(log: IO[Any], offset: int = 0) -> Iterator[bytes]:
-    marker = log.read(3)
+    marker = log.read(3)  # skip optional BOM
     if marker != b'\xEF\xBB\xBF':
         log.seek(0, os.SEEK_SET)
     log.seek(offset, os.SEEK_CUR)

@@ -172,7 +172,7 @@ class UIHint:
             return HintStatus.HINT_PRIORITY
         elif self.item_flags & ItemClassification.trap:
             return HintStatus.HINT_AVOID
-        else:
+        else:  # useful or filler
             return HintStatus.HINT_NO_PRIORITY
 
     @staticmethod
@@ -186,17 +186,17 @@ class UIHint:
         Returns:
             A string describing the item's classification (Progression, Useful, Trap, or Filler)
         """
-        if flags & ItemClassification.progression:
+        if flags & ItemClassification.progression:  # Check for progression flag first!
             # "useful progression" gets marked progression
-            if flags & ItemClassification.deprioritized:
+            if flags & ItemClassification.deprioritized:  # deprioritized, but still progression (skulls etc)
                 return "Progression - Logically Relevant"
-            elif flags & ItemClassification.skip_balancing:
+            elif flags & ItemClassification.skip_balancing:  # skip_balancing bit set on a priority item: macguffin
                 return "Progression - Requried for Goal"
             else:
                 return "Progression"
-        elif flags & ItemClassification.useful:
+        elif flags & ItemClassification.useful:  # useful
             return "Useful"
-        elif flags & ItemClassification.trap:
+        elif flags & ItemClassification.trap:  # "useful trap" gets marked trap
             return "Trap"
         else:
             return "Filler"

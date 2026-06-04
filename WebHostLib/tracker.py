@@ -311,7 +311,7 @@ def _process_if_request_valid(incoming_request: Request, room: Optional[Room]) -
     if if_modified_str:
         if_modified = parsedate_to_datetime(if_modified_str)
         if if_modified.tzinfo is None:
-            abort(400)
+            abort(400)  # standard requires "GMT" timezone
         # database may use datetime.utcnow(), which is timezone-naive. convert to timezone-aware.
         last_activity = room.last_activity
         if last_activity.tzinfo is None:

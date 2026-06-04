@@ -77,7 +77,7 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument('--multi', default=defaults.players, type=lambda value: max(int(value), 1))
     parser.add_argument('--spoiler', type=int, default=defaults.spoiler)
     parser.add_argument('--outputpath', default=settings.general_options.output_path,
-                        help="Path to output folder. Absolute or relative to cwd.")
+                        help="Path to output folder. Absolute or relative to cwd.")  # absolute or relative to cwd
     parser.add_argument('--outputname', help="Name for the output files.")
     parser.add_argument('--allow-quantity', action="store_true", default=defaults.allow_quantity,
                         help='Allows the use of the quantity option in yamls. Default is the set value in the host.yaml.')

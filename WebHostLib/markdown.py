@@ -77,7 +77,7 @@ def render_markdown(path: str, img_url_base: str | None = None) -> str:
                 assert isinstance(text, str)
                 unique_id = heading_id(text)
                 tok["attrs"]["id"] = unique_id
-                tok["text"] = f"<a href=\"#{unique_id}\">{text}</a>"
+                tok["text"] = f"<a href=\"#{unique_id}\">{text}</a>"  # make header link to itself
 
     markdown.before_render_hooks.append(id_hook)
     if img_url_base:

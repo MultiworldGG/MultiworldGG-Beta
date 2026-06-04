@@ -197,7 +197,7 @@ class APPlayerContainer(APContainer):
     def get_manifest(self) -> dict[str, Any]:
         manifest = super().get_manifest()
         manifest.update({
-            "server": self.server,
+            "server": self.server,  # allow immediate connection to server in multiworld. Empty string otherwise
             "player": self.player,
             "player_name": self.player_name,
             "game": self.game,

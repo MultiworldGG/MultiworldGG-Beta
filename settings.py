@@ -145,7 +145,7 @@ class Group:
 
         for k in self.__annotations__:
             if not k.startswith("_") and k not in dct:
-                self._changed = True
+                self._changed = True  # key missing from host.yaml
 
         for k, v in dct.items():
             # don't do getattr to stay lazy with world group init/loading
