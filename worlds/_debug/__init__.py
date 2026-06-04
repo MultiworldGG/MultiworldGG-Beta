@@ -1,15 +1,15 @@
 from typing import Dict, Any
 
-from BaseClasses import CollectionState, Item, MultiWorld, Region
+from BaseClasses import CollectionState, Item, Location, MultiWorld, Region
 from worlds.AutoWorld import LogicMixin, World
-from .items import item_table
+from .items import item_table, item_data_table
 
 class DebugWorld(World):
     """A minimal debug world with only a few items for testing purposes."""
     game = "debug"
     author = "TreZ"
     hidden = True
-    location_name_to_id = {}
+    location_name_to_id = {f"TestLocation{i}": 999100 + i for i in range(1, 11)}
     item_name_to_id = item_table
     origin_region_name = "TestRegion"
     item_name_groups = {
@@ -20,8 +20,8 @@ class DebugWorld(World):
     }
     
     def create_item(self, name: str) -> "DebugItem":
-        item = DebugItem(name, self.player)
-        return item
+        data = item_data_table[name]
+        return DebugItem(name, data.type, data.code, self.player)
 
     def create_items(self) -> None:
         items_to_create = [
@@ -32,7 +32,10 @@ class DebugWorld(World):
 
     def create_regions(self) -> None:
         test_region = Region("TestRegion", self.player, self.multiworld)
+        for location_name, location_id in self.location_name_to_id.items():
+            test_region.locations.append(DebugLocation(self.player, location_name, location_id, test_region))
         self.multiworld.regions += [test_region]
+        self.multiworld.completion_condition[self.player] = lambda state: True
 
     def set_rules(self) -> None:
         pass
@@ -42,6 +45,10 @@ class DebugWorld(World):
 
 
 class DebugItem(Item):
+    game = "debug"
+
+
+class DebugLocation(Location):
     game = "debug"
 
 

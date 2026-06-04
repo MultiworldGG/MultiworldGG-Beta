@@ -30,7 +30,7 @@ STATIC_REDIRECTS = [
     ("/check",           "/play/validate"),
     ("/lobbies",         "/play/lobbies"),
     ("/user-content",    "/me"),
-    ("/tutorial",        "/learn/tutorials"),
+    ("/tutorial",        "/learn/en/tutorials"),
 ]
 
 
