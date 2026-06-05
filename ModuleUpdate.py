@@ -149,13 +149,23 @@ try:
 except OSError:
     pass
 
+def _scan_custom_worlds() -> None:
+    """Register any .whl/.apworld files in custom_worlds_dir into worlds_files.
+
+    Skipped once a full update has run (those files are handled by the updater).
+    Reads the module-level update_ran / custom_worlds_dir / worlds_files, so tests
+    can monkeypatch them and call this directly instead of re-implementing it.
+    """
+    if update_ran or not custom_worlds_dir.exists():
+        return
+    for world_file in custom_worlds_dir.glob("*.whl"):
+        worlds_files["wheels"].add(str(world_file))
+    for world_file in custom_worlds_dir.glob("*.apworld"):
+        worlds_files["apworlds"].add(str(world_file))
+
+
 # Add wheel files if update hasn't run
-if not update_ran:
-    if custom_worlds_dir.exists():
-        for world_file in custom_worlds_dir.glob("*.whl"):
-            worlds_files["wheels"].add(str(world_file))
-        for world_file in custom_worlds_dir.glob("*.apworld"):
-            worlds_files["apworlds"].add(str(world_file))
+_scan_custom_worlds()
 
 # Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
 python_cmd = sys.executable

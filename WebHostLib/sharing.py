@@ -162,10 +162,8 @@ def accept_invite(token: UUID):
         old_primary = target.owner
         # Hand the keys over.
         target.owner = me
-        # Old primary keeps access as a co-owner (unless they were the same as us).
         if old_primary != me:
             _add_co_owner(invite.target_kind, invite.target_id, old_primary, granted_by=me)
-        # If accepting user was a co-owner before, drop the now-redundant row.
         existing = _co_owner_row(invite.target_kind, invite.target_id, me)
         if existing is not None:
             db.session.delete(existing)
@@ -219,7 +217,6 @@ def _remove_co_owner(kind: str, target_id: UUID, co_owner: UUID):
         abort(403)
     row = _co_owner_row(kind, target_id, co_owner)
     if row is None:
-        # 404 / 200 reveal the same thing here — keep the response shape stable.
         return jsonify({"ok": True})
     db.session.delete(row)
     commit()

@@ -18,7 +18,6 @@ from Utils import utcnow
 from .models import Lobby, Room, Seed, db
 
 
-# Lobby states we consider "active" on the dashboard — anything except CLOSED (-1).
 # Matches the filter the legacy /me handler used.
 _ACTIVE_LOBBY_STATES = (0, 1, 2, 3)
 

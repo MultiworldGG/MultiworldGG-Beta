@@ -196,10 +196,10 @@ def test_resolve_variant_falls_back_to_default_when_undetectable(monkeypatch, re
 # custom_worlds scan -> worlds_files["wheels"] / ["apworlds"]
 # --------------------------------------------------------------------------- #
 def test_custom_worlds_scan_populates_worlds_files(tmp_path, monkeypatch):
-    """The module-load scan (guarded by `not update_ran`) collects every .whl
-    and .apworld in custom_worlds_dir into the two RequirementsSets. Replays the
-    exact scan against the real product objects with update_ran flipped off, then
-    restores update_ran and the sets so the rest of the suite is unaffected.
+    """`ModuleUpdate._scan_custom_worlds()` collects every .whl and .apworld in
+    custom_worlds_dir into the two RequirementsSets (guarded by `not update_ran`).
+    Calls the real product function with update_ran flipped off, then restores
+    update_ran and the sets so the rest of the suite is unaffected.
     """
     wheel = tmp_path / "worlds.example-1.0-py3-none-any.whl"
     apworld = tmp_path / "example.apworld"
@@ -216,18 +216,19 @@ def test_custom_worlds_scan_populates_worlds_files(tmp_path, monkeypatch):
         ModuleUpdate.worlds_files["apworlds"].clear()
         ModuleUpdate.update_ran = False
 
-        # Identical to the module-level scan body in ModuleUpdate (lines ~153-158).
-        if not ModuleUpdate.update_ran and ModuleUpdate.custom_worlds_dir.exists():
-            for world_file in ModuleUpdate.custom_worlds_dir.glob("*.whl"):
-                ModuleUpdate.worlds_files["wheels"].add(str(world_file))
-            for world_file in ModuleUpdate.custom_worlds_dir.glob("*.apworld"):
-                ModuleUpdate.worlds_files["apworlds"].add(str(world_file))
+        ModuleUpdate._scan_custom_worlds()
 
         assert ModuleUpdate.worlds_files["wheels"] == {str(wheel)}
         assert ModuleUpdate.worlds_files["apworlds"] == {str(apworld)}
         # The stray non-world file is collected into neither set.
         assert str(decoy) not in ModuleUpdate.worlds_files["wheels"]
         assert str(decoy) not in ModuleUpdate.worlds_files["apworlds"]
+
+        # The update_ran guard short-circuits the scan (no re-collection after update).
+        ModuleUpdate.worlds_files["wheels"].clear()
+        ModuleUpdate.update_ran = True
+        ModuleUpdate._scan_custom_worlds()
+        assert ModuleUpdate.worlds_files["wheels"] == set()
     finally:
         ModuleUpdate.worlds_files["wheels"].clear()
         ModuleUpdate.worlds_files["wheels"].update(saved_wheels)

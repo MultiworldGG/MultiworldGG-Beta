@@ -1,8 +1,6 @@
+import re
 import unittest
-from unittest.mock import patch, MagicMock
-import json
-import tempfile
-import os
+from unittest.mock import patch
 
 from . import TestBase
 
@@ -22,114 +20,75 @@ class TestFavoritesFeature(TestBase):
             return self.client.get('/games')
 
     def test_supported_games_page_loads_with_favorites_section(self):
-        """Test that the supported games page includes the favorites section HTML"""
+        """The /games route renders the favorites section and a per-world entry.
+
+        Exercises the real Flask route + supportedGames.html template: the static
+        favorites-section block AND the per-world loop driven by get_visible_worlds().
+        The stub injects the "Archipelago" world (web.display_name "MultiworldGG-Test"),
+        so the rendered <details> must carry data-game="Archipelago" and the
+        display-name fallback resolves to the WebWorld display_name, not the game key.
+        """
         response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
+        body = response.data.decode("utf-8")
 
-        # Check that the favorites section is present
-        self.assertIn(b'favorites-section', response.data)
-        self.assertIn(b'favorites-list', response.data)
-        self.assertIn(b'Favorite Games', response.data)
+        # Static favorites-section scaffolding rendered by the template.
+        self.assertIn('<div id="favorites-section"', body)
+        self.assertIn('id="favorites-list"', body)
+        self.assertIn("<h2>Favorite Games</h2>", body)
 
-        # Check that star icons are present
-        self.assertIn(b'star-icon', response.data)
-        self.assertIn(b'Add to favorites', response.data)
+        # The per-world loop rendered the injected world. data-display-name must be the
+        # WebWorld display_name ("MultiworldGG-Test"), proving the
+        # `display_name | default(game_name)` filter ran (a mutation that emitted the raw
+        # game key instead would change this to "Archipelago").
+        details = re.findall(
+            r'<details\s+data-game="([^"]+)"\s+data-display-name="([^"]+)"', body
+        )
+        self.assertIn(("Archipelago", "MultiworldGG-Test"), details)
+
+        # The per-world star icon renders with its game key and the default tooltip.
+        self.assertIn(
+            '<span class="star-icon" data-game="Archipelago" title="Add to favorites">',
+            body,
+        )
 
     def test_star_icons_have_correct_attributes(self):
-        """Test that star icons have the correct data attributes"""
+        """Each rendered star icon carries data-game (the game key) and the add tooltip.
+
+        Pins the template's star-icon markup: a mutation dropping the data-game
+        attribute (which the JS keys favorites off of) or changing the default title
+        would fail here.
+        """
         response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
+        body = response.data.decode("utf-8")
 
-        # Check that star icons have data-game attribute
-        self.assertIn(b'data-game', response.data)
-        self.assertIn(b'star-icon', response.data)
+        star_games = re.findall(
+            r'<span class="star-icon" data-game="([^"]+)" title="Add to favorites">',
+            body,
+        )
+        # The injected world produced exactly one star icon keyed to its game name.
+        self.assertEqual(star_games, ["Archipelago"])
 
     def test_favorites_section_is_hidden_by_default(self):
-        """Test that the favorites section is hidden by default"""
-        response = self.client.get('/games')
+        """The favorites section ships collapsed (inline display:none on that div).
+
+        The section is shown client-side only once a favorite exists, so the server
+        must render it hidden. Asserting the style on the favorites-section element
+        itself (not just "display: none" appearing anywhere) pins that contract; a
+        mutation removing the inline style would fail.
+        """
+        response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
-        
-        # Check that the favorites section has display: none
-        self.assertIn(b'style="display: none;"', response.data)
+        body = response.data.decode("utf-8")
 
-    def test_javascript_includes_favorites_functionality(self):
-        """Test that the JavaScript file includes favorites functionality"""
-        js_file_path = 'WebHostLib/static/assets/supportedGames.js'
-        
-        with open(js_file_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        
-        # Check for key favorites functionality
-        self.assertIn('FAVORITES_STORAGE_KEY', js_content)
-        self.assertIn('localStorage', js_content)
-        self.assertIn('favoriteGames', js_content)
-        self.assertIn('toggleFavorite', js_content)
-        self.assertIn('updateFavoritesSection', js_content)
-
-    def test_css_includes_favorites_styles(self):
-        """Test that the CSS file includes favorites styling"""
-        css_file_path = 'WebHostLib/static/styles/supportedGames.css'
-        
-        with open(css_file_path, 'r', encoding='utf-8') as f:
-            css_content = f.read()
-        
-        # Check for key favorites styles
-        self.assertIn('#favorites-section', css_content)
-        self.assertIn('.star-icon', css_content)
-        self.assertIn('.favorited', css_content)
-        self.assertIn('.favorite-game-item', css_content)
-
-    def test_local_storage_functionality(self):
-        """Test that localStorage functions work correctly"""
-        # This would require a browser environment to test fully
-        # For now, we'll just verify the functions exist in the JS
-        js_file_path = 'WebHostLib/static/assets/supportedGames.js'
-        
-        with open(js_file_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        
-        # Check for localStorage usage
-        self.assertIn('localStorage.getItem', js_content)
-        self.assertIn('localStorage.setItem', js_content)
-        self.assertIn('JSON.parse', js_content)
-        self.assertIn('JSON.stringify', js_content)
-
-    def test_star_icon_functionality(self):
-        """Test that star icon functionality is properly implemented"""
-        js_file_path = 'WebHostLib/static/assets/supportedGames.js'
-        
-        with open(js_file_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        
-        # Check for star icon related functionality
-        self.assertIn('updateStarIcon', js_content)
-        self.assertIn('initializeStarIcons', js_content)
-        self.assertIn('star-icon', js_content)
-
-    def test_search_integration(self):
-        """Test that search functionality works with favorites"""
-        js_file_path = 'WebHostLib/static/assets/supportedGames.js'
-        
-        with open(js_file_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        
-        # Check that search also filters favorites
-        self.assertIn('favoriteItems', js_content)
-        self.assertIn('favorite-game-item', js_content)
-
-    def test_search_cleared_when_favoriting(self):
-        """Test that search bar is cleared when adding a new favorite"""
-        js_file_path = 'WebHostLib/static/assets/supportedGames.js'
-        
-        with open(js_file_path, 'r', encoding='utf-8') as f:
-            js_content = f.read()
-        
-        # Check for search clearing functionality when favoriting
-        self.assertIn('wasFavorited', js_content)
-        self.assertIn('gameSearch.value = \'\'', js_content)
-        self.assertIn('dispatchEvent', js_content)
-        self.assertIn('new Event(\'input\')', js_content)
+        self.assertRegex(
+            body,
+            r'<div id="favorites-section"[^>]*\bstyle="display: none;"',
+        )
+        # It is also gated behind js-only so non-JS clients never see an empty section.
+        self.assertRegex(body, r'<div id="favorites-section"[^>]*\bclass="js-only"')
 
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

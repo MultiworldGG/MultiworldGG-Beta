@@ -297,6 +297,21 @@ class TestLocationChecks(unittest.TestCase):
         # nothing should have been marked
         self.assertEqual(ctx.location_checks[0, 1], set())
 
+    def test_register_location_checks_ignores_unknown_location_ids(self) -> None:
+        ctx = build_context()
+        make_client(ctx, slot=1)
+        # slot 1 only knows locations 10 and 11; 999 is unknown to this multidata
+        MultiServer.register_location_checks(ctx, 0, 1, [10, 999])
+
+        # the unknown id is silently dropped; only the known check is recorded
+        self.assertEqual(ctx.location_checks[0, 1], {10})
+
+        # and the unknown id is not echoed back as a checked location
+        room_updates = [payload[0] for kind, payload in ctx.captured
+                        if kind == "broadcast" and payload and payload[0].get("cmd") == "RoomUpdate"]
+        self.assertTrue(room_updates)
+        self.assertEqual(set(room_updates[-1]["checked_locations"]), {10})
+
 
 class TestSay(unittest.TestCase):
     def test_routes_text_to_message_processor(self) -> None:

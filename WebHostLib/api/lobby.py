@@ -289,7 +289,6 @@ def _extract_game_info(content) -> tuple[str, str, str | None]:
                 if games_req and isinstance(games_req, dict) and game in games_req:
                     constraint = games_req[game]
                     if isinstance(constraint, str):
-                        # A bare version string means "designed for this exact version"
                         requires_version = json.dumps({"exact": constraint})
                     elif isinstance(constraint, dict):
                         # Explicit min/max dict from the YAML

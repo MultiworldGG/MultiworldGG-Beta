@@ -76,14 +76,19 @@ class TestHostFakeRoom(TestBase):
 
     def test_display_log_missing_range(self) -> None:
         """
-        Verify that we get a full response for missing log even if we asked for range.
-        This is required for the JS logic to differentiate between log update and log error message.
+        Verify that a missing log returns a full (non-range) error response even when a Range was asked for.
+        The 200 (not 206) status plus the "does not exist" body is what lets the JS logic differentiate
+        between a partial log update and a log error message.
         """
         with self.app.app_context(), self.app.test_request_context():
             response = self.client.get(url_for("display_log", room=self.room_id), headers={
                 "Range": "bytes=100-"
             })
+            # A present log + Range yields 206 (see test_display_log_range); a missing log must NOT,
+            # so the client treats it as an error message rather than a partial update.
             self.assertEqual(response.status_code, 200)
+            self.assertNotEqual(response.status_code, 206)
+            self.assertIn("does not exist", response.get_data(True))
 
     def test_display_log_denied(self) -> None:
         """Verify that only the owner can see the log."""

@@ -114,7 +114,6 @@ class APContainer:
 
     def get_manifest(self) -> dict[str, Any]:
         return {
-            # minimum version of patch system expected for patching to be successful
             "compatible_version": 5,
             "version": container_version,
         }
