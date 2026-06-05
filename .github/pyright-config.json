@@ -1,5 +1,6 @@
 {
   "include": [
+    "../ModuleUpdate.py",
     "../Patch.py",
     "../rule_builder/cached_world.py",
     "../rule_builder/field_resolvers.py",
