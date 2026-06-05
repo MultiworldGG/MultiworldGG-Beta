@@ -3,7 +3,9 @@
 # imports `worlds.*` (which would otherwise pull the real index from GitHub).
 # See MWClone ModuleUpdate.py for the SKIP_ALL_INSTALLS short-circuit; the shim
 # below provides the GameIndex surface that Utils.set_game_names depends on.
-os.environ["SKIP_ALL_INSTALLS"] = "1"
+# os/sys/ap_path are owned by the host fuzz.py at the splice point; this fragment
+# is never run standalone, so flake8's F821 on those names is suppressed per-line.
+os.environ["SKIP_ALL_INSTALLS"] = "1"  # noqa: F821
 
 import argparse as _bootstrap_argparse
 import json as _bootstrap_json
@@ -27,15 +29,15 @@ _pre_args, _ = _pre_parser.parse_known_args()
 # Spawn workers re-import the module with sys.argv = ['-c', ...] —
 # argparse sees nothing, so fall back to an env var the parent sets.
 _games = _pre_args.game or [
-    s for s in os.environ.get("APFUZZ_GAMES", "").split(",") if s
+    s for s in os.environ.get("APFUZZ_GAMES", "").split(",") if s  # noqa: F821
 ]
 if _games:
-    os.environ["APFUZZ_GAMES"] = ",".join(_games)
+    os.environ["APFUZZ_GAMES"] = ",".join(_games)  # noqa: F821
 
 _name_to_slug: dict = {}
 if _games:
     _search_roots = [
-        _BootstrapPath(ap_path) / "worlds",
+        _BootstrapPath(ap_path) / "worlds",  # noqa: F821
         _BootstrapPath(_bootstrap_sysconfig.get_paths()["purelib"]) / "worlds",
     ]
     for _slug in _games:
@@ -92,7 +94,7 @@ _shim_src = (
 _shim_path = _BootstrapPath(_bootstrap_sysconfig.get_paths()["purelib"]) / "mwgg_igdb.py"
 _shim_path.write_text(_shim_src, encoding="utf-8")
 _bootstrap_importlib.invalidate_caches()
-sys.modules.pop("mwgg_igdb", None)
+sys.modules.pop("mwgg_igdb", None)  # noqa: F821
 
 if _games:
     from Utils import set_game_names
