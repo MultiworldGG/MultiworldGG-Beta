@@ -1036,7 +1036,7 @@ def update_requirements(needed_packages: List[str]) -> None:
             # flagged. The previous per-spec-line `pip install --upgrade <req_line>`
             # ignored sibling constraints and oscillated against check_requirements_satisfied.
             req_pkg_names = {
-                re.split(r'[<>=!~;@\s]', line, 1)[0].strip()
+                re.split(r'[<>=!~;@\s]', line, maxsplit=1)[0].strip()
                 for line in parse_requirements_file(req_file)
             }
             relevant = [p for p in needed_packages if p in req_pkg_names]
