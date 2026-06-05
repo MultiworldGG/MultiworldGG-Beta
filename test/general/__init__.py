@@ -74,6 +74,7 @@ class TestWebWorld(WebWorld):
 
 
 class TestWorld(World):
+    __test__ = False  # a fixture World, not a pytest test class (silences PytestCollectionWarning)
     game = f"Test Game"
     item_name_to_id = {}
     location_name_to_id = {}
