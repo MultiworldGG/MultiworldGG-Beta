@@ -294,10 +294,11 @@ class Rule(Generic[TWorld]):
             elif cached_result is False:
                 # If there are deferred item updates, process them because it could mean this rule needs to be
                 # reevaluated.
-                deferred_updates: set[str]
-                if deferred_updates := state.rule_builder_deferred_item_dependency_updates[self.player]:  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+                deferred_updates = cast(set[str], state.rule_builder_deferred_item_dependency_updates[self.player])  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+                if deferred_updates:
+                    # `world` is the concrete TWorld for this player at runtime; pyright sees only the base World.
                     world = state.multiworld.worlds[self.player]
-                    if not self._process_deferred_item_dependency_updates(world, player_results, deferred_updates):
+                    if not self._process_deferred_item_dependency_updates(world, player_results, deferred_updates):  # pyright: ignore[reportArgumentType]
                         return False
                 else:
                     # There are no deferred updates, so this rule is still cached as False.

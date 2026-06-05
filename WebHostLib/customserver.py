@@ -430,7 +430,11 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
     del ponyconfig
     gc.collect()  # free intermediate objects used during setup
 
-    loop = asyncio.get_event_loop()
+    # This runs as a fresh spawned process (see autolauncher.run_server_process launch),
+    # so create and install its own loop rather than asyncio.get_event_loop() (deprecated
+    # when there is no current loop on 3.12+).
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
 
     async def start_room(room_id):
         with Locker(f"RoomLocker {room_id}"):
