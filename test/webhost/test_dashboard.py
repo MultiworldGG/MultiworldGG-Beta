@@ -133,9 +133,38 @@ class TestGetDashboardData:
         # Only the OPEN lobby counts — CLOSED ones are stripped.
         assert data.stats.open_lobbies == 1
 
-    def test_returns_dashboard_data_dataclass(self, app):
+    def test_returns_dashboard_data_dataclass(
+        self, app, room_factory, lobby_factory, seed_factory
+    ):
+        # Drive the *populated* path so the assertions pin the aggregation
+        # output, not the empty-session early return (which trivially yields
+        # default-constructed dataclasses regardless of the function body).
         session = uuid4()
+        room_factory(owner=session)            # default last_activity=now → Running
+        lobby_factory(owner=session, state=0)  # LOBBY_OPEN
+        seed_factory(owner=session)            # 2nd seed (room_factory made one too)
+
         with app.app_context():
             data = get_dashboard_data(session)
+
         assert isinstance(data, DashboardData)
         assert isinstance(data.stats, DashboardStats)
+
+        # Headline sub-strings are computed from the live rows.
+        assert data.stats.active_rooms_sub == "1 running"
+        assert data.stats.open_lobbies_sub == "1 open"
+        assert data.stats.saved_seeds_sub == "0 with spoilers"
+
+        # The active-rooms cards are (Room, RoomStatus) pairs, and the status
+        # is the one classify_room produced for a fresh (Running) room.
+        assert len(data.active_rooms) == 1
+        room, status = data.active_rooms[0]
+        assert isinstance(status, RoomStatus)
+        assert status.label == "Running"
+        assert status.pill_class == "running"
+        assert room.owner == session
+
+        # total_* mirror the full counts the "View all" links use.
+        assert data.total_active_rooms == 1
+        assert data.total_lobbies == 1
+        assert data.total_seeds == 2

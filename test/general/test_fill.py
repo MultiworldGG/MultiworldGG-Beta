@@ -5,7 +5,7 @@ from Options import Accessibility
 from test.general import generate_items, generate_locations, generate_test_multiworld
 from Fill import FillError, balance_multiworld_progression, fill_restrictive, \
     distribute_early_items, distribute_items_restrictive
-from BaseClasses import Entrance, LocationProgressType, MultiWorld, Region, Item, Location, \
+from BaseClasses import CollectionState, Entrance, LocationProgressType, MultiWorld, Region, Item, Location, \
     ItemClassification
 from worlds.generic.Rules import CollectionRule, add_item_rule, locality_rules, set_rule
 
@@ -344,7 +344,14 @@ class TestFillRestrictive(unittest.TestCase):
         self.assertEqual(player2.locations[1].item, player1.prog_items[1])
 
     def test_cross_world_entrance_rules_fill(self):
-        """Test that entrance rules with cross-world logic can be filled"""
+        """Test that fill respects an entrance rule gated on another world's item.
+
+        player1's second region is gated behind player2_items[0]. Reverse fill must
+        place that gating item in the ungated region so the gated region opens; the
+        only winnable layout puts items[0] in the shallow location and items[1] in
+        the gated one. Asserting the exact placement plus winnability fails if the
+        cross-world logic dependency or the swap/ordering is broken.
+        """
         multiworld = generate_test_multiworld(2)
         player1 = generate_player_data(multiworld, 1)
         player2 = generate_player_data(multiworld, 2, prog_item_count=2)
@@ -356,7 +363,10 @@ class TestFillRestrictive(unittest.TestCase):
             names(player2_items), player2.id)
 
         r1 = player1.generate_region(player1.menu, 1)
-        player1.generate_region(r1, 1, lambda state: state.has(player2_items[0].name, player2.id))
+        gated_region = player1.generate_region(
+            r1, 1, lambda state: state.has(player2_items[0].name, player2.id))
+        shallow_location = r1.locations[0]
+        gated_location = gated_region.locations[0]
 
         # player1 is logically dependent on player2's items.
         multiworld.register_logic_dependency(1, 2)
@@ -366,8 +376,30 @@ class TestFillRestrictive(unittest.TestCase):
         fill_restrictive(multiworld, multiworld.state,
                          locations, player2.prog_items)
 
+        # Both items must be placed (item pool drained, both locations filled).
+        self.assertEqual([], player2.prog_items)
+        self.assertEqual([], multiworld.get_unfilled_locations())
+        # The gating item cannot gate itself, so it goes in the ungated location.
+        self.assertEqual(shallow_location.item, player2_items[0])
+        self.assertEqual(gated_location.item, player2_items[1])
+        # The resulting seed is actually beatable from an empty state...
+        self.assertTrue(multiworld.can_beat_game())
+        # ...and every placed location is reachable (full accessibility upheld).
+        sweep_state = CollectionState(multiworld)
+        sweep_state.sweep_for_advancements()
+        self.assertEqual(
+            sorted(names(multiworld.get_reachable_locations(sweep_state))),
+            sorted(names(multiworld.get_filled_locations())))
+
     def test_cross_world_location_rules_fill(self):
-        """Test that location rules with cross-world logic can be filled"""
+        """Test that fill respects a location rule gated on another world's item.
+
+        player1.locations[1] is gated behind player2_items[0]. The gating item must
+        not land on the location it gates, so the only winnable layout puts items[0]
+        on the ungated location and items[1] on the gated one. Asserting the exact
+        placement plus winnability fails if the cross-world logic dependency or the
+        swap/ordering is broken.
+        """
         multiworld = generate_test_multiworld(2)
         player1 = generate_player_data(multiworld, 1, location_count=2)
         player2 = generate_player_data(multiworld, 2, prog_item_count=2)
@@ -389,8 +421,30 @@ class TestFillRestrictive(unittest.TestCase):
         fill_restrictive(multiworld, multiworld.state,
                          locations, player2.prog_items)
 
+        # Both items must be placed (item pool drained, both locations filled).
+        self.assertEqual([], player2.prog_items)
+        self.assertEqual([], multiworld.get_unfilled_locations())
+        # The gating item cannot gate itself, so it goes in the ungated location.
+        self.assertEqual(player1.locations[0].item, player2_items[0])
+        self.assertEqual(player1.locations[1].item, player2_items[1])
+        # The resulting seed is actually beatable from an empty state...
+        self.assertTrue(multiworld.can_beat_game())
+        # ...and every placed location is reachable (full accessibility upheld).
+        sweep_state = CollectionState(multiworld)
+        sweep_state.sweep_for_advancements()
+        self.assertEqual(
+            sorted(names(multiworld.get_reachable_locations(sweep_state))),
+            sorted(names(multiworld.get_filled_locations())))
+
     def test_restrictive_progress(self):
-        """Test that various spheres with different requirements can be filled"""
+        """Test that fill solves a chain of regions each gated behind earlier items.
+
+        25 progression items must fill 25 locations spread over five regions, each
+        region (after the first) gated behind a distinct five-item batch. Only a
+        correct sphere-by-sphere reverse fill produces a layout where every item is
+        placed and every location stays reachable; a sphere/ordering bug would either
+        leave items unplaced or strand a gated region.
+        """
         multiworld = generate_test_multiworld()
         player1 = generate_player_data(multiworld, 1, prog_item_count=25)
         items = player1.prog_items.copy()
@@ -408,9 +462,20 @@ class TestFillRestrictive(unittest.TestCase):
             names(items[17:22]), player1.id))
 
         locations = multiworld.get_unfilled_locations()
+        self.assertEqual(len(locations), 25)
 
         fill_restrictive(multiworld, multiworld.state,
                          locations, player1.prog_items)
+
+        # Every item was placed into a location (nothing left unplaced or unfilled).
+        self.assertEqual([], player1.prog_items)
+        self.assertEqual([], multiworld.get_unfilled_locations())
+        self.assertEqual(len(multiworld.get_filled_locations()), 25)
+        # The full sphere chain is solvable: beatable from empty and fully reachable.
+        self.assertTrue(multiworld.can_beat_game())
+        sweep_state = CollectionState(multiworld)
+        sweep_state.sweep_for_advancements()
+        self.assertEqual(len(multiworld.get_reachable_locations(sweep_state)), 25)
 
     def test_swap_to_earlier_location_with_item_rule(self):
         """Test that item swap happens and works as intended"""

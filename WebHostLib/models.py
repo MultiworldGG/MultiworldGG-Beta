@@ -11,7 +11,15 @@ from uuid import UUID, uuid4
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import (
-    Boolean, DateTime, Integer, LargeBinary, String, Text, UUID as SA_UUID,
+    # Use the 2.0 ``Uuid`` (not the legacy ``UUID``): on SQLite the legacy type
+    # maps to a NUMERIC-affinity column, so an all-digit-hex UUID (e.g. the
+    # all-zero UUID(int=0) "null owner" sentinel) is coerced to an int/float on
+    # write and crashes on read ("'int' object has no attribute 'replace'"),
+    # taking down autolauncher.cleanup(). ``Uuid`` stores hex TEXT on SQLite and
+    # native UUID on Postgres, round-tripping every value. Existing 32-char-hex
+    # rows read back identically; only legacy SQLite DBs with already-coerced
+    # sentinel rows need their owner columns recreated (see PR notes).
+    Boolean, DateTime, Integer, LargeBinary, String, Text, Uuid as SA_UUID,
     ForeignKey,
 )
 from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship, deferred
@@ -64,7 +72,6 @@ class Base(DeclarativeBase):
                 original_init(self, *args, **kw)
             else:
                 super(cls, self).__init__(*args, **kw)
-            # Auto-add to session so callers don't need an explicit session.add()
             try:
                 session = _get_session()
                 session.add(self)

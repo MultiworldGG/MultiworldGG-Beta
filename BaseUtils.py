@@ -71,12 +71,10 @@ def tuplize_version(version: str) -> Version:
         # If packaging fails to parse, fall back to simple parsing
         pass
     
-    # Simple parsing fallback for backward compatibility.
-    # Handles PEP 440 pre-release suffixes (e.g. "0.8.0b7" → 0.8.0) by stripping
-    # any non-digit suffix from each component. Without this, frozen builds that
-    # don't bundle the `packaging` library would crash on int("0b7") here and
-    # fall through to Version(0, 0, 0) — which causes every Connect packet to
-    # send Version(0,0,0) and get refused with IncompatibleVersion.
+    # Without this, frozen builds that don't bundle the `packaging` library
+    # would crash on int("0b7") here and fall through to Version(0, 0, 0) —
+    # which causes every Connect packet to send Version(0,0,0) and get refused
+    # with IncompatibleVersion.
     import re
     def _leading_int(part: str) -> int:
         m = re.match(r"^(\d+)", part)

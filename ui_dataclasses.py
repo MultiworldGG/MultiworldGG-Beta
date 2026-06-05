@@ -124,10 +124,8 @@ class UIHint:
         flag_enum = MWGGUIHintStatus(flag) if not isinstance(flag, MWGGUIHintStatus) else flag
 
         if value:
-            # Set the flag by combining with existing flags using bitwise OR
             self.mwgg_hint_status = self.mwgg_hint_status | flag_enum
         else:
-            # Clear the flag by using bitwise AND with the inverted flag
             self.mwgg_hint_status = self.mwgg_hint_status & ~flag_enum
 
         # Update the individual boolean properties

@@ -521,7 +521,6 @@ class AtLeast(NestedRule[TWorld], game="Archipelago"):
                 count -= 1
                 continue
             if child.always_false:
-                # falses can be ignored
                 continue
 
             clauses.append(child)
@@ -529,10 +528,8 @@ class AtLeast(NestedRule[TWorld], game="Archipelago"):
         if len(clauses) < count:
             return False_().resolve(world)
         if count == 1:
-            # Switch to Or which has more optimized handling
             return Or.from_resolved(world, clauses)
         if count == len(clauses):
-            # Switch to And which has more optimized handling
             return And.from_resolved(world, clauses)
         return AtLeast.Resolved(
             tuple(clauses),
@@ -628,10 +625,8 @@ class And(NestedRule[TWorld], game="Archipelago"):
         while children_to_process:
             child = children_to_process.pop(0)
             if child.always_false:
-                # false always wins
                 return child
             if child.always_true:
-                # dedupe trues
                 true_rule = child
                 continue
             if isinstance(child, And.Resolved):
@@ -717,10 +712,8 @@ class Or(NestedRule[TWorld], game="Archipelago"):
         while children_to_process:
             child = children_to_process.pop(0)
             if child.always_true:
-                # true always wins
                 return child
             if child.always_false:
-                # falses can be ignored
                 continue
             if isinstance(child, Or.Resolved):
                 children_to_process.extend(child.children)
@@ -923,7 +916,6 @@ class Has(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has
             return state.prog_items[self.player][self.item_name] >= self.count
 
         @override
@@ -977,7 +969,6 @@ class HasAll(Rule[TWorld], game="Archipelago"):
     @override
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         if len(self.item_names) == 0:
-            # match state.has_all
             return True_().resolve(world)
         if len(self.item_names) == 1:
             return Has(self.item_names[0]).resolve(world)
@@ -1006,7 +997,6 @@ class HasAll(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_all
             player_prog_items = state.prog_items[self.player]
             for item in self.item_names:
                 if not player_prog_items[item]:
@@ -1095,7 +1085,6 @@ class HasAny(Rule[TWorld], game="Archipelago"):
     @override
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         if len(self.item_names) == 0:
-            # match state.has_any
             return False_().resolve(world)
         if len(self.item_names) == 1:
             return Has(self.item_names[0]).resolve(world)
@@ -1124,7 +1113,6 @@ class HasAny(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_any
             player_prog_items = state.prog_items[self.player]
             for item in self.item_names:
                 if player_prog_items[item]:
@@ -1204,7 +1192,6 @@ class HasAllCounts(Rule[TWorld], game="Archipelago"):
     @override
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         if len(self.item_counts) == 0:
-            # match state.has_all_counts
             return True_().resolve(world)
         if len(self.item_counts) == 1:
             item = next(iter(self.item_counts))
@@ -1244,7 +1231,6 @@ class HasAllCounts(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_all_counts
             player_prog_items = state.prog_items[self.player]
             for item, count in self.item_counts:
                 if player_prog_items[item] < count:
@@ -1327,7 +1313,6 @@ class HasAnyCount(Rule[TWorld], game="Archipelago"):
     @override
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         if len(self.item_counts) == 0:
-            # match state.has_any_count
             return False_().resolve(world)
         if len(self.item_counts) == 1:
             item = next(iter(self.item_counts))
@@ -1367,7 +1352,6 @@ class HasAnyCount(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_any_count
             player_prog_items = state.prog_items[self.player]
             for item, count in self.item_counts:
                 if player_prog_items[item] >= count:
@@ -1464,7 +1448,6 @@ class HasFromList(Rule[TWorld], game="Archipelago"):
     @override
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         if len(self.item_names) == 0:
-            # match state.has_from_list
             return False_().resolve(world)
         if len(self.item_names) == 1:
             return Has(self.item_names[0], self.count).resolve(world)
@@ -1495,7 +1478,6 @@ class HasFromList(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_from_list
             found = 0
             player_prog_items = state.prog_items[self.player]
             for item_name in self.item_names:
@@ -1599,7 +1581,6 @@ class HasFromListUnique(Rule[TWorld], game="Archipelago"):
     def _instantiate(self, world: TWorld) -> Rule.Resolved:
         count = resolve_field(self.count, world, int)
         if len(self.item_names) == 0 or len(self.item_names) < count:
-            # match state.has_from_list_unique
             return False_().resolve(world)
         if len(self.item_names) == 1:
             return Has(self.item_names[0]).resolve(world)
@@ -1630,7 +1611,6 @@ class HasFromListUnique(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_from_list_unique
             found = 0
             player_prog_items = state.prog_items[self.player]
             for item_name in self.item_names:
@@ -1739,7 +1719,6 @@ class HasGroup(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_group
             found = 0
             player_prog_items = state.prog_items[self.player]
             for item_name in self.item_names:
@@ -1813,7 +1792,6 @@ class HasGroupUnique(Rule[TWorld], game="Archipelago"):
 
         @override
         def _evaluate(self, state: CollectionState) -> bool:
-            # implementation based on state.has_group_unique
             found = 0
             player_prog_items = state.prog_items[self.player]
             for item_name in self.item_names:
