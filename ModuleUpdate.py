@@ -2,14 +2,12 @@ import sys
 import os
 import subprocess
 import multiprocessing
-import warnings
 import json
 import shutil
 import time
 import datetime
 import zipfile
 import re
-import shutil
 import logging
 import tempfile
 import contextlib
@@ -23,7 +21,8 @@ if not logging.getLogger().hasHandlers():
     logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
 
 from pathlib import Path
-from typing import List, Optional
+from collections.abc import Iterable
+from typing import Any, List, Optional, TypeVar, override
 
 from importlib import invalidate_caches
 from BaseUtils import tuplize_version, Version, local_path, write_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
@@ -112,15 +111,20 @@ _skip_update = bool(
 update_ran = _skip_update
 need_update: List[str] = []
 
-class RequirementsSet(set):
+_T = TypeVar("_T")
+
+
+class RequirementsSet(set[_T]):
     """Custom set that tracks whether updates have been run."""
-    
-    def add(self, e):
+
+    @override
+    def add(self, e: _T) -> None:
         global update_ran
         update_ran &= _skip_update
         super().add(e)
 
-    def update(self, *s):
+    @override
+    def update(self, *s: Iterable[_T]) -> None:
         global update_ran
         update_ran &= _skip_update
         super().update(*s)
@@ -128,8 +132,8 @@ class RequirementsSet(set):
 
 # Initialize file sets
 
-requirements_files = RequirementsSet({Path(local_path("requirements.txt"))})
-worlds_files = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
+requirements_files: RequirementsSet[Path] = RequirementsSet({Path(local_path("requirements.txt"))})
+worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
 # Frozen builds: custom_worlds lives under write_path() — i.e.
 # ~/.local/share/MultiworldGG/custom_worlds on Linux, %LOCALAPPDATA% on Windows,
@@ -206,18 +210,17 @@ def _uv_pip(*args: str) -> list[str]:
     return ["pip", *args, "--python", str(python_cmd)]
 
 
-def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subprocess.CompletedProcess:
+def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subprocess.CompletedProcess[str]:
     """Run `uv <args>` against the first reachable uv binary."""
     global _uv_resolved_path, _uv_unavailable
 
-    kwargs = {
-        "capture_output": True,
-        "text": True,
-        "stdin": subprocess.DEVNULL,
-        "timeout": timeout,
-    }
-    if is_windows():
-        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+    # Windows-only: detach into a new process group with no console window so a uv
+    # subprocess can't flash a window or steal the parent's Ctrl-C. 0 is the
+    # cross-platform no-op default elsewhere.
+    creationflags = (
+        subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        if is_windows() else 0
+    )
 
     if _uv_unavailable:
         return subprocess.CompletedProcess(args, 127, "", "uv not found at any known path")
@@ -227,7 +230,15 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
     for cand in candidates:
         cmd = [cand] + args
         try:
-            result = subprocess.run(cmd, check=check, **kwargs)
+            result = subprocess.run(
+                cmd,
+                check=check,
+                capture_output=True,
+                text=True,
+                stdin=subprocess.DEVNULL,
+                timeout=timeout,
+                creationflags=creationflags,
+            )
         except OSError as e:
             # The candidate is unusable — try next.
             logger.debug(f"uv not usable at {cand} ({e!r}); trying next candidate")
@@ -343,7 +354,7 @@ def parse_requirements_file(file_path: Path) -> List[str]:
     Parse a requirements.txt file and return a list of requirement strings.
     Handles line continuations, comments, and various requirement formats.
     """
-    requirements = []
+    requirements: list[str] = []
     
     with open(file_path, 'r') as f:
         lines = f.readlines()
@@ -439,9 +450,12 @@ def _resolve_variant() -> str:
         variant = _EXPLICIT_VARIANT
     else:
         variant = _detect_installed_variant() or DEFAULT_MWGG_IGDB_VARIANT
-    MWGG_IGDB_VARIANT = variant
-    MWGG_IGDB_BRANCH = f"game_index_{variant}"
-    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+    # These UPPERCASE names are public, documented module globals that are
+    # intentionally reassigned here (callers and tests read ModuleUpdate.MWGG_IGDB_*);
+    # the "constant" rule doesn't apply and renaming would break the public API.
+    MWGG_IGDB_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]
+    MWGG_IGDB_BRANCH = f"game_index_{variant}"  # pyright: ignore[reportConstantRedefinition]
+    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"  # pyright: ignore[reportConstantRedefinition]
     return variant
 
 
@@ -467,7 +481,9 @@ def _igdb_upgraded_recently() -> bool:
     return install_date is not None and install_date == datetime.date.today()
 
 
-def _venv_has_worlds() -> bool:
+# Consumed by the upgrader tools (tools/mwgg_upgrade.py, tools/mcp_mwgg_upgrader.py),
+# so it is unused *within* this module — hence the targeted ignore.
+def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
     try:
         worlds_dir = _venv_worlds_dir()
         return worlds_dir.exists() and any(worlds_dir.iterdir())
@@ -578,7 +594,7 @@ def set_variant(variant: str) -> None:
     installed variant on subsequent _resolve_variant() calls.
     """
     global _EXPLICIT_VARIANT
-    _EXPLICIT_VARIANT = variant
+    _EXPLICIT_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]  # intentional reassignment of the override sentinel
     _resolve_variant()
 
 
@@ -816,7 +832,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         install_mwgg_igdb(upgrade=True, force=True)
 
     index = _get_game_index()
-    games = index.get_all_games() if index is not None else {}
+    games: dict[str, dict[str, Any]] = index.get_all_games() if index is not None else {}
     # Snapshot BEFORE uninstall_worlds: a world properly installed at the current
     # mwgg_igdb tag stays in the set so update=True reinstalls can skip deps.
     installed_world_slugs = {
@@ -912,7 +928,7 @@ def update_world_from_package() -> None:
             import threading
             import queue
 
-            result_queue = queue.Queue()
+            result_queue: queue.Queue[tuple[int, str, str]] = queue.Queue()
 
             def _pip_install_thread():
                 try:
@@ -952,12 +968,14 @@ def update_world_from_package() -> None:
                 new_version: Optional[Version] = None
                 manifest: dict[str, object] = {}
                 try:
-                    apworld_container = APWorldContainer(world)
+                    apworld_container = APWorldContainer(world_path)
                     # Set manifest path to expected location
                     with zipfile.ZipFile(world, 'r') as apworld_zip:
                         manifest = apworld_container.read_contents(apworld_zip)
                     if "world_version" in manifest:
-                        new_version = tuplize_version(manifest["world_version"])
+                        # manifest is untrusted external data (dict[str, object]); coerce the
+                        # value to str so a non-string world_version can't crash tuplize_version.
+                        new_version = tuplize_version(str(manifest["world_version"]))
                         logger.info(f"APworld {world} has version {new_version}")
                     else:
                         logger.info(f"APworld {world} has no world_version specified")
@@ -992,8 +1010,8 @@ def update_world_from_package() -> None:
                 # According to spec: "An APWorld without a world_version is always treated as older than one with a version"
                 if new_version is None and installed_version is not None:
                     logger.info(f"There is a custom apworld file with no world version specified, please remove it from your custom_worlds directory.")
-                elif installed_version is None or new_version > installed_version:
-                    if installed_version is not None:
+                elif installed_version is None or (new_version is not None and new_version > installed_version):
+                    if installed_version is not None and new_version is not None:
                         uninstall_worlds([package_name])
                         logger.info(f"New version {new_version.as_simple_string()} > installed {installed_version.as_simple_string()}, uninstalling old version so new version will be picked up.")
                 else:
@@ -1125,12 +1143,15 @@ def _install_lock():
                 lock_file.seek(0)
                 msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
         else:
+            # fcntl is Unix-only and this branch only runs off-Windows, but the gate
+            # type-checks with pythonPlatform=Windows (where typeshed hides flock/LOCK_*),
+            # so these are platform false positives, not real attribute errors.
             import fcntl
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             try:
                 yield
             finally:
-                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
