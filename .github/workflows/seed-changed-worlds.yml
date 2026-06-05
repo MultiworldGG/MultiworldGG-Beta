@@ -1,0 +1,34 @@
+name: Seed changed-world wheels
+
+# On every push to main that touches worlds/**, hand off to the bulk builder in
+# gen-pymod-release: it diffs the changed worlds and builds + uploads a wheel for
+# each. Build logic + token minting live in gen-pymod-release; this file is just
+# the trigger plus the app credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      base-ref:
+        description: "Base ref to diff against (default: previous commit)"
+        required: false
+        default: ""
+      dry-run:
+        description: "Build wheels but skip the upload"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    # Pin to a tag once gen-pymod-release cuts a release that includes this workflow.
+    uses: MultiworldGG/gen-pymod-release/.github/workflows/build-changed-worlds.yml@main
+    with:
+      base-ref: ${{ github.event.before || inputs.base-ref }}
+      source-ref: ${{ github.sha }}
+      dry-run: ${{ inputs.dry-run || false }}
+      # GitHub App Client ID (Iv23...). Not sensitive — store as an Actions *variable*.
+      upload-client-id: ${{ vars.MWGG_BUILD_APP_CLIENT_ID }}
+    secrets:
+      # PEM private key for that same app.
+      upload-private-key: ${{ secrets.MWGG_BUILD_APP_PRIVATE_KEY }}
