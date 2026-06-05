@@ -133,6 +133,25 @@ class TestGetDashboardData:
         # Only the OPEN lobby counts — CLOSED ones are stripped.
         assert data.stats.open_lobbies == 1
 
+    def test_all_active_lobby_states_counted(self, app):
+        # OPEN, GENERATING, DONE, and LOCKED are all "active" (only CLOSED is
+        # excluded), and the sub-string lists them in the order the source builds.
+        from WebHostLib.models import (
+            Lobby, LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_LOCKED, db, commit,
+        )
+
+        session = uuid4()
+        with app.app_context():
+            Lobby(title="open", owner=session, state=LOBBY_OPEN, meta="{}")
+            Lobby(title="generating", owner=session, state=LOBBY_GENERATING, meta="{}")
+            Lobby(title="done", owner=session, state=LOBBY_DONE, meta="{}")
+            Lobby(title="locked", owner=session, state=LOBBY_LOCKED, meta="{}")
+            commit()
+            data = get_dashboard_data(session)
+
+        assert data.stats.open_lobbies == 4
+        assert data.stats.open_lobbies_sub == "1 open · 1 generating · 1 locked · 1 done"
+
     def test_returns_dashboard_data_dataclass(
         self, app, room_factory, lobby_factory, seed_factory
     ):
