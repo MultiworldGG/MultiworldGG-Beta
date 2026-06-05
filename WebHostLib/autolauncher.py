@@ -254,8 +254,6 @@ def cleanup():
     """delete unowned user-content and expired lobbies"""
     engine = _get_engine()
     with Session(engine) as session:
-        # >>> bool(uuid.UUID(int=0))
-        # True
         null_owner = UUID(int=0)
         rooms_to_delete = session.scalars(
             select(Room).where(Room.owner == null_owner)

@@ -492,8 +492,6 @@ def handle_name(name: str, player: int, name_counter: Counter[str]):
                                                       "NUMBER": (number if number > 1 else ''),
                                                       "player": player,
                                                       "PLAYER": (player if player > 1 else '')})
-    # Run .strip twice for edge case where after the initial .slice new_name has a leading whitespace.
-    # Could cause issues for some clients that cannot handle the additional whitespace.
     new_name = new_name.strip()[:16].strip()
 
     if new_name == "Archipelago" or new_name == "MultiworldGG":
@@ -538,8 +536,6 @@ def update_weights(weights: dict, new_weights: dict, update_type: str, name: str
                                 f" received {type(new_value).__name__}.")
             cleaned_weights[option_name] = cleaned_value
         else:
-            # Options starting with + and - may modify values in-place, and new_weights may be shared by multiple slots
-            # using the same .yaml, so ensure that the new value is a copy.
             cleaned_value = copy.deepcopy(new_weights[option])
             cleaned_weights[option_name] = cleaned_value
     new_options = set(cleaned_weights) - set(weights)

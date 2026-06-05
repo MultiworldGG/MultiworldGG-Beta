@@ -270,7 +270,6 @@ class ERPlacementState:
         target_region = target_entrance.connected_region
 
         self._connect_one_way(source_exit, target_entrance)
-        # if we're doing coupled randomization place the reverse transition as well.
         if self.coupled and source_exit.randomization_type == EntranceType.TWO_WAY:
             for reverse_entrance in source_region.entrances:
                 if reverse_entrance.name == source_exit.name:
@@ -336,7 +335,6 @@ def disconnect_entrance_for_randomization(entrance: Entrance, target_group: int 
 
     # create the needed ER target
     if entrance.randomization_type == EntranceType.TWO_WAY:
-        # for 2-ways, create a target in the parent region with a matching name to support coupling.
         # targets in the child region will be created when the other direction edge is disconnected
         target = parent_region.create_er_target(entrance.name)
     else:

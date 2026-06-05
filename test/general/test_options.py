@@ -85,16 +85,61 @@ class TestOptions(unittest.TestCase):
     #     # TODO test that the group created using these options has the items
 
     def test_item_links_resolve(self):
-        """Test item link option resolves correctly."""
-        item_link_group = [{
+        """Test that ItemLinks.verify expands item groups and fills defaults."""
+        world = AutoWorldRegister.world_types["debug"]
+        plando_options = PlandoOptions.from_option_string("items")
+
+        item_links = ItemLinks.from_any([{
             "name": "ItemLinkTest",
             "item_pool": ["Everything"],
-            "link_replacement": False,
             "replacement_item": None,
-        }]
-        item_links = {1: ItemLinks.from_any(item_link_group), 2: ItemLinks.from_any(item_link_group)}
-        for link in item_links.values():
-            self.assertEqual(link.value[0], item_link_group[0])
+        }])
+        item_links.verify(world, "tester", plando_options)
+        resolved = item_links.value[0]
+
+        # "Everything" is the auto-generated group containing every item of the world.
+        self.assertCountEqual(resolved["item_pool"], world.item_names)
+        self.assertEqual(set(resolved["item_pool"]), set(world.item_names))
+        # verify() fills in link_replacement when the player omits it.
+        self.assertIsNone(resolved["link_replacement"])
+
+    def test_item_links_name_truncated_and_unique(self):
+        """Test that ItemLinks names are truncated to 16 chars and must stay unique."""
+        world = AutoWorldRegister.world_types["debug"]
+        plando_options = PlandoOptions.from_option_string("items")
+
+        # A name longer than 16 characters is truncated to its first 16 (then re-stripped).
+        long_name = ItemLinks.from_any([{
+            "name": "ThisNameIsWayTooLongToFitInSixteen",
+            "item_pool": ["TestItem1"],
+            "replacement_item": None,
+        }])
+        long_name.verify(world, "tester", plando_options)
+        self.assertEqual(long_name.value[0]["name"], "ThisNameIsWayToo")
+
+        # Two links whose names collide after the 16-char truncation are rejected.
+        # "SixteenCharsName" is exactly 16 characters, so both truncate to the same value.
+        colliding = ItemLinks.from_any([
+            {"name": "SixteenCharsNameAlpha", "item_pool": ["TestItem1"], "replacement_item": None},
+            {"name": "SixteenCharsNameBeta", "item_pool": ["TestItem2"], "replacement_item": None},
+        ])
+        with self.assertRaises(Exception) as ctx:
+            colliding.verify(world, "tester", plando_options)
+        self.assertIn("must be unique", str(ctx.exception))
+
+    def test_item_links_unknown_item_rejected(self):
+        """Test that ItemLinks.verify rejects an item that is not in the world."""
+        world = AutoWorldRegister.world_types["debug"]
+        plando_options = PlandoOptions.from_option_string("items")
+
+        bad = ItemLinks.from_any([{
+            "name": "BadPool",
+            "item_pool": ["NotARealItem"],
+            "replacement_item": None,
+        }])
+        with self.assertRaises(Exception) as ctx:
+            bad.verify(world, "tester", plando_options)
+        self.assertIn("NotARealItem", str(ctx.exception))
 
     def test_pickle_dumps_default(self):
         """Test that default option values can be pickled into database for WebHost generation"""
