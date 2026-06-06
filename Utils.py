@@ -111,7 +111,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     game_names = _expand_game_choices(game_names)
     _worlds_to_install = {game: "" for game in game_names}
     _unknown_worlds = []
-    custom_worlds_dir = Path(local_path("custom_worlds"))
+    custom_worlds_dir = ModuleUpdate.custom_worlds_dir
     _unlisted_worlds = [world for world in ModuleUpdate.find_world_modules() if world not in GameIndex.game_names.values()]
     # We only have the module name here, not the game name, and that is buried deep in the metadata
 
@@ -432,7 +432,7 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
                 # dir, so importlib.import_module(worlds.<slug>) now works via the
                 # normal file loader. Just register them with the live GameIndex
                 # so launcher lookups (game_name -> module) resolve cleanly.
-                custom_worlds_dir = Path(local_path("custom_worlds"))
+                custom_worlds_dir = ModuleUpdate.custom_worlds_dir
                 for target in custom_fallbacks:
                     slug = target.removeprefix("worlds.")
                     apworld_file = custom_worlds_dir / f"{slug}.apworld"

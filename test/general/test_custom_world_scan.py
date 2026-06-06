@@ -17,6 +17,7 @@ import importlib
 import json
 import sys
 import zipfile
+from pathlib import Path
 
 import pytest
 
@@ -137,6 +138,25 @@ def test_custom_apworld_scanned_indexed_and_searchable(tmp_path, monkeypatch):
     available = Utils.get_available_worlds()
     assert "sentinel_world" in available       # union preserved
     assert slug in available                   # custom world surfaced as selectable
+
+
+def test_custom_worlds_dir_is_executable_folder_even_when_frozen(monkeypatch):
+    """custom_worlds must resolve next to the executable / source checkout -- the
+    upstream location, and where users actually drop apworlds -- never to
+    write_path()/AppData. Splitting the scan dir from the launch dir is what makes
+    custom worlds silently un-selectable in frozen builds.
+
+    The is_frozen() mock is a tripwire: it has no effect on the current resolver,
+    but if anyone reintroduces an `if is_frozen(): write_path(...)` branch this test
+    fails because the resolved dir would jump to write_path under the mock.
+    """
+    from BaseUtils import write_path
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+
+    resolved = ModuleUpdate._resolve_custom_worlds_dir()
+
+    assert resolved == Path(ModuleUpdate.local_path("custom_worlds"))
+    assert resolved != Path(write_path("custom_worlds"))
 
 
 def test_add_game_indexes_into_search_index():
