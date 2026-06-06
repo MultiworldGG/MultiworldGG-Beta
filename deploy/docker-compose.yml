@@ -229,6 +229,18 @@ services:
       timeout: 5s
       retries: 3
 
+  # Pull-only helper — NOT a runtime service. github-bots spawns the fuzz image
+  # ad-hoc via `docker run`, so `docker compose pull` never fetches it (it isn't
+  # a service). This entry makes `docker compose pull` grab it too; `docker run`
+  # later finds it already local. `entrypoint: ["true"]` makes it exit 0 at once
+  # if `up` ever starts it, and it never restarts. Keep its image expression
+  # IDENTICAL to the github-bots FUZZ_IMAGE above so both resolve to the same ref.
+  # Run `docker compose pull` (authenticated) BEFORE `up` so the image is local.
+  fuzz-image:
+    image: ${FUZZ_IMAGE:-ghcr.io/multiworldgg/multiworldgg-fuzz:latest}
+    entrypoint: ["true"]
+    restart: "no"
+
   # Docker API proxy in front of the host's /var/run/docker.sock.
   #
   # SECURITY: handing the internet-facing bot the raw docker.sock is effectively

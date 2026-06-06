@@ -35,6 +35,7 @@ export type EventReason =
   | "fuzz_bad_payload"
   | "fuzz_not_index_repo"
   | "fuzz_container_error"
+  | "fuzz_image_unavailable"
   | "fuzz_sha_mismatch"
   | "fuzz_timeout"
   | "fuzz_overall_fail"

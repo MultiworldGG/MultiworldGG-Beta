@@ -29,7 +29,7 @@ import {
 import { renderFuzzRegion, upsertFuzzComment } from "../fuzz/comment";
 import { toFuzzJob, validateFuzzPayload } from "../fuzz/payload";
 import { getFuzzQueue } from "../fuzz/queue";
-import { runFuzzContainer, type RunFuzzOptions } from "../fuzz/runner";
+import { ensureImageAvailable, runFuzzContainer, type RunFuzzOptions } from "../fuzz/runner";
 import type { FuzzClientPayload, FuzzWorldResult } from "../fuzz/types";
 
 export interface HandleRepositoryDispatchArgs {
@@ -269,8 +269,34 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
   const options = runnerOptionsFromEnv(runnerLog, signal);
   const results: FuzzWorldResult[] = [];
 
+  // One-time pre-flight: a missing FUZZ_IMAGE would 125 every world with a
+  // cryptic "no result.json". Inspect-or-pull once; if it's truly unavailable,
+  // every world fails fast below with one actionable reason instead of N 125s.
+  const preflight = await ensureImageAvailable(options.image, runnerLog);
+  if (!preflight.ok) {
+    eventLog.emit({
+      kind: "error",
+      source_repo: indexRepoSpec,
+      pr_number: fuzz.pr_number,
+      reason: "fuzz_image_unavailable",
+      message:
+        `FUZZ_IMAGE ${options.image} is not available on the host (${preflight.detail ?? "not present"}); ` +
+        `pull or build it — see deploy/README.md. Failing all ${fuzz.worlds.length} world(s).`,
+    });
+  }
+
   for (const world of fuzz.worlds) {
     const job = toFuzzJob(fuzz, world);
+    if (!preflight.ok) {
+      results.push({
+        slug: job.slug,
+        status: "fail",
+        detail: `${job.slug}: FUZZ_IMAGE ${options.image} unavailable — ${preflight.detail ?? "not present"}`,
+        exitCode: 125,
+        timedOut: false,
+      });
+      continue;
+    }
     try {
       const result = await runFuzzContainer(job, options);
       results.push(result);

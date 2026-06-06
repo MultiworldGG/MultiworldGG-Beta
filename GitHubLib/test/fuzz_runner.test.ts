@@ -12,7 +12,12 @@ vi.mock("child_process", () => ({
   execFile: (...args: unknown[]) => execFileMock(...args),
 }));
 
-import { runFuzzContainer, buildDockerArgs, type RunFuzzOptions } from "../src/fuzz/runner";
+import {
+  runFuzzContainer,
+  buildDockerArgs,
+  ensureImageAvailable,
+  type RunFuzzOptions,
+} from "../src/fuzz/runner";
 import type { FuzzJob } from "../src/fuzz/types";
 
 const VALID_WHEEL =
@@ -366,6 +371,47 @@ describe("runFuzzContainer — abort signal", () => {
     expect(res.timedOut).toBe(false);
     expect(res.detail).toContain("aborted");
     expect(rmIssued).toBe(true);
+  });
+});
+
+describe("ensureImageAvailable — batch image pre-flight", () => {
+  // execFile callback is the 3rd arg for `image inspect` (no opts) and the 4th
+  // for `pull` (opts present); pick whichever is a function.
+  function wire(handler: (args: string[]) => { err: Error | null; stderr?: string }): void {
+    execFileMock.mockImplementation((_file: string, args: string[], a3?: unknown, a4?: unknown) => {
+      const cb = (typeof a3 === "function" ? a3 : a4) as
+        | ((err: Error | null, stdout: string, stderr: string) => void)
+        | undefined;
+      const { err, stderr } = handler(args);
+      queueMicrotask(() => cb?.(err, "", stderr ?? ""));
+      return { kill: vi.fn() } as unknown as ChildProcess;
+    });
+  }
+  const fail = (msg: string) => Object.assign(new Error(msg), { code: 1 }) as Error;
+
+  it("returns ok without pulling when the image is already present", async () => {
+    wire((args) => (args[0] === "image" ? { err: null } : { err: fail("should not pull") }));
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(true);
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "pull")).toBe(false);
+  });
+
+  it("pulls once when absent and returns ok on a successful pull", async () => {
+    wire((args) => (args[0] === "image" ? { err: fail("No such image") } : { err: null }));
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(true);
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "pull")).toBe(true);
+  });
+
+  it("reports docker's pull error when the image is absent and unpullable", async () => {
+    wire((args) =>
+      args[0] === "image"
+        ? { err: fail("No such image") }
+        : { err: fail("exit 1"), stderr: "Error response from daemon: manifest unknown" },
+    );
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(false);
+    expect(res.detail).toContain("manifest unknown");
   });
 });
 

@@ -206,6 +206,44 @@ function firstStderrLine(stderr: string | undefined): string {
   return line.length > 300 ? line.slice(0, 297) + "..." : line;
 }
 
+/**
+ * Batch pre-flight: confirm FUZZ_IMAGE is usable before spawning N containers.
+ * `docker image inspect` first; if it's not local, try ONE `docker pull` — so a
+ * public image is fetched once (instead of N racing auto-pulls) and a missing or
+ * private one fails ONCE with docker's real reason instead of N cryptic exit-125s
+ * with no result.json. Resolves `{ ok }`; never throws.
+ */
+export function ensureImageAvailable(
+  image: string,
+  log: (m: string) => void,
+): Promise<{ ok: boolean; detail?: string }> {
+  return new Promise((resolve) => {
+    execFile("docker", ["image", "inspect", image], (inspectErr) => {
+      if (!inspectErr) {
+        resolve({ ok: true });
+        return;
+      }
+      log(`fuzz: image ${image} not present locally; pulling once…`);
+      execFile(
+        "docker",
+        ["pull", image],
+        { maxBuffer: 16 * 1024 * 1024 },
+        (pullErr, _stdout, stderr) => {
+          if (!pullErr) {
+            log(`fuzz: pulled ${image}`);
+            resolve({ ok: true });
+            return;
+          }
+          const detail =
+            firstStderrLine(stderr) ||
+            (pullErr instanceof Error ? pullErr.message : String(pullErr));
+          resolve({ ok: false, detail });
+        },
+      );
+    });
+  });
+}
+
 interface ContainerResult {
   status: FuzzStatus;
   stats?: Record<string, number>;
