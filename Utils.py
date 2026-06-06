@@ -299,7 +299,7 @@ def register_custom_worlds() -> typing.List[str]:
         try:
             module_name = discover_custom_world_module(world_file)
         except Exception as e:
-            update_logger.warning(f"Skipping custom world {world_file.name}: {e}")
+            update_logger.warning(f"Skipping custom world {world_file.name}: {e}", exc_info=True)
             continue
         if module_name and module_name not in found:
             found.append(module_name)
