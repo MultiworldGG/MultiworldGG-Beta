@@ -485,10 +485,10 @@ function bundleIndexManifest(game: string): string {
   return JSON.stringify({ game, world_version: "1.0.0", igdb_id: 1, module_location: "old" }, null, 2);
 }
 
-// A single Oliver-token Index client for the bundle path: repo/git/pulls/issues
-// + graphql over a tiny present-manifests map. `present[path]` decides whether a
-// world is on the Index (copy+edit) or skipped.
-function makeBundleIndexOctokit(present: Record<string, string>, writes: string[]): any {
+// Karen-token Index client for the bundle path: repo/git ops over a tiny
+// present-manifests map. `present[path]` decides whether a world is on the Index
+// (copy+edit) or skipped.
+function makeBundleKarenIndexOctokit(present: Record<string, string>, writes: string[]): any {
   return {
     rest: {
       repos: {
@@ -521,38 +521,24 @@ function makeBundleIndexOctokit(present: Record<string, string>, writes: string[
           return { data: {} };
         },
       },
-      pulls: {
-        list: async () => ({ data: [] }),
-        create: async () => {
-          writes.push("pulls.create");
-          return { data: { number: 99, node_id: "PR_node_99" } };
-        },
-        update: async () => {
-          writes.push("pulls.update");
-          return { data: {} };
-        },
-      },
-      issues: {
-        addLabels: async ({ labels }: { labels: string[] }) => {
-          writes.push(`labels:${labels.join(",")}`);
-          return { data: [] };
-        },
-      },
-    },
-    graphql: async () => {
-      writes.push("graphql");
-      return {};
     },
   };
 }
 
-// Oliver does the whole bundle job; Karen must never be authenticated.
+// Same split as single-world: Karen commits, Oliver opens. Both share one writes
+// log so assertions can check createRef/commit (Karen) and pulls.create (Oliver).
 function makeBundleProbots(present: Record<string, string>, writes: string[]) {
-  const oliverIndexOctokit = makeBundleIndexOctokit(present, writes);
+  const oliverIndexOctokit = makeOliverIndexOctokit(writes);
+  const karenIndexOctokit = makeBundleKarenIndexOctokit(present, writes);
   const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
   const karenProbot = {
-    auth: vi.fn(() => {
-      throw new Error("Karen must not be authenticated on the bundle path");
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
     }),
     log: fakeLog,
   } as any;
@@ -584,7 +570,6 @@ describe("handleReleasePublished — bundled multi-world release", () => {
     expect(writes).toContain("createRef");
     expect(writes.filter((w) => w.startsWith("commit:worlds/")).length).toBe(3);
     expect(writes).toContain("pulls.create");
-    expect(karenProbot.auth).not.toHaveBeenCalled(); // bundle never touches Karen
 
     const events = readEvents();
     expect(events.find((e) => e.kind === "ok")).toMatchObject({
@@ -708,6 +693,5 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       expect.objectContaining({ kind: "skip", reason: "bundle_no_valid_worlds" }),
     );
     expect(writes).not.toContain("pulls.create");
-    expect(karenProbot.auth).not.toHaveBeenCalled();
   });
 });

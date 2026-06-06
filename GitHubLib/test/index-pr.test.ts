@@ -707,6 +707,7 @@ function bundleWorld(slug: string) {
 }
 
 const bundleBaseOpts = (worlds: ReturnType<typeof bundleWorld>[]) => ({
+  karenData: KAREN_DATA,
   oliverData: OLIVER_DATA,
   indexOwner: INDEX_OWNER,
   indexName: INDEX_NAME,
@@ -727,19 +728,12 @@ function manifestWrite(state: FakeIndex, path: string) {
   return w ? JSON.parse(w.payload.content) : undefined;
 }
 
-// The bundle drives ALL Index ops with Oliver's token, so the test client needs
-// Karen's repo/git ops AND Oliver's pulls/issues/graphql on one octokit.
-function makeBundleOliverOctokit(state: FakeIndex, opts: { graphqlThrows?: Error } = {}) {
-  const karen = makeKarenOctokit(state);
-  const oliver = makeOliverOctokit(state, INDEX_OWNER, opts);
+// Same split as single-world: Karen for repo/git/commits, Oliver for
+// pulls/issues/graphql — two clients over one shared FakeIndex state.
+function makeBundleOctokits(state: FakeIndex, opts: { graphqlThrows?: Error } = {}) {
   return {
-    rest: {
-      repos: karen.rest.repos,
-      git: karen.rest.git,
-      pulls: oliver.rest.pulls,
-      issues: oliver.rest.issues,
-    },
-    graphql: oliver.graphql,
+    karenOctokit: makeKarenOctokit(state),
+    oliverOctokit: makeOliverOctokit(state, INDEX_OWNER, opts),
   };
 }
 
@@ -770,10 +764,10 @@ describe("openOrUpdateBundleIndexPR", () => {
         },
       },
     });
-    const oliverOctokit = makeBundleOliverOctokit(state);
+    const octokits = makeBundleOctokits(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("oot")]),
-      oliverOctokit,
+      ...octokits,
     });
 
     expect(result.opened).toBe(true);
@@ -809,8 +803,8 @@ describe("openOrUpdateBundleIndexPR", () => {
     const state = makeFakeIndex({
       files: { main: { "worlds/dk64.json": { content: fourSpace, sha: "dk" } } },
     });
-    const oliverOctokit = makeBundleOliverOctokit(state);
-    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), oliverOctokit });
+    const octokits = makeBundleOctokits(state);
+    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), ...octokits });
 
     const write = state.writes.find((w) => w.kind === "file" && w.payload.path === "worlds/dk64.json");
     expect(write?.payload.content).toContain('\n    "game"'); // 4-space indent retained
@@ -820,10 +814,10 @@ describe("openOrUpdateBundleIndexPR", () => {
     const state = makeFakeIndex({
       files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
     });
-    const oliverOctokit = makeBundleOliverOctokit(state);
+    const octokits = makeBundleOctokits(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("newbie")]),
-      oliverOctokit,
+      ...octokits,
     });
 
     expect(result.opened).toBe(true);
@@ -835,10 +829,10 @@ describe("openOrUpdateBundleIndexPR", () => {
 
   it("opens no PR when no bundled world is on the Index", async () => {
     const state = makeFakeIndex(); // empty main
-    const oliverOctokit = makeBundleOliverOctokit(state);
+    const octokits = makeBundleOctokits(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta")]),
-      oliverOctokit,
+      ...octokits,
     });
 
     expect(result.opened).toBe(false);
@@ -858,10 +852,10 @@ describe("openOrUpdateBundleIndexPR", () => {
       },
       openPRs: [{ number: 42, head: branch }],
     });
-    const oliverOctokit = makeBundleOliverOctokit(state);
+    const octokits = makeBundleOctokits(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64")]),
-      oliverOctokit,
+      ...octokits,
     });
 
     expect(result.created).toBe(false);
@@ -881,8 +875,8 @@ describe("openOrUpdateBundleIndexPR", () => {
     const state = makeFakeIndex({
       files: { main: { "worlds/alpha.json": { content: noIgdb, sha: "a" } } },
     });
-    const oliverOctokit = makeBundleOliverOctokit(state);
-    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("alpha")]), oliverOctokit });
+    const octokits = makeBundleOctokits(state);
+    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("alpha")]), ...octokits });
 
     const label = state.writes.find((w) => w.kind === "labels");
     expect(label?.payload.labels).toEqual(["APWorld Update", "Needs IGDB id"]);
@@ -892,8 +886,8 @@ describe("openOrUpdateBundleIndexPR", () => {
     const state = makeFakeIndex({
       files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
     });
-    const oliverOctokit = makeBundleOliverOctokit(state, { graphqlThrows: new Error("auto_merge disabled") });
-    const result = await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), oliverOctokit });
+    const octokits = makeBundleOctokits(state, { graphqlThrows: new Error("auto_merge disabled") });
+    const result = await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), ...octokits });
 
     expect(result.created).toBe(true);
     expect(state.writes.find((w) => w.kind === "labels")).toBeDefined();

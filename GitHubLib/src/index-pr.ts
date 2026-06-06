@@ -235,9 +235,11 @@ export interface BundleWorld {
 }
 
 export interface BundleIndexPROpts {
-  // Oliver holds Contents:Write on the Index for the bundle path and does the
-  // whole job himself — branch, commits, PR, labels. Karen is not involved.
+  // Same split as the single-world path: Karen (Contents:Write) creates the
+  // branch and commits the manifests; Oliver opens and labels the PR.
+  karenOctokit: ProbotOctokit;
   oliverOctokit: ProbotOctokit;
+  karenData: IndexBotData;
   oliverData: IndexBotData;
   indexOwner: string;
   indexName: string;
@@ -266,11 +268,13 @@ export interface BundleIndexPRResult {
 // every other field and the file's indentation so the diff is a single line.
 // A bundled world that isn't on the Index is skipped — the Beta repo carries no
 // per-world archipelago.json at the release commit, so there's nothing to seed a
-// new manifest from. All Index writes use Oliver's token (Contents:Write);
-// Karen's review workflow still runs once the PR is open.
+// new manifest from. Same split as the single-world path: Karen (Contents:Write)
+// creates the branch and commits the manifests; Oliver opens and labels the PR.
 export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promise<BundleIndexPRResult> {
   const {
+    karenOctokit,
     oliverOctokit,
+    karenData,
     oliverData,
     indexOwner,
     indexName,
@@ -282,7 +286,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
 
   const branchName = `update/${releaseTag}`;
 
-  const repoInfo = await oliverOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
+  const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
   // Plan from the canonical default-branch manifests. Reading each manifest from
@@ -302,7 +306,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     const filePath = `worlds/${w.slug}.json`;
     let raw: string | null = null;
     try {
-      const f = await oliverOctokit.rest.repos.getContent({
+      const f = await karenOctokit.rest.repos.getContent({
         owner: indexOwner,
         repo: indexName,
         path: filePath,
@@ -332,7 +336,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     return { opened: false, prNumber: 0, branchName, created: false, updatedWorldSlugs: [], skippedSlugs };
   }
 
-  const baseRef = await oliverOctokit.rest.git.getRef({
+  const baseRef = await karenOctokit.rest.git.getRef({
     owner: indexOwner,
     repo: indexName,
     ref: `heads/${defaultBranch}`,
@@ -341,7 +345,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
 
   let branchExists = true;
   try {
-    await oliverOctokit.rest.git.getRef({
+    await karenOctokit.rest.git.getRef({
       owner: indexOwner,
       repo: indexName,
       ref: `heads/${branchName}`,
@@ -350,7 +354,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     branchExists = false;
   }
   if (!branchExists) {
-    await oliverOctokit.rest.git.createRef({
+    await karenOctokit.rest.git.createRef({
       owner: indexOwner,
       repo: indexName,
       ref: `refs/heads/${branchName}`,
@@ -363,14 +367,14 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   for (const p of planned) {
     const filePath = `worlds/${p.slug}.json`;
     if (p.needsIgdb) anyNeedsIgdb = true;
-    await oliverOctokit.rest.repos.createOrUpdateFileContents({
+    await karenOctokit.rest.repos.createOrUpdateFileContents({
       owner: indexOwner,
       repo: indexName,
       path: filePath,
       branch: branchName,
       message: `[${p.slug}] Update to ${releaseTag}`,
       content: Buffer.from(p.content, "utf-8").toString("base64"),
-      sha: await shaOnRef(oliverOctokit, indexOwner, indexName, filePath, branchName),
+      sha: await shaOnRef(karenOctokit, indexOwner, indexName, filePath, branchName),
     });
     bodyWorldLines.push(`- \`${p.slug}\`: \`${p.wheelAssetName}\` (${formatWheelSize(p.wheelAssetSize)})`);
   }
@@ -393,7 +397,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     ``,
     ...bodyWorldLines,
     ``,
-    `Branch created and committed by \`${oliverData.name}[bot](${oliverData.html_url})\`; Karen's review workflow will run automatically.`,
+    `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
   ].join("\n");
 
   let prNumber: number;

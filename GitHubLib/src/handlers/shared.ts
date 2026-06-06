@@ -213,43 +213,44 @@ export async function processReleaseAssets({
     throw err;
   }
 
-  // Karen (Contents:Write) is only needed for the single-world path. The bundle
-  // path commits with Oliver's own token, so it never resolves or authenticates
-  // Karen — a Karen credential problem can't block a bundle.
-  let karenIndexInstallId: number | undefined;
-  if (!isBundle) {
-    try {
-      const karenAppOctokit = await karenProbot.auth();
-      const karenInstall = await karenAppOctokit.rest.apps.getRepoInstallation({
-        owner: indexOwner,
-        repo: indexName,
+  // Karen (Contents:Write) creates the branch and commits the manifests on the
+  // Index for BOTH the single-world and bundle paths; Oliver only opens/labels
+  // the PR. This keeps Oliver read-only on the per-world repos it's installed on.
+  let karenIndexInstallId: number;
+  try {
+    const karenAppOctokit = await karenProbot.auth();
+    const karenInstall = await karenAppOctokit.rest.apps.getRepoInstallation({
+      owner: indexOwner,
+      repo: indexName,
+    });
+    karenIndexInstallId = karenInstall.data.id;
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status;
+    if (status === 404) {
+      karenLog.emit({
+        kind: "error",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: releaseSha,
+        wheel_asset: single?.wheelAssetName,
+        reason: "index_install_missing",
+        message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
       });
-      karenIndexInstallId = karenInstall.data.id;
-    } catch (err: unknown) {
-      const status = (err as { status?: number }).status;
-      if (status === 404) {
-        karenLog.emit({
-          kind: "error",
-          source_repo: sourceRepo,
-          slug,
-          release_tag: releaseTag,
-          release_sha: releaseSha,
-          wheel_asset: single?.wheelAssetName,
-          reason: "index_install_missing",
-          message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
-        });
-        return;
-      }
-      throw err;
+      return;
     }
+    throw err;
   }
 
   try {
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
+    const karenOctokit = await karenProbot.auth(karenIndexInstallId);
 
     if (isBundle) {
       const result = await openOrUpdateBundleIndexPR({
+        karenOctokit,
         oliverOctokit,
+        karenData,
         oliverData,
         indexOwner,
         indexName,
@@ -291,7 +292,6 @@ export async function processReleaseAssets({
           : `Updated bundle Index PR #${result.prNumber} for ${releaseTag} (${result.updatedWorldSlugs.length} worlds).`,
       });
     } else {
-      const karenOctokit = await karenProbot.auth(karenIndexInstallId!);
       const result = await openOrUpdateIndexPR({
         karenOctokit,
         oliverOctokit,
