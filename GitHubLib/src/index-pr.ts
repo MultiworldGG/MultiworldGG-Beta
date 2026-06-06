@@ -285,21 +285,50 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   const repoInfo = await oliverOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
-  // Only worlds already on the Index can be copy+edited; the rest are skipped.
-  const updatable: BundleWorld[] = [];
+  // Plan from the canonical default-branch manifests. Reading each manifest from
+  // main (NOT the PR branch) makes every run self-healing: a prior bad commit on
+  // the branch is overwritten with the correct manifest. A world absent from main
+  // is skipped — there is nothing to copy. Copying spreads currentJson first so
+  // every field and module_location's key position survive; only the URL changes.
+  const planned: Array<{
+    slug: string;
+    wheelAssetName: string;
+    wheelAssetSize: number;
+    content: string;
+    needsIgdb: boolean;
+  }> = [];
   const skippedSlugs: string[] = [];
   for (const w of worlds) {
-    const exists = await fileExistsOnRef(
-      oliverOctokit,
-      indexOwner,
-      indexName,
-      `worlds/${w.slug}.json`,
-      defaultBranch,
-    );
-    if (exists) updatable.push(w);
-    else skippedSlugs.push(w.slug);
+    const filePath = `worlds/${w.slug}.json`;
+    let raw: string | null = null;
+    try {
+      const f = await oliverOctokit.rest.repos.getContent({
+        owner: indexOwner,
+        repo: indexName,
+        path: filePath,
+        ref: defaultBranch,
+      });
+      if (!Array.isArray(f.data) && f.data.type === "file") {
+        raw = Buffer.from(f.data.content, f.data.encoding as BufferEncoding).toString("utf-8");
+      }
+    } catch {
+      // 404 → not on the Index
+    }
+    if (raw === null) {
+      skippedSlugs.push(w.slug);
+      continue;
+    }
+    const currentJson = JSON.parse(raw) as Record<string, unknown>;
+    const updated = { ...currentJson, module_location: w.moduleLocation };
+    planned.push({
+      slug: w.slug,
+      wheelAssetName: w.wheelAssetName,
+      wheelAssetSize: w.wheelAssetSize,
+      content: JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n",
+      needsIgdb: !("igdb_id" in updated),
+    });
   }
-  if (updatable.length === 0) {
+  if (planned.length === 0) {
     return { opened: false, prNumber: 0, branchName, created: false, updatedWorldSlugs: [], skippedSlugs };
   }
 
@@ -331,44 +360,22 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
 
   let anyNeedsIgdb = false;
   const bodyWorldLines: string[] = [];
-  for (const w of updatable) {
-    const filePath = `worlds/${w.slug}.json`;
-    const existing = await oliverOctokit.rest.repos.getContent({
-      owner: indexOwner,
-      repo: indexName,
-      path: filePath,
-      ref: branchName,
-    });
-    if (Array.isArray(existing.data) || existing.data.type !== "file") {
-      skippedSlugs.push(w.slug);
-      continue;
-    }
-    const raw = Buffer.from(existing.data.content, existing.data.encoding as BufferEncoding).toString("utf-8");
-    const currentJson = JSON.parse(raw) as Record<string, unknown>;
-    // Copy the Index manifest; rewrite only the wheel pointer. Spreading
-    // currentJson first preserves every other field and module_location's
-    // original key position, so the diff is just the URL line.
-    const updated = { ...currentJson, module_location: w.moduleLocation };
-    if (!("igdb_id" in updated)) anyNeedsIgdb = true;
-
-    const newContent = JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n";
+  for (const p of planned) {
+    const filePath = `worlds/${p.slug}.json`;
+    if (p.needsIgdb) anyNeedsIgdb = true;
     await oliverOctokit.rest.repos.createOrUpdateFileContents({
       owner: indexOwner,
       repo: indexName,
       path: filePath,
       branch: branchName,
-      message: `[${w.slug}] Update to ${releaseTag}`,
-      content: Buffer.from(newContent, "utf-8").toString("base64"),
-      sha: existing.data.sha,
+      message: `[${p.slug}] Update to ${releaseTag}`,
+      content: Buffer.from(p.content, "utf-8").toString("base64"),
+      sha: await shaOnRef(oliverOctokit, indexOwner, indexName, filePath, branchName),
     });
-
-    bodyWorldLines.push(`- \`${w.slug}\`: \`${w.wheelAssetName}\` (${formatWheelSize(w.wheelAssetSize)})`);
+    bodyWorldLines.push(`- \`${p.slug}\`: \`${p.wheelAssetName}\` (${formatWheelSize(p.wheelAssetSize)})`);
   }
 
-  const updatedWorldSlugs = updatable.map((w) => w.slug).filter((s) => !skippedSlugs.includes(s));
-  if (updatedWorldSlugs.length === 0) {
-    return { opened: false, prNumber: 0, branchName, created: false, updatedWorldSlugs: [], skippedSlugs };
-  }
+  const updatedWorldSlugs = planned.map((p) => p.slug);
 
   const existingPRs = await oliverOctokit.rest.pulls.list({
     owner: indexOwner,
@@ -473,6 +480,23 @@ async function fileExistsOnRef(
     if (status === 404) return false;
     throw err;
   }
+}
+
+// Blob sha of `path` on `ref`, or undefined when absent (so a commit creates it).
+async function shaOnRef(
+  octokit: ProbotOctokit,
+  owner: string,
+  repo: string,
+  path: string,
+  ref: string,
+): Promise<string | undefined> {
+  try {
+    const res = await octokit.rest.repos.getContent({ owner, repo, path, ref });
+    if (!Array.isArray(res.data) && res.data.type === "file") return res.data.sha;
+  } catch {
+    // not present on this ref
+  }
+  return undefined;
 }
 
 // Read a JSON file on a branch, returning its parsed object + blob sha, or

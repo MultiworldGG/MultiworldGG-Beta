@@ -847,13 +847,14 @@ describe("openOrUpdateBundleIndexPR", () => {
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
   });
 
-  it("updates the existing bundle PR on re-run without re-creating or re-enabling auto-merge", async () => {
+  it("re-runs from Index main (self-healing) and updates the existing PR", async () => {
     const branch = `update/${BUNDLE_TAG}`;
+    const stripped = JSON.stringify({ module_location: "stale" }, null, 2); // a prior bad commit
     const state = makeFakeIndex({
       branches: { main: "main-sha", [branch]: "branch-sha" },
       files: {
         main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "m" } },
-        [branch]: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "b" } },
+        [branch]: { "worlds/dk64.json": { content: stripped, sha: "b" } },
       },
       openPRs: [{ number: 42, head: branch }],
     });
@@ -866,6 +867,10 @@ describe("openOrUpdateBundleIndexPR", () => {
     expect(result.created).toBe(false);
     expect(result.prNumber).toBe(42);
     expect(result.updatedWorldSlugs).toEqual(["dk64"]);
+    // The commit restores the rich fields from main, not the stripped branch copy.
+    const dk = manifestWrite(state, "worlds/dk64.json");
+    expect(dk).toMatchObject({ game: "Donkey Kong 64", authors: ["Dev One", "Dev Two"], igdb_id: 1096 });
+    expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
     expect(state.writes.find((w) => w.kind === "pulls.update")).toBeDefined();
     expect(state.writes.find((w) => w.kind === "graphql")).toBeUndefined();
