@@ -157,14 +157,15 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   });
 
   const prBody = [
-    `Auto-opened by Oliver from \`${sourceOwner}/${sourceRepo}@${releaseTag}\`.`,
+    `Hey folks, I found a new update for ${updated.game_name}. I'm gonna grab some info on it for y'all.`,
     ``,
-    `**Slug:** \`${slug}\``,
+    `**APWorld:** \`${slug}\``,
+    `**Location:** \`${sourceOwner}/${sourceRepo}@${releaseTag}\``,
     `**Release tag:** \`${releaseTag}\``,
     `**Wheel:** \`${wheelAssetName}\` (${formatWheelSize(wheelAssetSize)})`,
     `**New module_location:** \`${moduleLocation}\``,
     ``,
-    `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
+    `${karenData.name}[bot](${karenData.html_url}) is gathering the manifest for ${updated.game_name} and cross referencing. She'll review in a moment.`,
   ].join("\n");
 
   let prNumber: number;
@@ -296,6 +297,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   // every field and module_location's key position survive; only the URL changes.
   const planned: Array<{
     slug: string;
+    gameName: string;
     wheelAssetName: string;
     wheelAssetSize: number;
     content: string;
@@ -326,6 +328,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     const updated = { ...currentJson, module_location: w.moduleLocation };
     planned.push({
       slug: w.slug,
+      gameName: (currentJson.game_name as string) || "",
       wheelAssetName: w.wheelAssetName,
       wheelAssetSize: w.wheelAssetSize,
       content: JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n",
@@ -389,15 +392,17 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   });
 
   const prBody = [
-    `Auto-opened by Oliver from \`${sourceOwner}/${sourceRepo}@${releaseTag}\` (bundled multi-world release).`,
+    `Hey folks, I found a bunch of new updates for ${updatedWorldSlugs.length} worlds. I'm gonna grab some info on them for y'all.`,
     ``,
+    `**Location:** \`${sourceOwner}/${sourceRepo}@${releaseTag}\``,
     `**Release tag:** \`${releaseTag}\``,
-    `**Worlds updated:** ${updatedWorldSlugs.length}`,
+    `**APWorlds:** ${updatedWorldSlugs.map((s) => `\`${s}\``).join(", ")}`,
+    `**Games:** ${planned.map((p) => `\`${p.gameName}\``).join(", ")}`,
     ...(skippedSlugs.length ? [`**Skipped (not on Index):** ${skippedSlugs.join(", ")}`] : []),
     ``,
     ...bodyWorldLines,
     ``,
-    `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
+    `${karenData.name}[bot](${karenData.html_url}) is gathering the manifests for ${updatedWorldSlugs.length} worlds and cross referencing. She'll review them individually in a moment.`,
   ].join("\n");
 
   let prNumber: number;
