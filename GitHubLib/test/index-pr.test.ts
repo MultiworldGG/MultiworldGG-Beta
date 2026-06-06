@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { openOrUpdateIndexPR, IndexPROpts } from "../src/index-pr";
+import {
+  openOrUpdateIndexPR,
+  openOrUpdateBundleIndexPR,
+  mergeWorldManifest,
+  IndexPROpts,
+} from "../src/index-pr";
 
 interface FileEntry {
   content: string;
@@ -681,5 +686,255 @@ describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
 
     const label = state.writes.find((w) => w.kind === "labels");
     expect(label).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bundled multi-world release: openOrUpdateBundleIndexPR
+// ---------------------------------------------------------------------------
+
+const BUNDLE_TAG = "worlds-wheels-2026-06-06";
+
+function bundleWorld(slug: string, manifest: Record<string, unknown> = { game: slug, igdb_id: 1 }) {
+  return {
+    slug,
+    moduleLocation:
+      `https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/${BUNDLE_TAG}/` +
+      `worlds_${slug}-1.0.0-py3-none-any.whl#sha256=${"a".repeat(64)}`,
+    wheelAssetName: `worlds_${slug}-1.0.0-py3-none-any.whl`,
+    wheelAssetSize: 158_720,
+    sourceManifest: manifest,
+  };
+}
+
+const bundleBaseOpts = (worlds: ReturnType<typeof bundleWorld>[]) => ({
+  karenData: KAREN_DATA,
+  oliverData: OLIVER_DATA,
+  indexOwner: INDEX_OWNER,
+  indexName: INDEX_NAME,
+  sourceOwner: "MultiworldGG",
+  sourceRepo: "MultiworldGG-Beta",
+  releaseTag: BUNDLE_TAG,
+  worlds,
+});
+
+function manifestPaths(state: FakeIndex): string[] {
+  return state.writes
+    .filter((w) => w.kind === "file" && /^worlds\/.*\.json$/.test(w.payload.path))
+    .map((w) => w.payload.path);
+}
+
+function codeownersWrite(state: FakeIndex) {
+  return state.writes.find((w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS");
+}
+
+describe("openOrUpdateBundleIndexPR", () => {
+  it("commits every world manifest and opens ONE PR with auto-merge", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta"), bundleWorld("gamma")]),
+      ...octokits,
+    });
+
+    expect(result.created).toBe(true);
+    expect(result.newWorldSlugs).toEqual(["alpha", "beta", "gamma"]);
+    expect(result.updatedWorldSlugs).toEqual([]);
+    expect(manifestPaths(state)).toEqual([
+      "worlds/alpha.json",
+      "worlds/beta.json",
+      "worlds/gamma.json",
+    ]);
+    expect(state.writes.filter((w) => w.kind === "branch")).toHaveLength(1);
+    expect(state.writes.filter((w) => w.kind === "pulls.create")).toHaveLength(1);
+    expect(state.writes.filter((w) => w.kind === "graphql")).toHaveLength(1);
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld"]);
+  });
+
+  it("defaults the bundle codeowner to the repo-owner fallback when no shared owner exists", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("lallaria");
+    const co = codeownersWrite(state);
+    expect(co?.payload.content).toContain("worlds/alpha.json @lallaria");
+    expect(co?.payload.content).toContain("worlds/beta.json @lallaria");
+  });
+
+  it("uses the unanimous existing owner as the bundle codeowner for new worlds", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/a.json": { content: "{}", sha: "a" },
+          "worlds/b.json": { content: "{}", sha: "b" },
+          ".github/CODEOWNERS": {
+            content: "worlds/a.json @owner1\nworlds/b.json @owner1\n",
+            sha: "co",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("b"), bundleWorld("c")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("owner1");
+    expect(result.newWorldSlugs).toEqual(["c"]);
+    expect(result.updatedWorldSlugs).toEqual(["a", "b"]);
+    const co = codeownersWrite(state);
+    expect(co?.payload.content).toContain("worlds/c.json @owner1");
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld", "APWorld Update"]);
+  });
+
+  it("falls back to the repo owner when bundled worlds have differing owners", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/a.json": { content: "{}", sha: "a" },
+          "worlds/b.json": { content: "{}", sha: "b" },
+          ".github/CODEOWNERS": {
+            content: "worlds/a.json @owner1\nworlds/b.json @owner2\n",
+            sha: "co",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("b"), bundleWorld("c")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("lallaria");
+    expect(codeownersWrite(state)?.payload.content).toContain("worlds/c.json @lallaria");
+  });
+
+  it("treats a bundled world with no CODEOWNERS line as not breaking unanimity", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/a.json": { content: "{}", sha: "a" },
+          ".github/CODEOWNERS": { content: "worlds/a.json @owner1\n", sha: "co" },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("c")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("owner1");
+    expect(codeownersWrite(state)?.payload.content).toContain("worlds/c.json @owner1");
+  });
+
+  it("updates the existing bundle PR on re-run without re-creating or re-enabling auto-merge", async () => {
+    const branch = `update/${BUNDLE_TAG}`;
+    const state = makeFakeIndex({
+      branches: { main: "main-sha", [branch]: "branch-sha" },
+      files: {
+        main: { "worlds/alpha.json": { content: "{}", sha: "m" } },
+        [branch]: { "worlds/alpha.json": { content: "{}", sha: "existing" } },
+      },
+      openPRs: [{ number: 42, head: branch }],
+    });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha")]),
+      ...octokits,
+    });
+
+    expect(result.created).toBe(false);
+    expect(result.prNumber).toBe(42);
+    expect(result.updatedWorldSlugs).toEqual(["alpha"]);
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
+    expect(state.writes.find((w) => w.kind === "pulls.update")).toBeDefined();
+    expect(state.writes.find((w) => w.kind === "graphql")).toBeUndefined();
+  });
+
+  it("reports CODEOWNERS conflicts for new worlds whose existing owner differs, still opening the PR", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          ".github/CODEOWNERS": {
+            content: "worlds/c.json @someone-else\nworlds/d.json @another\n",
+            sha: "co",
+          },
+        },
+      },
+    });
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("c"), bundleWorld("d")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("lallaria");
+    expect(result.codeownersConflicts).toEqual([
+      { slug: "c", conflictWith: "someone-else" },
+      { slug: "d", conflictWith: "another" },
+    ]);
+    // Both lines conflicted → no CODEOWNERS write, but the PR + manifests still happen.
+    expect(codeownersWrite(state)).toBeUndefined();
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeDefined();
+    expect(manifestPaths(state)).toEqual(["worlds/c.json", "worlds/d.json"]);
+  });
+
+  it("labels 'Needs IGDB id' when any bundled world lacks an igdb_id", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([
+        bundleWorld("alpha", { game: "Alpha", igdb_id: 1 }),
+        bundleWorld("beta", { game: "Beta" }),
+      ]),
+      ...octokits,
+    });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld", "Needs IGDB id"]);
+  });
+
+  it("honors OLIVER_CODEOWNER_PREFIX on the resolved bundle handle", async () => {
+    process.env.OLIVER_CODEOWNER_PREFIX = "MWGGTESTING-";
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha")]),
+      ...octokits,
+    });
+
+    expect(result.bundleCodeowner).toBe("MWGGTESTING-lallaria");
+    expect(codeownersWrite(state)?.payload.content).toContain("worlds/alpha.json @MWGGTESTING-lallaria");
+  });
+});
+
+describe("mergeWorldManifest", () => {
+  it("stamps module_location and disk_space_mb and keeps author fields", () => {
+    const m = mergeWorldManifest({ game: "G", flags: ["ROM"] }, {}, "url#sha256=x", 2 * 1024 * 1024);
+    expect(m.module_location).toBe("url#sha256=x");
+    expect(m.disk_space_mb).toBe(2);
+    expect(m.game).toBe("G");
+    expect(m.flags).toEqual(["ROM"]);
+  });
+
+  it("preserves igdb_id from the current Index manifest when the author omits it", () => {
+    const m = mergeWorldManifest({ game: "G" }, { igdb_id: 42 }, "u", 1);
+    expect(m.igdb_id).toBe(42);
+  });
+
+  it("lets the author's igdb_id win over the current Index manifest", () => {
+    const m = mergeWorldManifest({ igdb_id: 7 }, { igdb_id: 42 }, "u", 1);
+    expect(m.igdb_id).toBe(7);
   });
 });

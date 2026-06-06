@@ -468,3 +468,162 @@ describe("handleReleasePublished", () => {
     expect(probot.auth).not.toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Bundled multi-world release (tag `worlds-wheels-<date>`)
+// ---------------------------------------------------------------------------
+
+const BUNDLE_TAG = "worlds-wheels-2026-06-06";
+
+// Wire both Index octokits behind the Oliver/Karen probot pair, mirroring the
+// single-world happy-path test's setup.
+function makeIndexProbots(oliverWrites: string[], karenWrites: string[]) {
+  const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+  const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+  const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
+  const karenProbot = {
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
+    }),
+    log: fakeLog,
+  } as any;
+  return { probot, karenProbot };
+}
+
+describe("handleReleasePublished — bundled multi-world release", () => {
+  it("opens one combined Index PR for a worlds-wheels release with multiple wheels", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [
+            wheelAsset({ slug: "worlds_alpha", version: "1.0.0", tag: BUNDLE_TAG }),
+            wheelAsset({ slug: "worlds_beta", version: "1.0.0", tag: BUNDLE_TAG }),
+            wheelAsset({ slug: "worlds_gamma", version: "1.0.0", tag: BUNDLE_TAG }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "Some Game", authors: ["Dev"] },
+      indexInstall: { id: 12345 },
+    };
+    const oliverWrites: string[] = [];
+    const karenWrites: string[] = [];
+    const { probot, karenProbot } = makeIndexProbots(oliverWrites, karenWrites);
+
+    const ctx = makeContext(state, BUNDLE_TAG);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+
+    expect(karenWrites).toContain("createRef");
+    expect(karenWrites.filter((w) => w === "commit").length).toBeGreaterThanOrEqual(3);
+    expect(oliverWrites).toContain("pulls.create");
+
+    const events = readEvents();
+    const ok = events.find((e) => e.kind === "ok");
+    expect(ok).toMatchObject({ kind: "ok", release_tag: BUNDLE_TAG, index_pr: 99 });
+    // A bundle emits a single bundle-level ok, not one per world.
+    expect(events.filter((e) => e.kind === "ok")).toHaveLength(1);
+  });
+
+  it("skips a wheel missing a digest but still opens the PR for the rest", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [
+            wheelAsset({ slug: "worlds_alpha", version: "1.0.0", tag: BUNDLE_TAG }),
+            wheelAsset({ slug: "worlds_beta", version: "1.0.0", tag: BUNDLE_TAG, digest: null }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "Some Game" },
+      indexInstall: { id: 12345 },
+    };
+    const oliverWrites: string[] = [];
+    const karenWrites: string[] = [];
+    const { probot, karenProbot } = makeIndexProbots(oliverWrites, karenWrites);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "asset_digest_missing",
+        slug: "beta",
+        wheel_asset: "worlds_beta-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(oliverWrites).toContain("pulls.create");
+  });
+
+  it("skips an unrecognized wheel name and opens the PR for the recognized worlds", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [
+            wheelAsset({ slug: "worlds_alpha", version: "1.0.0", tag: BUNDLE_TAG }),
+            // No `worlds_` dist prefix → unrecognized.
+            wheelAsset({ slug: "random", version: "1.0.0", tag: BUNDLE_TAG }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "Some Game" },
+      indexInstall: { id: 12345 },
+    };
+    const oliverWrites: string[] = [];
+    const karenWrites: string[] = [];
+    const { probot, karenProbot } = makeIndexProbots(oliverWrites, karenWrites);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "bundle_wheel_unrecognized",
+        wheel_asset: "random-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(oliverWrites).toContain("pulls.create");
+  });
+
+  it("logs bundle_no_valid_worlds and opens no PR when every wheel is unusable", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [
+            wheelAsset({ slug: "worlds_alpha", version: "1.0.0", tag: BUNDLE_TAG, digest: null }),
+            wheelAsset({ slug: "worlds_beta", version: "1.0.0", tag: BUNDLE_TAG, digest: null }),
+          ],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const oliverWrites: string[] = [];
+    const karenWrites: string[] = [];
+    const { probot, karenProbot } = makeIndexProbots(oliverWrites, karenWrites);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "skip", reason: "bundle_no_valid_worlds" }),
+    );
+    // Returned before resolving the Index install / auth.
+    expect(probot.auth).not.toHaveBeenCalled();
+    expect(oliverWrites).toEqual([]);
+  });
+});

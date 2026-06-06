@@ -1,10 +1,19 @@
 import type { Context, Probot } from "probot";
 import { EventLog } from "../event-log";
-import { IndexBotData, openOrUpdateIndexPR } from "../index-pr";
+import {
+  BundleWorld,
+  IndexBotData,
+  openOrUpdateBundleIndexPR,
+  openOrUpdateIndexPR,
+} from "../index-pr";
 
 type Octokit = Context["octokit"];
 
 export const INDEX_REPO_DEFAULT = "MultiworldGG/MultiworldGG-Index";
+// A release whose tag begins with this prefix is the Beta monorepo's bundled
+// "changed worlds" build (one wheel per changed world). It takes the
+// multi-world path; every other multi-wheel release keeps the ambiguous skip.
+const BUNDLE_TAG_PREFIX = "worlds-wheels-";
 
 export interface ProcessReleaseAssetsParams {
   octokit: Octokit;
@@ -33,86 +42,128 @@ export async function processReleaseAssets({
   const karenLog = new EventLog(karenProbot.log);
   const sourceRepo = `${owner}/${repo}`;
 
-  const dashIdx = releaseTag.indexOf("-");
-  let slug: string | null = null;
-  if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
-    slug = releaseTag.slice(0, dashIdx);
-  }
-  if (!slug) {
-    oliverLog.emit({
-      kind: "skip",
-      source_repo: sourceRepo,
-      release_sha: releaseSha,
-      release_tag: releaseTag,
-      reason: "no_slug_resolved",
-      message:
-        `Cannot resolve slug for ${sourceRepo}: release tag '${releaseTag}' ` +
-        `does not match '<slug>-<world_version>'.`,
-    });
-    return;
+  const isBundle = releaseTag.startsWith(BUNDLE_TAG_PREFIX);
+
+  // Single-world releases carry the slug in the tag (`<slug>-<world_version>`).
+  // Bundles (`worlds-wheels-<date>`) derive a slug per wheel instead.
+  let slug: string | undefined;
+  if (!isBundle) {
+    const dashIdx = releaseTag.indexOf("-");
+    if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
+      slug = releaseTag.slice(0, dashIdx);
+    }
+    if (!slug) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        release_sha: releaseSha,
+        release_tag: releaseTag,
+        reason: "no_slug_resolved",
+        message:
+          `Cannot resolve slug for ${sourceRepo}: release tag '${releaseTag}' ` +
+          `does not match '<slug>-<world_version>'.`,
+      });
+      return;
+    }
   }
 
-  let moduleLocation: string;
-  let wheelAssetName: string;
-  let wheelAssetSize: number;
+  // Path-specific parse results: exactly one is populated below.
+  let single: {
+    moduleLocation: string;
+    wheelAssetName: string;
+    wheelAssetSize: number;
+    sourceManifest: Record<string, unknown>;
+  } | null = null;
+  let bundleWorlds: BundleWorld[] = [];
+
   try {
     const release = await octokit.rest.repos.getReleaseByTag({ owner, repo, tag: releaseTag });
     const wheelAssets = release.data.assets.filter((a) => a.name.endsWith(".whl"));
-    if (wheelAssets.length === 0) {
-      oliverLog.emit({
-        kind: "skip",
-        source_repo: sourceRepo,
-        slug,
-        release_tag: releaseTag,
-        release_sha: releaseSha,
-        reason: "wheel_asset_missing",
-        message: `Release ${releaseTag} on ${sourceRepo} has no .whl asset attached.`,
+
+    if (isBundle) {
+      // Per-world parsing: a bad wheel (unrecognized name or missing digest)
+      // drops just that world, not the whole bundle.
+      bundleWorlds = await buildBundleWorlds({
+        octokit,
+        owner,
+        repo,
+        releaseTag,
+        releaseSha,
+        wheelAssets,
+        oliverLog,
+        sourceRepo,
       });
-      return;
+      if (bundleWorlds.length === 0) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "bundle_no_valid_worlds",
+          message: `Bundle ${releaseTag} on ${sourceRepo} had no usable world wheels; no Index PR opened.`,
+        });
+        return;
+      }
+    } else {
+      if (wheelAssets.length === 0) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "wheel_asset_missing",
+          message: `Release ${releaseTag} on ${sourceRepo} has no .whl asset attached.`,
+        });
+        return;
+      }
+      if (wheelAssets.length > 1) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "wheel_asset_ambiguous",
+          message:
+            `Release ${releaseTag} on ${sourceRepo} has ${wheelAssets.length} .whl assets; ` +
+            `expected exactly one.`,
+        });
+        return;
+      }
+      const wheelAsset = wheelAssets[0];
+      // GitHub release-asset API exposes a `digest` field ("sha256:<hex>"). The
+      // openapi-types schema bundled with this Probot/octokit pin predates the
+      // field, so cast at the access site rather than bumping the dep.
+      const digest = (wheelAsset as { digest?: string | null }).digest;
+      if (!digest || !digest.startsWith("sha256:")) {
+        // Without a SHA256 the URL points at mutable bytes — a release-write
+        // compromise on the per-world repo could swap the wheel after Karen has
+        // already approved the manifest. Bail rather than open an Index PR with
+        // an unverifiable module_location. The runtime relies on pip's PEP 503
+        // #sha256= fragment verification.
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "asset_digest_missing",
+          message:
+            `Release ${releaseTag} on ${sourceRepo} wheel asset ${wheelAsset.name} ` +
+            `has no SHA256 digest from the GitHub API; refusing to open an Index PR ` +
+            `with an unverifiable module_location.`,
+        });
+        return;
+      }
+      const sha256 = digest.slice("sha256:".length);
+      single = {
+        moduleLocation: `${wheelAsset.browser_download_url}#sha256=${sha256}`,
+        wheelAssetName: wheelAsset.name,
+        wheelAssetSize: wheelAsset.size,
+        sourceManifest: {},
+      };
     }
-    if (wheelAssets.length > 1) {
-      oliverLog.emit({
-        kind: "skip",
-        source_repo: sourceRepo,
-        slug,
-        release_tag: releaseTag,
-        release_sha: releaseSha,
-        reason: "wheel_asset_ambiguous",
-        message:
-          `Release ${releaseTag} on ${sourceRepo} has ${wheelAssets.length} .whl assets; ` +
-          `expected exactly one.`,
-      });
-      return;
-    }
-    const wheelAsset = wheelAssets[0];
-    // GitHub release-asset API exposes a `digest` field ("sha256:<hex>"). The
-    // openapi-types schema bundled with this Probot/octokit pin predates the
-    // field, so cast at the access site rather than bumping the dep.
-    const digest = (wheelAsset as { digest?: string | null }).digest;
-    if (!digest || !digest.startsWith("sha256:")) {
-      // Without a SHA256 the URL points at mutable bytes — a release-write
-      // compromise on the per-world repo could swap the wheel after Karen has
-      // already approved the manifest. Bail rather than open an Index PR with
-      // an unverifiable module_location. The runtime relies on pip's PEP 503
-      // #sha256= fragment verification.
-      oliverLog.emit({
-        kind: "skip",
-        source_repo: sourceRepo,
-        slug,
-        release_tag: releaseTag,
-        release_sha: releaseSha,
-        reason: "asset_digest_missing",
-        message:
-          `Release ${releaseTag} on ${sourceRepo} wheel asset ${wheelAsset.name} ` +
-          `has no SHA256 digest from the GitHub API; refusing to open an Index PR ` +
-          `with an unverifiable module_location.`,
-      });
-      return;
-    }
-    const sha256 = digest.slice("sha256:".length);
-    moduleLocation = `${wheelAsset.browser_download_url}#sha256=${sha256}`;
-    wheelAssetName = wheelAsset.name;
-    wheelAssetSize = wheelAsset.size;
   } catch (err: unknown) {
     const status = (err as { status?: number }).status;
     if (status === 404) {
@@ -130,7 +181,9 @@ export async function processReleaseAssets({
     throw err;
   }
 
-  const sourceManifest = await fetchSourceManifest(octokit, owner, repo, slug, releaseSha);
+  if (single) {
+    single.sourceManifest = (await fetchSourceManifest(octokit, owner, repo, slug!, releaseSha)) ?? {};
+  }
 
   const indexRepoSpec = process.env.OLIVER_INDEX_REPO ?? INDEX_REPO_DEFAULT;
   const [indexOwner, indexName] = indexRepoSpec.split("/", 2);
@@ -154,7 +207,7 @@ export async function processReleaseAssets({
         slug,
         release_tag: releaseTag,
         release_sha: releaseSha,
-        wheel_asset: wheelAssetName,
+        wheel_asset: single?.wheelAssetName,
         reason: "index_install_missing",
         message: `Oliver is not installed on ${indexRepoSpec}; cannot open Index PR.`,
       });
@@ -180,7 +233,7 @@ export async function processReleaseAssets({
         slug,
         release_tag: releaseTag,
         release_sha: releaseSha,
-        wheel_asset: wheelAssetName,
+        wheel_asset: single?.wheelAssetName,
         reason: "index_install_missing",
         message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
       });
@@ -193,47 +246,84 @@ export async function processReleaseAssets({
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
     const karenOctokit = await karenProbot.auth(karenIndexInstallId);
 
-    const result = await openOrUpdateIndexPR({
-      karenOctokit,
-      oliverOctokit,
-      karenData,
-      oliverData,
-      indexOwner,
-      indexName,
-      sourceOwner: owner,
-      sourceRepo: repo,
-      slug,
-      releaseTag,
-      moduleLocation,
-      wheelAssetName,
-      wheelAssetSize,
-      sourceManifest: sourceManifest ?? {},
-    });
-    oliverLog.emit({
-      kind: "ok",
-      source_repo: sourceRepo,
-      slug,
-      release_tag: releaseTag,
-      release_sha: releaseSha,
-      wheel_asset: wheelAssetName,
-      wheel_size_bytes: wheelAssetSize,
-      module_location: moduleLocation,
-      index_pr: result.prNumber,
-      message: result.created
-        ? `Opened Index PR #${result.prNumber} for ${slug}@${releaseTag}.`
-        : `Updated Index PR #${result.prNumber} for ${slug}@${releaseTag}.`,
-    });
-    if (result.codeownersConflictWith) {
+    if (isBundle) {
+      const result = await openOrUpdateBundleIndexPR({
+        karenOctokit,
+        oliverOctokit,
+        karenData,
+        oliverData,
+        indexOwner,
+        indexName,
+        sourceOwner: owner,
+        sourceRepo: repo,
+        releaseTag,
+        worlds: bundleWorlds,
+      });
       oliverLog.emit({
-        kind: "skip",
+        kind: "ok",
+        source_repo: sourceRepo,
+        release_tag: releaseTag,
+        release_sha: releaseSha,
+        index_pr: result.prNumber,
+        message: result.created
+          ? `Opened bundle Index PR #${result.prNumber} for ${releaseTag} (${bundleWorlds.length} worlds).`
+          : `Updated bundle Index PR #${result.prNumber} for ${releaseTag} (${bundleWorlds.length} worlds).`,
+      });
+      for (const conflict of result.codeownersConflicts) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug: conflict.slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          index_pr: result.prNumber,
+          reason: "codeowners_conflict",
+          message: `Bundle PR opened, but CODEOWNERS already lists @${conflict.conflictWith} for worlds/${conflict.slug}.json; left untouched.`,
+        });
+      }
+    } else {
+      const result = await openOrUpdateIndexPR({
+        karenOctokit,
+        oliverOctokit,
+        karenData,
+        oliverData,
+        indexOwner,
+        indexName,
+        sourceOwner: owner,
+        sourceRepo: repo,
+        slug: slug!,
+        releaseTag,
+        moduleLocation: single!.moduleLocation,
+        wheelAssetName: single!.wheelAssetName,
+        wheelAssetSize: single!.wheelAssetSize,
+        sourceManifest: single!.sourceManifest,
+      });
+      oliverLog.emit({
+        kind: "ok",
         source_repo: sourceRepo,
         slug,
         release_tag: releaseTag,
         release_sha: releaseSha,
+        wheel_asset: single!.wheelAssetName,
+        wheel_size_bytes: single!.wheelAssetSize,
+        module_location: single!.moduleLocation,
         index_pr: result.prNumber,
-        reason: "codeowners_conflict",
-        message: `New-world PR opened, but CODEOWNERS already lists @${result.codeownersConflictWith} for worlds/${slug}.json; left untouched.`,
+        message: result.created
+          ? `Opened Index PR #${result.prNumber} for ${slug}@${releaseTag}.`
+          : `Updated Index PR #${result.prNumber} for ${slug}@${releaseTag}.`,
       });
+      if (result.codeownersConflictWith) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          index_pr: result.prNumber,
+          reason: "codeowners_conflict",
+          message: `New-world PR opened, but CODEOWNERS already lists @${result.codeownersConflictWith} for worlds/${slug}.json; left untouched.`,
+        });
+      }
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -243,7 +333,7 @@ export async function processReleaseAssets({
       slug,
       release_tag: releaseTag,
       release_sha: releaseSha,
-      wheel_asset: wheelAssetName,
+      wheel_asset: single?.wheelAssetName,
       reason: "github_api_error",
       message: `Failed to open/update Index PR: ${message}`,
     });
@@ -273,4 +363,90 @@ export async function fetchSourceManifest(
   } catch {
     return null;
   }
+}
+
+// Each beta world's wheel is `worlds_<module>-<version>-py3-none-any.whl` (dist
+// name `worlds.<module>` normalized by PEP 503). The Index slug is <module>:
+// strip the `worlds_` prefix, then take everything before the first `-` (module
+// names are lowercase identifiers with no hyphen). Returns null for any wheel
+// that doesn't fit that shape.
+export function slugFromBundleWheelName(name: string): string | null {
+  if (!name.startsWith("worlds_") || !name.endsWith(".whl")) return null;
+  const afterPrefix = name.slice("worlds_".length);
+  const dash = afterPrefix.indexOf("-");
+  if (dash <= 0) return null;
+  return afterPrefix.slice(0, dash);
+}
+
+// Turn a bundle's wheel assets into per-world entries, logging a per-world skip
+// (and dropping just that world) for an unrecognized wheel name, a duplicate
+// slug, or a missing SHA256 digest.
+async function buildBundleWorlds(params: {
+  octokit: Octokit;
+  owner: string;
+  repo: string;
+  releaseTag: string;
+  releaseSha: string;
+  wheelAssets: Array<{ name: string; browser_download_url: string; size: number }>;
+  oliverLog: EventLog;
+  sourceRepo: string;
+}): Promise<BundleWorld[]> {
+  const { octokit, owner, repo, releaseTag, releaseSha, wheelAssets, oliverLog, sourceRepo } = params;
+  const worlds: BundleWorld[] = [];
+  const seen = new Set<string>();
+
+  for (const asset of wheelAssets) {
+    const slug = slugFromBundleWheelName(asset.name);
+    if (!slug) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        release_tag: releaseTag,
+        release_sha: releaseSha,
+        wheel_asset: asset.name,
+        reason: "bundle_wheel_unrecognized",
+        message: `Wheel ${asset.name} in bundle ${releaseTag} does not match worlds_<module>-<version>; skipping.`,
+      });
+      continue;
+    }
+    if (seen.has(slug)) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: releaseSha,
+        wheel_asset: asset.name,
+        reason: "bundle_wheel_unrecognized",
+        message: `Duplicate world slug '${slug}' in bundle ${releaseTag} (wheel ${asset.name}); skipping the duplicate.`,
+      });
+      continue;
+    }
+    const digest = (asset as { digest?: string | null }).digest;
+    if (!digest || !digest.startsWith("sha256:")) {
+      oliverLog.emit({
+        kind: "skip",
+        source_repo: sourceRepo,
+        slug,
+        release_tag: releaseTag,
+        release_sha: releaseSha,
+        wheel_asset: asset.name,
+        reason: "asset_digest_missing",
+        message: `Wheel ${asset.name} for ${slug} in bundle ${releaseTag} has no SHA256 digest; skipping this world.`,
+      });
+      continue;
+    }
+    const sha256 = digest.slice("sha256:".length);
+    const sourceManifest = (await fetchSourceManifest(octokit, owner, repo, slug, releaseSha)) ?? {};
+    seen.add(slug);
+    worlds.push({
+      slug,
+      moduleLocation: `${asset.browser_download_url}#sha256=${sha256}`,
+      wheelAssetName: asset.name,
+      wheelAssetSize: asset.size,
+      sourceManifest,
+    });
+  }
+
+  return worlds;
 }

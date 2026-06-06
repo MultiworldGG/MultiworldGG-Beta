@@ -27,6 +27,9 @@ export type EventReason =
   | "github_api_error"
   | "codeowners_conflict"
   | "tag_sha_lookup_failed"
+  // Bundled multi-world release (handlers/shared.ts bundle path).
+  | "bundle_wheel_unrecognized"
+  | "bundle_no_valid_worlds"
   // Karen fuzz/scan dispatch (handlers/fuzz_dispatch.ts).
   | "fuzz_bad_payload"
   | "fuzz_not_index_repo"
