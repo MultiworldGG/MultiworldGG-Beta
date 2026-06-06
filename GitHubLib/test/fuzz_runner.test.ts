@@ -78,7 +78,7 @@ function envPairs(args: string[]): Record<string, string> {
  * the callback to simulate the container exiting with `exitCode`. `docker rm …`
  * (and any non-run call) just succeeds. Returns the fake ChildProcess.
  */
-function mockRun(produce: () => unknown, exitCode = 0): void {
+function mockRun(produce: () => unknown, exitCode = 0, stderr = ""): void {
   execFileMock.mockImplementation(
     (_file: string, args: string[], a3?: unknown, a4?: unknown) => {
       const cb = (typeof a3 === "function" ? a3 : a4) as
@@ -100,7 +100,7 @@ function mockRun(produce: () => unknown, exitCode = 0): void {
           exitCode === 0
             ? null
             : (Object.assign(new Error(`exit ${exitCode}`), { code: exitCode }) as Error);
-        queueMicrotask(() => cb?.(err, "", ""));
+        queueMicrotask(() => cb?.(err, "", stderr));
       } else {
         queueMicrotask(() => cb?.(null, "", ""));
       }
@@ -288,6 +288,19 @@ describe("runFuzzContainer — result.json mapping", () => {
     const res = await runFuzzContainer(job(), options());
     expect(res.status).toBe("fail");
     expect(res.detail).toContain("result.json");
+  });
+
+  it("surfaces docker's stderr when `docker run` itself fails (exit 125, no result.json)", async () => {
+    mockRun(
+      () => undefined, // container never starts → no result.json
+      125,
+      "docker: Error response from daemon: network mwgg-fuzz-egress not found.\nSee 'docker run --help'.",
+    );
+    const res = await runFuzzContainer(job(), options());
+    expect(res.status).toBe("fail");
+    expect(res.exitCode).toBe(125);
+    expect(res.detail).toContain("network mwgg-fuzz-egress not found");
+    expect(logs.some((l) => l.includes("docker exit 125"))).toBe(true);
   });
 });
 

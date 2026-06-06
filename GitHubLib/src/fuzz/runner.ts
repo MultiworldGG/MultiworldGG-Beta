@@ -79,8 +79,9 @@ function jobSuffix(job: FuzzJob): string {
   return sanitizeToken(`${job.prNumber}-${job.slug}-${headPrefix}-${process.pid}`);
 }
 
-function containerName(job: FuzzJob, suffix: string): string {
-  return sanitizeToken(`mwgg-fuzz-${job.prNumber}-${job.slug}-${suffix}`);
+function containerName(suffix: string): string {
+  // suffix already encodes pr-slug-sha-pid; don't repeat pr-slug in the name.
+  return sanitizeToken(`mwgg-fuzz-${suffix}`);
 }
 
 /** Build the hardened `docker run` argv. Pure (no I/O) so it is trivially testable. */
@@ -194,6 +195,17 @@ function summarizeTail(logTail: unknown): string {
   return lastLine ?? "";
 }
 
+/**
+ * First non-empty line of docker's own stderr — the actionable bit when
+ * `docker run` itself fails (exit 125): e.g. "docker: Error response from
+ * daemon: network mwgg-fuzz-egress not found." Truncated for the comment/log.
+ */
+function firstStderrLine(stderr: string | undefined): string {
+  if (!stderr) return "";
+  const line = stderr.split("\n").map((l) => l.trim()).find((l) => l.length > 0) ?? "";
+  return line.length > 300 ? line.slice(0, 297) + "..." : line;
+}
+
 interface ContainerResult {
   status: FuzzStatus;
   stats?: Record<string, number>;
@@ -211,6 +223,7 @@ async function readContainerResult(
   job: FuzzJob,
   hostOutDir: string,
   dockerExitCode: number,
+  dockerStderr?: string,
 ): Promise<ContainerResult> {
   const resultPath = path.join(hostOutDir, "result.json");
 
@@ -224,10 +237,16 @@ async function readContainerResult(
     parsed = json as Record<string, unknown>;
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
+    // No result.json + a non-zero docker exit usually means `docker run` itself
+    // failed (missing network/image, bad mount) — surface docker's own stderr so
+    // the operator sees the real reason instead of a bare exit code.
+    const hint = dockerExitCode !== 0 ? firstStderrLine(dockerStderr) : "";
     return {
       status: "fail",
       exitCode: dockerExitCode,
-      detail: `${job.slug}: no readable result.json (${why}); container exit ${dockerExitCode}`,
+      detail:
+        `${job.slug}: no readable result.json (${why}); container exit ${dockerExitCode}` +
+        (hint ? ` — ${hint}` : ""),
     };
   }
 
@@ -271,6 +290,8 @@ function dockerRemove(name: string, log: (m: string) => void): Promise<void> {
 interface DockerRunOutcome {
   kind: "exited" | "timeout" | "aborted";
   exitCode: number;
+  /** docker's own stderr on an `exited` outcome (the reason for a 125, etc.). */
+  stderr?: string;
 }
 
 /**
@@ -299,7 +320,7 @@ function runDocker(
       "docker",
       args,
       { maxBuffer: 16 * 1024 * 1024 },
-      (err) => {
+      (err, _stdout, stderr) => {
         if (settled) return; // already torn down by timeout/abort
         // execFile reports non-zero exits as an error carrying `.code`. A numeric
         // code is an ordinary container failure, not a spawn error.
@@ -311,7 +332,11 @@ function runDocker(
           reject(err);
           return;
         }
-        finish({ kind: "exited", exitCode: typeof code === "number" ? code : 0 });
+        finish({
+          kind: "exited",
+          exitCode: typeof code === "number" ? code : 0,
+          stderr: typeof stderr === "string" ? stderr : undefined,
+        });
       },
     );
 
@@ -355,7 +380,7 @@ export async function runFuzzContainer(
 ): Promise<FuzzWorldResult> {
   const wallSeconds = opts.wallSeconds ?? DEFAULT_WALL_SECONDS;
   const suffix = jobSuffix(job);
-  const name = containerName(job, suffix);
+  const name = containerName(suffix);
   const jobDir = path.join(opts.workDir, suffix);
   const hostOutDir = path.join(jobDir, "out");
 
@@ -394,7 +419,10 @@ export async function runFuzzContainer(
       };
     }
 
-    const result = await readContainerResult(job, hostOutDir, outcome.exitCode);
+    if (outcome.exitCode !== 0 && outcome.stderr) {
+      opts.log(`fuzz ${job.slug}: docker exit ${outcome.exitCode}: ${firstStderrLine(outcome.stderr)}`);
+    }
+    const result = await readContainerResult(job, hostOutDir, outcome.exitCode, outcome.stderr);
     return {
       slug: job.slug,
       status: result.status,
