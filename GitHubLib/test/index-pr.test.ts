@@ -695,20 +695,18 @@ describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
 
 const BUNDLE_TAG = "worlds-wheels-2026-06-06";
 
-function bundleWorld(slug: string, manifest: Record<string, unknown> = { game: slug, igdb_id: 1 }) {
+function bundleWorld(slug: string) {
   return {
     slug,
     moduleLocation:
       `https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/${BUNDLE_TAG}/` +
-      `worlds_${slug}-1.0.0-py3-none-any.whl#sha256=${"a".repeat(64)}`,
+      `worlds_${slug}-1.0.0-py3-none-any.whl#sha256=${"b".repeat(64)}`,
     wheelAssetName: `worlds_${slug}-1.0.0-py3-none-any.whl`,
     wheelAssetSize: 158_720,
-    sourceManifest: manifest,
   };
 }
 
 const bundleBaseOpts = (worlds: ReturnType<typeof bundleWorld>[]) => ({
-  karenData: KAREN_DATA,
   oliverData: OLIVER_DATA,
   indexOwner: INDEX_OWNER,
   indexName: INDEX_NAME,
@@ -724,118 +722,129 @@ function manifestPaths(state: FakeIndex): string[] {
     .map((w) => w.payload.path);
 }
 
-function codeownersWrite(state: FakeIndex) {
-  return state.writes.find((w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS");
+function manifestWrite(state: FakeIndex, path: string) {
+  const w = state.writes.find((x) => x.kind === "file" && x.payload.path === path);
+  return w ? JSON.parse(w.payload.content) : undefined;
+}
+
+// The bundle drives ALL Index ops with Oliver's token, so the test client needs
+// Karen's repo/git ops AND Oliver's pulls/issues/graphql on one octokit.
+function makeBundleOliverOctokit(state: FakeIndex, opts: { graphqlThrows?: Error } = {}) {
+  const karen = makeKarenOctokit(state);
+  const oliver = makeOliverOctokit(state, INDEX_OWNER, opts);
+  return {
+    rest: {
+      repos: karen.rest.repos,
+      git: karen.rest.git,
+      pulls: oliver.rest.pulls,
+      issues: oliver.rest.issues,
+    },
+    graphql: oliver.graphql,
+  };
+}
+
+// A rich existing Index manifest, like the real worlds/<slug>.json entries.
+function indexManifest(game: string, extra: Record<string, unknown> = {}) {
+  return JSON.stringify(
+    {
+      minimum_ap_version: "0.6.5",
+      world_version: "1.5.7",
+      authors: ["Dev One", "Dev Two"],
+      igdb_id: 1096,
+      game,
+      module_location: `https://example/old/${game}.whl#sha256=${"0".repeat(64)}`,
+      ...extra,
+    },
+    null,
+    2,
+  );
 }
 
 describe("openOrUpdateBundleIndexPR", () => {
-  it("commits every world manifest and opens ONE PR with auto-merge", async () => {
-    const state = makeFakeIndex();
-    const octokits = makeOctokits(state);
+  it("copies each existing Index manifest and rewrites only module_location", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" },
+          "worlds/oot.json": { content: indexManifest("Ocarina of Time"), sha: "oot" },
+        },
+      },
+    });
+    const oliverOctokit = makeBundleOliverOctokit(state);
     const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta"), bundleWorld("gamma")]),
-      ...octokits,
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("oot")]),
+      oliverOctokit,
     });
 
+    expect(result.opened).toBe(true);
     expect(result.created).toBe(true);
-    expect(result.newWorldSlugs).toEqual(["alpha", "beta", "gamma"]);
-    expect(result.updatedWorldSlugs).toEqual([]);
-    expect(manifestPaths(state)).toEqual([
-      "worlds/alpha.json",
-      "worlds/beta.json",
-      "worlds/gamma.json",
-    ]);
+    expect(result.updatedWorldSlugs).toEqual(["dk64", "oot"]);
+    expect(result.skippedSlugs).toEqual([]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json", "worlds/oot.json"]);
+
+    const dk = manifestWrite(state, "worlds/dk64.json");
+    // Every rich field survives; only module_location changes.
+    expect(dk).toMatchObject({
+      minimum_ap_version: "0.6.5",
+      world_version: "1.5.7",
+      authors: ["Dev One", "Dev Two"],
+      igdb_id: 1096,
+      game: "Donkey Kong 64",
+    });
+    expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
+
     expect(state.writes.filter((w) => w.kind === "branch")).toHaveLength(1);
     expect(state.writes.filter((w) => w.kind === "pulls.create")).toHaveLength(1);
     expect(state.writes.filter((w) => w.kind === "graphql")).toHaveLength(1);
-
     const label = state.writes.find((w) => w.kind === "labels");
-    expect(label?.payload.labels).toEqual(["New APWorld"]);
+    expect(label?.payload.labels).toEqual(["APWorld Update"]);
+    // The bundle never touches CODEOWNERS.
+    expect(
+      state.writes.find((w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS"),
+    ).toBeUndefined();
   });
 
-  it("defaults the bundle codeowner to the repo-owner fallback when no shared owner exists", async () => {
-    const state = makeFakeIndex();
-    const octokits = makeOctokits(state);
+  it("preserves the manifest's existing indentation (one-line diff)", async () => {
+    const fourSpace = JSON.stringify({ game: "G", igdb_id: 1, module_location: "old" }, null, 4);
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: fourSpace, sha: "dk" } } },
+    });
+    const oliverOctokit = makeBundleOliverOctokit(state);
+    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), oliverOctokit });
+
+    const write = state.writes.find((w) => w.kind === "file" && w.payload.path === "worlds/dk64.json");
+    expect(write?.payload.content).toContain('\n    "game"'); // 4-space indent retained
+  });
+
+  it("skips bundled worlds not on the Index but opens the PR for the rest", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
+    });
+    const oliverOctokit = makeBundleOliverOctokit(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("newbie")]),
+      oliverOctokit,
+    });
+
+    expect(result.opened).toBe(true);
+    expect(result.updatedWorldSlugs).toEqual(["dk64"]);
+    expect(result.skippedSlugs).toEqual(["newbie"]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json"]);
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeDefined();
+  });
+
+  it("opens no PR when no bundled world is on the Index", async () => {
+    const state = makeFakeIndex(); // empty main
+    const oliverOctokit = makeBundleOliverOctokit(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta")]),
-      ...octokits,
+      oliverOctokit,
     });
 
-    expect(result.bundleCodeowner).toBe("lallaria");
-    const co = codeownersWrite(state);
-    expect(co?.payload.content).toContain("worlds/alpha.json @lallaria");
-    expect(co?.payload.content).toContain("worlds/beta.json @lallaria");
-  });
-
-  it("uses the unanimous existing owner as the bundle codeowner for new worlds", async () => {
-    const state = makeFakeIndex({
-      files: {
-        main: {
-          "worlds/a.json": { content: "{}", sha: "a" },
-          "worlds/b.json": { content: "{}", sha: "b" },
-          ".github/CODEOWNERS": {
-            content: "worlds/a.json @owner1\nworlds/b.json @owner1\n",
-            sha: "co",
-          },
-        },
-      },
-    });
-    const octokits = makeOctokits(state);
-    const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("b"), bundleWorld("c")]),
-      ...octokits,
-    });
-
-    expect(result.bundleCodeowner).toBe("owner1");
-    expect(result.newWorldSlugs).toEqual(["c"]);
-    expect(result.updatedWorldSlugs).toEqual(["a", "b"]);
-    const co = codeownersWrite(state);
-    expect(co?.payload.content).toContain("worlds/c.json @owner1");
-
-    const label = state.writes.find((w) => w.kind === "labels");
-    expect(label?.payload.labels).toEqual(["New APWorld", "APWorld Update"]);
-  });
-
-  it("falls back to the repo owner when bundled worlds have differing owners", async () => {
-    const state = makeFakeIndex({
-      files: {
-        main: {
-          "worlds/a.json": { content: "{}", sha: "a" },
-          "worlds/b.json": { content: "{}", sha: "b" },
-          ".github/CODEOWNERS": {
-            content: "worlds/a.json @owner1\nworlds/b.json @owner2\n",
-            sha: "co",
-          },
-        },
-      },
-    });
-    const octokits = makeOctokits(state);
-    const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("b"), bundleWorld("c")]),
-      ...octokits,
-    });
-
-    expect(result.bundleCodeowner).toBe("lallaria");
-    expect(codeownersWrite(state)?.payload.content).toContain("worlds/c.json @lallaria");
-  });
-
-  it("treats a bundled world with no CODEOWNERS line as not breaking unanimity", async () => {
-    const state = makeFakeIndex({
-      files: {
-        main: {
-          "worlds/a.json": { content: "{}", sha: "a" },
-          ".github/CODEOWNERS": { content: "worlds/a.json @owner1\n", sha: "co" },
-        },
-      },
-    });
-    const octokits = makeOctokits(state);
-    const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("a"), bundleWorld("c")]),
-      ...octokits,
-    });
-
-    expect(result.bundleCodeowner).toBe("owner1");
-    expect(codeownersWrite(state)?.payload.content).toContain("worlds/c.json @owner1");
+    expect(result.opened).toBe(false);
+    expect(result.skippedSlugs).toEqual(["alpha", "beta"]);
+    expect(state.writes.find((w) => w.kind === "branch")).toBeUndefined();
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
   });
 
   it("updates the existing bundle PR on re-run without re-creating or re-enabling auto-merge", async () => {
@@ -843,79 +852,46 @@ describe("openOrUpdateBundleIndexPR", () => {
     const state = makeFakeIndex({
       branches: { main: "main-sha", [branch]: "branch-sha" },
       files: {
-        main: { "worlds/alpha.json": { content: "{}", sha: "m" } },
-        [branch]: { "worlds/alpha.json": { content: "{}", sha: "existing" } },
+        main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "m" } },
+        [branch]: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "b" } },
       },
       openPRs: [{ number: 42, head: branch }],
     });
-    const octokits = makeOctokits(state);
+    const oliverOctokit = makeBundleOliverOctokit(state);
     const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("alpha")]),
-      ...octokits,
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      oliverOctokit,
     });
 
     expect(result.created).toBe(false);
     expect(result.prNumber).toBe(42);
-    expect(result.updatedWorldSlugs).toEqual(["alpha"]);
+    expect(result.updatedWorldSlugs).toEqual(["dk64"]);
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
     expect(state.writes.find((w) => w.kind === "pulls.update")).toBeDefined();
     expect(state.writes.find((w) => w.kind === "graphql")).toBeUndefined();
   });
 
-  it("reports CODEOWNERS conflicts for new worlds whose existing owner differs, still opening the PR", async () => {
+  it("labels 'Needs IGDB id' when a copied manifest lacks an igdb_id", async () => {
+    const noIgdb = JSON.stringify({ game: "G", world_version: "1.0.0", module_location: "old" }, null, 2);
     const state = makeFakeIndex({
-      files: {
-        main: {
-          ".github/CODEOWNERS": {
-            content: "worlds/c.json @someone-else\nworlds/d.json @another\n",
-            sha: "co",
-          },
-        },
-      },
+      files: { main: { "worlds/alpha.json": { content: noIgdb, sha: "a" } } },
     });
-    const octokits = makeOctokits(state);
-    const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("c"), bundleWorld("d")]),
-      ...octokits,
-    });
-
-    expect(result.bundleCodeowner).toBe("lallaria");
-    expect(result.codeownersConflicts).toEqual([
-      { slug: "c", conflictWith: "someone-else" },
-      { slug: "d", conflictWith: "another" },
-    ]);
-    // Both lines conflicted → no CODEOWNERS write, but the PR + manifests still happen.
-    expect(codeownersWrite(state)).toBeUndefined();
-    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeDefined();
-    expect(manifestPaths(state)).toEqual(["worlds/c.json", "worlds/d.json"]);
-  });
-
-  it("labels 'Needs IGDB id' when any bundled world lacks an igdb_id", async () => {
-    const state = makeFakeIndex();
-    const octokits = makeOctokits(state);
-    await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([
-        bundleWorld("alpha", { game: "Alpha", igdb_id: 1 }),
-        bundleWorld("beta", { game: "Beta" }),
-      ]),
-      ...octokits,
-    });
+    const oliverOctokit = makeBundleOliverOctokit(state);
+    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("alpha")]), oliverOctokit });
 
     const label = state.writes.find((w) => w.kind === "labels");
-    expect(label?.payload.labels).toEqual(["New APWorld", "Needs IGDB id"]);
+    expect(label?.payload.labels).toEqual(["APWorld Update", "Needs IGDB id"]);
   });
 
-  it("honors OLIVER_CODEOWNER_PREFIX on the resolved bundle handle", async () => {
-    process.env.OLIVER_CODEOWNER_PREFIX = "MWGGTESTING-";
-    const state = makeFakeIndex();
-    const octokits = makeOctokits(state);
-    const result = await openOrUpdateBundleIndexPR({
-      ...bundleBaseOpts([bundleWorld("alpha")]),
-      ...octokits,
+  it("swallows a graphql auto-merge error and still completes", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
     });
+    const oliverOctokit = makeBundleOliverOctokit(state, { graphqlThrows: new Error("auto_merge disabled") });
+    const result = await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), oliverOctokit });
 
-    expect(result.bundleCodeowner).toBe("MWGGTESTING-lallaria");
-    expect(codeownersWrite(state)?.payload.content).toContain("worlds/alpha.json @MWGGTESTING-lallaria");
+    expect(result.created).toBe(true);
+    expect(state.writes.find((w) => w.kind === "labels")).toBeDefined();
   });
 });
 

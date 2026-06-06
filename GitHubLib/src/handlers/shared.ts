@@ -83,10 +83,7 @@ export async function processReleaseAssets({
     if (isBundle) {
       // Per-world parsing: a bad wheel (unrecognized name or missing digest)
       // drops just that world, not the whole bundle.
-      bundleWorlds = await buildBundleWorlds({
-        octokit,
-        owner,
-        repo,
+      bundleWorlds = buildBundleWorlds({
         releaseTag,
         releaseSha,
         wheelAssets,
@@ -216,41 +213,43 @@ export async function processReleaseAssets({
     throw err;
   }
 
-  let karenIndexInstallId: number;
-  try {
-    const karenAppOctokit = await karenProbot.auth();
-    const karenInstall = await karenAppOctokit.rest.apps.getRepoInstallation({
-      owner: indexOwner,
-      repo: indexName,
-    });
-    karenIndexInstallId = karenInstall.data.id;
-  } catch (err: unknown) {
-    const status = (err as { status?: number }).status;
-    if (status === 404) {
-      karenLog.emit({
-        kind: "error",
-        source_repo: sourceRepo,
-        slug,
-        release_tag: releaseTag,
-        release_sha: releaseSha,
-        wheel_asset: single?.wheelAssetName,
-        reason: "index_install_missing",
-        message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
+  // Karen (Contents:Write) is only needed for the single-world path. The bundle
+  // path commits with Oliver's own token, so it never resolves or authenticates
+  // Karen — a Karen credential problem can't block a bundle.
+  let karenIndexInstallId: number | undefined;
+  if (!isBundle) {
+    try {
+      const karenAppOctokit = await karenProbot.auth();
+      const karenInstall = await karenAppOctokit.rest.apps.getRepoInstallation({
+        owner: indexOwner,
+        repo: indexName,
       });
-      return;
+      karenIndexInstallId = karenInstall.data.id;
+    } catch (err: unknown) {
+      const status = (err as { status?: number }).status;
+      if (status === 404) {
+        karenLog.emit({
+          kind: "error",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          wheel_asset: single?.wheelAssetName,
+          reason: "index_install_missing",
+          message: `Karen is not installed on ${indexRepoSpec}; cannot create Index branch.`,
+        });
+        return;
+      }
+      throw err;
     }
-    throw err;
   }
 
   try {
     const oliverOctokit = await oliverProbot.auth(oliverIndexInstallId);
-    const karenOctokit = await karenProbot.auth(karenIndexInstallId);
 
     if (isBundle) {
       const result = await openOrUpdateBundleIndexPR({
-        karenOctokit,
         oliverOctokit,
-        karenData,
         oliverData,
         indexOwner,
         indexName,
@@ -259,6 +258,28 @@ export async function processReleaseAssets({
         releaseTag,
         worlds: bundleWorlds,
       });
+      for (const skippedSlug of result.skippedSlugs) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug: skippedSlug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "bundle_world_not_on_index",
+          message: `World '${skippedSlug}' from bundle ${releaseTag} is not on the Index; skipped (no manifest to copy).`,
+        });
+      }
+      if (!result.opened) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "bundle_no_valid_worlds",
+          message: `Bundle ${releaseTag} on ${sourceRepo} updated no Index worlds; no PR opened.`,
+        });
+        return;
+      }
       oliverLog.emit({
         kind: "ok",
         source_repo: sourceRepo,
@@ -266,22 +287,11 @@ export async function processReleaseAssets({
         release_sha: releaseSha,
         index_pr: result.prNumber,
         message: result.created
-          ? `Opened bundle Index PR #${result.prNumber} for ${releaseTag} (${bundleWorlds.length} worlds).`
-          : `Updated bundle Index PR #${result.prNumber} for ${releaseTag} (${bundleWorlds.length} worlds).`,
+          ? `Opened bundle Index PR #${result.prNumber} for ${releaseTag} (${result.updatedWorldSlugs.length} worlds).`
+          : `Updated bundle Index PR #${result.prNumber} for ${releaseTag} (${result.updatedWorldSlugs.length} worlds).`,
       });
-      for (const conflict of result.codeownersConflicts) {
-        oliverLog.emit({
-          kind: "skip",
-          source_repo: sourceRepo,
-          slug: conflict.slug,
-          release_tag: releaseTag,
-          release_sha: releaseSha,
-          index_pr: result.prNumber,
-          reason: "codeowners_conflict",
-          message: `Bundle PR opened, but CODEOWNERS already lists @${conflict.conflictWith} for worlds/${conflict.slug}.json; left untouched.`,
-        });
-      }
     } else {
+      const karenOctokit = await karenProbot.auth(karenIndexInstallId!);
       const result = await openOrUpdateIndexPR({
         karenOctokit,
         oliverOctokit,
@@ -380,18 +390,18 @@ export function slugFromBundleWheelName(name: string): string | null {
 
 // Turn a bundle's wheel assets into per-world entries, logging a per-world skip
 // (and dropping just that world) for an unrecognized wheel name, a duplicate
-// slug, or a missing SHA256 digest.
-async function buildBundleWorlds(params: {
-  octokit: Octokit;
-  owner: string;
-  repo: string;
+// slug, or a missing SHA256 digest. The manifest is NOT fetched here: the
+// bundle copies each world's existing Index manifest and rewrites only the wheel
+// pointer (the Beta repo carries no per-world archipelago.json at the release
+// commit, so there is nothing to fetch from the source side).
+function buildBundleWorlds(params: {
   releaseTag: string;
   releaseSha: string;
   wheelAssets: Array<{ name: string; browser_download_url: string; size: number }>;
   oliverLog: EventLog;
   sourceRepo: string;
-}): Promise<BundleWorld[]> {
-  const { octokit, owner, repo, releaseTag, releaseSha, wheelAssets, oliverLog, sourceRepo } = params;
+}): BundleWorld[] {
+  const { releaseTag, releaseSha, wheelAssets, oliverLog, sourceRepo } = params;
   const worlds: BundleWorld[] = [];
   const seen = new Set<string>();
 
@@ -437,14 +447,12 @@ async function buildBundleWorlds(params: {
       continue;
     }
     const sha256 = digest.slice("sha256:".length);
-    const sourceManifest = (await fetchSourceManifest(octokit, owner, repo, slug, releaseSha)) ?? {};
     seen.add(slug);
     worlds.push({
       slug,
       moduleLocation: `${asset.browser_download_url}#sha256=${sha256}`,
       wheelAssetName: asset.name,
       wheelAssetSize: asset.size,
-      sourceManifest,
     });
   }
 

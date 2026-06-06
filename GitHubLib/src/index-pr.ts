@@ -61,10 +61,6 @@ const NEW_WORLD_LABEL = "New APWorld";
 const UPDATE_WORLD_LABEL = "APWorld Update";
 const NEEDS_IGDB_ID_LABEL = "Needs IGDB id";
 const CODEOWNERS_PATH = ".github/CODEOWNERS";
-// Fallback codeowner for a bundled multi-world release whose worlds don't all
-// already share one owner on the Index. Bundles span many worlds/authors, so
-// there is no single per-world author to attribute; the repo owner takes it.
-const BUNDLE_CODEOWNER_FALLBACK = "lallaria";
 
 export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRResult> {
   const {
@@ -236,13 +232,12 @@ export interface BundleWorld {
   moduleLocation: string;
   wheelAssetName: string;
   wheelAssetSize: number;
-  sourceManifest: Record<string, unknown>;
 }
 
 export interface BundleIndexPROpts {
-  karenOctokit: ProbotOctokit;
+  // Oliver holds Contents:Write on the Index for the bundle path and does the
+  // whole job himself — branch, commits, PR, labels. Karen is not involved.
   oliverOctokit: ProbotOctokit;
-  karenData: IndexBotData;
   oliverData: IndexBotData;
   indexOwner: string;
   indexName: string;
@@ -256,26 +251,27 @@ export interface BundleIndexPROpts {
 }
 
 export interface BundleIndexPRResult {
+  opened: boolean;
   prNumber: number;
   branchName: string;
   created: boolean;
-  newWorldSlugs: string[];
   updatedWorldSlugs: string[];
-  bundleCodeowner: string;
-  codeownersConflicts: Array<{ slug: string; conflictWith: string }>;
+  // Bundled worlds not yet on the Index (no manifest to copy).
+  skippedSlugs: string[];
 }
 
-// Open (or update) ONE combined Index PR for a bundled multi-world release: a
-// single branch `update/<releaseTag>` that commits every changed
-// `worlds/<slug>.json`. CODEOWNERS lines for NEW worlds use a single resolved
-// bundle codeowner (the unanimous existing owner, else the repo-owner fallback)
-// rather than per-world authors. Mirrors openOrUpdateIndexPR's Karen-commits /
-// Oliver-opens split.
+// Open (or update) ONE combined Index PR for a bundled multi-world release.
+// Each bundled world already lives on the Index: copy its `worlds/<slug>.json`
+// verbatim and rewrite only `module_location` (the new wheel URL), preserving
+// every other field and the file's indentation so the diff is a single line.
+// A bundled world that isn't on the Index is skipped — the Beta repo carries no
+// per-world archipelago.json at the release commit, so there's nothing to seed a
+// new manifest from. All Index writes use Oliver's token (Contents:Write);
+// Karen's review workflow still runs once the PR is open.
 export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promise<BundleIndexPRResult> {
   const {
-    karenOctokit,
     oliverOctokit,
-    karenData,
+    oliverData,
     indexOwner,
     indexName,
     sourceOwner,
@@ -286,32 +282,28 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
 
   const branchName = `update/${releaseTag}`;
 
-  const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
+  const repoInfo = await oliverOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
-  // New vs existing is decided against the Index default branch, per world.
-  const newWorldSlugs: string[] = [];
-  const updatedWorldSlugs: string[] = [];
+  // Only worlds already on the Index can be copy+edited; the rest are skipped.
+  const updatable: BundleWorld[] = [];
+  const skippedSlugs: string[] = [];
   for (const w of worlds) {
-    const isNew = !(await fileExistsOnRef(
-      karenOctokit,
+    const exists = await fileExistsOnRef(
+      oliverOctokit,
       indexOwner,
       indexName,
       `worlds/${w.slug}.json`,
       defaultBranch,
-    ));
-    (isNew ? newWorldSlugs : updatedWorldSlugs).push(w.slug);
+    );
+    if (exists) updatable.push(w);
+    else skippedSlugs.push(w.slug);
+  }
+  if (updatable.length === 0) {
+    return { opened: false, prNumber: 0, branchName, created: false, updatedWorldSlugs: [], skippedSlugs };
   }
 
-  // Resolve the single bundle codeowner from the *base* branch CODEOWNERS, then
-  // run it through the same prefix treatment as the single-world path so sandbox
-  // runs stay non-pinging.
-  const baseCodeowners = (await readCodeowners(karenOctokit, indexOwner, indexName, defaultBranch)).content;
-  const bundleCodeowner = deriveCodeownerHandle(
-    resolveBundleCodeowner(baseCodeowners, worlds.map((w) => w.slug)),
-  );
-
-  const baseRef = await karenOctokit.rest.git.getRef({
+  const baseRef = await oliverOctokit.rest.git.getRef({
     owner: indexOwner,
     repo: indexName,
     ref: `heads/${defaultBranch}`,
@@ -320,7 +312,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
 
   let branchExists = true;
   try {
-    await karenOctokit.rest.git.getRef({
+    await oliverOctokit.rest.git.getRef({
       owner: indexOwner,
       repo: indexName,
       ref: `heads/${branchName}`,
@@ -329,7 +321,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     branchExists = false;
   }
   if (!branchExists) {
-    await karenOctokit.rest.git.createRef({
+    await oliverOctokit.rest.git.createRef({
       owner: indexOwner,
       repo: indexName,
       ref: `refs/heads/${branchName}`,
@@ -337,46 +329,46 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     });
   }
 
-  const newWorldSet = new Set(newWorldSlugs);
   let anyNeedsIgdb = false;
   const bodyWorldLines: string[] = [];
-  for (const w of worlds) {
+  for (const w of updatable) {
     const filePath = `worlds/${w.slug}.json`;
-    const { json: currentJson, sha: currentSha } = await readJsonOnBranch(
-      karenOctokit,
-      indexOwner,
-      indexName,
-      filePath,
-      branchName,
-    );
-    const updated = mergeWorldManifest(w.sourceManifest, currentJson, w.moduleLocation, w.wheelAssetSize);
+    const existing = await oliverOctokit.rest.repos.getContent({
+      owner: indexOwner,
+      repo: indexName,
+      path: filePath,
+      ref: branchName,
+    });
+    if (Array.isArray(existing.data) || existing.data.type !== "file") {
+      skippedSlugs.push(w.slug);
+      continue;
+    }
+    const raw = Buffer.from(existing.data.content, existing.data.encoding as BufferEncoding).toString("utf-8");
+    const currentJson = JSON.parse(raw) as Record<string, unknown>;
+    // Copy the Index manifest; rewrite only the wheel pointer. Spreading
+    // currentJson first preserves every other field and module_location's
+    // original key position, so the diff is just the URL line.
+    const updated = { ...currentJson, module_location: w.moduleLocation };
     if (!("igdb_id" in updated)) anyNeedsIgdb = true;
 
-    const newContent = JSON.stringify(updated, null, 2) + "\n";
-    await karenOctokit.rest.repos.createOrUpdateFileContents({
+    const newContent = JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n";
+    await oliverOctokit.rest.repos.createOrUpdateFileContents({
       owner: indexOwner,
       repo: indexName,
       path: filePath,
       branch: branchName,
       message: `[${w.slug}] Update to ${releaseTag}`,
       content: Buffer.from(newContent, "utf-8").toString("base64"),
-      sha: currentSha,
+      sha: existing.data.sha,
     });
 
-    const kind = newWorldSet.has(w.slug) ? "new" : "update";
-    bodyWorldLines.push(
-      `- \`${w.slug}\` (${kind}): \`${w.wheelAssetName}\` (${formatWheelSize(w.wheelAssetSize)})`,
-    );
+    bodyWorldLines.push(`- \`${w.slug}\`: \`${w.wheelAssetName}\` (${formatWheelSize(w.wheelAssetSize)})`);
   }
 
-  const codeownersConflicts = await appendCodeownersForNewWorlds({
-    karenOctokit,
-    indexOwner,
-    indexName,
-    branchName,
-    releaseTag,
-    entries: newWorldSlugs.map((slug) => ({ slug, codeowner: bundleCodeowner })),
-  });
+  const updatedWorldSlugs = updatable.map((w) => w.slug).filter((s) => !skippedSlugs.includes(s));
+  if (updatedWorldSlugs.length === 0) {
+    return { opened: false, prNumber: 0, branchName, created: false, updatedWorldSlugs: [], skippedSlugs };
+  }
 
   const existingPRs = await oliverOctokit.rest.pulls.list({
     owner: indexOwner,
@@ -389,12 +381,12 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     `Auto-opened by Oliver from \`${sourceOwner}/${sourceRepo}@${releaseTag}\` (bundled multi-world release).`,
     ``,
     `**Release tag:** \`${releaseTag}\``,
-    `**Worlds:** ${worlds.length} (${newWorldSlugs.length} new, ${updatedWorldSlugs.length} update)`,
-    `**Codeowner:** @${bundleCodeowner}`,
+    `**Worlds updated:** ${updatedWorldSlugs.length}`,
+    ...(skippedSlugs.length ? [`**Skipped (not on Index):** ${skippedSlugs.join(", ")}`] : []),
     ``,
     ...bodyWorldLines,
     ``,
-    `Branch was created and committed by \`${karenData.name}[bot](${karenData.html_url})\`; Karen's review workflow will run automatically.`,
+    `Branch created and committed by \`${oliverData.name}[bot](${oliverData.html_url})\`; Karen's review workflow will run automatically.`,
   ].join("\n");
 
   let prNumber: number;
@@ -403,7 +395,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     const createdPR = await oliverOctokit.rest.pulls.create({
       owner: indexOwner,
       repo: indexName,
-      title: `[bundle] Update ${worlds.length} world${worlds.length === 1 ? "" : "s"} (${releaseTag})`,
+      title: `[bundle] Update ${updatedWorldSlugs.length} world${updatedWorldSlugs.length === 1 ? "" : "s"} (${releaseTag})`,
       head: branchName,
       base: defaultBranch,
       body: prBody,
@@ -438,28 +430,23 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     created = false;
   }
 
-  const labels: string[] = [];
-  if (newWorldSlugs.length > 0) labels.push(NEW_WORLD_LABEL);
-  if (updatedWorldSlugs.length > 0) labels.push(UPDATE_WORLD_LABEL);
+  const labels = [UPDATE_WORLD_LABEL];
   if (anyNeedsIgdb) labels.push(NEEDS_IGDB_ID_LABEL);
-  if (labels.length > 0) {
-    await oliverOctokit.rest.issues.addLabels({
-      owner: indexOwner,
-      repo: indexName,
-      issue_number: prNumber,
-      labels,
-    });
-  }
+  await oliverOctokit.rest.issues.addLabels({
+    owner: indexOwner,
+    repo: indexName,
+    issue_number: prNumber,
+    labels,
+  });
 
-  return {
-    prNumber,
-    branchName,
-    created,
-    newWorldSlugs,
-    updatedWorldSlugs,
-    bundleCodeowner,
-    codeownersConflicts,
-  };
+  return { opened: true, prNumber, branchName, created, updatedWorldSlugs, skippedSlugs };
+}
+
+// Preserve the existing manifest's indentation so a bundle update is a one-line
+// diff (only module_location changes). Falls back to two-space.
+function detectJsonIndent(raw: string): string | number {
+  const m = raw.match(/\n([ \t]+)"/);
+  return m ? m[1] : 2;
 }
 
 function formatWheelSize(bytes: number): string {
@@ -628,83 +615,6 @@ async function appendCodeownersForNewWorld(opts: AppendCodeownersOpts): Promise<
   });
 
   return null;
-}
-
-// Batch variant for the bundle path: append CODEOWNERS lines for several new
-// worlds in ONE commit. Reuses the single-world conflict/idempotency checks
-// against an accumulating copy so the next line sees the previous append.
-async function appendCodeownersForNewWorlds(opts: {
-  karenOctokit: ProbotOctokit;
-  indexOwner: string;
-  indexName: string;
-  branchName: string;
-  releaseTag: string;
-  entries: Array<{ slug: string; codeowner: string }>;
-}): Promise<Array<{ slug: string; conflictWith: string }>> {
-  const { karenOctokit, indexOwner, indexName, branchName, releaseTag, entries } = opts;
-  const conflicts: Array<{ slug: string; conflictWith: string }> = [];
-  if (entries.length === 0) return conflicts;
-
-  const { content: existingContent, sha: existingSha } = await readCodeowners(
-    karenOctokit,
-    indexOwner,
-    indexName,
-    branchName,
-  );
-
-  let working = existingContent;
-  let appended = 0;
-  for (const { slug, codeowner } of entries) {
-    const targetPath = `worlds/${slug}.json`;
-    const conflict = findCodeownersConflict(working, targetPath, codeowner);
-    if (conflict !== null) {
-      conflicts.push({ slug, conflictWith: conflict });
-      continue;
-    }
-    if (containsExactLine(working, targetPath, codeowner)) continue;
-    working = appendCodeownersLine(working, `${targetPath} @${codeowner}`);
-    appended++;
-  }
-
-  if (appended > 0) {
-    await karenOctokit.rest.repos.createOrUpdateFileContents({
-      owner: indexOwner,
-      repo: indexName,
-      path: CODEOWNERS_PATH,
-      branch: branchName,
-      message: `[${releaseTag}] Add codeowners for ${appended} new world${appended === 1 ? "" : "s"}`,
-      content: Buffer.from(working, "utf-8").toString("base64"),
-      sha: existingSha,
-    });
-  }
-
-  return conflicts;
-}
-
-// The owners declared for `targetPath` on the first matching CODEOWNERS line
-// (handles, @-stripped), or null when no line covers it.
-function ownersForPath(content: string, targetPath: string): string[] | null {
-  for (const raw of content.split("\n")) {
-    const line = raw.trim();
-    if (!line || line.startsWith("#")) continue;
-    const [pattern, ...owners] = line.split(/\s+/);
-    if (pattern !== targetPath) continue;
-    return owners.map((o) => o.replace(/^@/, ""));
-  }
-  return null;
-}
-
-// A bundle gets ONE codeowner: the single owner shared by every bundled world
-// that already has a CODEOWNERS line (worlds with no line don't break that
-// unanimity); if the bundled worlds resolve to zero or several distinct owners,
-// fall back to the repo owner. Used only for appending NEW worlds' lines.
-function resolveBundleCodeowner(codeownersContent: string, slugs: string[]): string {
-  const owners = new Set<string>();
-  for (const slug of slugs) {
-    const handles = ownersForPath(codeownersContent, `worlds/${slug}.json`);
-    if (handles && handles.length === 1) owners.add(handles[0]);
-  }
-  return owners.size === 1 ? [...owners][0] : BUNDLE_CODEOWNER_FALLBACK;
 }
 
 function findCodeownersConflict(content: string, targetPath: string, expectedHandle: string): string | null {
