@@ -46,10 +46,11 @@ function options(overrides: Partial<RunFuzzOptions> = {}): RunFuzzOptions {
   return {
     image: "ghcr.io/multiworldgg/fuzz:latest",
     workDir: tmpDir,
-    mwggCoreRepo: "MultiworldGG/MultiworldGG",
-    mwggCoreRef: "main",
-    fuzzerRepo: "Eijebong/Archipelago-fuzzer",
-    fuzzerRef: "main",
+    // Offline runner fetches the wheel itself; inject a no-network fake that just
+    // writes the bind file so runFuzzContainer tests never touch the network.
+    fetchWheel: async (_url: string, _sha: string, dest: string) => {
+      fs.writeFileSync(dest, "wheel-bytes");
+    },
     log: (m: string) => logs.push(m),
     ...overrides,
   };
@@ -127,7 +128,7 @@ afterEach(() => {
 
 describe("buildDockerArgs — hardening flags", () => {
   it("emits every required hardening flag", () => {
-    const args = buildDockerArgs(job(), options(), "mwgg-fuzz-42-hk-x", "/work/out");
+    const args = buildDockerArgs(job(), options(), "mwgg-fuzz-42-hk-x", "/work/out", "/work/in");
 
     expect(args[0]).toBe("run");
     expect(args).toContain("--rm");
@@ -146,7 +147,9 @@ describe("buildDockerArgs — hardening flags", () => {
     expect(pairAfter("--memory")).toBe("4g");
     expect(pairAfter("--memory-swap")).toBe("4g");
     expect(pairAfter("--ulimit")).toBe("nofile=4096:4096");
-    expect(pairAfter("--network")).toBe("bridge");
+    expect(pairAfter("--network")).toBe("none");
+    // wheel arrives as a read-only bind mount at /in.
+    expect(args).toContain("/work/in:/in:ro");
 
     // both tmpfs mounts present
     const tmpfs = args.filter((_, i) => args[i - 1] === "--tmpfs");
@@ -161,7 +164,7 @@ describe("buildDockerArgs — hardening flags", () => {
   it("adds READ-ONLY rom + host.yaml mounts only when romDir/hostYaml are set", () => {
     const vmounts = (a: string[]): string[] => a.filter((_, i) => a[i - 1] === "-v");
 
-    const without = buildDockerArgs(job(), options(), "n", "/work/out");
+    const without = buildDockerArgs(job(), options(), "n", "/work/out", "/work/in");
     expect(vmounts(without).some((m) => m.includes(":/roms:ro"))).toBe(false);
     expect(vmounts(without).some((m) => m.includes("/opt/fuzz/host.yaml:ro"))).toBe(false);
 
@@ -170,13 +173,14 @@ describe("buildDockerArgs — hardening flags", () => {
       options({ romDir: "/var/lib/mwgg-fuzz-roms", hostYaml: "/var/lib/host.yaml" }),
       "n",
       "/work/out",
+      "/work/in",
     );
     expect(vmounts(withRoms)).toContain("/var/lib/mwgg-fuzz-roms:/roms:ro");
     expect(vmounts(withRoms)).toContain("/var/lib/host.yaml:/opt/fuzz/host.yaml:ro");
   });
 
   it("passes the scan size cap through as FUZZ_SIZE_CAP_MB", () => {
-    const env = envPairs(buildDockerArgs(job({ sizeCapMb: 512 }), options(), "n", "/work/out"));
+    const env = envPairs(buildDockerArgs(job({ sizeCapMb: 512 }), options(), "n", "/work/out", "/work/in"));
     expect(env.FUZZ_SIZE_CAP_MB).toBe("512");
   });
 
@@ -186,31 +190,32 @@ describe("buildDockerArgs — hardening flags", () => {
       options(),
       "n",
       "/work/out",
+      "/work/in",
     );
     const env = envPairs(args);
 
     expect(env.FUZZ_SLUG).toBe("rop");
-    expect(env.FUZZ_WHEEL_URL).toBe(VALID_WHEEL);
     expect(env.FUZZ_WHEEL_SHA256).toBe("a".repeat(64));
     expect(env.FUZZ_RUNS).toBe("7");
     expect(env.FUZZ_TIMEOUT).toBe("11");
     expect(env.FUZZ_YAMLS).toBe("2-3");
     expect(env.FUZZ_THREADS).toBe("4");
-    expect(env.MWGG_CORE_REPO).toBe("MultiworldGG/MultiworldGG");
-    expect(env.MWGG_CORE_REF).toBe("main");
-    expect(env.FUZZER_REPO).toBe("Eijebong/Archipelago-fuzzer");
-    expect(env.FUZZER_REF).toBe("main");
     expect(env.KIVY_NO_ARGS).toBe("1");
     expect(env.SKIP_ALL_INSTALLS).toBe("1");
     expect(env.MALLOC_ARENA_MAX).toBe("2");
+    // Offline container: no fetch URL / core / fuzzer env is passed.
+    expect(env.FUZZ_WHEEL_URL).toBeUndefined();
+    expect(env.MWGG_CORE_REPO).toBeUndefined();
+    expect(env.FUZZER_REPO).toBeUndefined();
   });
 
   it("honors resource overrides", () => {
     const args = buildDockerArgs(
       job(),
-      options({ net: "none", cpus: "1", memory: "2g", pids: 128 }),
+      options({ cpus: "1", memory: "2g", pids: 128 }),
       "n",
       "/work/out",
+      "/work/in",
     );
     const pairAfter = (flag: string): string => args[args.indexOf(flag) + 1];
     expect(pairAfter("--network")).toBe("none");
@@ -306,6 +311,22 @@ describe("runFuzzContainer — result.json mapping", () => {
     expect(res.exitCode).toBe(125);
     expect(res.detail).toContain("network mwgg-fuzz-egress not found");
     expect(logs.some((l) => l.includes("docker exit 125"))).toBe(true);
+  });
+
+  it("fails (without throwing) when the wheel fetch/verify fails", async () => {
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    const res = await runFuzzContainer(
+      job(),
+      options({
+        fetchWheel: async () => {
+          throw new Error("wheel sha256 mismatch");
+        },
+      }),
+    );
+    expect(res.status).toBe("fail");
+    expect(res.detail).toContain("fetch/verify wheel");
+    // The container must not run if the wheel couldn't be fetched/verified.
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "run")).toBe(false);
   });
 });
 

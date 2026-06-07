@@ -18,6 +18,9 @@
 
 import { execFile } from "child_process";
 import * as fs from "fs/promises";
+import { createReadStream, createWriteStream } from "fs";
+import * as https from "https";
+import * as crypto from "crypto";
 import * as path from "path";
 
 import type { FuzzJob, FuzzStatus, FuzzWorldResult } from "./types";
@@ -26,15 +29,10 @@ export interface RunFuzzOptions {
   image: string;
   /** Host path that equals the in-container path; the FUZZ_WORK_DIR bind root. */
   workDir: string;
-  net?: string;
   cpus?: string;
   memory?: string;
   pids?: number;
   wallSeconds?: number;
-  mwggCoreRepo: string;
-  mwggCoreRef: string;
-  fuzzerRepo: string;
-  fuzzerRef: string;
   /**
    * Optional HOST path to a base-ROM directory, bind-mounted READ-ONLY at /roms
    * so ROM-dependent worlds can actually generate. Resolved by the host daemon,
@@ -48,12 +46,17 @@ export interface RunFuzzOptions {
    * .rom_file entries should point at /roms/<file>.
    */
   hostYaml?: string;
+  /**
+   * Download + sha256-verify the wheel to `dest` before the container runs. The
+   * container is `--network none`, so the TRUSTED bot fetches the bytes and
+   * bind-mounts them in at /in. Injectable for tests; defaults to an https fetch.
+   */
+  fetchWheel?: (url: string, sha256: string, dest: string) => Promise<void>;
   log: (m: string) => void;
   signal?: AbortSignal;
 }
 
 const DEFAULT_WALL_SECONDS = 1200;
-const DEFAULT_NET = "bridge";
 const DEFAULT_CPUS = "2";
 const DEFAULT_MEMORY = "4g";
 const DEFAULT_PIDS = 512;
@@ -90,25 +93,24 @@ export function buildDockerArgs(
   opts: RunFuzzOptions,
   name: string,
   hostOutDir: string,
+  hostInDir: string,
 ): string[] {
-  const net = opts.net ?? DEFAULT_NET;
   const cpus = opts.cpus ?? DEFAULT_CPUS;
   const memory = opts.memory ?? DEFAULT_MEMORY;
   const pids = opts.pids ?? DEFAULT_PIDS;
 
+  // No FUZZ_WHEEL_URL / MWGG_CORE_* / FUZZER_*: the container is offline. The
+  // wheel arrives as a bind mount (/in); core, its venv, and fuzz.py are baked
+  // into the image at build time. FUZZ_WHEEL_SHA256 stays for an in-container
+  // re-verify of the mounted bytes (defense in depth; the bot already verified).
   const env: Record<string, string> = {
     FUZZ_SLUG: job.slug,
-    FUZZ_WHEEL_URL: job.wheelUrl,
     FUZZ_WHEEL_SHA256: job.sha256,
     FUZZ_RUNS: String(job.runs),
     FUZZ_TIMEOUT: String(job.timeoutS),
     FUZZ_YAMLS: job.yamls,
     FUZZ_THREADS: String(job.threads),
     FUZZ_SIZE_CAP_MB: String(job.sizeCapMb),
-    MWGG_CORE_REPO: opts.mwggCoreRepo,
-    MWGG_CORE_REF: opts.mwggCoreRef,
-    FUZZER_REPO: opts.fuzzerRepo,
-    FUZZER_REF: opts.fuzzerRef,
     KIVY_NO_ARGS: "1",
     SKIP_ALL_INSTALLS: "1",
     MALLOC_ARENA_MAX: "2",
@@ -128,6 +130,8 @@ export function buildDockerArgs(
     "/work:rw,nosuid,size=4g",
     "-v",
     `${hostOutDir}:/out:rw`,
+    "-v",
+    `${hostInDir}:/in:ro`,
     "--cap-drop",
     "ALL",
     "--security-opt",
@@ -142,8 +146,10 @@ export function buildDockerArgs(
     memory,
     "--ulimit",
     "nofile=4096:4096",
+    // Untrusted world code gets ZERO network. Everything it needs is baked into
+    // the image or bind-mounted by the trusted bot, so there's nothing to reach.
     "--network",
-    net,
+    "none",
   ];
 
   // Optional READ-ONLY mounts for ROM-dependent worlds. Both resolve on the host
@@ -198,7 +204,7 @@ function summarizeTail(logTail: unknown): string {
 /**
  * First non-empty line of docker's own stderr — the actionable bit when
  * `docker run` itself fails (exit 125): e.g. "docker: Error response from
- * daemon: network mwgg-fuzz-egress not found." Truncated for the comment/log.
+ * daemon: invalid mount config" / "Unable to find image". Truncated for the log.
  */
 function firstStderrLine(stderr: string | undefined): string {
   if (!stderr) return "";
@@ -241,6 +247,59 @@ export function ensureImageAvailable(
         },
       );
     });
+  });
+}
+
+/**
+ * Default wheel fetch: stream the URL to `dest` (following redirects — GitHub
+ * release assets 302 to objects.githubusercontent.com), then sha256-verify the
+ * written file. Rejects on HTTP error, redirect loop, or digest mismatch, so the
+ * bot never bind-mounts unverified bytes into the sandbox.
+ */
+function defaultFetchWheel(url: string, expectedSha: string, dest: string): Promise<void> {
+  const expected = expectedSha.toLowerCase();
+  return new Promise((resolve, reject) => {
+    let redirects = 0;
+    const get = (u: string): void => {
+      https
+        .get(u, { headers: { "user-agent": "oliver-fuzz" } }, (res) => {
+          const status = res.statusCode ?? 0;
+          if (status >= 300 && status < 400 && res.headers.location) {
+            res.resume();
+            if (++redirects > 5) {
+              reject(new Error("too many redirects fetching wheel"));
+              return;
+            }
+            get(new URL(res.headers.location, u).toString());
+            return;
+          }
+          if (status !== 200) {
+            res.resume();
+            reject(new Error(`wheel fetch returned HTTP ${status}`));
+            return;
+          }
+          const out = createWriteStream(dest);
+          out.on("error", reject);
+          res.on("error", reject);
+          res.pipe(out);
+          out.on("finish", () => {
+            const hash = crypto.createHash("sha256");
+            const rs = createReadStream(dest);
+            rs.on("data", (c) => hash.update(c));
+            rs.on("error", reject);
+            rs.on("end", () => {
+              const actual = hash.digest("hex");
+              if (actual !== expected) {
+                reject(new Error(`wheel sha256 mismatch: expected ${expected}, got ${actual}`));
+              } else {
+                resolve();
+              }
+            });
+          });
+        })
+        .on("error", reject);
+    };
+    get(url);
   });
 }
 
@@ -421,12 +480,32 @@ export async function runFuzzContainer(
   const name = containerName(suffix);
   const jobDir = path.join(opts.workDir, suffix);
   const hostOutDir = path.join(jobDir, "out");
+  const hostInDir = path.join(jobDir, "in");
 
-  // Out-dir creation failing is a genuine internal error — let it reject.
+  // Dir creation failing is a genuine internal error — let it reject.
   await fs.mkdir(hostOutDir, { recursive: true });
+  await fs.mkdir(hostInDir, { recursive: true });
 
   try {
-    const args = buildDockerArgs(job, opts, name, hostOutDir);
+    // The container is offline, so the (trusted) bot fetches + verifies the wheel
+    // and bind-mounts it at /in. A fetch/verify failure is this world's failure,
+    // not a crash.
+    const fetchWheel = opts.fetchWheel ?? defaultFetchWheel;
+    try {
+      await fetchWheel(job.wheelUrl, job.sha256, path.join(hostInDir, "world.whl"));
+    } catch (err) {
+      const why = err instanceof Error ? err.message : String(err);
+      opts.log(`fuzz ${job.slug}: wheel fetch/verify failed: ${why}`);
+      return {
+        slug: job.slug,
+        status: "fail",
+        detail: `${job.slug}: could not fetch/verify wheel — ${why}`,
+        exitCode: 1,
+        timedOut: false,
+      };
+    }
+
+    const args = buildDockerArgs(job, opts, name, hostOutDir, hostInDir);
     opts.log(`fuzz ${job.slug}: docker run (${name}, wall ${wallSeconds}s)`);
 
     let outcome: DockerRunOutcome;

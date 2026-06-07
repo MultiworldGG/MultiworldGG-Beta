@@ -1,25 +1,25 @@
 #!/usr/bin/env bash
 # Single-world fuzz + scan, run inside the hardened image (see Dockerfile).
 #
-# A SINGLE-WORLD port of the Index repo's scripts/fuzz_worlds.sh, driven entirely
-# by env vars instead of a karen-targets.txt list. The bot (src/fuzz/runner.ts)
-# supplies every input as an env var and mounts ONLY /out (rw); /tmp and /work are
-# writable tmpfs, everything else is read-only.
+# A SINGLE-WORLD port of the Index repo's scripts/fuzz_worlds.sh, driven by env
+# vars instead of a karen-targets.txt list. The bot (src/fuzz/runner.ts) bind-
+# mounts the wheel at /in (ro) and /out (rw); /tmp and /work are writable tmpfs,
+# everything else (incl. the baked core under /opt/fuzz) is read-only. The
+# container runs with NO network.
 #
-# Inputs (env):
+# Inputs:
+#   /in/world.whl      the wheel to fuzz, bind-mounted READ-ONLY by the bot
 #   FUZZ_SLUG          world slug, e.g. "hk"            (required)
-#   FUZZ_WHEEL_URL     https://…​.whl to fuzz           (required)
-#   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required)
+#   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required; re-verified here)
 #   FUZZ_RUNS          fuzzer -r                        (default 50)
 #   FUZZ_TIMEOUT       fuzzer -t per-generation secs    (default 30)
 #   FUZZ_YAMLS         fuzzer -n range, e.g. "1-10"      (default 1-10)
 #   FUZZ_THREADS       fuzzer -j                         (default 10)
-#   MWGG_CORE_REPO     "owner/name" of MultiworldGG core (required)
-#   MWGG_CORE_REF      branch/tag/sha of core            (required)
-#   FUZZER_REPO        "owner/name" of Eijebong fuzzer   (required)
-#   FUZZER_REF         branch/tag/sha of fuzzer          (required)
 #   FUZZ_WALL_SECONDS  hard wall for fuzz.py             (default 1080)
 #   FUZZ_SIZE_CAP_MB   size_sanity cap                   (default 250)
+#
+# Core, its venv, and fuzz.py are BAKED into the image (pinned at build) under
+# /opt/fuzz; the container fetches nothing at runtime.
 #
 # Outputs (all under /out):
 #   result.json  the contract the bot reads back (schema in README.md)
@@ -41,16 +41,14 @@ HARNESS_DIR=/opt/fuzz
 LOG="${WORK}/combined.log"
 
 SLUG="${FUZZ_SLUG:-}"
-WHEEL_URL="${FUZZ_WHEEL_URL:-}"
+WHEEL_IN="/in/world.whl"                 # bind-mounted READ-ONLY by the bot
 WHEEL_SHA256="$(printf '%s' "${FUZZ_WHEEL_SHA256:-}" | tr '[:upper:]' '[:lower:]')"
 RUNS="${FUZZ_RUNS:-50}"
 TIMEOUT_S="${FUZZ_TIMEOUT:-30}"
 YAMLS="${FUZZ_YAMLS:-1-10}"
 THREADS="${FUZZ_THREADS:-10}"
-CORE_REPO="${MWGG_CORE_REPO:-}"
-CORE_REF="${MWGG_CORE_REF:-}"
-FUZZER_REPO="${FUZZER_REPO:-}"
-FUZZER_REF="${FUZZER_REF:-}"
+BAKED_CORE=/opt/fuzz/core                # core + its relocatable .venv, baked at build
+BAKED_FUZZER=/opt/fuzz/fuzz.py           # pinned fuzzer entrypoint, baked at build
 WALL_SECONDS="${FUZZ_WALL_SECONDS:-1080}"
 SIZE_CAP_MB="${FUZZ_SIZE_CAP_MB:-250}"
 
@@ -107,7 +105,7 @@ write_result() {
         --arg status "${STATUS}" \
         --argjson stats "${STATS_JSON}" \
         --arg bandit "$(scan_status bandit)" \
-        --arg pip_audit "$(scan_status pip_audit)" \
+        --arg pip_audit "skipped" \
         --arg size_sanity "$(scan_status size_sanity)" \
         --arg no_rom_files "$(scan_status no_rom_files)" \
         --arg no_network_at_import "$(scan_status no_network_at_import)" \
@@ -188,12 +186,10 @@ run() {
     # --- Validate required inputs up front; a missing one is an internal dispatch
     # bug, surfaced as a non-zero exit (bot -> hard fail).
     [ -n "${SLUG}" ]        || die 2 "FUZZ_SLUG is required"
-    [ -n "${WHEEL_URL}" ]   || die 2 "FUZZ_WHEEL_URL is required"
+    [ -s "${WHEEL_IN}" ]    || die 2 "wheel not bind-mounted at ${WHEEL_IN}"
     [ -n "${WHEEL_SHA256}" ]|| die 2 "FUZZ_WHEEL_SHA256 is required"
-    [ -n "${CORE_REPO}" ]   || die 2 "MWGG_CORE_REPO is required"
-    [ -n "${CORE_REF}" ]    || die 2 "MWGG_CORE_REF is required"
-    [ -n "${FUZZER_REPO}" ] || die 2 "FUZZER_REPO is required"
-    [ -n "${FUZZER_REF}" ]  || die 2 "FUZZER_REF is required"
+    [ -d "${BAKED_CORE}" ]  || die 2 "baked core missing at ${BAKED_CORE}"
+    [ -s "${BAKED_FUZZER}" ]|| die 2 "baked fuzz.py missing at ${BAKED_FUZZER}"
     case "${SLUG}" in
         *[!a-z0-9_-]*|'') die 2 "FUZZ_SLUG '${SLUG}' is not a safe slug" ;;
     esac
@@ -203,13 +199,12 @@ run() {
 
     log "=== fuzz ${SLUG} === runs=${RUNS} per-gen-timeout=${TIMEOUT_S}s yamls=${YAMLS} threads=${THREADS} wall=${WALL_SECONDS}s"
 
-    # --- (a) Download the wheel to /work and VERIFY its sha256 before anything
-    # touches its bytes. Mismatch -> fail fast with scan.sha256="mismatch".
+    # --- (a) Copy the bind-mounted wheel to /work (writable) and RE-VERIFY its
+    # sha256. The bot already verified before mounting; this is defense in depth.
+    # Mismatch -> fail fast with scan.sha256="mismatch".
     local wheel="${WORK}/world.whl"
-    log "Downloading wheel: ${WHEEL_URL}"
-    if ! curl -sSfL --proto '=https' --max-time 120 -o "${wheel}" "${WHEEL_URL}" 2>>"${LOG}"; then
-        die 3 "wheel download failed: ${WHEEL_URL}"
-    fi
+    log "staging mounted wheel ${WHEEL_IN}"
+    cp "${WHEEL_IN}" "${wheel}"
     local actual
     actual="$(sha256sum "${wheel}" | awk '{print $1}')"
     if [ "${actual}" != "${WHEEL_SHA256}" ]; then
@@ -263,7 +258,10 @@ PY
     mkdir -p "${manifest_dir}"
     printf '{}' > "${manifest}"
 
-    log "scanning extracted wheel (size/rom/network/bandit/pip_audit)"
+    # pip_audit is intentionally NOT run here: it queries PyPI's advisory DB online
+    # and this container is --network none. World wheels declare no deps, so the
+    # audit surface is ~empty anyway; run it bot-side (trusted) later if desired.
+    log "scanning extracted wheel (size/rom/network/bandit)"
     # Non-fatal: a scan that errors must NOT abort the fuzz; its findings are
     # advisory and surfaced in scan.json / result.json.scan.
     set +e
@@ -275,7 +273,6 @@ PY
         --check no_rom_files \
         --check no_network_at_import \
         --check bandit \
-        --check pip_audit \
         --output-summary "${OUT}/scan.json" >>"${LOG}" 2>&1
     local scan_rc=$?
     set -e
@@ -289,14 +286,11 @@ PY
     set -e
     log "ruff exit=${ruff_rc}"
 
-    # --- (d) Clone core (shallow, pinned ref) and build a venv with core reqs + the
-    # candidate wheel. All under /work so it lands on tmpfs, not the read-only root.
-    log "cloning core ${CORE_REPO}@${CORE_REF}"
+    # --- (d) Stage the BAKED core (incl. its relocatable .venv) into /work so it is
+    # writable. No clone, no network — core is pinned into the image at build time.
+    log "staging baked core ${BAKED_CORE} -> ${CORE}"
     rm -rf "${CORE}"
-    if ! git clone --depth 1 --branch "${CORE_REF}" \
-            "https://github.com/${CORE_REPO}.git" "${CORE}" >>"${LOG}" 2>&1; then
-        die 5 "git clone of core ${CORE_REPO}@${CORE_REF} failed"
-    fi
+    cp -a "${BAKED_CORE}" "${CORE}"
 
     # If the operator bind-mounted a host.yaml (RO at ${HARNESS_DIR}/host.yaml),
     # install it where MWGG's get_settings() looks. With cwd == local_path == ${CORE}
@@ -316,31 +310,27 @@ PY
         log "no host.yaml mounted; ROM-dependent worlds will no-op (no base ROM)"
     fi
 
-    log "creating venv + installing core requirements and candidate wheel"
+    log "installing candidate wheel into the baked venv (offline, --no-deps)"
     set +e
     (
         set -e
         cd "${CORE}"
-        uv venv .venv
         # shellcheck disable=SC1091
         . .venv/bin/activate
-        uv pip install -r requirements.txt
-        uv pip install "${wheel}"
+        # Core requirements are already baked into .venv; world wheels declare no
+        # deps, so --no-deps + --offline guarantees zero network here.
+        uv pip install --offline --no-deps "${wheel}"
     ) >>"${LOG}" 2>&1
     local setup_rc=$?
     set -e
-    [ "${setup_rc}" -eq 0 ] || die 6 "core venv / dependency install failed"
+    [ "${setup_rc}" -eq 0 ] || die 6 "offline wheel install into baked venv failed"
 
     # --- (e) Fetch the upstream fuzzer and sed-inject the PINNED bootstrap BEFORE
     # the `from worlds import` line (same anchor as fuzz_worlds.sh — never a line
     # number, fuzz.py is a moving target). Then run it under a hard wall.
     cd "${CORE}"
-    log "fetching fuzz.py from ${FUZZER_REPO}@${FUZZER_REF}"
-    if ! curl -sSfL --proto '=https' --max-time 60 \
-            "https://raw.githubusercontent.com/${FUZZER_REPO}/${FUZZER_REF}/fuzz.py" \
-            -o fuzz.py 2>>"${LOG}"; then
-        die 7 "could not fetch fuzz.py"
-    fi
+    log "using baked fuzz.py (${BAKED_FUZZER})"
+    cp "${BAKED_FUZZER}" fuzz.py
     local worlds_line
     worlds_line="$(grep -n '^from worlds import' fuzz.py | head -n1 | cut -d: -f1)"
     [ -n "${worlds_line}" ] || die 7 "could not find 'from worlds import' anchor in fuzz.py"

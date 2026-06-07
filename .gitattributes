@@ -1,4 +1,2 @@
 worlds/blasphemous/region_data.py linguist-generated=true
 worlds/yachtdice/YachtWeights.py linguist-generated=true
-deploy/fuzz-egress-firewall.sh text eol=lf
-deploy/mwgg-fuzz-firewall.service text eol=lf

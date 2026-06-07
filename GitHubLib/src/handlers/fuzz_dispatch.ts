@@ -73,18 +73,15 @@ function runnerOptionsFromEnv(
 ): RunFuzzOptions {
   return {
     // Defaults mirror deploy/docker-compose.yml's github-bots env so a missing
-    // var falls back to the same value prod sets explicitly.
+    // var falls back to the same value prod sets explicitly. The container is
+    // `--network none`: core/fuzzer/deps are baked into FUZZ_IMAGE at build time,
+    // so there's no FUZZ_NET / MWGG_CORE_* / FUZZER_* to pass.
     image: envStr("FUZZ_IMAGE", "ghcr.io/multiworldgg/multiworldgg-fuzz:latest"),
     workDir: envStr("FUZZ_WORK_DIR", "/var/lib/mwgg-fuzz"),
-    net: envStr("FUZZ_NET", "bridge"),
     cpus: envStr("FUZZ_CPUS", "2"),
     memory: envStr("FUZZ_MEMORY", "4g"),
     pids: envNum("FUZZ_PIDS", 512),
     wallSeconds: envNum("FUZZ_WALL_SECONDS", 1200),
-    mwggCoreRepo: envStr("MWGG_CORE_REPO", "MultiworldGG/MultiworldGG"),
-    mwggCoreRef: envStr("MWGG_CORE_REF", "main"),
-    fuzzerRepo: envStr("FUZZER_REPO", "Eijebong/Archipelago-fuzzer"),
-    fuzzerRef: envStr("FUZZER_REF", "main"),
     // Optional RO mounts so ROM-dependent worlds can generate; unset → no mount.
     romDir: envOpt("FUZZ_ROM_DIR"),
     hostYaml: envOpt("FUZZ_HOST_YAML"),

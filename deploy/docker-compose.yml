@@ -182,7 +182,8 @@ services:
       # Work dir for per-job out mounts. MUST equal the host path bind-mounted
       # above so `docker run -v` resolves on the host daemon.
       - FUZZ_WORK_DIR=/var/lib/mwgg-fuzz
-      # Image the bot spawns per world to fetch+verify the wheel, scan, and fuzz.
+      # Image the bot spawns per world to scan + fuzz a bind-mounted wheel,
+      # OFFLINE (--network none). Core/venv/fuzz.py are baked into it at build.
       - FUZZ_IMAGE=${FUZZ_IMAGE:-ghcr.io/multiworldgg/multiworldgg-fuzz:latest}
       # At most this many fuzz containers run concurrently (clamped to >= 1).
       - FUZZ_MAX_CONCURRENCY=1
@@ -192,17 +193,11 @@ services:
       - FUZZ_PIDS=512
       # Node-side wall-clock budget per container; on expiry it is force-removed.
       - FUZZ_WALL_SECONDS=1200
-      # Dedicated egress-restricted bridge the fuzz containers attach to. The
-      # host MUST firewall this bridge off from RFC1918 + 169.254.169.254 + the
-      # host itself (see deploy/README.md); only FUZZ_WHEEL_HOSTS need to resolve.
-      - FUZZ_NET=${FUZZ_NET:-mwgg-fuzz-egress}
-      # Hosts the in-container wheel fetch is allowed to reach.
-      - FUZZ_WHEEL_HOSTS=github.com,objects.githubusercontent.com
-      # Core + fuzzer sources the container clones to build the harness.
-      - MWGG_CORE_REPO=MultiworldGG/MultiworldGG
-      - MWGG_CORE_REF=main
-      - FUZZER_REPO=Eijebong/Archipelago-fuzzer
-      - FUZZER_REF=main
+      # NOTE: the fuzz container runs with `--network none`. Core, its venv, and
+      # fuzz.py are baked into FUZZ_IMAGE at build time, and the bot downloads +
+      # verifies the wheel and bind-mounts it in — so there is NO FUZZ_NET /
+      # FUZZ_WHEEL_HOSTS / MWGG_CORE_* / FUZZER_* (and no egress bridge/firewall)
+      # to configure. Rebuild the image to pick up a newer core/fuzzer pin.
       # Optional ROM support (read-only). ROM-dependent worlds (e.g. metroidfusion)
       # only generate if the base ROMs are present. Set these to HOST paths and
       # the bot adds them to the inner `docker run` as READ-ONLY mounts (/roms +
@@ -210,9 +205,8 @@ services:
       # so — unlike FUZZ_WORK_DIR — they need NOT be bind-mounted into this
       # container. host.yaml's <world>_options.rom_file entries must point at
       # /roms/<file>, and the ROMs must be readable by uid 65532. Untrusted world
-      # code can READ (not write) the ROMs and the container has egress, so only
-      # expose ROMs you accept could be exfiltrated. Leave unset to keep ROM
-      # worlds as warn/no-ops (the legacy CI behavior).
+      # code can READ (not write) the ROMs, but the container has NO network, so
+      # they can't be exfiltrated. Leave unset to keep ROM worlds as warn/no-ops.
       # - FUZZ_ROM_DIR=/var/lib/mwgg-fuzz-roms
       # - FUZZ_HOST_YAML=/var/lib/mwgg-fuzz-host.yaml
     # Karen reaches the daemon proxy by service name over the compose network.

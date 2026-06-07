@@ -2,9 +2,12 @@
 #
 # The bot (src/fuzz/runner.ts) runs this with:
 #   --user 65532:65532 --read-only --cap-drop ALL --security-opt no-new-privileges
+#   --network none
 #   --tmpfs /tmp:rw,noexec,nosuid,size=512m  --tmpfs /work:rw,nosuid,size=4g
-#   -v <host>/out:/out:rw
-# and feeds every job input as an env var (FUZZ_*, MWGG_CORE_*, FUZZER_*).
+#   -v <host>/out:/out:rw  -v <host>/in:/in:ro
+# Untrusted world code gets ZERO network. Everything it needs is baked in at build
+# time (core + its venv + fuzz.py, pinned below) or bind-mounted by the trusted
+# bot (the wheel, at /in). Job parameters still arrive as FUZZ_* env vars.
 #
 # Because the root FS is read-only at runtime and /tmp is noexec, EVERYTHING the
 # run needs must already be in the image, and every runtime write must land on
@@ -82,6 +85,31 @@ RUN chmod 0555 /opt/fuzz/run_fuzz.sh /opt/fuzz/karen_review.py /opt/fuzz/fuzz_bo
 RUN set -eux; \
     mkdir -p /roms; chmod 0555 /roms; \
     : > /opt/fuzz/host.yaml; chmod 0444 /opt/fuzz/host.yaml
+
+# --- Bake the trusted harness inputs at BUILD time so the runtime needs NO
+# network. Pinned via build args — rebuild to update (per the design, core need
+# not be fresh every run). The BUILD has network; the runtime is --network none.
+ARG MWGG_CORE_REPO=MultiworldGG/MultiworldGG
+ARG MWGG_CORE_REF=main
+ARG FUZZER_REPO=Eijebong/Archipelago-fuzzer
+ARG FUZZER_REF=main
+
+RUN set -eux; \
+    git clone --depth 1 --branch "${MWGG_CORE_REF}" \
+        "https://github.com/${MWGG_CORE_REPO}.git" /opt/fuzz/core; \
+    rm -rf /opt/fuzz/core/.git; \
+    # Relocatable venv + core requirements, so the runtime copy to /work works
+    # without hardcoded paths. (uv/bandit/etc. live in system site-packages.)
+    ( cd /opt/fuzz/core \
+        && uv venv --relocatable .venv \
+        && . .venv/bin/activate \
+        && uv pip install -r requirements.txt ); \
+    # Pinned fuzzer entrypoint, baked — never fetched at runtime.
+    curl -sSfL --proto '=https' --max-time 60 \
+        "https://raw.githubusercontent.com/${FUZZER_REPO}/${FUZZER_REF}/fuzz.py" \
+        -o /opt/fuzz/fuzz.py; \
+    # The runtime user (65532) must be able to read + copy these.
+    chmod -R a+rX /opt/fuzz/core /opt/fuzz/fuzz.py
 
 # Drop to the unprivileged user for the default run. The bot pins this again with
 # --user, so this is defense-in-depth / correct behavior for a bare `docker run`.

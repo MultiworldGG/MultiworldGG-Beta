@@ -104,41 +104,23 @@ comment. To enable it:
    sudo mkdir -p /var/lib/mwgg-fuzz
    sudo chmod 700 /var/lib/mwgg-fuzz
    ```
-2. **Build/publish the fuzz image** referenced by `FUZZ_IMAGE`:
+2. **Build/publish the fuzz image** referenced by `FUZZ_IMAGE`. The container runs
+   `--network none`, so core, its venv, and `fuzz.py` are baked in at build time —
+   the *build* needs network and pins the sources via build args:
    ```bash
-   docker build -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest ../GitHubLib/fuzz-image
+   docker build \
+     --build-arg MWGG_CORE_REF=main \
+     --build-arg FUZZER_REF=main \
+     -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest ../GitHubLib/fuzz-image
    ```
-3. **Egress-restricted bridge** the fuzz containers attach to (`FUZZ_NET`). They
-   run untrusted world code, so the bridge MUST be firewalled off from the host,
-   the private network, and the cloud metadata endpoint — it only needs to reach
-   GitHub / PyPI / `FUZZ_WHEEL_HOSTS`. Create it with a **fixed bridge interface
-   name** so the firewall rules are stable:
-   ```bash
-   docker network create --opt com.docker.network.bridge.name=mwgg-fuzz0 mwgg-fuzz-egress
-   ```
-   Then apply the egress firewall. You can't use the normal `INPUT`/`FORWARD`
-   chains — Docker rewrites those. Filter in the **`DOCKER-USER`** chain, which
-   Docker jumps to first and never flushes. `fuzz-egress-firewall.sh` (here in
-   `deploy/`) does exactly that: drops the metadata IP + every RFC1918 range +
-   CGNAT from the `mwgg-fuzz0` bridge and allows the rest; it's idempotent.
-   ```bash
-   sudo install -m 0755 fuzz-egress-firewall.sh /usr/local/sbin/
-   sudo /usr/local/sbin/fuzz-egress-firewall.sh          # apply now
-   # persist across reboots (re-applies after Docker starts):
-   sudo install -m 0644 mwgg-fuzz-firewall.service /etc/systemd/system/
-   sudo systemctl enable --now mwgg-fuzz-firewall.service
-   ```
-   To also block the host's own public IP(s), pass `MWGG_FUZZ_BLOCK_IPS="<ip> …"`
-   (env var for the script; a `systemctl edit` drop-in for the service). Verify
-   from a throwaway container on the bridge — GitHub should work, metadata/LAN
-   should not:
-   ```bash
-   docker run --rm --network mwgg-fuzz-egress alpine/curl:latest -sS -m5 https://github.com -o /dev/null && echo "github OK"
-   docker run --rm --network mwgg-fuzz-egress alpine/curl:latest -sS -m5 http://169.254.169.254/   ; echo "metadata exit=$? (want non-zero)"
-   docker run --rm --network mwgg-fuzz-egress alpine/curl:latest -sS -m5 http://192.168.0.1/        ; echo "LAN exit=$? (want non-zero)"
-   ```
-   **Never** create the bridge without this firewall — an unfirewalled egress
-   bridge lets untrusted world code reach your LAN and steal cloud credentials.
+   (`MWGG_CORE_REPO` / `FUZZER_REPO` are also overridable. Rebuild to pick up a
+   newer core/fuzzer pin — per the design, core need not be fresh every run.)
+3. **No fuzz network — nothing to set up.** The fuzz container runs with
+   `--network none`: the bot downloads + sha256-verifies each wheel and bind-mounts
+   it read-only at `/in`, and everything else is baked into the image. There is no
+   egress bridge to create or firewall; untrusted world code simply has zero
+   network. (Trade-off: the `pip_audit` scan, which needs PyPI's advisory DB, is
+   skipped — world wheels declare no deps, so its surface is ~empty.)
 4. **Karen App config:** Webhook URL `https://karen.prismativerse.com/` (Karen's
    own subdomain — needs a DNS A record + its own Let's Encrypt cert; the host
    nginx validates the Karen HMAC and maps it to the bot's internal `/karen`),
