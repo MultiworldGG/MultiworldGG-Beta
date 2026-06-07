@@ -6,26 +6,31 @@ and scans its wheel. It is the single-world engine behind the Karen bot's
 `docker run` and reads `/out/result.json` back).
 
 Everything the run needs is baked into the image — the harness
-(`fuzz_bootstrap.py`, `karen_review.py`) is **pinned**, never fetched from a
-mutable branch at runtime — so the only moving parts are the world wheel and the
-two upstream repos (core + fuzzer) that the run script clones at well-known refs.
+(`fuzz_bootstrap.py`, `karen_review.py`) plus core (with its `.venv`) and the
+fuzzer's `fuzz.py` are all **pinned** at build time, never fetched at runtime — so
+the only moving part is the world wheel, which the trusted bot bind-mounts
+read-only at `/in`. The container itself runs `--network none`.
 
 ## What it does (per invocation)
 
-Driven entirely by env vars, under `/work` (writable tmpfs), writing results to
-`/out`:
+Driven by `FUZZ_*` env vars plus the wheel bind-mounted at `/in/world.whl`, under
+`/work` (writable tmpfs), writing results to `/out`:
 
-1. **Download** `FUZZ_WHEEL_URL` to `/work` and **verify** its SHA-256 equals
-   `FUZZ_WHEEL_SHA256`. Mismatch ⇒ fail fast (`result.json.scan.sha256:"mismatch"`,
-   non-zero `exit_code`).
+1. **Stage** the bind-mounted `/in/world.whl` to `/work` (writable) and
+   **re-verify** its SHA-256 equals `FUZZ_WHEEL_SHA256` — the bot already verified
+   before mounting, so this is defense in depth. Mismatch ⇒ fail fast
+   (`result.json.scan.sha256:"mismatch"`, `exit_code:3`).
 2. **Extract** the wheel (a zip) to `/work/extracted` with a path-traversal guard.
 3. **Scan** the extracted dir with the pinned `karen_review.py --world-dir`
-   (`size_sanity`, `no_rom_files`, `no_network_at_import`, `bandit`, `pip_audit`)
-   ⇒ `/out/scan.json`; plus `ruff check --output-format json` ⇒ `/out/ruff.json`
-   (both advisory, never abort the run).
-4. **Clone** core (`MWGG_CORE_REPO@MWGG_CORE_REF`, shallow) into `/work/core`,
-   `uv venv`, install `requirements.txt` + the candidate wheel.
-5. **Fetch** the upstream fuzzer (`FUZZER_REPO@FUZZER_REF`) `fuzz.py` and
+   (`size_sanity`, `no_rom_files`, `no_network_at_import`, `bandit`) ⇒
+   `/out/scan.json`; plus `ruff check --output-format json` ⇒ `/out/ruff.json`
+   (both advisory, never abort the run). `pip_audit` is **not** run: it queries
+   PyPI's advisory DB online and the container is `--network none`.
+4. **Stage** the baked core (`/opt/fuzz/core`, including its relocatable `.venv`)
+   into `/work/core` with `cp -a`, then install the candidate wheel into that venv
+   with `uv pip install --offline --no-deps`. No clone, no `uv venv`, no network —
+   core and its `requirements.txt` were installed into the venv at build time.
+5. **Copy** the baked `fuzz.py` (`/opt/fuzz/fuzz.py`) into the core and
    `sed`-inject the pinned `fuzz_bootstrap.py` immediately before its
    `from worlds import` line (anchored on that line — never a line number), then
    run `timeout <wall> python fuzz.py -r RUNS -t TIMEOUT -g SLUG -j THREADS -n YAMLS`.
@@ -35,26 +40,30 @@ Driven entirely by env vars, under `/work` (writable tmpfs), writing results to
    everything else (all-`ignored`, ROM/output failures from a missing base ROM on
    CI) ⇒ `warn`.
 7. **Write** `/out/result.json` (schema below). A trap guarantees a parseable
-   `result.json` is written on *every* exit path — sha mismatch, clone failure,
-   wall-clock kill, or an unexpected crash.
+   `result.json` is written on *every* exit path — sha mismatch, offline
+   wheel-install failure, wall-clock kill, or an unexpected crash.
 
-## Inputs (environment variables)
+## Inputs
+
+The world wheel is **not** an env var: the trusted bot bind-mounts it read-only at
+`/in/world.whl` (the container is `--network none` and fetches nothing). Core, its
+venv, and `fuzz.py` are baked into the image at build time — see [Build](#build) —
+not passed at runtime. The remaining job parameters arrive as env vars:
 
 | Var | Required | Default | Meaning |
 | --- | :---: | --- | --- |
 | `FUZZ_SLUG` | ✅ | — | World slug, e.g. `hk`. Must be `[a-z0-9_-]+`. |
-| `FUZZ_WHEEL_URL` | ✅ | — | `https://…​.whl` to fuzz. |
-| `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest of the wheel. |
+| `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest, **re-verified in-container** against the bytes mounted at `/in/world.whl`. |
 | `FUZZ_RUNS` | | `50` | Fuzzer `-r`. |
 | `FUZZ_TIMEOUT` | | `30` | Fuzzer `-t` (per-generation seconds). |
 | `FUZZ_YAMLS` | | `1-10` | Fuzzer `-n` range. |
 | `FUZZ_THREADS` | | `10` | Fuzzer `-j`. |
-| `MWGG_CORE_REPO` | ✅ | — | `owner/name` of MultiworldGG core. |
-| `MWGG_CORE_REF` | ✅ | — | Branch/tag/SHA of core. |
-| `FUZZER_REPO` | ✅ | — | `owner/name` of the Eijebong fuzzer. |
-| `FUZZER_REF` | ✅ | — | Branch/tag/SHA of the fuzzer. |
 | `FUZZ_WALL_SECONDS` | | `1080` | Hard wall for `fuzz.py`. Keep below the bot's outer wall (1200s) so the container exits and writes `result.json` itself. |
 | `FUZZ_SIZE_CAP_MB` | | `250` | `size_sanity` cap. |
+
+Core and fuzzer refs are **build** inputs, not runtime env vars: `MWGG_CORE_REPO`,
+`MWGG_CORE_REF`, `FUZZER_REPO`, `FUZZER_REF` are `ARG`s baked at build time (see
+[Build](#build)).
 
 The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
 (also defaulted in the image).
@@ -82,7 +91,7 @@ The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
   },
   "scan": {
     "bandit": "pass | warn | fail | skip | missing",
-    "pip_audit": "pass | warn | fail | skip | missing",
+    "pip_audit": "skipped",
     "size_sanity": "pass | warn | fail | skip | missing",
     "no_rom_files": "pass | warn | fail | skip | missing",
     "no_network_at_import": "pass | warn | fail | skip | missing",
@@ -104,8 +113,8 @@ Contract notes that match `src/fuzz/runner.ts`:
   bot force the world to `fail` regardless of `status` (a wheel/setup failure
   invalidates the verdict).
 - A classifier `fail` (a real world failure) is still a *completed* run, so it
-  exits `0` with `status:"fail"`. Non-zero exits are reserved for
-  download/verify/clone/setup failures and wall-clock kills (`124`/`137`).
+  exits `0` with `status:"fail"`. Non-zero exits are reserved for wheel-verify,
+  extraction, or offline-setup failures and wall-clock kills (`124`/`137`).
 - `stats` values are all finite numbers; the bot drops any non-numeric field.
 - `scan`/`log_tail` are advisory; the bot surfaces them in the PR comment.
 
@@ -125,55 +134,86 @@ cp ../../../../MultiworldGG-Index/scripts/fuzz_bootstrap.py .
 docker build -t multiworldgg-fuzz .
 ```
 
-## Local smoke test
-
-Run exactly as the bot does — read-only root, `/tmp` + `/work` tmpfs, only `/out`
-bind-mounted rw, dropped caps, non-root user:
+Core (with its `.venv`) and the fuzzer's `fuzz.py` are cloned/fetched at **build**
+time and baked in via build args — the build has network, the runtime does not.
+They default to the values below (the `ARG`s in the Dockerfile); override to pin a
+different ref. Per the design, core need not be fresh every run — rebuild to
+update it.
 
 ```sh
-mkdir -p /tmp/fuzz-out
+docker build -t multiworldgg-fuzz \
+  --build-arg MWGG_CORE_REPO=MultiworldGG/MultiworldGG-Beta \
+  --build-arg MWGG_CORE_REF=main \
+  --build-arg FUZZER_REPO=Eijebong/Archipelago-fuzzer \
+  --build-arg FUZZER_REF=main \
+  .
+```
+
+## Local smoke test
+
+Run exactly as the bot does — `--network none`, read-only root, `/tmp` + `/work`
+tmpfs, the wheel bind-mounted read-only at `/in` and `/out` bind-mounted rw,
+dropped caps, non-root user:
+
+```sh
+work="$(mktemp -d)"
+mkdir -p "$work/in" "$work/out"
+
+# The wheel MUST be named world.whl inside /in (the path the run script reads).
+# Compute its sha256 for the in-container re-verify.
+cp /path/to/hk-<ver>.whl "$work/in/world.whl"
+sha="$(sha256sum "$work/in/world.whl" | awk '{print $1}')"
+
+# The container runs as uid 65532 and writes /out/result.json; the bot chmods the
+# out dir 0777 for exactly this reason, so do the same (or run docker as root).
+chmod 777 "$work/out"
 
 docker run --rm \
   --user 65532:65532 \
   --read-only \
-  --tmpfs /tmp:rw,noexec,nosuid,size=512m \
-  --tmpfs /work:rw,nosuid,size=4g \
-  -v /tmp/fuzz-out:/out:rw \
+  --tmpfs /tmp:rw,noexec,nosuid,size=512m,mode=1777 \
+  --tmpfs /work:rw,nosuid,size=4g,mode=1777 \
+  -v "$work/in:/in:ro" \
+  -v "$work/out:/out:rw" \
   --cap-drop ALL \
   --security-opt no-new-privileges \
   --pids-limit 512 \
   --cpus 2 --memory 4g --memory-swap 4g \
-  --network bridge \
+  --ulimit nofile=4096:4096 \
+  --network none \
   -e FUZZ_SLUG=hk \
-  -e FUZZ_WHEEL_URL='https://github.com/<org>/<repo>/releases/download/<tag>/hk-<ver>.whl' \
-  -e FUZZ_WHEEL_SHA256='<64-hex sha256 of that wheel>' \
+  -e FUZZ_WHEEL_SHA256="$sha" \
   -e FUZZ_RUNS=10 \
   -e FUZZ_TIMEOUT=30 \
   -e FUZZ_YAMLS=1-5 \
   -e FUZZ_THREADS=4 \
-  -e MWGG_CORE_REPO=MultiworldGG/MultiworldGG \
-  -e MWGG_CORE_REF=main \
-  -e FUZZER_REPO=Eijebong/Archipelago-fuzzer \
-  -e FUZZER_REF=main \
   multiworldgg-fuzz
 
-jq . /tmp/fuzz-out/result.json
+jq . "$work/out/result.json"
 ```
 
-To exercise the **fail-fast** path without a real wheel, point `FUZZ_WHEEL_URL`
-at any reachable `.whl` and pass a deliberately wrong `FUZZ_WHEEL_SHA256`; the run
-should exit non-zero with `result.json.scan.sha256 == "mismatch"`.
+The `mode=1777` on the tmpfs mounts and `chmod 777` on the out dir are not
+cosmetic: with explicit tmpfs options Docker skips its default mode, so the tmpfs
+root would otherwise be `0755 root` and the `--user 65532` process could not
+create `/work/.cache`; a `0755` out dir would likewise block `/out/result.json`,
+masking the container's real exit behind a "no result.json".
+
+To exercise the **fail-fast** path, drop any `.whl` at `$work/in/world.whl` and
+pass a deliberately wrong `FUZZ_WHEEL_SHA256`; the run exits `3` with
+`result.json.scan.sha256 == "mismatch"`.
 
 ## Hardening summary
 
 - Distroless-ish `python:3.13-slim`; only `git`, `curl`, `jq`, `ca-certificates`
   and the Python audit tooling (`uv bandit pip-audit ruff jsonschema`) added.
 - Runs as uid/gid **65532** with `--cap-drop ALL`, `--security-opt
-  no-new-privileges`, a read-only root FS, and a `pids-limit`.
+  no-new-privileges`, a read-only root FS, `--network none`, and a `pids-limit`.
 - Untrusted world code only ever executes inside the run's own `/work` venv,
   behind the fuzzer; it never runs during the scan (the scan is static —
   `karen_review` AST-inspects, it does not import the world).
-- The harness is pinned into the image. The only network at runtime is the wheel
-  download and the two pinned-ref clones/fetches.
+- The harness **and** the pinned core (with its venv) + fuzzer `fuzz.py` are baked
+  into the image at build time, so the container needs **zero** network at runtime
+  (`--network none`). The only runtime input is the wheel, bind-mounted read-only
+  at `/in` by the trusted bot.
 - Every cache/`$HOME` write is redirected to `/work`, so the read-only root FS is
   never written.
