@@ -89,7 +89,7 @@ RUN set -eux; \
 # --- Bake the trusted harness inputs at BUILD time so the runtime needs NO
 # network. Pinned via build args — rebuild to update (per the design, core need
 # not be fresh every run). The BUILD has network; the runtime is --network none.
-ARG MWGG_CORE_REPO=MultiworldGG/MultiworldGG
+ARG MWGG_CORE_REPO=MultiworldGG/MultiworldGG-Beta
 ARG MWGG_CORE_REF=main
 ARG FUZZER_REPO=Eijebong/Archipelago-fuzzer
 ARG FUZZER_REF=main
