@@ -156,7 +156,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     state: "open",
   });
 
-  const gameName = updated.hasOwnProperty('game_name') ? updated.game_name : '';
+  const gameName = updated.hasOwnProperty('game_name') ? (updated.game_name as string) : '';
   const prBody = [
     `Hey folks, I found a new update for ${gameName}. I'm gonna grab some info on it for y'all.`,
     ``,
@@ -298,7 +298,6 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   // every field and module_location's key position survive; only the URL changes.
   const planned: Array<{
     slug: string;
-    gameName: string;
     wheelAssetName: string;
     wheelAssetSize: number;
     content: string;
@@ -331,7 +330,6 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
       slug: w.slug,
       wheelAssetName: w.wheelAssetName,
       wheelAssetSize: w.wheelAssetSize,
-      gameName: (currentJson.hasOwnProperty('game_name') ? currentJson.game_name as string : w.slug),
       content: JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n",
       needsIgdb: !("igdb_id" in updated),
     });
@@ -398,7 +396,6 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     `**Location:** \`${sourceOwner}/${sourceRepo}@${releaseTag}\``,
     `**Release tag:** \`${releaseTag}\``,
     `**APWorlds:** ${updatedWorldSlugs.map((s) => `\`${s}\``).join(", ")}`,
-    `**Games:** ${planned.map((p) => `\`${p.gameName}\``).join(", ")}`,
     ...(skippedSlugs.length ? [`**Skipped (not on Index):** ${skippedSlugs.join(", ")}`] : []),
     ``,
     ...bodyWorldLines,

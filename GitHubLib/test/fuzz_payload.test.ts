@@ -25,7 +25,7 @@ function payload(overrides: Record<string, unknown> = {}): Record<string, unknow
     index_repo: "MultiworldGG/MultiworldGG-Index",
     pr_number: 42,
     head_sha: VALID_HEAD_SHA,
-    check_run_name: "Karen / fuzz",
+    check_run_name: "Karen's Isolated QA Checks",
     comment_marker: "<!-- karen-pr-review -->",
     fuzz: { runs: 50, timeout_s: 30, yamls: "1-10", threads: 10 },
     scan: { size_cap_mb: 250 },

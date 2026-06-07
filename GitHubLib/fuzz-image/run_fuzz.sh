@@ -8,7 +8,9 @@
 # container runs with NO network.
 #
 # Inputs:
-#   /in/world.whl      the wheel to fuzz, bind-mounted READ-ONLY by the bot
+#   /in/<name>.whl     the wheel to fuzz (its REAL PEP 427 filename — NOT a fixed
+#                      name; uv parses the filename and rejects e.g. world.whl),
+#                      bind-mounted READ-ONLY by the bot. Exactly one .whl at /in.
 #   FUZZ_SLUG          world slug, e.g. "hk"            (required)
 #   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required; re-verified here)
 #   FUZZ_RUNS          fuzzer -r                        (default 50)
@@ -41,7 +43,7 @@ HARNESS_DIR=/opt/fuzz
 LOG="${WORK}/combined.log"
 
 SLUG="${FUZZ_SLUG:-}"
-WHEEL_IN="/in/world.whl"                 # bind-mounted READ-ONLY by the bot
+WHEEL_IN=""                              # resolved to the single /in/*.whl in run()
 WHEEL_SHA256="$(printf '%s' "${FUZZ_WHEEL_SHA256:-}" | tr '[:upper:]' '[:lower:]')"
 RUNS="${FUZZ_RUNS:-50}"
 TIMEOUT_S="${FUZZ_TIMEOUT:-30}"
@@ -186,7 +188,16 @@ run() {
     # --- Validate required inputs up front; a missing one is an internal dispatch
     # bug, surfaced as a non-zero exit (bot -> hard fail).
     [ -n "${SLUG}" ]        || die 2 "FUZZ_SLUG is required"
-    [ -s "${WHEEL_IN}" ]    || die 2 "wheel not bind-mounted at ${WHEEL_IN}"
+    # The bot bind-mounts exactly ONE wheel at /in under its REAL PEP 427 filename
+    # (uv pip install parses the filename; a fixed name like world.whl is rejected
+    # with "Must have a version"). Resolve it by glob — nullglob so a no-match
+    # leaves the array empty, and we guard the count before indexing under set -u.
+    shopt -s nullglob
+    local in_wheels=( /in/*.whl )
+    shopt -u nullglob
+    [ "${#in_wheels[@]}" -eq 1 ] || die 2 "expected exactly one .whl at /in, found ${#in_wheels[@]}"
+    WHEEL_IN="${in_wheels[0]}"
+    [ -s "${WHEEL_IN}" ]    || die 2 "wheel not bind-mounted at /in"
     [ -n "${WHEEL_SHA256}" ]|| die 2 "FUZZ_WHEEL_SHA256 is required"
     [ -d "${BAKED_CORE}" ]  || die 2 "baked core missing at ${BAKED_CORE}"
     [ -s "${BAKED_FUZZER}" ]|| die 2 "baked fuzz.py missing at ${BAKED_FUZZER}"
@@ -202,7 +213,9 @@ run() {
     # --- (a) Copy the bind-mounted wheel to /work (writable) and RE-VERIFY its
     # sha256. The bot already verified before mounting; this is defense in depth.
     # Mismatch -> fail fast with scan.sha256="mismatch".
-    local wheel="${WORK}/world.whl"
+    # Preserve the real basename when staging to /work so `uv pip install` can
+    # parse the PEP 427 filename (it rejects a non-conformant name outright).
+    local wheel="${WORK}/$(basename "${WHEEL_IN}")"
     log "staging mounted wheel ${WHEEL_IN}"
     cp "${WHEEL_IN}" "${wheel}"
     local actual

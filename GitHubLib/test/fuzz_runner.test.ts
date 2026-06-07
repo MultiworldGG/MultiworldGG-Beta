@@ -16,6 +16,7 @@ import {
   runFuzzContainer,
   buildDockerArgs,
   ensureImageAvailable,
+  wheelFileName,
   type RunFuzzOptions,
 } from "../src/fuzz/runner";
 import type { FuzzJob } from "../src/fuzz/types";
@@ -236,7 +237,47 @@ describe("buildDockerArgs — hardening flags", () => {
   });
 });
 
+describe("wheelFileName — use the wheel's own name", () => {
+  it("returns the real wheel filename from the URL", () => {
+    expect(wheelFileName(job())).toBe("hk-1.0.0-py3-none-any.whl");
+  });
+
+  it("excludes a query string (the name lives in the URL path)", () => {
+    expect(
+      wheelFileName(
+        job({
+          wheelUrl:
+            "https://objects.githubusercontent.com/x/crosscode-2.1.0-py3-none-any.whl?token=abc",
+        }),
+      ),
+    ).toBe("crosscode-2.1.0-py3-none-any.whl");
+  });
+
+  it("returns a bare filename — directory components can't traverse the bind dir", () => {
+    const name = wheelFileName(
+      job({ wheelUrl: "https://github.com/o/r/releases/download/v1.2/rop-3.2.1-py3-none-any.whl" }),
+    );
+    expect(name).toBe("rop-3.2.1-py3-none-any.whl");
+    expect(name).not.toContain("/");
+  });
+});
+
 describe("runFuzzContainer — result.json mapping", () => {
+  it("stages the wheel under its real (uv-parseable) name, not world.whl", async () => {
+    let dest = "";
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    await runFuzzContainer(
+      job(),
+      options({
+        fetchWheel: async (_u: string, _s: string, d: string) => {
+          dest = d;
+          fs.writeFileSync(d, "wheel-bytes");
+        },
+      }),
+    );
+    expect(path.basename(dest)).toBe("hk-1.0.0-py3-none-any.whl");
+  });
+
   it("maps a passing result.json to a FuzzWorldResult and cleans up the job dir", async () => {
     mockRun(() => ({
       slug: "hk",

@@ -13,10 +13,12 @@ read-only at `/in`. The container itself runs `--network none`.
 
 ## What it does (per invocation)
 
-Driven by `FUZZ_*` env vars plus the wheel bind-mounted at `/in/world.whl`, under
-`/work` (writable tmpfs), writing results to `/out`:
+Driven by `FUZZ_*` env vars plus the wheel bind-mounted at `/in` (under its real
+PEP 427 filename — the bot mounts exactly one `.whl` there), under `/work`
+(writable tmpfs), writing results to `/out`:
 
-1. **Stage** the bind-mounted `/in/world.whl` to `/work` (writable) and
+1. **Stage** the bind-mounted wheel (the single `/in/*.whl`) to `/work`
+   (preserving its filename — `uv pip install` parses it) and
    **re-verify** its SHA-256 equals `FUZZ_WHEEL_SHA256` — the bot already verified
    before mounting, so this is defense in depth. Mismatch ⇒ fail fast
    (`result.json.scan.sha256:"mismatch"`, `exit_code:3`).
@@ -46,14 +48,16 @@ Driven by `FUZZ_*` env vars plus the wheel bind-mounted at `/in/world.whl`, unde
 ## Inputs
 
 The world wheel is **not** an env var: the trusted bot bind-mounts it read-only at
-`/in/world.whl` (the container is `--network none` and fetches nothing). Core, its
+`/in` under its real `.whl` filename (the container is `--network none` and
+fetches nothing; `uv` parses that filename, so it can't be a fixed `world.whl`).
+Core, its
 venv, and `fuzz.py` are baked into the image at build time — see [Build](#build) —
 not passed at runtime. The remaining job parameters arrive as env vars:
 
 | Var | Required | Default | Meaning |
 | --- | :---: | --- | --- |
 | `FUZZ_SLUG` | ✅ | — | World slug, e.g. `hk`. Must be `[a-z0-9_-]+`. |
-| `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest, **re-verified in-container** against the bytes mounted at `/in/world.whl`. |
+| `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest, **re-verified in-container** against the bytes of the wheel mounted at `/in`. |
 | `FUZZ_RUNS` | | `50` | Fuzzer `-r`. |
 | `FUZZ_TIMEOUT` | | `30` | Fuzzer `-t` (per-generation seconds). |
 | `FUZZ_YAMLS` | | `1-10` | Fuzzer `-n` range. |
@@ -159,10 +163,10 @@ dropped caps, non-root user:
 work="$(mktemp -d)"
 mkdir -p "$work/in" "$work/out"
 
-# The wheel MUST be named world.whl inside /in (the path the run script reads).
-# Compute its sha256 for the in-container re-verify.
-cp /path/to/hk-<ver>.whl "$work/in/world.whl"
-sha="$(sha256sum "$work/in/world.whl" | awk '{print $1}')"
+# Drop the wheel under its REAL filename (the run script globs /in/*.whl and uv
+# parses that name — a fixed world.whl is rejected). Exactly one .whl at /in.
+cp /path/to/hk-<ver>.whl "$work/in/"
+sha="$(sha256sum "$work"/in/*.whl | awk '{print $1}')"
 
 # The container runs as uid 65532 and writes /out/result.json; the bot chmods the
 # out dir 0777 for exactly this reason, so do the same (or run docker as root).
@@ -198,9 +202,10 @@ root would otherwise be `0755 root` and the `--user 65532` process could not
 create `/work/.cache`; a `0755` out dir would likewise block `/out/result.json`,
 masking the container's real exit behind a "no result.json".
 
-To exercise the **fail-fast** path, drop any `.whl` at `$work/in/world.whl` and
-pass a deliberately wrong `FUZZ_WHEEL_SHA256`; the run exits `3` with
-`result.json.scan.sha256 == "mismatch"`.
+To exercise the **fail-fast** path, drop any `.whl` in `$work/in/` and pass a
+deliberately wrong `FUZZ_WHEEL_SHA256`; the run exits `3` with
+`result.json.scan.sha256 == "mismatch"` (the sha is checked on the bytes, before
+the install, so the filename doesn't matter for this path).
 
 ## Hardening summary
 

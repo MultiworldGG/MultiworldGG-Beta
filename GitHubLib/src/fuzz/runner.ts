@@ -87,6 +87,20 @@ function containerName(suffix: string): string {
   return sanitizeToken(`mwgg-fuzz-${suffix}`);
 }
 
+/**
+ * The wheel's own filename, taken straight from the URL. `uv pip install` parses
+ * the wheel FILENAME, so the staged file must keep its real PEP 427 name — a
+ * fixed "world.whl" is what made every install fail ("Must have a version"). No
+ * reconstruction: validateFuzzPayload already guaranteed the URL is https, ends
+ * in ".whl", and is host-allow-listed, and a real release asset is named
+ * correctly by `build`. `.pathname` drops any "?query" and `path.basename` drops
+ * every directory component, so the result is a bare ".whl" filename that can't
+ * traverse out of the bind dir.
+ */
+export function wheelFileName(job: FuzzJob): string {
+  return path.posix.basename(new URL(job.wheelUrl).pathname);
+}
+
 /** Build the hardened `docker run` argv. Pure (no I/O) so it is trivially testable. */
 export function buildDockerArgs(
   job: FuzzJob,
@@ -506,7 +520,7 @@ export async function runFuzzContainer(
     // not a crash.
     const fetchWheel = opts.fetchWheel ?? defaultFetchWheel;
     try {
-      await fetchWheel(job.wheelUrl, job.sha256, path.join(hostInDir, "world.whl"));
+      await fetchWheel(job.wheelUrl, job.sha256, path.join(hostInDir, wheelFileName(job)));
     } catch (err) {
       const why = err instanceof Error ? err.message : String(err);
       opts.log(`fuzz ${job.slug}: wheel fetch/verify failed: ${why}`);
