@@ -156,8 +156,9 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     state: "open",
   });
 
+  const gameName = updated.hasOwnProperty('game_name') ? updated.game_name : '';
   const prBody = [
-    `Hey folks, I found a new update for ${updated.game_name}. I'm gonna grab some info on it for y'all.`,
+    `Hey folks, I found a new update for ${gameName}. I'm gonna grab some info on it for y'all.`,
     ``,
     `**APWorld:** \`${slug}\``,
     `**Location:** \`${sourceOwner}/${sourceRepo}@${releaseTag}\``,
@@ -165,7 +166,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     `**Wheel:** \`${wheelAssetName}\` (${formatWheelSize(wheelAssetSize)})`,
     `**New module_location:** \`${moduleLocation}\``,
     ``,
-    `${karenData.name}[bot](${karenData.html_url}) is gathering the manifest for ${updated.game_name} and cross referencing. She'll review in a moment.`,
+    `${karenData.name}[bot](${karenData.html_url}) is gathering the manifest for ${gameName} and cross referencing. She'll review in a moment.`,
   ].join("\n");
 
   let prNumber: number;
@@ -328,9 +329,9 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     const updated = { ...currentJson, module_location: w.moduleLocation };
     planned.push({
       slug: w.slug,
-      gameName: (currentJson.game_name as string) || "",
       wheelAssetName: w.wheelAssetName,
       wheelAssetSize: w.wheelAssetSize,
+      gameName: (currentJson.hasOwnProperty('game_name') ? currentJson.game_name as string : w.slug),
       content: JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n",
       needsIgdb: !("igdb_id" in updated),
     });
@@ -402,7 +403,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     ``,
     ...bodyWorldLines,
     ``,
-    `${karenData.name}[bot](${karenData.html_url}) is gathering the manifests for ${updatedWorldSlugs.length} worlds and cross referencing. She'll review them individually in a moment.`,
+    `${karenData.name} [bot](${karenData.html_url}) is gathering the manifests for ${updatedWorldSlugs.length} worlds and cross referencing. She'll review them individually in a moment.`,
   ].join("\n");
 
   let prNumber: number;
