@@ -124,10 +124,14 @@ export function buildDockerArgs(
     "--user",
     "65532:65532",
     "--read-only",
+    // mode=1777 is REQUIRED: with explicit tmpfs options Docker does NOT inject
+    // its default mode, so the kernel mounts the tmpfs root 0755 owned by root —
+    // and the container runs as --user 65532, which then can't create /work/.cache
+    // etc. 1777 (sticky, world-writable, like /tmp) lets the unprivileged user write.
     "--tmpfs",
-    "/tmp:rw,noexec,nosuid,size=512m",
+    "/tmp:rw,noexec,nosuid,size=512m,mode=1777",
     "--tmpfs",
-    "/work:rw,nosuid,size=4g",
+    "/work:rw,nosuid,size=4g,mode=1777",
     "-v",
     `${hostOutDir}:/out:rw`,
     "-v",

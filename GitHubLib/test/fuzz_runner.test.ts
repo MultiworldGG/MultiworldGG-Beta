@@ -153,8 +153,8 @@ describe("buildDockerArgs — hardening flags", () => {
 
     // both tmpfs mounts present
     const tmpfs = args.filter((_, i) => args[i - 1] === "--tmpfs");
-    expect(tmpfs).toContain("/tmp:rw,noexec,nosuid,size=512m");
-    expect(tmpfs).toContain("/work:rw,nosuid,size=4g");
+    expect(tmpfs).toContain("/tmp:rw,noexec,nosuid,size=512m,mode=1777");
+    expect(tmpfs).toContain("/work:rw,nosuid,size=4g,mode=1777");
 
     // the out bind and the image come last (image is the final arg).
     expect(outBindHostPath(args)).toBe("/work/out");
