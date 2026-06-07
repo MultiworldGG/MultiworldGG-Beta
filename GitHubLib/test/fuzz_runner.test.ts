@@ -261,6 +261,40 @@ describe("runFuzzContainer — result.json mapping", () => {
     expect(fs.readdirSync(tmpDir)).toHaveLength(0);
   });
 
+  it("makes the rw out dir writable by the unprivileged container user before running", async () => {
+    // The (root) bot creates the per-job out dir 0755/root-owned, but the
+    // container runs --user 65532:65532 and bind-mounts it rw. Capture the dir's
+    // mode at `docker run` time and assert "other" has the write bit, else uid
+    // 65532 can't write /out/result.json. POSIX-only: Windows fs doesn't model
+    // these bits, but the chmod call still runs there.
+    let outMode = -1;
+    execFileMock.mockImplementation(
+      (_file: string, args: string[], a3?: unknown, a4?: unknown) => {
+        const cb = (typeof a3 === "function" ? a3 : a4) as
+          | ((err: Error | null, stdout: string, stderr: string) => void)
+          | undefined;
+        const child = { kill: vi.fn() } as unknown as ChildProcess;
+        if (args[0] === "run") {
+          const hostOut = outBindHostPath(args);
+          outMode = fs.statSync(hostOut).mode & 0o777;
+          fs.writeFileSync(
+            path.join(hostOut, "result.json"),
+            JSON.stringify({ slug: "hk", status: "pass", exit_code: 0 }),
+          );
+        }
+        queueMicrotask(() => cb?.(null, "", ""));
+        return child;
+      },
+    );
+
+    const res = await runFuzzContainer(job(), options());
+    expect(res.status).toBe("pass");
+    expect(outMode).toBeGreaterThanOrEqual(0); // the run actually happened
+    if (process.platform !== "win32") {
+      expect(outMode & 0o002).toBe(0o002); // world-writable: 65532 can write /out
+    }
+  });
+
   it("carries a warn verdict through", async () => {
     mockRun(() => ({
       slug: "hk",

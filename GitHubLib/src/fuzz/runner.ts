@@ -489,6 +489,16 @@ export async function runFuzzContainer(
   // Dir creation failing is a genuine internal error — let it reject.
   await fs.mkdir(hostOutDir, { recursive: true });
   await fs.mkdir(hostInDir, { recursive: true });
+  // The bot runs as root, so it just made these per-job dirs 0755/root-owned. But
+  // the container runs `--user 65532:65532` and gets <out> bind-mounted rw; a 0755
+  // dir is read-only to "other", so the unprivileged user can't create
+  // /out/result.json — and EVERY outcome then degrades to the caller's "no readable
+  // result.json", masking the container's real exit code. Make the rw out dir
+  // world-writable so uid 65532 can write its result. (Same root cause as the
+  // tmpfs mode=1777 mounts, but here the perms come from the host dir, not a tmpfs
+  // flag; chmod, not mkdir's mode, because the latter is masked by umask. /in is
+  // mounted :ro — the container only reads the wheel — so its 0755 is fine.)
+  await fs.chmod(hostOutDir, 0o777);
 
   try {
     // The container is offline, so the (trusted) bot fetches + verifies the wheel
