@@ -243,25 +243,53 @@ describe("upsertFuzzComment — no-op when head moved", () => {
 describe("renderFuzzRegion — formatting", () => {
   it("renders a markdown table with verdict glyphs and a stats/detail cell", () => {
     const md = renderFuzzRegion([
-      result({ slug: "hk", status: "pass", detail: "fuzzed clean", stats: { success: 10, total: 10 } }),
+      result({
+        slug: "hk",
+        status: "pass",
+        detail: "fuzzed clean",
+        stats: { success: 10, total: 10 },
+        scan: {
+          bandit: "pass",
+          size_sanity: "pass",
+          no_rom_files: "pass",
+          no_network_at_import: "pass",
+          ruff: "captured",
+        },
+      }),
       result({ slug: "sm", status: "warn", detail: "no clean generation", stats: { success: 0, total: 8 } }),
       result({ slug: "z3", status: "fail", detail: "unparseable report.json" }),
     ]);
 
     expect(md).toContain("### World generation (fuzzer) results");
-    expect(md).toContain("| World | Verdict | Details |");
+    expect(md).toContain("| World | Verdict | Details | Scan |");
     expect(md).toContain("| `hk` | ✅ ");
     expect(md).toContain("| `sm` | ⚠️ ");
     expect(md).toContain("| `z3` | ❌ ");
     // stats expand into k=v pairs
     expect(md).toContain("success=10");
     expect(md).toContain("total=10");
+    // scan summary renders with short labels
+    expect(md).toContain("bandit:pass");
+    expect(md).toContain("size:pass");
+    expect(md).toContain("net:pass");
+    expect(md).toContain("ruff:captured");
     // detail-only row falls back to the human summary
     expect(md).toContain("unparseable report.json");
     // legend matches the workflow wording
     expect(md).toContain("✅ generated");
     expect(md).toContain("⚠️ no-op");
     expect(md).toContain("❌ failed");
+  });
+
+  it("renders the scan summary (sha256 mismatch) and an em dash when scan is absent", () => {
+    const md = renderFuzzRegion([
+      result({ slug: "hk", status: "fail", detail: "", scan: { sha256: "mismatch" } }),
+      result({ slug: "sm", status: "pass", detail: "ok" }), // no scan
+    ]);
+    const hk = md.split("\n").find((l) => l.startsWith("| `hk`"))!;
+    const sm = md.split("\n").find((l) => l.startsWith("| `sm`"))!;
+    expect(hk).toContain("sha256:mismatch");
+    expect(sm.endsWith("| — |")).toBe(true); // empty Scan cell -> em dash
   });
 
   it("emits a placeholder (not an empty table) when there are no results", () => {

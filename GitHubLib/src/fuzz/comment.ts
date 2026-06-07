@@ -52,9 +52,11 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
   if (results.length === 0) {
     lines.push("_No worlds were fuzzed._");
   } else {
-    lines.push("| World | Verdict | Details |", "| --- | :---: | --- |");
+    lines.push("| World | Verdict | Details | Scan |", "| --- | :---: | --- | --- |");
     for (const r of results) {
-      lines.push(`| \`${r.slug}\` | ${STATUS_GLYPH[r.status]} | ${formatDetail(r)} |`);
+      lines.push(
+        `| \`${r.slug}\` | ${STATUS_GLYPH[r.status]} | ${formatDetail(r)} | ${formatScan(r.scan)} |`,
+      );
     }
     lines.push("", LEGEND);
   }
@@ -78,6 +80,34 @@ function formatDetail(r: FuzzWorldResult): string {
 function formatStats(stats: Record<string, number>): string {
   const parts = Object.entries(stats).map(([k, v]) => `${k}=${v}`);
   return parts.join(" ");
+}
+
+// Short labels so the Scan cell stays compact (no_network_at_import -> net, …).
+const SCAN_LABELS: Record<string, string> = {
+  bandit: "bandit",
+  pip_audit: "pip-audit",
+  size_sanity: "size",
+  no_rom_files: "rom",
+  no_network_at_import: "net",
+  ruff: "ruff",
+  sha256: "sha256",
+};
+
+/**
+ * Compact per-check scan summary for the Scan cell, e.g.
+ * "bandit:pass size:pass rom:pass net:pass ruff:captured". This is the status
+ * SUMMARY the container records in result.json.scan — the raw scan.json/ruff.json
+ * findings aren't available bot-side (they live in the /out dir, reclaimed after
+ * the run). Non-string values are JSON-encoded so an unexpected shape can't break
+ * the row; an absent/empty scan renders an em dash.
+ */
+function formatScan(scan: Record<string, unknown> | undefined): string {
+  if (!scan) return "—";
+  const parts = Object.entries(scan).map(([key, value]) => {
+    const label = SCAN_LABELS[key] ?? key;
+    return `${label}:${typeof value === "string" ? value : JSON.stringify(value)}`;
+  });
+  return parts.length > 0 ? escapeCell(parts.join(" ")) : "—";
 }
 
 /** Keep table-breaking characters from leaking into a Markdown cell. */
