@@ -77,6 +77,16 @@ else:
     from kivy.uix.image import AsyncImage as ApAsyncImage
     from kivymd.uix.tooltip import MDTooltipPlain as ToolTip
 
+    # Compatibility re-exports for world clients that do `from kvui import ...`.
+    # MultiworldGG worlds (kh3, etc.) import these canonical kivy/kivymd names from
+    # kvui; the GUI imports above bind some only under MWGG aliases (ToggleButton,
+    # MainLayout) or not at all.
+    from kivy.clock import Clock
+    from kivy.core.window import Window
+    from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
+    from kivymd.uix.gridlayout import MDGridLayout
+    from kivymd.uix.textfield.textfield import MDTextField
+
     class GameManager:
         logging_pairs: list = []
         base_title: str = ""
