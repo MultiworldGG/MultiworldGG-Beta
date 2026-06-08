@@ -66,6 +66,13 @@ function envOpt(name: string): string | undefined {
   return raw !== undefined && raw.trim() !== "" ? raw : undefined;
 }
 
+/** Truthy env flag: 1/true/yes/on (case-insensitive) → true; otherwise `def`. */
+function envBool(name: string, def: boolean): boolean {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return def;
+  return /^(1|true|yes|on)$/i.test(raw.trim());
+}
+
 /** Assemble the runner options for one batch from the process environment. */
 function runnerOptionsFromEnv(
   log: (m: string) => void,
@@ -85,6 +92,9 @@ function runnerOptionsFromEnv(
     // Optional RO mounts so ROM-dependent worlds can generate; unset → no mount.
     romDir: envOpt("FUZZ_ROM_DIR"),
     hostYaml: envOpt("FUZZ_HOST_YAML"),
+    // Opt-in: persist each container's full log + worker dumps and keep the
+    // per-job dir for inspection. Off by default; see deploy/docker-compose.yml.
+    debug: envBool("FUZZ_DEBUG", false),
     log,
     signal,
   };

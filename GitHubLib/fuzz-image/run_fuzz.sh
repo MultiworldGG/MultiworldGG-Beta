@@ -53,6 +53,10 @@ BAKED_CORE=/opt/fuzz/core                # core + its relocatable .venv, baked a
 BAKED_FUZZER=/opt/fuzz/fuzz.py           # pinned fuzzer entrypoint, baked at build
 WALL_SECONDS="${FUZZ_WALL_SECONDS:-1080}"
 SIZE_CAP_MB="${FUZZ_SIZE_CAP_MB:-250}"
+# Opt-in debug: when truthy, persist the FULL combined log and the fuzzer's
+# per-generation worker dumps (fuzz_output/) into /out so a failing run leaves
+# diagnostics behind. The bot also keeps the per-job dir when this is on.
+DEBUG="${FUZZ_DEBUG:-}"
 
 # Verdict state shared between run() and the EXIT trap. The trap is the single
 # writer of /out/result.json on ANY exit path, so partial/crashed runs still
@@ -139,6 +143,21 @@ write_result() {
     fi
 }
 
+# When FUZZ_DEBUG is truthy, copy the full combined log and the fuzzer's
+# per-generation worker dumps (tracebacks + failing YAMLs, written to
+# ${CORE}/fuzz_output) into /out. result.json only carries the last ~4KB of the
+# log, and worker tracebacks never reach it at all — so this is the only way to
+# see WHY a generation (e.g. a ROM world) actually failed. No-op unless enabled;
+# best-effort so it never changes the run's verdict/exit code.
+persist_debug_artifacts() {
+    case "${DEBUG}" in 1|true|TRUE|yes|on) ;; *) return 0 ;; esac
+    cp -f "${LOG}" "${OUT}/combined.log" 2>>"${LOG}" || true
+    if [ -d "${CORE}/fuzz_output" ]; then
+        rm -rf "${OUT}/fuzz_output"
+        cp -a "${CORE}/fuzz_output" "${OUT}/fuzz_output" 2>>"${LOG}" || true
+    fi
+}
+
 # Always leave a parseable result.json behind, whatever killed us (set -e abort,
 # `timeout` SIGTERM, OOM bubbling up as a non-zero, ...).
 on_exit() {
@@ -149,6 +168,9 @@ on_exit() {
         STATUS="fail"
         write_result
     fi
+    # Single exit point, so every path (success, die, crash) persists the logs
+    # when debug is on — including the no-report crashes that produce die 8.
+    persist_debug_artifacts
     exit "${EXIT_CODE}"
 }
 trap on_exit EXIT

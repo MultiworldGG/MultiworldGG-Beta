@@ -209,6 +209,16 @@ services:
       # they can't be exfiltrated. Leave unset to keep ROM worlds as warn/no-ops.
       # - FUZZ_ROM_DIR=/var/lib/mwgg-fuzz-roms
       # - FUZZ_HOST_YAML=/var/lib/mwgg-fuzz-host.yaml
+      # Debug diagnostics (off by default). When set truthy, each fuzz container
+      # copies its FULL combined log and the fuzzer's per-generation worker dumps
+      # (tracebacks + failing YAMLs) into the job's /out, and the bot KEEPS the
+      # per-job dir instead of deleting it. Inspect after a failing run at:
+      #   /var/lib/mwgg-fuzz/<id>/out/{result.json,report.json,combined.log,fuzz_output/}
+      # result.json only ever holds the last ~4KB of the log and no worker
+      # tracebacks, so this is how you see WHY a generation actually failed.
+      # Dirs accumulate while on — turn it back off and clean /var/lib/mwgg-fuzz
+      # when done.
+      # - FUZZ_DEBUG=1
     # Karen reaches the daemon proxy by service name over the compose network.
     depends_on:
       - docker-socket-proxy

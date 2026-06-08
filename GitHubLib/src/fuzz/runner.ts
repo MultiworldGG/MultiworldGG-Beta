@@ -54,6 +54,13 @@ export interface RunFuzzOptions {
   fetchWheel?: (url: string, sha256: string, dest: string) => Promise<void>;
   log: (m: string) => void;
   signal?: AbortSignal;
+  /**
+   * Opt-in debug. When set, the container persists its full combined.log + the
+   * fuzzer's per-generation worker dumps (fuzz_output/) into /out, and we KEEP
+   * the per-job dir instead of deleting it — so a failing run leaves diagnostics
+   * under <workDir>/<id>/ for inspection. Off by default; artifacts accumulate.
+   */
+  debug?: boolean;
 }
 
 const DEFAULT_WALL_SECONDS = 1200;
@@ -129,6 +136,9 @@ export function buildDockerArgs(
     SKIP_ALL_INSTALLS: "1",
     MALLOC_ARENA_MAX: "2",
   };
+
+  // Opt-in: tell the container to persist its full log + worker dumps to /out.
+  if (opts.debug) env.FUZZ_DEBUG = "1";
 
   const args: string[] = [
     "run",
@@ -578,10 +588,17 @@ export async function runFuzzContainer(
       timedOut: false,
     };
   } finally {
-    // Reclaim the per-job host dir regardless of outcome; never mask a real error.
-    await fs.rm(jobDir, { recursive: true, force: true }).catch((err: unknown) => {
-      const why = err instanceof Error ? err.message : String(err);
-      opts.log(`fuzz ${job.slug}: failed to remove ${jobDir} (best effort): ${why}`);
-    });
+    if (opts.debug) {
+      // FUZZ_DEBUG: keep the per-job dir so the operator can read the diagnostics
+      // the container persisted — <id>/out/{result.json,report.json,combined.log,
+      // fuzz_output/}. These accumulate; turn FUZZ_DEBUG off and clean workDir when done.
+      opts.log(`fuzz ${job.slug}: FUZZ_DEBUG on — kept artifacts at ${hostOutDir}`);
+    } else {
+      // Reclaim the per-job host dir regardless of outcome; never mask a real error.
+      await fs.rm(jobDir, { recursive: true, force: true }).catch((err: unknown) => {
+        const why = err instanceof Error ? err.message : String(err);
+        opts.log(`fuzz ${job.slug}: failed to remove ${jobDir} (best effort): ${why}`);
+      });
+    }
   }
 }

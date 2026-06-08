@@ -185,6 +185,13 @@ describe("buildDockerArgs — hardening flags", () => {
     expect(env.FUZZ_SIZE_CAP_MB).toBe("512");
   });
 
+  it("passes FUZZ_DEBUG only when debug is enabled", () => {
+    expect(envPairs(buildDockerArgs(job(), options(), "n", "/work/out", "/work/in")).FUZZ_DEBUG).toBeUndefined();
+    expect(
+      envPairs(buildDockerArgs(job(), options({ debug: true }), "n", "/work/out", "/work/in")).FUZZ_DEBUG,
+    ).toBe("1");
+  });
+
   it("passes one -e per documented input with the job/opts values", () => {
     const args = buildDockerArgs(
       job({ slug: "rop", runs: 7, timeoutS: 11, yamls: "2-3", threads: 4 }),
@@ -300,6 +307,13 @@ describe("runFuzzContainer — result.json mapping", () => {
 
     // per-job dir was reclaimed (workDir is left containing nothing).
     expect(fs.readdirSync(tmpDir)).toHaveLength(0);
+  });
+
+  it("keeps the per-job dir for inspection when debug is enabled", async () => {
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    await runFuzzContainer(job(), options({ debug: true }));
+    // not reclaimed — artifacts (result.json, combined.log, fuzz_output/) survive.
+    expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
   });
 
   it("makes the rw out dir writable by the unprivileged container user before running", async () => {

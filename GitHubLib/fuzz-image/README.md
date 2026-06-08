@@ -64,6 +64,7 @@ not passed at runtime. The remaining job parameters arrive as env vars:
 | `FUZZ_THREADS` | | `10` | Fuzzer `-j`. |
 | `FUZZ_WALL_SECONDS` | | `1080` | Hard wall for `fuzz.py`. Keep below the bot's outer wall (1200s) so the container exits and writes `result.json` itself. |
 | `FUZZ_SIZE_CAP_MB` | | `250` | `size_sanity` cap. |
+| `FUZZ_DEBUG` | | (off) | Truthy (`1`/`true`/`yes`/`on`) ⇒ also copy the full `combined.log` and the fuzzer's `fuzz_output/` worker dumps into `/out`. |
 
 Core and fuzzer refs are **build** inputs, not runtime env vars: `MWGG_CORE_REPO`,
 `MWGG_CORE_REF`, `FUZZER_REPO`, `FUZZER_REF` are `ARG`s baked at build time (see
@@ -79,6 +80,11 @@ The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
 - **`ruff.json`** — raw `ruff` findings array (advisory).
 - **`report.json`** — the fuzzer's raw report, copied out for debugging (when one
   was produced).
+- **`combined.log`** — the FULL run log (only with `FUZZ_DEBUG`; `result.json`
+  carries just its last ~4KB). Written on every exit path, including crashes.
+- **`fuzz_output/`** — the fuzzer's per-generation worker dumps: tracebacks and
+  the failing YAMLs (only with `FUZZ_DEBUG`). This is where a generation's *real*
+  failure reason lives — it never reaches `result.json`.
 
 ### `result.json` schema
 
