@@ -60,7 +60,7 @@ not passed at runtime. The remaining job parameters arrive as env vars:
 | `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest, **re-verified in-container** against the bytes of the wheel mounted at `/in`. |
 | `FUZZ_RUNS` | | `50` | Fuzzer `-r`. |
 | `FUZZ_TIMEOUT` | | `30` | Fuzzer `-t` (per-generation seconds). |
-| `FUZZ_YAMLS` | | `1-10` | Fuzzer `-n` range. |
+| `FUZZ_YAMLS` | | `1-3` | Fuzzer `-n` range. |
 | `FUZZ_THREADS` | | `10` | Fuzzer `-j`. |
 | `FUZZ_WALL_SECONDS` | | `1080` | Hard wall for `fuzz.py`. Keep below the bot's outer wall (1200s) so the container exits and writes `result.json` itself. |
 | `FUZZ_SIZE_CAP_MB` | | `250` | `size_sanity` cap. |

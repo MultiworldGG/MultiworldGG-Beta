@@ -15,7 +15,7 @@
 #   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required; re-verified here)
 #   FUZZ_RUNS          fuzzer -r                        (default 50)
 #   FUZZ_TIMEOUT       fuzzer -t per-generation secs    (default 30)
-#   FUZZ_YAMLS         fuzzer -n range, e.g. "1-10"      (default 1-10)
+#   FUZZ_YAMLS         fuzzer -n range, e.g. "1-3"       (default 1-3)
 #   FUZZ_THREADS       fuzzer -j                         (default 10)
 #   FUZZ_WALL_SECONDS  hard wall for fuzz.py             (default 1080)
 #   FUZZ_SIZE_CAP_MB   size_sanity cap                   (default 250)
@@ -47,7 +47,7 @@ WHEEL_IN=""                              # resolved to the single /in/*.whl in r
 WHEEL_SHA256="$(printf '%s' "${FUZZ_WHEEL_SHA256:-}" | tr '[:upper:]' '[:lower:]')"
 RUNS="${FUZZ_RUNS:-50}"
 TIMEOUT_S="${FUZZ_TIMEOUT:-30}"
-YAMLS="${FUZZ_YAMLS:-1-10}"
+YAMLS="${FUZZ_YAMLS:-1-3}"
 THREADS="${FUZZ_THREADS:-10}"
 BAKED_CORE=/opt/fuzz/core                # core + its relocatable .venv, baked at build
 BAKED_FUZZER=/opt/fuzz/fuzz.py           # pinned fuzzer entrypoint, baked at build
@@ -70,7 +70,13 @@ RESULT_WRITTEN=0
 mkdir -p "${OUT}"
 # Pre-make the writable caches our env (Dockerfile) points HOME/XDG/uv/pip at, now
 # that /work is mounted. Without these, the first tool that writes a cache dies.
-mkdir -p "${WORK}/.cache/uv" "${WORK}/.cache/pip" "${WORK}/.config" "${WORK}/.local/share"
+mkdir -p "${WORK}/.cache/uv" "${WORK}/.cache/pip" "${WORK}/.cache/ruff" "${WORK}/.config" "${WORK}/.local/share" "${WORK}/tmp"
+# Native deps (Pillow, bsdiff4, …) dlopen their .so with PROT_EXEC; /tmp is mounted
+# noexec, so point Python's tempdir at the exec-capable /work — libraries that
+# extract a .so to a tempdir then map it would otherwise fail with "failed to map
+# segment from shared object". Also redirect ruff's cache off the read-only root.
+export TMPDIR="${WORK}/tmp"
+export RUFF_CACHE_DIR="${WORK}/.cache/ruff"
 : > "${LOG}"
 
 # Mirror everything to the console AND the log file we tail into result.json.

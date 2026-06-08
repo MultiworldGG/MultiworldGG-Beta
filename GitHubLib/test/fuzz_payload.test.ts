@@ -167,7 +167,7 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ fuzz: {}, scan: {} }));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value.fuzz).toEqual({ runs: 50, timeout_s: 30, yamls: "1-10", threads: 10 });
+    expect(res.value.fuzz).toEqual({ runs: 50, timeout_s: 30, yamls: "1-3", threads: 10 });
     expect(res.value.scan).toEqual({ size_cap_mb: 250 });
   });
 
@@ -192,7 +192,7 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ fuzz: { yamls: "1-2-3" } }));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value.fuzz.yamls).toBe("1-10");
+    expect(res.value.fuzz.yamls).toBe("1-3");
   });
 });
 

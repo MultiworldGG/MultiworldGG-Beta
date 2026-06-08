@@ -154,8 +154,13 @@ export function buildDockerArgs(
     // etc. 1777 (sticky, world-writable, like /tmp) lets the unprivileged user write.
     "--tmpfs",
     "/tmp:rw,noexec,nosuid,size=512m,mode=1777",
+    // exec is REQUIRED: the trusted venv lives on /work and Python C extensions
+    // there are dlopen'd (mmap PROT_EXEC). Docker's --tmpfs default is noexec, and
+    // omitting it from explicit options doesn't reliably disable it (same default-
+    // injection class as the mode=1777 fix), so set exec explicitly — else native
+    // deps (bsdiff4, Pillow, …) fail to load with "failed to map segment".
     "--tmpfs",
-    "/work:rw,nosuid,size=4g,mode=1777",
+    "/work:rw,exec,nosuid,size=4g,mode=1777",
     "-v",
     `${hostOutDir}:/out:rw`,
     "-v",

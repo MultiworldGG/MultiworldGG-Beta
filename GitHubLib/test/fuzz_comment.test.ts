@@ -240,8 +240,8 @@ describe("upsertFuzzComment — no-op when head moved", () => {
   });
 });
 
-describe("renderFuzzRegion — formatting", () => {
-  it("renders a markdown table with verdict glyphs and a stats/detail cell", () => {
+describe("renderFuzzRegion — Karen-style per-world tables", () => {
+  it("renders a per-world Check/Status/Notes table with glyph+word status", () => {
     const md = renderFuzzRegion([
       result({
         slug: "hk",
@@ -256,47 +256,40 @@ describe("renderFuzzRegion — formatting", () => {
           ruff: "captured",
         },
       }),
-      result({ slug: "sm", status: "warn", detail: "no clean generation", stats: { success: 0, total: 8 } }),
       result({ slug: "z3", status: "fail", detail: "unparseable report.json" }),
     ]);
 
     expect(md).toContain("### World generation (fuzzer) results");
-    expect(md).toContain("| World | Verdict | Details | Scan |");
-    expect(md).toContain("| `hk` | ✅ ");
-    expect(md).toContain("| `sm` | ⚠️ ");
-    expect(md).toContain("| `z3` | ❌ ");
-    // stats expand into k=v pairs
-    expect(md).toContain("success=10");
-    expect(md).toContain("total=10");
-    // scan summary renders with short labels
-    expect(md).toContain("bandit:pass");
-    expect(md).toContain("size:pass");
-    expect(md).toContain("net:pass");
-    expect(md).toContain("ruff:captured");
-    // detail-only row falls back to the human summary
-    expect(md).toContain("unparseable report.json");
-    // legend matches the workflow wording
-    expect(md).toContain("✅ generated");
-    expect(md).toContain("⚠️ no-op");
-    expect(md).toContain("❌ failed");
+    // per-world headings mirror Karen's "### `slug` — ✅ pass"
+    expect(md).toContain("#### `hk` — ✅ pass");
+    expect(md).toContain("#### `z3` — ❌ fail");
+    // Karen's columns
+    expect(md).toContain("| Check | Status | Notes |");
+    // generation row carries the verdict (glyph+word) + stats/detail in Notes
+    expect(md).toContain("| `generation` | ✅ pass | fuzzed clean (success=10 total=10) |");
+    expect(md).toContain("| `generation` | ❌ fail | unparseable report.json |");
+    // scan checks become their own rows with glyph+word and short labels
+    expect(md).toContain("| `bandit` | ✅ pass |");
+    expect(md).toContain("| `net` | ✅ pass |");
+    expect(md).toContain("| `ruff` | captured |"); // no glyph for "captured" -> bare word
   });
 
-  it("renders the scan summary (sha256 mismatch) and an em dash when scan is absent", () => {
+  it("renders sha256 mismatch as a scan row, and no scan rows when scan is absent", () => {
     const md = renderFuzzRegion([
       result({ slug: "hk", status: "fail", detail: "", scan: { sha256: "mismatch" } }),
       result({ slug: "sm", status: "pass", detail: "ok" }), // no scan
     ]);
-    const hk = md.split("\n").find((l) => l.startsWith("| `hk`"))!;
-    const sm = md.split("\n").find((l) => l.startsWith("| `sm`"))!;
-    expect(hk).toContain("sha256:mismatch");
-    expect(sm.endsWith("| — |")).toBe(true); // empty Scan cell -> em dash
+    expect(md).toContain("| `sha256` | mismatch |");
+    const smSection = md.slice(md.indexOf("#### `sm`"));
+    expect(smSection).toContain("| `generation` | ✅ pass | ok |");
+    expect(smSection).not.toContain("| `bandit`"); // no scan -> generation row only
   });
 
-  it("emits a placeholder (not an empty table) when there are no results", () => {
+  it("emits a placeholder (not a table) when there are no results", () => {
     const md = renderFuzzRegion([]);
     expect(md).toContain("### World generation (fuzzer) results");
     expect(md).toContain("_No worlds were fuzzed._");
-    expect(md).not.toContain("| World | Verdict |");
+    expect(md).not.toContain("| Check | Status | Notes |");
   });
 
   it("escapes pipe characters so a detail string cannot break the table", () => {
@@ -304,10 +297,8 @@ describe("renderFuzzRegion — formatting", () => {
     expect(md).toContain("a \\| b \\| c");
   });
 
-  it("renders an em dash when a row has neither stats nor detail", () => {
+  it("renders an em dash in the generation Notes when there are no stats or detail", () => {
     const md = renderFuzzRegion([result({ slug: "hk", status: "pass", detail: "" })]);
-    const row = md.split("\n").find((l) => l.startsWith("| `hk`"));
-    expect(row).toBeDefined();
-    expect(row).toContain("—");
+    expect(md).toContain("| `generation` | ✅ pass | — |");
   });
 });

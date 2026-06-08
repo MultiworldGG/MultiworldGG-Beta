@@ -19,16 +19,20 @@ import type { FuzzWorldResult } from "./types";
 export const FUZZ_REGION_START = "<!-- karen-fuzz:start -->";
 export const FUZZ_REGION_END = "<!-- karen-fuzz:end -->";
 
-const STATUS_GLYPH: Record<FuzzWorldResult["status"], string> = {
+// Same glyphs Karen's review uses, so the fuzz region reads identically. Includes
+// scan-only statuses (skip); a status with no glyph renders as the bare word.
+const STATUS_GLYPH: Record<string, string> = {
   pass: "✅",
   warn: "⚠️",
   fail: "❌",
+  skip: "⏭️",
 };
 
-// Legend wording mirrors `.github/workflows/karen-pr-review.yml` so the fenced
-// region reads identically whether the workflow or this code authored it.
-const LEGEND =
-  "_Legend: ✅ generated · ⚠️ no-op (all option-rejected, or ROM/output unavailable on CI) · ❌ failed._";
+/** "{glyph} {status}" cell like Karen's review; bare word when no glyph maps. */
+function statusLabel(status: string): string {
+  const glyph = STATUS_GLYPH[status];
+  return glyph ? `${glyph} ${status}` : status;
+}
 
 export interface UpsertFuzzCommentParams {
   owner: string;
@@ -43,38 +47,42 @@ export interface UpsertFuzzCommentParams {
 }
 
 /**
- * Render the fenced fuzz region body (markers + a per-world table + legend) for
- * a set of results. Pure: no I/O, deterministic, safe to unit-test directly.
+ * Render the fenced fuzz region as per-world sections that mirror Karen's review
+ * tables: a `#### \`slug\` — {glyph} {status}` heading then a
+ * `| Check | Status | Notes |` table with glyph+word status cells. Each world
+ * lists its generation verdict (with stats) plus the per-check scan statuses.
+ * Pure: no I/O, deterministic, safe to unit-test directly.
  */
 export function renderFuzzRegion(results: FuzzWorldResult[]): string {
   const lines: string[] = ["### World generation (fuzzer) results", ""];
 
   if (results.length === 0) {
     lines.push("_No worlds were fuzzed._");
-  } else {
-    lines.push("| World | Verdict | Details | Scan |", "| --- | :---: | --- | --- |");
-    for (const r of results) {
-      lines.push(
-        `| \`${r.slug}\` | ${STATUS_GLYPH[r.status]} | ${formatDetail(r)} | ${formatScan(r.scan)} |`,
-      );
+    return lines.join("\n");
+  }
+
+  for (const r of results) {
+    lines.push(`#### \`${r.slug}\` — ${statusLabel(r.status)}`, "");
+    lines.push("| Check | Status | Notes |", "| --- | --- | --- |");
+    lines.push(`| \`generation\` | ${statusLabel(r.status)} | ${escapeCell(generationNotes(r))} |`);
+    for (const [label, status] of scanRows(r.scan)) {
+      lines.push(`| \`${label}\` | ${escapeCell(statusLabel(status))} |  |`);
     }
-    lines.push("", LEGEND);
+    lines.push("");
   }
 
   return lines.join("\n");
 }
 
 /**
- * Prefer the explicit per-world stats line; fall back to the human `detail`
- * summary; otherwise emit an em dash so the table cell is never blank.
+ * The `generation` row's Notes: the stats line (success=… total=…) and/or the
+ * human `detail` tail; an em dash when neither is present. (Caller escapes it.)
  */
-function formatDetail(r: FuzzWorldResult): string {
+function generationNotes(r: FuzzWorldResult): string {
   const statsLine = r.stats ? formatStats(r.stats) : "";
   const detail = r.detail.trim();
-  if (statsLine && detail) return `${escapeCell(detail)} (${escapeCell(statsLine)})`;
-  if (statsLine) return escapeCell(statsLine);
-  if (detail) return escapeCell(detail);
-  return "—";
+  if (statsLine && detail) return `${detail} (${statsLine})`;
+  return statsLine || detail || "—";
 }
 
 function formatStats(stats: Record<string, number>): string {
@@ -82,7 +90,7 @@ function formatStats(stats: Record<string, number>): string {
   return parts.join(" ");
 }
 
-// Short labels so the Scan cell stays compact (no_network_at_import -> net, …).
+// Short check labels (no_network_at_import -> net, …) for the scan rows.
 const SCAN_LABELS: Record<string, string> = {
   bandit: "bandit",
   pip_audit: "pip-audit",
@@ -94,20 +102,18 @@ const SCAN_LABELS: Record<string, string> = {
 };
 
 /**
- * Compact per-check scan summary for the Scan cell, e.g.
- * "bandit:pass size:pass rom:pass net:pass ruff:captured". This is the status
- * SUMMARY the container records in result.json.scan — the raw scan.json/ruff.json
- * findings aren't available bot-side (they live in the /out dir, reclaimed after
- * the run). Non-string values are JSON-encoded so an unexpected shape can't break
- * the row; an absent/empty scan renders an em dash.
+ * One [label, status] row per scan check, mirroring Karen's per-check rows. These
+ * are the status SUMMARY the container records in result.json.scan — the raw
+ * scan.json/ruff.json findings aren't available bot-side (they live in the /out
+ * dir, reclaimed after the run). Non-string values are JSON-encoded so an
+ * unexpected shape can't break a row; an absent scan yields no rows.
  */
-function formatScan(scan: Record<string, unknown> | undefined): string {
-  if (!scan) return "—";
-  const parts = Object.entries(scan).map(([key, value]) => {
-    const label = SCAN_LABELS[key] ?? key;
-    return `${label}:${typeof value === "string" ? value : JSON.stringify(value)}`;
-  });
-  return parts.length > 0 ? escapeCell(parts.join(" ")) : "—";
+function scanRows(scan: Record<string, unknown> | undefined): Array<[string, string]> {
+  if (!scan) return [];
+  return Object.entries(scan).map(([key, value]) => [
+    SCAN_LABELS[key] ?? key,
+    typeof value === "string" ? value : JSON.stringify(value),
+  ]);
 }
 
 /** Keep table-breaking characters from leaking into a Markdown cell. */
