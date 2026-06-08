@@ -100,21 +100,26 @@ The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
     "total": 0
   },
   "scan": {
-    "bandit": "pass | warn | fail | skip | missing",
-    "pip_audit": "skipped",
-    "size_sanity": "pass | warn | fail | skip | missing",
-    "no_rom_files": "pass | warn | fail | skip | missing",
-    "no_network_at_import": "pass | warn | fail | skip | missing",
-    "ruff": "captured | missing"
+    "bandit":               { "status": "pass | warn | fail | skip | missing", "note": "karen_review message" },
+    "pip_audit":            { "status": "skipped", "note": "not run in the offline sandbox" },
+    "size_sanity":          { "status": "pass | warn | fail | skip | missing", "note": "…" },
+    "no_rom_files":         { "status": "pass | warn | fail | skip | missing", "note": "…" },
+    "no_network_at_import": { "status": "pass | warn | fail | skip | missing", "note": "…" },
+    "ruff":                 { "status": "captured | missing", "note": "N lint finding(s)" }
   },
   "exit_code": 0,
   "log_tail": "…last ~4 KB of the combined log…"
 }
 ```
 
+Each `scan` entry is `{status, note}`: `status` drives the bot's glyph, `note` is
+the human message the bot shows in the Notes column (from `karen_review`, ruff's
+finding count, etc.). The bot still accepts a legacy bare-string status (empty
+note) for forward/backward compatibility.
+
 On a **SHA mismatch** the object is shaped `{slug, status:"fail",
-scan:{sha256:"mismatch"}, exit_code:3, log_tail}` (stats may be zeroed) — the
-distinguishing field is `scan.sha256`.
+scan:{sha256:{status:"mismatch", note:"expected …, got …"}}, exit_code:3,
+log_tail}` (stats may be zeroed) — the distinguishing field is `scan.sha256`.
 
 Contract notes that match `src/fuzz/runner.ts`:
 

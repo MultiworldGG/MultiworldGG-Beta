@@ -223,6 +223,21 @@ describe("upsertFuzzComment — create when no marker comment", () => {
     expect(state.created).toHaveLength(1);
     expect(state.created[0].body.startsWith(MARKER)).toBe(true);
   });
+
+  it("writes the optional title heading above the fence when creating", async () => {
+    const state = makeState();
+    const octokit = makeOctokit(state);
+
+    await run(octokit, "created region", { title: "Karen: Isolated QA Checks" });
+
+    expect(state.created).toHaveLength(1);
+    const out = state.created[0].body;
+    expect(out.startsWith(MARKER)).toBe(true);
+    expect(out).toContain("## Karen: Isolated QA Checks");
+    // The heading sits ABOVE the fence so later region splices never clobber it.
+    expect(out.indexOf("## Karen: Isolated QA Checks")).toBeLessThan(out.indexOf(FUZZ_REGION_START));
+    expect(out).toContain("created region");
+  });
 });
 
 describe("upsertFuzzComment — no-op when head moved", () => {
@@ -241,7 +256,7 @@ describe("upsertFuzzComment — no-op when head moved", () => {
 });
 
 describe("renderFuzzRegion — Karen-style per-world tables", () => {
-  it("renders a per-world Check/Status/Notes table with glyph+word status", () => {
+  it("renders a per-world Check/Status/Notes table with glyph+word status and per-check notes", () => {
     const md = renderFuzzRegion([
       result({
         slug: "hk",
@@ -249,11 +264,11 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
         detail: "fuzzed clean",
         stats: { success: 10, total: 10 },
         scan: {
-          bandit: "pass",
-          size_sanity: "pass",
-          no_rom_files: "pass",
-          no_network_at_import: "pass",
-          ruff: "captured",
+          bandit: { status: "pass", note: "Bandit found nothing worth mentioning." },
+          size_sanity: { status: "pass", note: "a very reasonable 5.2MB / cap 250MB" },
+          no_rom_files: { status: "pass", note: "no illegal games here" },
+          no_network_at_import: { status: "pass", note: "" },
+          ruff: { status: "captured", note: "3 lint findings" },
         },
       }),
       result({ slug: "z3", status: "fail", detail: "unparseable report.json" }),
@@ -265,24 +280,39 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).toContain("#### `z3` — ❌ fail");
     // Karen's columns
     expect(md).toContain("| Check | Status | Notes |");
-    // generation row carries the verdict (glyph+word) + stats/detail in Notes
-    expect(md).toContain("| `generation` | ✅ pass | fuzzed clean (success=10 total=10) |");
-    expect(md).toContain("| `generation` | ❌ fail | unparseable report.json |");
-    // scan checks become their own rows with glyph+word and short labels
-    expect(md).toContain("| `bandit` | ✅ pass |");
-    expect(md).toContain("| `net` | ✅ pass |");
-    expect(md).toContain("| `ruff` | captured |"); // no glyph for "captured" -> bare word
+    // the fuzzer row carries the verdict (glyph+word) + stats/detail in Notes
+    expect(md).toContain("| `fuzzer` | ✅ pass | fuzzed clean (success=10 total=10) |");
+    expect(md).toContain("| `fuzzer` | ❌ fail | unparseable report.json |");
+    // scan checks become their own rows with glyph+word, short labels, and the
+    // human note karen_review recorded in the Notes column
+    expect(md).toContain("| `bandit` | ✅ pass | Bandit found nothing worth mentioning. |");
+    expect(md).toContain("| `size` | ✅ pass | a very reasonable 5.2MB / cap 250MB |");
+    expect(md).toContain("| `net` | ✅ pass |  |"); // empty note -> blank cell
+    expect(md).toContain("| `ruff` | captured | 3 lint findings |"); // no glyph for "captured"
   });
 
-  it("renders sha256 mismatch as a scan row, and no scan rows when scan is absent", () => {
+  it("tolerates legacy bare-string scan statuses (renders an empty note)", () => {
     const md = renderFuzzRegion([
-      result({ slug: "hk", status: "fail", detail: "", scan: { sha256: "mismatch" } }),
+      result({ slug: "hk", status: "pass", detail: "ok", scan: { bandit: "pass", ruff: "captured" } }),
+    ]);
+    expect(md).toContain("| `bandit` | ✅ pass |  |");
+    expect(md).toContain("| `ruff` | captured |  |");
+  });
+
+  it("renders sha256 mismatch (with note) as a scan row, and no scan rows when scan is absent", () => {
+    const md = renderFuzzRegion([
+      result({
+        slug: "hk",
+        status: "fail",
+        detail: "",
+        scan: { sha256: { status: "mismatch", note: "expected abc…, got def…" } },
+      }),
       result({ slug: "sm", status: "pass", detail: "ok" }), // no scan
     ]);
-    expect(md).toContain("| `sha256` | mismatch |");
+    expect(md).toContain("| `sha256` | mismatch | expected abc…, got def… |");
     const smSection = md.slice(md.indexOf("#### `sm`"));
-    expect(smSection).toContain("| `generation` | ✅ pass | ok |");
-    expect(smSection).not.toContain("| `bandit`"); // no scan -> generation row only
+    expect(smSection).toContain("| `fuzzer` | ✅ pass | ok |");
+    expect(smSection).not.toContain("| `bandit`"); // no scan -> fuzzer row only
   });
 
   it("emits a placeholder (not a table) when there are no results", () => {
@@ -297,8 +327,8 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).toContain("a \\| b \\| c");
   });
 
-  it("renders an em dash in the generation Notes when there are no stats or detail", () => {
+  it("renders an em dash in the fuzzer Notes when there are no stats or detail", () => {
     const md = renderFuzzRegion([result({ slug: "hk", status: "pass", detail: "" })]);
-    expect(md).toContain("| `generation` | ✅ pass | — |");
+    expect(md).toContain("| `fuzzer` | ✅ pass | — |");
   });
 });

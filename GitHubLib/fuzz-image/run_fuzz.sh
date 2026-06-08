@@ -95,6 +95,30 @@ scan_status() {
     ' "${OUT}/scan.json" 2>/dev/null || printf 'missing'
 }
 
+# The human `message` karen_review recorded for a single check — the Notes cell
+# the bot renders next to the status. Args: <check_name>. Empty when absent.
+scan_message() {
+    local name="$1"
+    [ -s "${OUT}/scan.json" ] || { printf ''; return; }
+    jq -r --arg n "$name" '
+        (.worlds[0].checks // []) | map(select(.name == $n)) | (.[0].message // "")
+    ' "${OUT}/scan.json" 2>/dev/null || printf ''
+}
+
+# A short note for the ruff row: the finding count (ruff.json is a JSON array of
+# diagnostics). karen_review doesn't produce ruff, so summarize it here.
+ruff_note() {
+    [ -s "${OUT}/ruff.json" ] || { printf 'not captured'; return; }
+    local n
+    n="$(jq 'if type == "array" then length else 0 end' "${OUT}/ruff.json" 2>/dev/null || printf 0)"
+    case "$n" in
+        ''|*[!0-9]*) printf '' ;;
+        0)           printf 'no lint findings' ;;
+        1)           printf '1 lint finding' ;;
+        *)           printf '%s lint findings' "$n" ;;
+    esac
+}
+
 # Last ~4KB of the combined log, JSON-safe. Truncated to the TAIL of the file so a
 # noisy run still surfaces its final error.
 log_tail_json() {
@@ -112,16 +136,24 @@ write_result() {
     local ruff_status="missing"
     [ -s "${OUT}/ruff.json" ] && ruff_status="captured"
 
+    # Each scan check is {status, note}: status drives the glyph, note is the
+    # human message the bot shows in the Notes column (item parity with Karen's
+    # manifest-review tables). pip_audit can't run offline; ruff is summarized
+    # from its finding count, everything else from karen_review's scan.json.
     jq -n \
         --arg slug "${SLUG:-unknown}" \
         --arg status "${STATUS}" \
         --argjson stats "${STATS_JSON}" \
-        --arg bandit "$(scan_status bandit)" \
-        --arg pip_audit "skipped" \
-        --arg size_sanity "$(scan_status size_sanity)" \
-        --arg no_rom_files "$(scan_status no_rom_files)" \
-        --arg no_network_at_import "$(scan_status no_network_at_import)" \
-        --arg ruff "${ruff_status}" \
+        --arg bandit_s "$(scan_status bandit)" \
+        --arg bandit_n "$(scan_message bandit)" \
+        --arg size_s "$(scan_status size_sanity)" \
+        --arg size_n "$(scan_message size_sanity)" \
+        --arg rom_s "$(scan_status no_rom_files)" \
+        --arg rom_n "$(scan_message no_rom_files)" \
+        --arg net_s "$(scan_status no_network_at_import)" \
+        --arg net_n "$(scan_message no_network_at_import)" \
+        --arg ruff_s "${ruff_status}" \
+        --arg ruff_n "$(ruff_note)" \
         --argjson exit_code "${EXIT_CODE}" \
         --argjson log_tail "$(log_tail_json)" \
         '{
@@ -129,12 +161,12 @@ write_result() {
             status: $status,
             stats: $stats,
             scan: {
-                bandit: $bandit,
-                pip_audit: $pip_audit,
-                size_sanity: $size_sanity,
-                no_rom_files: $no_rom_files,
-                no_network_at_import: $no_network_at_import,
-                ruff: $ruff
+                bandit: {status: $bandit_s, note: $bandit_n},
+                pip_audit: {status: "skipped", note: "not run in the offline sandbox"},
+                size_sanity: {status: $size_s, note: $size_n},
+                no_rom_files: {status: $rom_s, note: $rom_n},
+                no_network_at_import: {status: $net_s, note: $net_n},
+                ruff: {status: $ruff_s, note: $ruff_n}
             },
             exit_code: $exit_code,
             log_tail: $log_tail
@@ -253,11 +285,12 @@ run() {
         # Bespoke result for the mismatch case so the bot can show scan.sha256.
         RESULT_WRITTEN=1
         STATUS="fail"; EXIT_CODE=3
-        jq -n --arg slug "${SLUG}" --argjson lt "$(log_tail_json)" \
+        jq -n --arg slug "${SLUG}" --arg exp "${WHEEL_SHA256}" --arg got "${actual}" --argjson lt "$(log_tail_json)" \
             '{slug:$slug, status:"fail", stats:{success:0,failure:0,timeout:0,ignored:0,total:0},
-              scan:{sha256:"mismatch"}, exit_code:3, log_tail:$lt}' \
+              scan:{sha256:{status:"mismatch", note:("expected " + $exp[0:12] + "…, got " + $got[0:12] + "…")}},
+              exit_code:3, log_tail:$lt}' \
             > "${OUT}/result.json" 2>>"${LOG}" \
-          || printf '{"slug":"%s","status":"fail","scan":{"sha256":"mismatch"},"exit_code":3,"log_tail":""}\n' \
+          || printf '{"slug":"%s","status":"fail","scan":{"sha256":{"status":"mismatch","note":"digest mismatch"}},"exit_code":3,"log_tail":""}\n' \
                 "${SLUG}" > "${OUT}/result.json"
         exit 3
     fi

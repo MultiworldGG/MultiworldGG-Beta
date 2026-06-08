@@ -27,6 +27,7 @@ import {
   type FuzzConclusion,
 } from "../fuzz/check-run";
 import { renderFuzzRegion, upsertFuzzComment } from "../fuzz/comment";
+import { decideFuzzReview, submitFuzzReview } from "../fuzz/review";
 import { toFuzzJob, validateFuzzPayload } from "../fuzz/payload";
 import { getFuzzQueue } from "../fuzz/queue";
 import { ensureImageAvailable, runFuzzContainer, type RunFuzzOptions } from "../fuzz/runner";
@@ -352,6 +353,9 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       marker: fuzz.comment_marker,
       headSha: fuzz.head_sha,
       region: renderFuzzRegion(results),
+      // Karen's isolated checks live in their OWN sticky comment, separate from
+      // her manifest review; this heading titles it when the bot creates it.
+      title: "Karen: Isolated QA Checks",
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -361,6 +365,46 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       pr_number: fuzz.pr_number,
       reason: "fuzz_check_run_error",
       message: `Failed to upsert fuzz comment region: ${message}`,
+    });
+  }
+
+  // Karen's FINAL verdict lands AFTER the isolated checks — the whole reason they
+  // run in the bot. Approve only when the manifest checks (verdict from the
+  // dispatch payload) AND these isolated checks are green; request changes when
+  // either is red. (The workflow only reviews synchronously on the no-fuzz path.)
+  // Guard on the PR head exactly like the comment splice: a batch that finished
+  // after a newer push must NOT land a stale APPROVE on now-superseded code — the
+  // newer batch owns the review (the queue keys on head_sha, so it ran separately).
+  try {
+    const decision = decideFuzzReview(fuzz.manifest_status, status);
+    if (decision) {
+      const pull = await octokit.rest.pulls.get({ owner, repo, pull_number: fuzz.pr_number });
+      if (pull.data.head.sha === fuzz.head_sha) {
+        await submitFuzzReview(octokit, {
+          owner,
+          repo,
+          prNumber: fuzz.pr_number,
+          event: decision.event,
+          body: decision.body,
+        });
+      } else {
+        eventLog.emit({
+          kind: "skip",
+          source_repo: indexRepoSpec,
+          pr_number: fuzz.pr_number,
+          release_sha: fuzz.head_sha,
+          message: "Skipped Karen's final review: PR head moved since dispatch.",
+        });
+      }
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    eventLog.emit({
+      kind: "error",
+      source_repo: indexRepoSpec,
+      pr_number: fuzz.pr_number,
+      reason: "fuzz_check_run_error",
+      message: `Failed to submit Karen's final review: ${message}`,
     });
   }
 

@@ -196,6 +196,27 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
   });
 });
 
+describe("validateFuzzPayload — manifest_status passthrough", () => {
+  it("passes a string manifest_status through to the value", () => {
+    const res = validateFuzzPayload("karen-fuzz", payload({ manifest_status: "pass" }));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.manifest_status).toBe("pass");
+  });
+
+  it("defaults manifest_status to '' when missing or non-string (won't auto-approve)", () => {
+    const missing = validateFuzzPayload("karen-fuzz", payload());
+    expect(missing.ok).toBe(true);
+    if (!missing.ok) return;
+    expect(missing.value.manifest_status).toBe("");
+
+    const nonString = validateFuzzPayload("karen-fuzz", payload({ manifest_status: 3 }));
+    expect(nonString.ok).toBe(true);
+    if (!nonString.ok) return;
+    expect(nonString.value.manifest_status).toBe("");
+  });
+});
+
 describe("toFuzzJob", () => {
   it("flattens a payload + world into a runner work unit", () => {
     const res = validateFuzzPayload("karen-fuzz", payload());

@@ -44,6 +44,13 @@ export interface UpsertFuzzCommentParams {
   headSha: string;
   /** Caller-built markdown to place between the fuzz region markers. */
   region: string;
+  /**
+   * Optional `## {title}` heading written ABOVE the fenced region when the bot
+   * has to CREATE the sticky comment (the isolated-checks comment is Karen's own,
+   * separate from her manifest review). It lives outside the fence, so region
+   * updates never clobber it. Omitted → no heading (legacy splice-into-Karen mode).
+   */
+  title?: string;
 }
 
 /**
@@ -64,9 +71,9 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
   for (const r of results) {
     lines.push(`#### \`${r.slug}\` — ${statusLabel(r.status)}`, "");
     lines.push("| Check | Status | Notes |", "| --- | --- | --- |");
-    lines.push(`| \`generation\` | ${statusLabel(r.status)} | ${escapeCell(generationNotes(r))} |`);
-    for (const [label, status] of scanRows(r.scan)) {
-      lines.push(`| \`${label}\` | ${escapeCell(statusLabel(status))} |  |`);
+    lines.push(`| \`fuzzer\` | ${statusLabel(r.status)} | ${escapeCell(fuzzerNotes(r))} |`);
+    for (const [label, status, note] of scanRows(r.scan)) {
+      lines.push(`| \`${label}\` | ${escapeCell(statusLabel(status))} | ${escapeCell(note)} |`);
     }
     lines.push("");
   }
@@ -75,10 +82,10 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
 }
 
 /**
- * The `generation` row's Notes: the stats line (success=… total=…) and/or the
+ * The `fuzzer` row's Notes: the stats line (success=… total=…) and/or the
  * human `detail` tail; an em dash when neither is present. (Caller escapes it.)
  */
-function generationNotes(r: FuzzWorldResult): string {
+function fuzzerNotes(r: FuzzWorldResult): string {
   const statsLine = r.stats ? formatStats(r.stats) : "";
   const detail = r.detail.trim();
   if (statsLine && detail) return `${detail} (${statsLine})`;
@@ -102,18 +109,26 @@ const SCAN_LABELS: Record<string, string> = {
 };
 
 /**
- * One [label, status] row per scan check, mirroring Karen's per-check rows. These
- * are the status SUMMARY the container records in result.json.scan — the raw
- * scan.json/ruff.json findings aren't available bot-side (they live in the /out
- * dir, reclaimed after the run). Non-string values are JSON-encoded so an
- * unexpected shape can't break a row; an absent scan yields no rows.
+ * One [label, status, note] row per scan check, mirroring Karen's per-check rows.
+ * The container records each check in result.json.scan as `{status, note}`, where
+ * `note` is karen_review's human message (e.g. "a very reasonable 5.2MB / cap
+ * 250MB") — the raw scan.json/ruff.json findings themselves aren't available
+ * bot-side (they live in the /out dir, reclaimed after the run). A legacy
+ * bare-string value is read as the status with an empty note; any other shape is
+ * JSON-encoded so it can't break a row. An absent scan yields no rows.
  */
-function scanRows(scan: Record<string, unknown> | undefined): Array<[string, string]> {
+function scanRows(scan: Record<string, unknown> | undefined): Array<[string, string, string]> {
   if (!scan) return [];
-  return Object.entries(scan).map(([key, value]) => [
-    SCAN_LABELS[key] ?? key,
-    typeof value === "string" ? value : JSON.stringify(value),
-  ]);
+  return Object.entries(scan).map(([key, value]) => {
+    const label = SCAN_LABELS[key] ?? key;
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const v = value as Record<string, unknown>;
+      const status = typeof v.status === "string" ? v.status : JSON.stringify(v);
+      const note = typeof v.note === "string" ? v.note : "";
+      return [label, status, note];
+    }
+    return [label, typeof value === "string" ? value : JSON.stringify(value), ""];
+  });
 }
 
 /** Keep table-breaking characters from leaking into a Markdown cell. */
@@ -141,9 +156,14 @@ function spliceRegion(body: string, region: string): string {
   return `${body}${sep}\n${fenced}\n`;
 }
 
-/** A brand-new sticky comment: marker line followed by the fenced fuzz region. */
-function freshComment(marker: string, region: string): string {
-  return `${marker}\n\n${FUZZ_REGION_START}\n${region}\n${FUZZ_REGION_END}\n`;
+/**
+ * A brand-new sticky comment: marker line, an optional `## {title}` heading, then
+ * the fenced fuzz region. The heading sits OUTSIDE the fence so later region
+ * splices preserve it.
+ */
+function freshComment(marker: string, region: string, title?: string): string {
+  const header = title ? `${marker}\n\n## ${title}\n\n` : `${marker}\n\n`;
+  return `${header}${FUZZ_REGION_START}\n${region}\n${FUZZ_REGION_END}\n`;
 }
 
 /**
@@ -158,7 +178,7 @@ export async function upsertFuzzComment(
   octokit: ProbotOctokit,
   params: UpsertFuzzCommentParams,
 ): Promise<void> {
-  const { owner, repo, prNumber, marker, headSha, region } = params;
+  const { owner, repo, prNumber, marker, headSha, region, title } = params;
 
   // Bail before any write if this run is stale: the head moved, so a newer run
   // owns the comment now.
@@ -179,7 +199,7 @@ export async function upsertFuzzComment(
       owner,
       repo,
       issue_number: prNumber,
-      body: freshComment(marker, region),
+      body: freshComment(marker, region, title),
     });
     return;
   }

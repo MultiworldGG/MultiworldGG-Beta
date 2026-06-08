@@ -171,6 +171,11 @@ export function validateFuzzPayload(action: string, clientPayload: unknown): Fuz
     worlds: rawWorlds,
   } = clientPayload;
 
+  // Optional: tolerate an older dispatcher that doesn't send it. A non-string or
+  // missing value becomes "" — never a clean "pass" — so the bot won't auto-approve.
+  const manifestStatus =
+    typeof clientPayload.manifest_status === "string" ? clientPayload.manifest_status : "";
+
   if (typeof schemaVersion !== "number" || !Number.isInteger(schemaVersion)) {
     errors.push("schema_version must be an integer");
   }
@@ -222,6 +227,7 @@ export function validateFuzzPayload(action: string, clientPayload: unknown): Fuz
       head_sha: headSha as string,
       check_run_name: checkRunName as string,
       comment_marker: commentMarker as string,
+      manifest_status: manifestStatus,
       fuzz,
       scan,
       worlds,
