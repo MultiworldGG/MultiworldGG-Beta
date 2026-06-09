@@ -67,7 +67,6 @@ else:
     from kivymd.uix.gridlayout import MDGridLayout as MainLayout
     from kivymd.uix.floatlayout import MDFloatLayout as ContainerLayout
     from kivymd.uix.recycleview import MDRecycleView
-    from kivymd.uix.behaviors import HoverBehavior
     from kivymd.uix.divider import MDDivider
     from kivymd.uix.label import MDLabel
     from kivymd.uix.progressindicator import MDLinearProgressIndicator
@@ -83,9 +82,49 @@ else:
     # MainLayout) or not at all.
     from kivy.clock import Clock
     from kivy.core.window import Window
+    from kivy.factory import Factory
     from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
     from kivymd.uix.gridlayout import MDGridLayout
     from kivymd.uix.textfield.textfield import MDTextField
+
+    # World clients subclass HoverBehavior alongside kivymd widgets, e.g.
+    # `class X(HoverBehavior, MDIconButton)`. kivymd.uix.behaviors.HoverBehavior
+    # shares an MRO-incompatible base with those widgets; this plain object-based
+    # mixin (the original MWGG HoverBehavior) linearizes cleanly and exposes the
+    # hovered/border_point/on_enter/on_leave API those clients expect.
+    class HoverBehavior(object):
+        """originally from https://stackoverflow.com/a/605348110"""
+        hovered = BooleanProperty(False)
+        border_point = ObjectProperty(None)
+
+        def __init__(self, **kwargs):
+            self.register_event_type("on_enter")
+            self.register_event_type("on_leave")
+            Window.bind(mouse_pos=self.on_mouse_pos)
+            Window.bind(on_cursor_leave=self.on_cursor_leave)
+            super(HoverBehavior, self).__init__(**kwargs)
+
+        def on_mouse_pos(self, window, pos):
+            if not self.get_root_window():
+                return  # Abort if not displayed
+            # to_widget translates window pos to within widget pos
+            inside = self.collide_point(*self.to_widget(*pos))
+            if self.hovered == inside:
+                return  # We have already done what was needed
+            self.border_point = pos
+            self.hovered = inside
+            if inside:
+                self.dispatch("on_enter")
+            else:
+                self.dispatch("on_leave")
+
+        def on_cursor_leave(self, *args):
+            # if the mouse left the window, it is no longer inside the hover widget.
+            self.hovered = BooleanProperty(False)
+            self.border_point = ObjectProperty(None)
+            self.dispatch("on_leave")
+
+    Factory.register("HoverBehavior", HoverBehavior)
 
     class GameManager:
         logging_pairs: list = []
