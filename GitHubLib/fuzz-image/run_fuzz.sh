@@ -394,20 +394,32 @@ PY
     rm -rf "${CORE}"
     cp -a "${BAKED_CORE}" "${CORE}"
 
+    # Expose the bind-mounted ROMs INSIDE the install dir. host.yaml's rom_file
+    # entries are RELATIVE ("roms/<file>") so the SAME host.yaml drives real
+    # generation; MWGG resolves them under user_path == local_path == cwd == ${CORE}
+    # (Utils.local_path = dir of Utils.py; user_path = local_path when writable, and
+    # ${CORE} is). The bot bind-mounts the ROMs read-only at /roms, so a relative
+    # "roms/foo.z64" would resolve to ${CORE}/roms/foo.z64 and miss the mount —
+    # link ${CORE}/roms -> /roms to bridge that WITHOUT editing the shared yaml.
+    if [ -d /roms ]; then
+        # rm first: if the baked core ever shipped a real roms/ dir, `ln -s` would
+        # otherwise create the link INSIDE it (${CORE}/roms/roms). The mount wins.
+        rm -rf "${CORE}/roms"
+        ln -s /roms "${CORE}/roms"
+        log "linked ${CORE}/roms -> /roms ($(find /roms -maxdepth 1 -type f 2>/dev/null | wc -l) rom file(s)) for relative rom_file paths"
+    fi
+
     # If the operator bind-mounted a host.yaml (RO at ${HARNESS_DIR}/host.yaml),
     # install it where MWGG's get_settings() looks. With cwd == local_path == ${CORE}
     # and ${CORE} writable, user_path("host.yaml") resolves to ${CORE}/host.yaml.
-    # Its <world>_options.rom_file entries should point at the read-only /roms mount
-    # so ROM-dependent worlds (e.g. metroidfusion) can actually generate. Without
-    # it, get_settings() falls back to a romless default and those worlds no-op.
+    # Its <world>_options.rom_file entries may be absolute (/roms/<file>) or relative
+    # ("roms/<file>", resolved via the ${CORE}/roms link above) so the same host.yaml
+    # works here and for real generation. Without a host.yaml, get_settings() falls
+    # back to a romless default and ROM-dependent worlds no-op.
     if [ -s "${HARNESS_DIR}/host.yaml" ]; then
         cp "${HARNESS_DIR}/host.yaml" "${CORE}/host.yaml"
         log "installed mounted host.yaml -> ${CORE}/host.yaml"
-        if [ -d /roms ]; then
-            log "roms mount present: $(find /roms -maxdepth 1 -type f 2>/dev/null | wc -l) file(s)"
-        else
-            log "warning: host.yaml mounted but /roms is absent"
-        fi
+        [ -d /roms ] || log "warning: host.yaml mounted but /roms is absent"
     else
         log "no host.yaml mounted; ROM-dependent worlds will no-op (no base ROM)"
     fi

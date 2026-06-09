@@ -203,8 +203,10 @@ services:
       # the bot adds them to the inner `docker run` as READ-ONLY mounts (/roms +
       # the host.yaml). They are resolved by the host daemon, NOT read by the bot,
       # so — unlike FUZZ_WORK_DIR — they need NOT be bind-mounted into this
-      # container. host.yaml's <world>_options.rom_file entries must point at
-      # /roms/<file>, and the ROMs must be readable by uid 65532. Untrusted world
+      # container. host.yaml's <world>_options.rom_file entries may be absolute
+      # (/roms/<file>) or relative (roms/<file>, which the run script links to the
+      # mount) so the SAME host.yaml also drives real generation; the ROMs must be
+      # readable by uid 65532. Untrusted world
       # code can READ (not write) the ROMs, but the container has NO network, so
       # they can't be exfiltrated. Leave unset to keep ROM worlds as warn/no-ops.
       # - FUZZ_ROM_DIR=/var/lib/mwgg-fuzz-roms

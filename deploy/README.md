@@ -133,8 +133,10 @@ comment. To enable it:
    reaches it via `DOCKER_HOST`. Never mount the raw socket into the bot.
 6. **Optional ROMs:** ROM-dependent worlds only generate if their base ROMs are
    present. Set `FUZZ_ROM_DIR` (host dir, mounted read-only at `/roms`) and
-   `FUZZ_HOST_YAML` (a `host.yaml` whose `<world>_options.rom_file` entries point
-   at `/roms/<file>`); both must be readable by uid 65532. Untrusted world code
+   `FUZZ_HOST_YAML` (a `host.yaml` whose `<world>_options.rom_file` entries are
+   `/roms/<file>` or a relative `roms/<file>` — the run script links the install's
+   `roms/` to the mount, so the same yaml also drives real generation); both must
+   be readable by uid 65532. Untrusted world code
    can READ (not write) the ROMs and the container has egress, so only expose
    ROMs you accept could be exfiltrated. Unset → ROM worlds warn (no-op).
 
