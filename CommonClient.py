@@ -19,11 +19,38 @@ from websockets.asyncio.connection import Connection
 # the legacy `socket.closed` / `socket.open` attributes, which the websockets 14+
 # asyncio Connection removed. Restore them as State-backed properties with the
 # legacy semantics (both are False while opening/closing) so those clients run
-# unmodified against the bundled websockets 16.
+# unmodified against the bundled websockets 16. Each offending call site gets one
+# deprecation warning in the client log (not one per access -- these checks sit
+# in per-package and watcher loops) so world authors can find and migrate it.
+_legacy_socket_attr_sites: typing.Set[typing.Tuple[str, int, str]] = set()
+
+
+def _warn_legacy_socket_attr(name: str) -> None:
+    frame = sys._getframe(2)
+    site = (frame.f_code.co_filename, frame.f_lineno, name)
+    if site in _legacy_socket_attr_sites:
+        return
+    _legacy_socket_attr_sites.add(site)
+    logging.getLogger("Client").warning(
+        "Deprecated websockets API: %s:%s reads socket.%s, which websockets 14+ removed. "
+        "MWGG shims it for now; migrate to socket.state checks against websockets.protocol.State.",
+        site[0], site[1], name)
+
+
+def _compat_socket_closed(self: Connection) -> bool:
+    _warn_legacy_socket_attr("closed")
+    return self.state is State.CLOSED
+
+
+def _compat_socket_open(self: Connection) -> bool:
+    _warn_legacy_socket_attr("open")
+    return self.state is State.OPEN
+
+
 if not hasattr(Connection, "closed"):
-    Connection.closed = property(lambda self: self.state is State.CLOSED)
+    Connection.closed = property(_compat_socket_closed)
 if not hasattr(Connection, "open"):
-    Connection.open = property(lambda self: self.state is State.OPEN)
+    Connection.open = property(_compat_socket_open)
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"

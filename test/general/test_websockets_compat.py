@@ -49,6 +49,18 @@ class TestWebsocketsLegacyCompat(unittest.TestCase):
         server.socket.closed = Connection.closed.fget(server.socket)
         self.assertTrue(bool(server and server.socket and not server.socket.closed))
 
+    def test_deprecation_warning_once_per_call_site(self) -> None:
+        # Accessing a legacy attribute surfaces a warning in the client log,
+        # but only once per call site -- these checks sit in per-package loops.
+        stub = SimpleNamespace(state=State.OPEN)
+        with self.assertLogs("Client", level="WARNING") as logs:
+            for _ in range(3):
+                Connection.closed.fget(stub)  # one call site, three accesses
+        records = [r for r in logs.output if "socket.closed" in r]
+        self.assertEqual(len(records), 1)
+        self.assertIn("Deprecated websockets API", records[0])
+        self.assertIn(__file__, records[0])  # points at the offending call site
+
 
 if __name__ == "__main__":
     unittest.main()
