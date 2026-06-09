@@ -180,12 +180,39 @@ For routine updates (new world releases, mwgg_igdb refresh, code changes):
 ```bash
 cd /opt/mwgg
 git pull
-docker compose down
-docker compose build
-docker compose up -d
+deploy/update.sh            # build (webhost + bot + fuzz), recreate, then prune
 ```
 
-`docker compose down` (no `-v`) keeps named volumes — the `app_volume`
+`update.sh` wraps `docker compose build` (plus a `docker build` for the ad-hoc
+fuzz image, which is NOT a compose-service build), `docker compose up -d`, and a
+**self-cleaning** prune. Rebuild just one image with a target —
+`deploy/update.sh fuzz` (or `bot` / `webhost` / `none`). By hand it's:
+
+```bash
+docker compose build && docker compose up -d
+docker build -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest GitHubLib/fuzz-image
+docker image prune -f && docker builder prune -f      # <-- don't skip this
+```
+
+### Disk housekeeping (overlay2)
+
+The fuzz and `multiworld` images are multi-GB; every rebuild retags `:latest` and
+leaves the previous image **dangling**, and those orphaned layers pile up in
+`/var/lib/docker/overlay2` until the disk fills. `update.sh` prunes them each run;
+building by hand, run `docker image prune -f && docker builder prune -f` after.
+The prune is dangling-only with **no `--volumes`**, so it never removes a tagged
+in-use image or a named volume — and `/var/lib/mwgg` + `/var/lib/mwgg-fuzz` are
+host bind mounts it can't touch (inspect first with `docker system df`). A
+backstop cron for out-of-band churn:
+
+```cron
+0 4 * * 0  docker image prune -f && docker builder prune -f
+```
+
+If you ran fuzz with `FUZZ_DEBUG=1`, also clear the kept per-job dirs once
+inspected: `rm -rf /var/lib/mwgg-fuzz/*/`.
+
+A full `docker compose down` (no `-v`) keeps named volumes — the `app_volume`
 shared between multiworld/web/nginx for logs/seeds/static assets stays.
 
 If you need to nuke `app_volume` (rare — e.g., to reset all log history),
