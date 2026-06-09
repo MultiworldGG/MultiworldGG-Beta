@@ -237,12 +237,15 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-release-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Make the asset-digest wait instant in tests (no real backoff sleeps).
+  process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
+  delete process.env.OLIVER_DIGEST_WAIT_MS;
 });
 
 function readEvents(): any[] {
@@ -693,5 +696,68 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       expect.objectContaining({ kind: "skip", reason: "bundle_no_valid_worlds" }),
     );
     expect(writes).not.toContain("pulls.create");
+  });
+
+  it("waits for a lagging asset digest, then includes that world once GitHub finishes hashing", async () => {
+    const validDigest = `sha256:${"a".repeat(64)}`;
+    const dl = (name: string) =>
+      `https://github.com/MultiworldGG/myclgm-test/releases/download/${BUNDLE_TAG}/${name}`;
+    let releaseFetches = 0;
+
+    const state: RepoState = {
+      releases: [{ tag_name: BUNDLE_TAG, tagSha: "bundle-sha" }],
+      indexInstall: { id: 12345 },
+    };
+    const octokit = makeContextOctokit(state);
+    // oot's digest is still being computed on the first read; it lands on the second.
+    octokit.rest.repos.getReleaseByTag = async () => {
+      releaseFetches += 1;
+      const ootDigest = releaseFetches >= 2 ? validDigest : null;
+      return {
+        data: {
+          tag_name: BUNDLE_TAG,
+          assets: [
+            {
+              name: "worlds_dk64-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_dk64-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: validDigest,
+            },
+            {
+              name: "worlds_oot-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_oot-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: ootDigest,
+            },
+          ],
+        },
+      };
+    };
+
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      {
+        "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64"),
+        "worlds/oot.json": bundleIndexManifest("Ocarina of Time"),
+      },
+      writes,
+    );
+
+    const ctx = {
+      octokit,
+      payload: { release: { tag_name: BUNDLE_TAG, draft: false } },
+      log: fakeLog,
+      repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
+    };
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx as any);
+
+    expect(releaseFetches).toBeGreaterThanOrEqual(2); // re-fetched after the lagging digest
+    const events = readEvents();
+    expect(events.some((e) => e.reason === "asset_digest_missing")).toBe(false); // oot not dropped
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).sort()).toEqual([
+      "commit:worlds/dk64.json",
+      "commit:worlds/oot.json",
+    ]);
+    expect(writes).toContain("pulls.create");
   });
 });

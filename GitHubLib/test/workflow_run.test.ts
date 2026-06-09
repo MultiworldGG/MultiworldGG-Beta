@@ -152,12 +152,15 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-handler-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Make the asset-digest wait instant in tests (no real backoff sleeps).
+  process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
+  delete process.env.OLIVER_DIGEST_WAIT_MS;
 });
 
 function readEvents(): any[] {

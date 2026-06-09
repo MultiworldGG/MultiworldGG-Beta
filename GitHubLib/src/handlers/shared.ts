@@ -27,6 +27,48 @@ export interface ProcessReleaseAssetsParams {
   releaseSha: string;
 }
 
+// GitHub computes a release asset's `digest` ("sha256:<hex>") asynchronously
+// after upload, so a release.published webhook can fire before every wheel has
+// been hashed. A wheel without a digest is otherwise dropped (bundle path) or
+// bails the whole PR (single-world path) — which silently loses worlds from a
+// bundle. Re-fetch the release a few times until every .whl asset carries a
+// sha256 digest before parsing. Past the budget we proceed with whatever is
+// present — the per-asset digest guards below still refuse any unhashed wheel.
+const DIGEST_WAIT_ATTEMPTS_DEFAULT = 6;
+const DIGEST_WAIT_MS_DEFAULT = 5000;
+
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+function parseEnvInt(raw: string | undefined, fallback: number, min: number): number {
+  if (raw === undefined) return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? Math.max(min, Math.trunc(n)) : fallback;
+}
+
+function countWheelsMissingDigest(assets: ReadonlyArray<{ name: string }>): number {
+  let missing = 0;
+  for (const asset of assets) {
+    if (!asset.name.endsWith(".whl")) continue;
+    const digest = (asset as { digest?: string | null }).digest;
+    if (!digest || !digest.startsWith("sha256:")) missing += 1;
+  }
+  return missing;
+}
+
+// Fetch the release, re-polling while any .whl asset still lacks its GitHub
+// digest. Errors (e.g. a 404) propagate to the caller's existing handler.
+async function getReleaseWaitingForDigests(octokit: Octokit, owner: string, repo: string, releaseTag: string) {
+  const attempts = parseEnvInt(process.env.OLIVER_DIGEST_WAIT_ATTEMPTS, DIGEST_WAIT_ATTEMPTS_DEFAULT, 1);
+  const delayMs = parseEnvInt(process.env.OLIVER_DIGEST_WAIT_MS, DIGEST_WAIT_MS_DEFAULT, 0);
+  let release = await octokit.rest.repos.getReleaseByTag({ owner, repo, tag: releaseTag });
+  for (let attempt = 1; attempt < attempts; attempt += 1) {
+    if (countWheelsMissingDigest(release.data.assets) === 0) break;
+    await sleep(delayMs);
+    release = await octokit.rest.repos.getReleaseByTag({ owner, repo, tag: releaseTag });
+  }
+  return release;
+}
+
 export async function processReleaseAssets({
   octokit,
   oliverProbot,
@@ -77,7 +119,7 @@ export async function processReleaseAssets({
   let bundleWorlds: BundleWorld[] = [];
 
   try {
-    const release = await octokit.rest.repos.getReleaseByTag({ owner, repo, tag: releaseTag });
+    const release = await getReleaseWaitingForDigests(octokit, owner, repo, releaseTag);
     const wheelAssets = release.data.assets.filter((a) => a.name.endsWith(".whl"));
 
     if (isBundle) {
