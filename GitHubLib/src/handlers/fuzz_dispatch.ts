@@ -67,6 +67,14 @@ function envOpt(name: string): string | undefined {
   return raw !== undefined && raw.trim() !== "" ? raw : undefined;
 }
 
+/** Optional int env var: undefined when unset/blank/non-numeric (so the cap is off). */
+function envOptNum(name: string): number | undefined {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return undefined;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 /** Truthy env flag: 1/true/yes/on (case-insensitive) → true; otherwise `def`. */
 function envBool(name: string, def: boolean): boolean {
   const raw = process.env[name];
@@ -89,6 +97,10 @@ function runnerOptionsFromEnv(
     cpus: envStr("FUZZ_CPUS", "2"),
     memory: envStr("FUZZ_MEMORY", "4g"),
     pids: envNum("FUZZ_PIDS", 512),
+    // Operator ceilings on the fuzzer -j / -r so a small host bounds resource use
+    // no matter what the Index dispatch asked for. Unset → use the payload value.
+    maxThreads: envOptNum("FUZZ_MAX_THREADS"),
+    maxRuns: envOptNum("FUZZ_MAX_RUNS"),
     wallSeconds: envNum("FUZZ_WALL_SECONDS", 1200),
     // Optional RO mounts so ROM-dependent worlds can generate; unset → no mount.
     romDir: envOpt("FUZZ_ROM_DIR"),

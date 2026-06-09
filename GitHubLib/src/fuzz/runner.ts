@@ -32,6 +32,16 @@ export interface RunFuzzOptions {
   cpus?: string;
   memory?: string;
   pids?: number;
+  /**
+   * Operator-set CEILINGS on the fuzzer's parallelism (-j threads) and run count
+   * (-r), applied as min(payload, cap). The Index dispatch picks the nominal
+   * values; these let the HOST operator bound resource use from their own env
+   * (FUZZ_MAX_THREADS / FUZZ_MAX_RUNS) regardless of what the Index sends — e.g. a
+   * small host pinning threads to 1 so a 10-way generation fan-out can't thrash it.
+   * Unset / <= 0 → no cap.
+   */
+  maxThreads?: number;
+  maxRuns?: number;
   wallSeconds?: number;
   /**
    * Optional HOST path to a base-ROM directory, bind-mounted READ-ONLY at /roms
@@ -120,6 +130,13 @@ export function buildDockerArgs(
   const memory = opts.memory ?? DEFAULT_MEMORY;
   const pids = opts.pids ?? DEFAULT_PIDS;
 
+  // Apply the operator ceilings (min of payload value and the cap). An unset / <=0
+  // cap passes the payload value through unchanged. This is the only place the host
+  // can bound a too-aggressive Index dispatch (e.g. threads 10 -> 1 on a small box).
+  const runs = opts.maxRuns && opts.maxRuns > 0 ? Math.min(job.runs, opts.maxRuns) : job.runs;
+  const threads =
+    opts.maxThreads && opts.maxThreads > 0 ? Math.min(job.threads, opts.maxThreads) : job.threads;
+
   // No FUZZ_WHEEL_URL / MWGG_CORE_* / FUZZER_*: the container is offline. The
   // wheel arrives as a bind mount (/in); core, its venv, and fuzz.py are baked
   // into the image at build time. FUZZ_WHEEL_SHA256 stays for an in-container
@@ -127,10 +144,10 @@ export function buildDockerArgs(
   const env: Record<string, string> = {
     FUZZ_SLUG: job.slug,
     FUZZ_WHEEL_SHA256: job.sha256,
-    FUZZ_RUNS: String(job.runs),
+    FUZZ_RUNS: String(runs),
     FUZZ_TIMEOUT: String(job.timeoutS),
     FUZZ_YAMLS: job.yamls,
-    FUZZ_THREADS: String(job.threads),
+    FUZZ_THREADS: String(threads),
     FUZZ_SIZE_CAP_MB: String(job.sizeCapMb),
     KIVY_NO_ARGS: "1",
     SKIP_ALL_INSTALLS: "1",

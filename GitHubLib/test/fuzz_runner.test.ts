@@ -162,6 +162,32 @@ describe("buildDockerArgs — hardening flags", () => {
     expect(args[args.length - 1]).toBe("ghcr.io/multiworldgg/fuzz:latest");
   });
 
+  it("caps FUZZ_THREADS / FUZZ_RUNS at the operator ceilings (min of payload, cap)", () => {
+    const env = envPairs(
+      buildDockerArgs(
+        job({ threads: 10, runs: 50 }),
+        options({ maxThreads: 1, maxRuns: 25 }),
+        "n",
+        "/work/out",
+        "/work/in",
+      ),
+    );
+    expect(env.FUZZ_THREADS).toBe("1");
+    expect(env.FUZZ_RUNS).toBe("25");
+  });
+
+  it("leaves payload threads/runs intact when caps are unset or higher than the payload", () => {
+    const uncapped = envPairs(buildDockerArgs(job({ threads: 4, runs: 30 }), options(), "n", "/o", "/i"));
+    expect(uncapped.FUZZ_THREADS).toBe("4");
+    expect(uncapped.FUZZ_RUNS).toBe("30");
+
+    const higher = envPairs(
+      buildDockerArgs(job({ threads: 4, runs: 30 }), options({ maxThreads: 8, maxRuns: 100 }), "n", "/o", "/i"),
+    );
+    expect(higher.FUZZ_THREADS).toBe("4"); // min(4, 8)
+    expect(higher.FUZZ_RUNS).toBe("30"); // min(30, 100)
+  });
+
   it("adds READ-ONLY rom + host.yaml mounts only when romDir/hostYaml are set", () => {
     const vmounts = (a: string[]): string[] => a.filter((_, i) => a[i - 1] === "-v");
 
