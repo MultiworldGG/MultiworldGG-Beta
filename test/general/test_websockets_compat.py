@@ -31,7 +31,9 @@ class TestWebsocketsLegacyCompat(unittest.TestCase):
         # legacy: closed is True only once fully CLOSED
         for state, expected in ((State.CONNECTING, False), (State.OPEN, False),
                                 (State.CLOSING, False), (State.CLOSED, True)):
-            with self.subTest(state=state):
+            # subTest param must be a plain string: pytest-xdist ships subtest
+            # reports over execnet, which cannot serialize the State enum
+            with self.subTest(state=state.name):
                 stub = SimpleNamespace(state=state)
                 self.assertIs(Connection.closed.fget(stub), expected)
 
@@ -39,7 +41,7 @@ class TestWebsocketsLegacyCompat(unittest.TestCase):
         # legacy: open is True only while fully OPEN
         for state, expected in ((State.CONNECTING, False), (State.OPEN, True),
                                 (State.CLOSING, False), (State.CLOSED, False)):
-            with self.subTest(state=state):
+            with self.subTest(state=state.name):
                 stub = SimpleNamespace(state=state)
                 self.assertIs(Connection.open.fget(stub), expected)
 
