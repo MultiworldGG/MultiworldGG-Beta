@@ -63,7 +63,7 @@ DEBUG="${FUZZ_DEBUG:-}"
 # leave the bot something parseable.
 STATUS="fail"
 EXIT_CODE=1
-STATS_JSON='{"success":0,"failure":0,"timeout":0,"ignored":0,"total":0}'
+STATS_JSON='{"success":0,"failure":0,"timeout":0,"ignored":0,"rom":0,"real":0,"total":0}'
 SCAN_JSON='{}'
 RESULT_WRITTEN=0
 
@@ -119,6 +119,29 @@ ruff_note() {
     esac
 }
 
+# The actual finding lines karen_review recorded for a check (bandit hits, ROM
+# paths, top-level network calls) — the REPORT, not just the count. Echoes a
+# compact JSON array of strings; "[]" when absent. The bot renders these in a
+# collapsible block, so a summary like "8 issues" becomes the 8 specific hits.
+scan_details() {
+    local name="$1"
+    [ -s "${OUT}/scan.json" ] || { printf '[]'; return; }
+    jq -c --arg n "$name" '
+        (.worlds[0].checks // []) | map(select(.name == $n)) | (.[0].details // [])
+    ' "${OUT}/scan.json" 2>/dev/null || printf '[]'
+}
+
+# Up to 25 ruff diagnostics as "file:line CODE  message" strings (compact JSON
+# array) so the lint findings, not just their count, reach the comment.
+ruff_details() {
+    [ -s "${OUT}/ruff.json" ] || { printf '[]'; return; }
+    jq -c '
+        if type == "array"
+        then [ .[:25][] | "\(.filename // "?"):\(.location.row // "?") \(.code // "")  \(.message // "")" ]
+        else [] end
+    ' "${OUT}/ruff.json" 2>/dev/null || printf '[]'
+}
+
 # Last ~4KB of the combined log, JSON-safe. Truncated to the TAIL of the file so a
 # noisy run still surfaces its final error.
 log_tail_json() {
@@ -154,6 +177,11 @@ write_result() {
         --arg net_n "$(scan_message no_network_at_import)" \
         --arg ruff_s "${ruff_status}" \
         --arg ruff_n "$(ruff_note)" \
+        --argjson bandit_d "$(scan_details bandit)" \
+        --argjson size_d "$(scan_details size_sanity)" \
+        --argjson rom_d "$(scan_details no_rom_files)" \
+        --argjson net_d "$(scan_details no_network_at_import)" \
+        --argjson ruff_d "$(ruff_details)" \
         --argjson exit_code "${EXIT_CODE}" \
         --argjson log_tail "$(log_tail_json)" \
         '{
@@ -161,12 +189,12 @@ write_result() {
             status: $status,
             stats: $stats,
             scan: {
-                bandit: {status: $bandit_s, note: $bandit_n},
-                pip_audit: {status: "skipped", note: "not run in the offline sandbox"},
-                size_sanity: {status: $size_s, note: $size_n},
-                no_rom_files: {status: $rom_s, note: $rom_n},
-                no_network_at_import: {status: $net_s, note: $net_n},
-                ruff: {status: $ruff_s, note: $ruff_n}
+                bandit: {status: $bandit_s, note: $bandit_n, details: $bandit_d},
+                pip_audit: {status: "skipped", note: "not run in the offline sandbox", details: []},
+                size_sanity: {status: $size_s, note: $size_n, details: $size_d},
+                no_rom_files: {status: $rom_s, note: $rom_n, details: $rom_d},
+                no_network_at_import: {status: $net_s, note: $net_n, details: $net_d},
+                ruff: {status: $ruff_s, note: $ruff_n, details: $ruff_d}
             },
             exit_code: $exit_code,
             log_tail: $log_tail
@@ -286,8 +314,8 @@ run() {
         RESULT_WRITTEN=1
         STATUS="fail"; EXIT_CODE=3
         jq -n --arg slug "${SLUG}" --arg exp "${WHEEL_SHA256}" --arg got "${actual}" --argjson lt "$(log_tail_json)" \
-            '{slug:$slug, status:"fail", stats:{success:0,failure:0,timeout:0,ignored:0,total:0},
-              scan:{sha256:{status:"mismatch", note:("expected " + $exp[0:12] + "…, got " + $got[0:12] + "…")}},
+            '{slug:$slug, status:"fail", stats:{success:0,failure:0,timeout:0,ignored:0,rom:0,real:0,total:0},
+              scan:{sha256:{status:"mismatch", note:("expected " + $exp[0:12] + "…, got " + $got[0:12] + "…"), details:[]}},
               exit_code:3, log_tail:$lt}' \
             > "${OUT}/result.json" 2>>"${LOG}" \
           || printf '{"slug":"%s","status":"fail","scan":{"sha256":{"status":"mismatch","note":"digest mismatch"}},"exit_code":3,"log_tail":""}\n' \
@@ -459,13 +487,17 @@ PY
     # status:"fail" (the bot reads status, and forces fail itself only on a
     # non-zero exit_code, so we keep exit 0 here to mean "the harness worked").
     STATUS="${s_status}"
+    # rom/real split the failures so the note can explain a warn (e.g. all-ROM
+    # no-ops -> rom=N, real=0) instead of a bare scary failure count.
     STATS_JSON="$(jq -n \
         --argjson success "${s_succ:-0}" \
         --argjson failure "${s_fail:-0}" \
         --argjson timeout "${s_to:-0}" \
         --argjson ignored "${s_ign:-0}" \
+        --argjson rom     "${s_rom:-0}" \
+        --argjson real    "${s_real:-0}" \
         --argjson total   "${s_total:-0}" \
-        '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, total:$total}')"
+        '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, rom:$rom, real:$real, total:$total}')"
     EXIT_CODE=0
     write_result
     log "wrote /out/result.json (status=${STATUS})"

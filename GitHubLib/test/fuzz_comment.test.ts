@@ -280,8 +280,9 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).toContain("#### `z3` — ❌ fail");
     // Karen's columns
     expect(md).toContain("| Check | Status | Notes |");
-    // the fuzzer row carries the verdict (glyph+word) + stats/detail in Notes
-    expect(md).toContain("| `fuzzer` | ✅ pass | fuzzed clean (success=10 total=10) |");
+    // a completed run shows the stats breakdown ALONE (no duplicated detail);
+    // a setup failure with no stats falls back to the detail reason.
+    expect(md).toContain("| `fuzzer` | ✅ pass | success=10 total=10 |");
     expect(md).toContain("| `fuzzer` | ❌ fail | unparseable report.json |");
     // scan checks become their own rows with glyph+word, short labels, and the
     // human note karen_review recorded in the Notes column
@@ -299,6 +300,20 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).toContain("| `ruff` | captured |  |");
   });
 
+  it("shows the fuzzer stats alone for a completed run, not the duplicated detail", () => {
+    const md = renderFuzzRegion([
+      result({
+        slug: "dk64",
+        status: "warn",
+        // the verbose classified line that used to get appended on top of the stats
+        detail: "dk64: warn — classified: status=warn success=0 failure=50 rom=50 real=0 total=50",
+        stats: { success: 0, failure: 50, timeout: 0, ignored: 0, rom: 50, real: 0, total: 50 },
+      }),
+    ]);
+    expect(md).toContain("| `fuzzer` | ⚠️ warn | success=0 failure=50 timeout=0 ignored=0 rom=50 real=0 total=50 |");
+    expect(md).not.toContain("classified:"); // the duplicated detail is gone
+  });
+
   it("renders sha256 mismatch (with note) as a scan row, and no scan rows when scan is absent", () => {
     const md = renderFuzzRegion([
       result({
@@ -313,6 +328,74 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     const smSection = md.slice(md.indexOf("#### `sm`"));
     expect(smSection).toContain("| `fuzzer` | ✅ pass | ok |");
     expect(smSection).not.toContain("| `bandit`"); // no scan -> fuzzer row only
+  });
+
+  it("renders a collapsible Findings block from each check's details", () => {
+    const md = renderFuzzRegion([
+      result({
+        slug: "hk",
+        status: "warn",
+        detail: "scanned",
+        scan: {
+          bandit: {
+            status: "fail",
+            note: "2 issues(s), we should look it over.",
+            details: [
+              "worlds/hk/x.py:5 [B602/high] subprocess with shell=True",
+              "worlds/hk/y.py:9 [B101/low] assert used",
+            ],
+          },
+          ruff: { status: "captured", note: "1 lint finding", details: ["worlds/hk/x.py:1 F401  unused import"] },
+          no_rom_files: { status: "pass", note: "no illegal games here", details: [] },
+        },
+      }),
+    ]);
+
+    expect(md).toContain("<details><summary>Findings</summary>");
+    expect(md).toContain("**bandit**");
+    expect(md).toContain("- worlds/hk/x.py:5 [B602/high] subprocess with shell=True");
+    expect(md).toContain("**ruff**");
+    expect(md).toContain("- worlds/hk/x.py:1 F401  unused import");
+    // a check whose details are empty contributes no section
+    expect(md).not.toContain("**rom**");
+    expect(md).toContain("</details>");
+  });
+
+  it("caps findings per check with a '…and N more' tail", () => {
+    const many = Array.from({ length: 20 }, (_, i) => `finding ${i}`);
+    const md = renderFuzzRegion([
+      result({ slug: "hk", status: "fail", detail: "x", scan: { bandit: { status: "fail", note: "20", details: many } } }),
+    ]);
+    expect(md).toContain("- finding 0");
+    expect(md).toContain("- finding 14"); // 15th line shown (0-indexed)
+    expect(md).not.toContain("- finding 15");
+    expect(md).toContain("…and 5 more");
+  });
+
+  it("renders no Findings block when no check has details", () => {
+    const md = renderFuzzRegion([
+      result({ slug: "hk", status: "pass", detail: "ok", scan: { bandit: { status: "pass", note: "clean", details: [] } } }),
+    ]);
+    expect(md).not.toContain("<details><summary>Findings</summary>");
+  });
+
+  it("drops Findings blocks (keeping every table) past the region size budget", () => {
+    const long = "x".repeat(400);
+    const worlds = Array.from({ length: 20 }, (_, i) =>
+      result({
+        slug: `w${i}`,
+        status: "fail",
+        detail: "d",
+        scan: { bandit: { status: "fail", note: "many", details: Array.from({ length: 15 }, () => long) } },
+      }),
+    );
+    const md = renderFuzzRegion(worlds);
+    // every world's table survives...
+    expect(md).toContain("#### `w0`");
+    expect(md).toContain("#### `w19`");
+    // ...but findings are capped with a note, and the region stays under GitHub's limit
+    expect(md).toContain("_Some Findings were omitted to stay within GitHub's comment size limit._");
+    expect(md.length).toBeLessThan(65536);
   });
 
   it("emits a placeholder (not a table) when there are no results", () => {

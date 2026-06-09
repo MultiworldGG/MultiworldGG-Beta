@@ -68,28 +68,74 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
     return lines.join("\n");
   }
 
+  // Track the running size: a big multi-world PR (up to 25 worlds, some with
+  // thousands of ruff diagnostics) could render a region past GitHub's ~65 KB
+  // comment/check-run limit, which fails the API call outright. The per-world
+  // tables are always emitted; only the collapsible Findings blocks are dropped
+  // once the budget is hit, so the verdict survives even when detail can't.
+  let total = charLen(lines);
+  let findingsTruncated = false;
+
   for (const r of results) {
-    lines.push(`#### \`${r.slug}\` — ${statusLabel(r.status)}`, "");
-    lines.push("| Check | Status | Notes |", "| --- | --- | --- |");
-    lines.push(`| \`fuzzer\` | ${statusLabel(r.status)} | ${escapeCell(fuzzerNotes(r))} |`);
-    for (const [label, status, note] of scanRows(r.scan)) {
-      lines.push(`| \`${label}\` | ${escapeCell(statusLabel(status))} | ${escapeCell(note)} |`);
+    const head = [
+      `#### \`${r.slug}\` — ${statusLabel(r.status)}`,
+      "",
+      "| Check | Status | Notes |",
+      "| --- | --- | --- |",
+      `| \`fuzzer\` | ${statusLabel(r.status)} | ${escapeCell(fuzzerNotes(r))} |`,
+      ...scanRows(r.scan).map(
+        ([label, status, note]) => `| \`${label}\` | ${escapeCell(statusLabel(status))} | ${escapeCell(note)} |`,
+      ),
+      "",
+    ];
+    for (const l of head) lines.push(l);
+    total += charLen(head);
+
+    // The actual findings behind the summary counts ("8 issues" -> the 8 hits),
+    // collapsed like Karen's manifest review. Per-check capped, and the whole
+    // block is skipped if it would push the region past the budget.
+    const findings = scanDetailSections(r.scan);
+    if (findings.length === 0) continue;
+    const block: string[] = ["<details><summary>Findings</summary>", ""];
+    for (const sec of findings) {
+      block.push(`**${sec.label}**`, "");
+      for (const line of sec.lines) block.push(`- ${escapeListItem(line)}`);
+      block.push("");
     }
-    lines.push("");
+    block.push("</details>", "");
+
+    const blockLen = charLen(block);
+    if (total + blockLen <= REGION_CHAR_BUDGET) {
+      for (const l of block) lines.push(l);
+      total += blockLen;
+    } else {
+      findingsTruncated = true;
+    }
+  }
+
+  if (findingsTruncated) {
+    lines.push("_Some Findings were omitted to stay within GitHub's comment size limit._", "");
   }
 
   return lines.join("\n");
 }
 
+/** Approximate rendered length of an array of lines (joined with newlines). */
+function charLen(arr: string[]): number {
+  return arr.reduce((n, l) => n + l.length + 1, 0);
+}
+
 /**
- * The `fuzzer` row's Notes: the stats line (success=… total=…) and/or the
- * human `detail` tail; an em dash when neither is present. (Caller escapes it.)
+ * The `fuzzer` row's Notes. A completed run (the fuzzer wrote a report, so
+ * total > 0) shows the stats breakdown ALONE — for that path `detail` is just a
+ * verbose restatement of the same numbers (the `classified: …` log line), which
+ * is what made the cell print the stats twice. A setup/verify failure has no
+ * usable stats (total 0), so fall back to `detail`, which carries the real reason
+ * (exit code, wall kill, …); an em dash when there's nothing. (Caller escapes it.)
  */
 function fuzzerNotes(r: FuzzWorldResult): string {
-  const statsLine = r.stats ? formatStats(r.stats) : "";
-  const detail = r.detail.trim();
-  if (statsLine && detail) return `${detail} (${statsLine})`;
-  return statsLine || detail || "—";
+  if (r.stats && (r.stats.total ?? 0) > 0) return formatStats(r.stats);
+  return r.detail.trim() || "—";
 }
 
 function formatStats(stats: Record<string, number>): string {
@@ -129,6 +175,42 @@ function scanRows(scan: Record<string, unknown> | undefined): Array<[string, str
     }
     return [label, typeof value === "string" ? value : JSON.stringify(value), ""];
   });
+}
+
+/** Max finding lines rendered per check; the rest collapse to a "…and N more" tail. */
+const MAX_DETAIL_LINES = 15;
+
+/** Region char ceiling for the Findings blocks (under GitHub's ~65 KB comment limit). */
+const REGION_CHAR_BUDGET = 60000;
+
+/**
+ * The actual finding lines per scan check (result.json.scan[*].details — the
+ * bandit hits, ROM paths, ruff diagnostics behind each summary count), for the
+ * collapsible block. Only checks that recorded findings appear; each is capped at
+ * MAX_DETAIL_LINES with a "…and N more" tail so a world with thousands of
+ * diagnostics (e.g. ruff on a large upstream world) can't blow the comment limit.
+ */
+function scanDetailSections(
+  scan: Record<string, unknown> | undefined,
+): Array<{ label: string; lines: string[] }> {
+  if (!scan) return [];
+  const sections: Array<{ label: string; lines: string[] }> = [];
+  for (const [key, value] of Object.entries(scan)) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    const raw = (value as Record<string, unknown>).details;
+    if (!Array.isArray(raw)) continue;
+    const all = raw.filter((d): d is string => typeof d === "string");
+    if (all.length === 0) continue;
+    const shown = all.slice(0, MAX_DETAIL_LINES);
+    if (all.length > shown.length) shown.push(`…and ${all.length - shown.length} more`);
+    sections.push({ label: SCAN_LABELS[key] ?? key, lines: shown });
+  }
+  return sections;
+}
+
+/** Flatten a finding to a single safe Markdown list-item line. */
+function escapeListItem(text: string): string {
+  return text.replace(/\r?\n/g, " ").trim();
 }
 
 /** Keep table-breaking characters from leaking into a Markdown cell. */
