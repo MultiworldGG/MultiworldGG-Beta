@@ -13,6 +13,17 @@ import functools
 
 import websockets
 from websockets.protocol import State
+from websockets.asyncio.connection import Connection
+
+# World clients written against websockets 13.x (shipped MWGG) check liveness via
+# the legacy `socket.closed` / `socket.open` attributes, which the websockets 14+
+# asyncio Connection removed. Restore them as State-backed properties with the
+# legacy semantics (both are False while opening/closing) so those clients run
+# unmodified against the bundled websockets 16.
+if not hasattr(Connection, "closed"):
+    Connection.closed = property(lambda self: self.state is State.CLOSED)
+if not hasattr(Connection, "open"):
+    Connection.open = property(lambda self: self.state is State.OPEN)
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
