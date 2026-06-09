@@ -260,15 +260,24 @@ services:
       timeout: 5s
       retries: 3
 
-  # Pull-only helper — NOT a runtime service. github-bots spawns the fuzz image
-  # ad-hoc via `docker run`, so `docker compose pull` never fetches it (it isn't
-  # a service). This entry makes `docker compose pull` grab it too; `docker run`
-  # later finds it already local. `entrypoint: ["true"]` makes it exit 0 at once
-  # if `up` ever starts it, and it never restarts. Keep its image expression
-  # IDENTICAL to the github-bots FUZZ_IMAGE above so both resolve to the same ref.
-  # Run `docker compose pull` (authenticated) BEFORE `up` so the image is local.
+  # Build/pull home for the fuzz image — NOT a runtime service. github-bots spawns
+  # it ad-hoc via `docker run`, so without this entry `docker compose build`/`pull`
+  # would skip it. With the build block, `docker compose build fuzz-image` builds it
+  # locally (the default while you iterate on run_fuzz.sh / the Dockerfile), and
+  # `docker compose pull` still fetches the published image — either way the bot's
+  # `docker run` finds it already local. Core + fuzz.py are fetched at BUILD time
+  # via the args below (override a ref via env to pin a different core/fuzzer).
+  # `entrypoint: ["true"]` makes it exit 0 at once if `up` starts it; never
+  # restarts. Keep `image:` IDENTICAL to the github-bots FUZZ_IMAGE above.
   fuzz-image:
     image: ${FUZZ_IMAGE:-ghcr.io/multiworldgg/multiworldgg-fuzz:latest}
+    build:
+      context: ../GitHubLib/fuzz-image
+      args:
+        MWGG_CORE_REPO: ${MWGG_CORE_REPO:-MultiworldGG/MultiworldGG-Beta}
+        MWGG_CORE_REF: ${MWGG_CORE_REF:-main}
+        FUZZER_REPO: ${FUZZER_REPO:-Eijebong/Archipelago-fuzzer}
+        FUZZER_REF: ${FUZZER_REF:-main}
     entrypoint: ["true"]
     restart: "no"
 
