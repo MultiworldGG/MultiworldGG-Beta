@@ -14,7 +14,8 @@ import weakref
 from enum import Enum, auto
 from typing import Any, Optional, Callable, Iterable, Tuple
 
-from Utils import local_path, open_filename, is_frozen, is_kivy_running, open_file, user_path, read_apignore
+from Utils import local_path, open_filename, is_frozen, is_kivy_running, is_windows, open_file, user_path, \
+    read_apignore
 
 try:
     from Utils import instance_name as apname
@@ -190,6 +191,61 @@ class SuffixIdentifier:
                 if path.endswith(suffix):
                     return True
         return False
+
+
+def identify(path: Optional[str]) -> Optional[Component]:
+    """Return the first registered component whose file_identifier claims `path`.
+
+    Works against whatever is currently registered: with worlds unloaded that is
+    the builtin components plus any launcher-cache stubs (their suffixes are
+    serialized, so suffix lookups need no world import)."""
+    if not path:
+        return None
+    for component in components:
+        if component.handles_file(path):
+            return component
+    return None
+
+
+def get_exe(component: Component) -> Optional[list[str]]:
+    """Resolve the command line that runs a script/frozen-name component.
+
+    Beta equivalent of upstream Launcher.get_exe: the monorepo has no Launcher
+    module, so script components resolve against the frozen bundle root or the
+    repo checkout directly."""
+    if is_frozen():
+        suffix = ".exe" if is_windows else ""
+        return [local_path(f"{component.frozen_name}{suffix}")] if component.frozen_name else None
+    return [sys.executable, local_path(f"{component.script_name}.py")] if component.script_name else None
+
+
+def launch_exe(exe: Iterable[str], in_terminal: bool = False) -> bool:
+    """Run the command line `exe` in a new process. With `in_terminal`, try to
+    run it in a terminal window; the return value reports whether one was used.
+    Beta equivalent of upstream Launcher.launch (which the monorepo lacks)."""
+    exe = list(exe)
+    if in_terminal:
+        if is_windows:
+            # intentionally using a window title with a space so it gets quoted and treated as a title
+            subprocess.Popen(["start", f"Running {apname}", *exe], shell=True)
+            return True
+        elif sys.platform.startswith("linux"):
+            from shutil import which
+            xdg = which("xdg-terminal-exec")
+            if xdg:
+                subprocess.Popen([xdg, "--", *exe])
+                return True
+            terminal = which("x-terminal-emulator") or which("konsole") or which("gnome-terminal") or which("xterm")
+            if terminal:
+                import shlex
+                subprocess.Popen([terminal, "-e", shlex.join(exe)])
+                return True
+        elif sys.platform == "darwin":
+            from shutil import which
+            subprocess.Popen([which("open"), "-W", "-a", "Terminal.app", *exe])
+            return True
+    subprocess.Popen(exe)
+    return False
 
 
 def launch_textclient(*args):
@@ -474,13 +530,11 @@ def _launch_component(component: Component, launch_args: tuple[str, ...]) -> Non
         return
 
     if component.script_name:
-        from Launcher import get_exe, launch
-
         exe = get_exe(component)
         if not exe:
             logging.warning(f"Unable to resolve executable for launcher component {component.display_name}.")
             return
-        launch([*exe, *launch_args], component.cli)
+        launch_exe([*exe, *launch_args], component.cli)
         return
 
     logging.warning(f"Component {component.display_name} does not appear to be executable.")
@@ -508,8 +562,6 @@ def _launch_cached_script_stub(component: Component, launch_args: tuple[str, ...
     if not (component.script_name or component.frozen_name):
         return False, None
 
-    from Launcher import get_exe, launch
-
     exe = get_exe(component)
     if not exe:
         return False, None
@@ -522,7 +574,7 @@ def _launch_cached_script_stub(component: Component, launch_args: tuple[str, ...
         return False, None
 
     if component.cli:
-        launch([*exe, *launch_args], component.cli)
+        launch_exe([*exe, *launch_args], component.cli)
         return True, None
     try:
         return True, subprocess.Popen([*exe, *launch_args])
@@ -533,12 +585,12 @@ def _launch_cached_script_stub(component: Component, launch_args: tuple[str, ...
 
 def _launch_cached_callable_stub(callable_module: str | None, callable_qualname: str | None,
                                  launch_args: tuple[str, ...]) -> tuple[bool, subprocess.Popen[Any] | None]:
-    if not callable_module or not callable_qualname:
-        return False, None
-
-    from Launcher import launch_component_callable
-    launched_process = launch_component_callable(callable_module, callable_qualname, launch_args)
-    return launched_process is not None, launched_process
+    # Upstream relaunches cached callables through a separate Launcher process
+    # (`Launcher.launch_component_callable`). Beta has no Launcher executable and
+    # runs clients in-process, so report "not launched" and let
+    # _run_cached_component fall through to the script stub or the fully loaded
+    # component instead.
+    return False, None
 
 
 def _run_cached_component(component_id: tuple[Any, ...], callable_module: str | None,

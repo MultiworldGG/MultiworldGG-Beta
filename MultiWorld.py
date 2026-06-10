@@ -118,41 +118,132 @@ os.environ["KIVY_HOME"] = write_path("data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 
-def run_client(*args, queue=None):
+def make_arg_parser() -> ArgumentParser:
+    """Build the MultiWorldGG argument parser.
+
+    The optional positional is what OS file associations and the
+    archipelago://-style URL protocols hand us: every registered suffix and
+    protocol points at `MultiWorldGG.exe "%1"`."""
+    parser = ArgumentParser()
+    parser.add_argument("launch_file", type=str, default=None, nargs="?", metavar="PATCH_FILE|URL",
+                        help="A patch file to route to its game's client (OS file-association double-click), "
+                             "a file handled by a tool component (e.g. a .archipelago multidata for the Host), "
+                             "or an archipelago:// launch URL")
+    parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+    parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
+    parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
+    parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
+    parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
+    parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
+    parser.add_argument("--loglevel", default="debug",
+                        choices=['debug', 'info', 'warning', 'error', 'critical'],
+                        help="Set the logging level")
+    parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
+                        help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
+    # Internal: set by Utils._restart_client_with_args() so a second launch
+    # failure surfaces an error dialog instead of looping forever.
+    parser.add_argument("--no-restart", action="store_true", default=False,
+                        help=argparse.SUPPRESS)
+    return parser
+
+
+async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
+    """Launch a world module's client once the launcher frontend is up.
+
+    Beta clients cannot run standalone — they take over the launcher UI — so
+    this mirrors the GUI's own launch flow (mwgg_gui launcher._launch_module):
+    wait for the frontend, then route through Utils.discover_and_launch_module,
+    which installs the world on demand and forwards `launch_kwargs` (e.g.
+    patch_file from a double-clicked patch, or server_address from a CLI
+    --game launch) to the resolved client. The screen-flip hooks are
+    feature-detected so the TUI (or an older GUI) simply skips them."""
+    from frontend_protocol import resolve_frontend_class
+
+    logger = logging.getLogger("MultiWorld")
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    app = None
+    while loop.time() < deadline:
+        app = getattr(resolve_frontend_class(), "_active_instance", None)
+        if app is not None and (getattr(app, "root", None) is not None      # Kivy: root built
+                                or getattr(app, "is_running", False)):      # Textual: running
+            break
+        await asyncio.sleep(0.2)
+    if app is None:
+        logger.error(f"Frontend did not come up; cannot launch module {module_name}")
+        return
+
+    pre_hook = getattr(app, "client_console_init", None)
+    if callable(pre_hook):
+        try:
+            pre_hook()
+        except Exception:
+            logger.exception("client_console_init failed; continuing module launch")
+
+    def ready_callback(*_cb_args):
+        try:
+            console_init = getattr(app, "console_init", None)
+            change_screen = getattr(app, "change_screen", None)
+            if callable(console_init):
+                console_init()
+            if callable(change_screen):
+                change_screen("console")
+        except Exception:
+            logger.exception("Could not switch to the console screen after module launch")
+
+    def error_callback(*_cb_args):
+        logger.error(f"Failed to launch a client for module {module_name}")
+
+    from Utils import discover_and_launch_module
+    try:
+        discover_and_launch_module(module_name=module_name,
+                                   ready_callback=ready_callback,
+                                   error_callback=error_callback,
+                                   **launch_kwargs)
+    except Exception:
+        logger.exception(f"Module launch failed for {module_name}")
+
+
+def run_client(args=None, queue=None):
     """Start the MWGG client"""
 
-    async def main(args: list[str]):
+    async def main(args):
         from CommonClient import InitContext
 
         logger = logging.getLogger("MultiWorld")
         ctx = InitContext()
-        
-        # Check if a specific module was requested
+
+        # Resolve a requested module launch (CLI --game, or a routed patch
+        # file). Beta clients take over the launcher UI rather than running
+        # standalone, so the launch itself is deferred until the frontend is up.
+        route_module = None
+        route_kwargs = {}
         try:
             if args and args.game and args.server_address:
                 logger.info(f"Attempting to launch game: {args.game}")
-                from Utils import get_available_worlds, discover_and_launch_module
+                from Utils import get_available_worlds
 
-                if args.game not in get_available_worlds():
-                    raise Exception(f"Game {args.game} not found in available worlds")
+                if args.game in get_available_worlds():
+                    route_module = args.game
+                    route_kwargs = {"server_address": args.server_address,
+                                    "_restarted": getattr(args, "no_restart", False)}
+                else:
+                    logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
+            elif args and getattr(args, "patch_module", None):
+                route_module = args.patch_module
+                route_kwargs = {"patch_file": args.patch_file}
+        except Exception:
+            logger.exception("Could not resolve requested module launch; falling back to launcher")
 
-                # Try to launch the module via entrypoints
-                try:
-                    discover_and_launch_module(module_name=args.game,
-                                            server_address=args.server_address,
-                                            _restarted=getattr(args, "no_restart", False))
-                    return  # Module takeover successful, exit initial client
-                except Exception as e:
-                    logger.error(f"Module launch failed: {e}")
-                    # Fall back to initial client
-                    logger.info("Falling back to launcher")
-        except Exception as e:
-            pass
-        
         # Default initial client behavior
         logger.info("Launching default GUI")
         try:
             ctx.run_gui(splash_queue=queue)
+            if route_module:
+                # Keep a reference so the routing task isn't garbage-collected.
+                routing_task = asyncio.create_task(  # noqa: F841
+                    _route_module_when_ui_ready(route_module, **route_kwargs),
+                    name="ModuleRouting")
             await ctx.exit_event.wait()
         except Exception as e:
             logger.error(f"Error during GUI execution: {e}", exc_info=True)
@@ -191,22 +282,7 @@ if __name__ == "__main__":
     freeze_support()
 
     # Parse the command line arguments
-    parser = ArgumentParser()
-    parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
-    parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
-    parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
-    parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
-    parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
-    parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
-    parser.add_argument("--loglevel", default="debug",
-                        choices=['debug', 'info', 'warning', 'error', 'critical'],
-                        help="Set the logging level")
-    parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
-                        help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
-    # Internal: set by Utils._restart_client_with_args() so a second launch
-    # failure surfaces an error dialog instead of looping forever.
-    parser.add_argument("--no-restart", action="store_true", default=False,
-                        help=argparse.SUPPRESS)
+    parser = make_arg_parser()
 
     if sys.argv[1:]:
         args = parser.parse_args(sys.argv[1:])
@@ -286,6 +362,50 @@ if __name__ == "__main__":
         register_custom_worlds()
     except Exception as e:
         logger.warning(f"Could not scan custom_worlds on launch: {e}", exc_info=True)
+
+    # Route a double-clicked / positional file before the GUI comes up. Patch
+    # containers carry their game name in their root archipelago.json (same
+    # pre-load pattern as Patch.py), which resolves to a world module without
+    # importing any worlds; the client launch itself is deferred until the
+    # launcher UI is running (beta clients take over the launcher UI). Files
+    # claimed by a builtin tool component (.archipelago/.mwgg/.zip multidata ->
+    # Host) launch that component directly instead.
+    args.patch_module = None
+    args.patch_file = None
+    if args.launch_file:
+        if args.launch_file.startswith(("archipelago://", "mwgg://", "multiworldgg://")):
+            # Launch URLs open the launcher GUI; connection details are entered there.
+            logger.info(f"Launched with URL {args.launch_file}; opening launcher.")
+        elif os.path.isfile(args.launch_file):
+            from Utils import read_patch_game_name
+            game_name = read_patch_game_name(args.launch_file)
+            if game_name:
+                from mwgg_igdb import GameIndex
+                module_name = GameIndex.get_module_for_game(game_name)
+                if module_name:
+                    args.patch_module = module_name
+                    args.patch_file = os.path.abspath(args.launch_file)
+                    logger.info(f"Routing patch file {args.launch_file} to {game_name} ({module_name})")
+                else:
+                    logger.warning(f"No installed or indexed world handles game {game_name!r} "
+                                   f"from {args.launch_file}; opening launcher.")
+            else:
+                from worlds.LauncherComponents import identify, get_exe, launch_exe
+                component = identify(args.launch_file)
+                if component is not None:
+                    logger.info(f"Routing {args.launch_file} to component {component.display_name}")
+                    if component.func:
+                        component.func(args.launch_file)
+                        sys.exit(0)
+                    exe = get_exe(component)
+                    if exe:
+                        launch_exe([*exe, args.launch_file], component.cli)
+                        sys.exit(0)
+                    logger.warning(f"Component {component.display_name} is not executable; opening launcher.")
+                else:
+                    logger.warning(f"Could not identify a handler for {args.launch_file}; opening launcher.")
+        else:
+            logger.warning(f"File not found: {args.launch_file}; opening launcher.")
 
     # Run the main client in the current process
     run_client(args, queue=splash_queue)
