@@ -280,9 +280,9 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).toContain("#### `z3` — ❌ fail");
     // Karen's columns
     expect(md).toContain("| Check | Status | Notes |");
-    // a completed run shows the stats breakdown ALONE (no duplicated detail);
+    // a completed run keeps a meaningful detail next to the stats;
     // a setup failure with no stats falls back to the detail reason.
-    expect(md).toContain("| `fuzzer` | ✅ pass | success=10 total=10 |");
+    expect(md).toContain("| `fuzzer` | ✅ pass | fuzzed clean (success=10 total=10) |");
     expect(md).toContain("| `fuzzer` | ❌ fail | unparseable report.json |");
     // scan checks become their own rows with glyph+word, short labels, and the
     // human note karen_review recorded in the Notes column
@@ -312,6 +312,21 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     ]);
     expect(md).toContain("| `fuzzer` | ⚠️ warn | success=0 failure=50 timeout=0 ignored=0 rom=50 real=0 total=50 |");
     expect(md).not.toContain("classified:"); // the duplicated detail is gone
+  });
+
+  it("keeps a non-classifier detail (e.g. the wall-kill salvage note) next to the stats", () => {
+    const md = renderFuzzRegion([
+      result({
+        slug: "oot",
+        status: "warn",
+        detail: "oot: warn — wall-killed after 4/10 generations — partial stats salvaged (host too slow for this world within 1080s)",
+        stats: { success: 0, failure: 2, timeout: 2, ignored: 0, rom: 0, real: 2, total: 4 },
+      }),
+    ]);
+    expect(md).toContain(
+      "| `fuzzer` | ⚠️ warn | oot: warn — wall-killed after 4/10 generations — partial stats salvaged " +
+        "(host too slow for this world within 1080s) (success=0 failure=2 timeout=2 ignored=0 rom=0 real=2 total=4) |",
+    );
   });
 
   it("renders sha256 mismatch (with note) as a scan row, and no scan rows when scan is absent", () => {

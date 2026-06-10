@@ -203,12 +203,21 @@ services:
       # At most this many fuzz containers run concurrently (clamped to >= 1).
       - FUZZ_MAX_CONCURRENCY=1
       # Per-container resource caps (passed straight to `docker run`). Sized for a
-      # small SHARED host: 1 CPU + 1.5 GB leaves a vCPU and RAM for the live webhost
-      # during a scan, and the hard --memory cap means a too-heavy world OOM-fails
-      # ITS OWN container (a world failure) instead of taking the whole box down.
+      # small SHARED host: 1 CPU leaves a vCPU for the live webhost during a scan,
+      # and the hard --memory cap means a too-heavy world OOM-fails ITS OWN
+      # container (a world failure) instead of taking the whole box down. 2g
+      # because the heaviest worlds (oot, dk64) need the headroom even for plain
+      # fill — near-cap they stall/THRASH (no swap) before they OOM, which looks
+      # like a hang; the container logs cgroup memory.peak/memory.events on exit,
+      # so check those lines before blaming the world.
       - FUZZ_CPUS=1
-      - FUZZ_MEMORY=1536m
+      - FUZZ_MEMORY=2g
       - FUZZ_PIDS=256
+      # The fuzzer skips the output/patch stage by default (FUZZ_SKIP_OUTPUT=1 in
+      # the image): fill/logic is the signal, and patching loads + decompresses a
+      # base ROM per successful generation (minutes each on a small host). Set 0
+      # to exercise patching too — only with ROMs mounted and patience.
+      # - FUZZ_SKIP_OUTPUT=0
       # Operator CEILINGS on the fuzzer's parallelism (-j) and run count (-r),
       # applied as min(payload, cap). The Index dispatch asks for threads=10 /
       # runs=50; on a small host that 10-way generation fan-out is what thrashes

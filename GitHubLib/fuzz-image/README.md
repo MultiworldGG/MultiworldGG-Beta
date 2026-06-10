@@ -64,6 +64,7 @@ not passed at runtime. The remaining job parameters arrive as env vars:
 | `FUZZ_THREADS` | | `10` | Fuzzer `-j`. |
 | `FUZZ_WALL_SECONDS` | | `1080` | Hard wall for `fuzz.py`. Keep below the bot's outer wall (1200s) so the container exits and writes `result.json` itself. |
 | `FUZZ_SIZE_CAP_MB` | | `250` | `size_sanity` cap. |
+| `FUZZ_SKIP_OUTPUT` | | `1` | Pass `--skip-output` to the fuzzer: stop after fill/logic, skipping `assert_generate` and the output/patch stage. ROM worlds (oot, dk64, …) otherwise load + decompress + patch a base ROM per successful generation — the slowest, most memory-hungry phase. Set `0` to exercise patching (needs `/roms`). |
 | `FUZZ_DEBUG` | | (off) | Truthy (`1`/`true`/`yes`/`on`) ⇒ also copy the full `combined.log` and the fuzzer's `fuzz_output/` worker dumps into `/out`. |
 
 Core and fuzzer refs are **build** inputs, not runtime env vars: `MWGG_CORE_REPO`,
@@ -133,6 +134,19 @@ Contract notes that match `src/fuzz/runner.ts`:
 - A classifier `fail` (a real world failure) is still a *completed* run, so it
   exits `0` with `status:"fail"`. Non-zero exits are reserved for wheel-verify,
   extraction, or offline-setup failures and wall-clock kills (`124`/`137`).
+- **Wall kills salvage partial stats.** `report.json` is only written after ALL
+  runs finish, so a wall-killed `fuzz.py` would otherwise discard every
+  generation that completed. The run script parses the fuzzer's last
+  `N / M done. F failures, T timeouts, I ignored.` progress line and exits `0`
+  with partial `stats` (`total` = generations completed, no `rom`/`real` split)
+  and `status` `warn` — or `fail` when >50% of the completed generations were
+  bad. The detail note says `wall-killed after N/M generations`. Only a wall
+  kill with ZERO completed generations (a true hang) keeps the hard `124`/`137`
+  fail; a parent crash (e.g. exit 2) is always a hard fail — the crash is the
+  finding.
+- The script logs cgroup `memory.peak` and `memory.events` (oom_kill count) on
+  every exit — a generation stalling near the `--memory` cap looks like a hang
+  from outside; those lines make it provable from `combined.log`/`log_tail`.
 - `stats` values are all finite numbers; the bot drops any non-numeric field.
 - `scan`/`log_tail` are advisory; the bot surfaces them in the PR comment.
 

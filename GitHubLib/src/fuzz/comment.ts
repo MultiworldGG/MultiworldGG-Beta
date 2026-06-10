@@ -126,16 +126,20 @@ function charLen(arr: string[]): number {
 }
 
 /**
- * The `fuzzer` row's Notes. A completed run (the fuzzer wrote a report, so
- * total > 0) shows the stats breakdown ALONE — for that path `detail` is just a
- * verbose restatement of the same numbers (the `classified: …` log line), which
- * is what made the cell print the stats twice. A setup/verify failure has no
- * usable stats (total 0), so fall back to `detail`, which carries the real reason
- * (exit code, wall kill, …); an em dash when there's nothing. (Caller escapes it.)
+ * The `fuzzer` row's Notes. A completed run (total > 0) whose `detail` is the
+ * container's `classified: …` log line shows the stats breakdown ALONE — that
+ * detail just restates the same numbers (the old doubled cell). A detail that
+ * says something the stats don't (e.g. the wall-kill partial-salvage note) is
+ * kept alongside them. A setup/verify failure has no usable stats (total 0), so
+ * fall back to `detail` (exit code, wall kill, …); an em dash when there's
+ * nothing. (Caller escapes it.)
  */
 function fuzzerNotes(r: FuzzWorldResult): string {
-  if (r.stats && (r.stats.total ?? 0) > 0) return formatStats(r.stats);
-  return r.detail.trim() || "—";
+  const detail = r.detail.trim();
+  if (!r.stats || (r.stats.total ?? 0) <= 0) return detail || "—";
+  const stats = formatStats(r.stats);
+  if (!detail || detail.includes("classified:")) return stats;
+  return `${detail} (${stats})`;
 }
 
 function formatStats(stats: Record<string, number>): string {

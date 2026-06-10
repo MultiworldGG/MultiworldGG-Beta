@@ -19,6 +19,12 @@
 #   FUZZ_THREADS       fuzzer -j                         (default 10)
 #   FUZZ_WALL_SECONDS  hard wall for fuzz.py             (default 1080)
 #   FUZZ_SIZE_CAP_MB   size_sanity cap                   (default 250)
+#   FUZZ_SKIP_OUTPUT   pass --skip-output to the fuzzer  (default 1). Skips the
+#                      output/patch stage (and assert_generate), so ROM worlds
+#                      fuzz their fill/logic without loading or patching a base
+#                      ROM each successful generation — the slowest, most
+#                      memory-hungry part. Set 0 to exercise patching too
+#                      (requires /roms; expect multi-minute generations).
 #
 # Core, its venv, and fuzz.py are BAKED into the image (pinned at build) under
 # /opt/fuzz; the container fetches nothing at runtime.
@@ -57,6 +63,8 @@ SIZE_CAP_MB="${FUZZ_SIZE_CAP_MB:-250}"
 # per-generation worker dumps (fuzz_output/) into /out so a failing run leaves
 # diagnostics behind. The bot also keeps the per-job dir when this is on.
 DEBUG="${FUZZ_DEBUG:-}"
+# Default ON: fuzz fill/logic only (no output/patch stage). See header.
+SKIP_OUTPUT="${FUZZ_SKIP_OUTPUT:-1}"
 
 # Verdict state shared between run() and the EXIT trap. The trap is the single
 # writer of /out/result.json on ANY exit path, so partial/crashed runs still
@@ -224,10 +232,25 @@ persist_debug_artifacts() {
     fi
 }
 
+# Memory forensics from the container's cgroup (v2): peak usage and the oom_kill
+# counter. A generation that stalls/dies near the --memory cap looks like a hang
+# from outside; these two lines make it provable from the log. No-op when the
+# files aren't readable (cgroup v1 host).
+log_memory_stats() {
+    if [ -r /sys/fs/cgroup/memory.peak ]; then
+        log "cgroup memory.peak=$(cat /sys/fs/cgroup/memory.peak 2>/dev/null || echo '?')"
+    fi
+    if [ -r /sys/fs/cgroup/memory.events ]; then
+        log "cgroup memory.events: $(tr '\n' ' ' < /sys/fs/cgroup/memory.events 2>/dev/null || echo '?')"
+    fi
+}
+
 # Always leave a parseable result.json behind, whatever killed us (set -e abort,
 # `timeout` SIGTERM, OOM bubbling up as a non-zero, ...).
 on_exit() {
     local rc=$?
+    # Before any result write so a crash path's log_tail captures the memory state.
+    log_memory_stats
     if [ "${RESULT_WRITTEN}" -eq 0 ]; then
         # Nothing wrote a verdict yet -> crash/abort. Surface the shell's rc.
         EXIT_CODE="${rc}"
@@ -457,14 +480,22 @@ PY
     # bootstrap falls back to APFUZZ_GAMES, so export it for the single slug.
     export APFUZZ_GAMES="${SLUG}"
 
+    # --skip-output (default): stop after fill/logic — Main.py returns before the
+    # output/patch stage AND before assert_generate. ROM worlds (oot, dk64, …)
+    # otherwise load + decompress + patch a base ROM per successful generation,
+    # the slowest and most memory-hungry phase by far.
+    local fuzz_extra=()
+    case "${SKIP_OUTPUT}" in 1|true|TRUE|yes|on) fuzz_extra+=( --skip-output ) ;; esac
+
     # Run the fuzzer. Wall it with `timeout` (KILL after a grace TERM) so a hung
     # generation can't pin the container until the bot's outer wall fires. The
     # fuzzer's own non-zero exit is NOT fatal here — we classify from report.json.
-    log "running fuzz.py (wall ${WALL_SECONDS}s)"
+    log "running fuzz.py (wall ${WALL_SECONDS}s${fuzz_extra:+, ${fuzz_extra[*]}})"
     set +e
     . .venv/bin/activate
     timeout --kill-after=30s "${WALL_SECONDS}" \
         python fuzz.py -r "${RUNS}" -t "${TIMEOUT_S}" -g "${SLUG}" -j "${THREADS}" -n "${YAMLS}" \
+        "${fuzz_extra[@]}" \
         >>"${LOG}" 2>&1
     local fuzz_rc=$?
     set -e
@@ -473,12 +504,41 @@ PY
     # --- (f) Classify report.json (written relative to fuzz.py's cwd = ${CORE}).
     local report="${CORE}/fuzz_output/report.json"
     if [ ! -f "${report}" ]; then
-        # No report = fuzz.py crashed or was wall-killed. Hard fail with the rc.
-        STATUS="fail"
+        # No report = fuzz.py crashed or was wall-killed. report.json is only
+        # written after ALL runs finish, so a wall kill throws away every
+        # generation that DID complete. Salvage them: the fuzzer logs
+        # "N / M done. F failures, T timeouts, I ignored." after each generation —
+        # parse the last one and report partial stats instead of a blanket fail.
+        # Wall kills only (124/137): a parent CRASH (e.g. exit 2) stays a hard
+        # fail even with partials, because the crash itself is the finding.
         if [ "${fuzz_rc}" -eq 124 ] || [ "${fuzz_rc}" -eq 137 ]; then
+            local progress
+            progress="$(grep -E '^[0-9]+ / [0-9]+ done\. [0-9]+ failures, [0-9]+ timeouts, [0-9]+ ignored\.' "${LOG}" | tail -n 1 || true)"
+            if [ -n "${progress}" ]; then
+                local p_done p_runs p_fail p_to p_ign p_succ p_bad _w
+                read -r p_done _w p_runs _w p_fail _w p_to _w p_ign _w <<< "${progress}"
+                p_succ=$((p_done - p_fail - p_to - p_ign))
+                p_bad=$((p_fail + p_to))
+                # Same >50%-bad threshold as the full classifier; an incomplete
+                # run can never be better than "warn". No per-error report, so no
+                # rom/real split — with /roms mounted, failures are presumed real.
+                if [ $((p_bad * 2)) -gt "${p_done}" ]; then STATUS="fail"; else STATUS="warn"; fi
+                STATS_JSON="$(jq -n \
+                    --argjson success "${p_succ}" --argjson failure "${p_fail}" \
+                    --argjson timeout "${p_to}" --argjson ignored "${p_ign}" \
+                    --argjson real "${p_fail}" --argjson total "${p_done}" \
+                    '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, rom:0, real:$real, total:$total}')"
+                EXIT_CODE=0
+                log_memory_stats
+                log "wall-killed after ${p_done}/${p_runs} generations — partial stats salvaged (host too slow for this world within ${WALL_SECONDS}s)"
+                write_result
+                return 0
+            fi
+            STATUS="fail"
             EXIT_CODE="${fuzz_rc}"
-            die "${fuzz_rc}" "fuzz.py hit the ${WALL_SECONDS}s wall with no report.json"
+            die "${fuzz_rc}" "fuzz.py hit the ${WALL_SECONDS}s wall with no completed generations"
         fi
+        STATUS="fail"
         die 8 "no report.json (fuzz.py exit=${fuzz_rc})"
     fi
     # Preserve the raw report for debugging via the /out mount.
