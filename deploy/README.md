@@ -104,19 +104,23 @@ comment. To enable it:
    sudo mkdir -p /var/lib/mwgg-fuzz
    sudo chmod 700 /var/lib/mwgg-fuzz
    ```
-2. **Build/publish the fuzz image** referenced by `FUZZ_IMAGE`:
+2. **Build/publish the fuzz image** referenced by `FUZZ_IMAGE`. The container runs
+   `--network none`, so core, its venv, and `fuzz.py` are baked in at build time —
+   the *build* needs network and pins the sources via build args:
    ```bash
-   docker build -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest ../GitHubLib/fuzz-image
+   docker build \
+     --build-arg MWGG_CORE_REF=main \
+     --build-arg FUZZER_REF=main \
+     -t ghcr.io/multiworldgg/multiworldgg-fuzz:latest ../GitHubLib/fuzz-image
    ```
-3. **Egress-restricted bridge** the fuzz containers attach to (`FUZZ_NET`). They
-   run untrusted world code, so the bridge MUST be firewalled off from the host
-   and the private network — it only needs `FUZZ_WHEEL_HOSTS` + GitHub/PyPI:
-   ```bash
-   docker network create mwgg-fuzz-egress
-   # then, on the host firewall, DROP from this bridge's subnet to:
-   #   10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (RFC1918);
-   #   169.254.169.254 (cloud metadata); and the host's own IPs.
-   ```
+   (`MWGG_CORE_REPO` / `FUZZER_REPO` are also overridable. Rebuild to pick up a
+   newer core/fuzzer pin — per the design, core need not be fresh every run.)
+3. **No fuzz network — nothing to set up.** The fuzz container runs with
+   `--network none`: the bot downloads + sha256-verifies each wheel and bind-mounts
+   it read-only at `/in`, and everything else is baked into the image. There is no
+   egress bridge to create or firewall; untrusted world code simply has zero
+   network. (Trade-off: the `pip_audit` scan, which needs PyPI's advisory DB, is
+   skipped — world wheels declare no deps, so its surface is ~empty.)
 4. **Karen App config:** Webhook URL `https://karen.prismativerse.com/` (Karen's
    own subdomain — needs a DNS A record + its own Let's Encrypt cert; the host
    nginx validates the Karen HMAC and maps it to the bot's internal `/karen`),
@@ -129,8 +133,10 @@ comment. To enable it:
    reaches it via `DOCKER_HOST`. Never mount the raw socket into the bot.
 6. **Optional ROMs:** ROM-dependent worlds only generate if their base ROMs are
    present. Set `FUZZ_ROM_DIR` (host dir, mounted read-only at `/roms`) and
-   `FUZZ_HOST_YAML` (a `host.yaml` whose `<world>_options.rom_file` entries point
-   at `/roms/<file>`); both must be readable by uid 65532. Untrusted world code
+   `FUZZ_HOST_YAML` (a `host.yaml` whose `<world>_options.rom_file` entries are
+   `/roms/<file>` or a relative `roms/<file>` — the run script links the install's
+   `roms/` to the mount, so the same yaml also drives real generation); both must
+   be readable by uid 65532. Untrusted world code
    can READ (not write) the ROMs and the container has egress, so only expose
    ROMs you accept could be exfiltrated. Unset → ROM worlds warn (no-op).
 
@@ -174,12 +180,58 @@ For routine updates (new world releases, mwgg_igdb refresh, code changes):
 ```bash
 cd /opt/mwgg
 git pull
-docker compose down
-docker compose build
+docker compose build         # builds multiworld + github-bots + fuzz-image
 docker compose up -d
+docker image prune -f        # reclaim the images this rebuild just orphaned
 ```
 
-`docker compose down` (no `-v`) keeps named volumes — the `app_volume`
+`docker compose build` with no service rebuilds every service that has a build
+context — `multiworld`, `github-bots`, and `fuzz-image`; name one to rebuild just
+that (e.g. `docker compose build fuzz-image`). The trailing `docker image prune -f`
+is the part not to skip — see below.
+
+### Disk housekeeping (overlay2)
+
+The fuzz and `multiworld` images are multi-GB; every rebuild retags `:latest` and
+leaves the previous image **dangling**, and those orphaned layers pile up in
+`/var/lib/docker/overlay2` until the disk fills. Keep it bounded on two fronts:
+
+**Dangling images** — Docker never auto-collects these, so prune them after a
+rebuild (`docker image prune -f`) and/or on a schedule as a backstop for any
+out-of-band churn:
+
+```cron
+# /etc/cron.d/docker-prune — weekly, runs as root (docker needs root/group access)
+0 4 * * 0  root  docker image prune -f
+```
+
+**Build cache** — let the BuildKit garbage collector self-bound it instead of
+pruning by hand. Set a ceiling in `/etc/docker/daemon.json` (merge into any
+existing file — don't clobber other keys):
+
+```json
+{
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "defaultKeepStorage": "10GB"
+    }
+  }
+}
+```
+
+Apply with `sudo systemctl restart docker` (restarts the daemon; bring the stack
+back with `docker compose up -d`). The daemon then trims build cache above the
+ceiling automatically, so you never need `docker builder prune`. Size
+`defaultKeepStorage` to taste — 10 GB is ample for this stack.
+
+Both are dangling/cache-only with **no `--volumes`**, so they never touch a tagged
+in-use image or a named volume; `/var/lib/mwgg` + `/var/lib/mwgg-fuzz` are host
+bind mounts they can't reach. See what's reclaimable any time with
+`docker system df`. If you ran fuzz with `FUZZ_DEBUG=1`, also clear the kept
+per-job dirs once inspected: `rm -rf /var/lib/mwgg-fuzz/*/`.
+
+A full `docker compose down` (no `-v`) keeps named volumes — the `app_volume`
 shared between multiworld/web/nginx for logs/seeds/static assets stays.
 
 If you need to nuke `app_volume` (rare — e.g., to reset all log history),

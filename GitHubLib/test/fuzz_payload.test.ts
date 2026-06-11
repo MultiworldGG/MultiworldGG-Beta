@@ -25,7 +25,7 @@ function payload(overrides: Record<string, unknown> = {}): Record<string, unknow
     index_repo: "MultiworldGG/MultiworldGG-Index",
     pr_number: 42,
     head_sha: VALID_HEAD_SHA,
-    check_run_name: "Karen / fuzz",
+    check_run_name: "Karen's Isolated QA Checks",
     comment_marker: "<!-- karen-pr-review -->",
     fuzz: { runs: 50, timeout_s: 30, yamls: "1-10", threads: 10 },
     scan: { size_cap_mb: 250 },
@@ -167,7 +167,7 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ fuzz: {}, scan: {} }));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value.fuzz).toEqual({ runs: 50, timeout_s: 30, yamls: "1-10", threads: 10 });
+    expect(res.value.fuzz).toEqual({ runs: 50, timeout_s: 30, yamls: "1-3", threads: 10 });
     expect(res.value.scan).toEqual({ size_cap_mb: 250 });
   });
 
@@ -192,7 +192,28 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ fuzz: { yamls: "1-2-3" } }));
     expect(res.ok).toBe(true);
     if (!res.ok) return;
-    expect(res.value.fuzz.yamls).toBe("1-10");
+    expect(res.value.fuzz.yamls).toBe("1-3");
+  });
+});
+
+describe("validateFuzzPayload — manifest_status passthrough", () => {
+  it("passes a string manifest_status through to the value", () => {
+    const res = validateFuzzPayload("karen-fuzz", payload({ manifest_status: "pass" }));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.manifest_status).toBe("pass");
+  });
+
+  it("defaults manifest_status to '' when missing or non-string (won't auto-approve)", () => {
+    const missing = validateFuzzPayload("karen-fuzz", payload());
+    expect(missing.ok).toBe(true);
+    if (!missing.ok) return;
+    expect(missing.value.manifest_status).toBe("");
+
+    const nonString = validateFuzzPayload("karen-fuzz", payload({ manifest_status: 3 }));
+    expect(nonString.ok).toBe(true);
+    if (!nonString.ok) return;
+    expect(nonString.value.manifest_status).toBe("");
   });
 });
 

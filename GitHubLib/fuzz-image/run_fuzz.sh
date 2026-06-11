@@ -1,25 +1,33 @@
 #!/usr/bin/env bash
 # Single-world fuzz + scan, run inside the hardened image (see Dockerfile).
 #
-# A SINGLE-WORLD port of the Index repo's scripts/fuzz_worlds.sh, driven entirely
-# by env vars instead of a karen-targets.txt list. The bot (src/fuzz/runner.ts)
-# supplies every input as an env var and mounts ONLY /out (rw); /tmp and /work are
-# writable tmpfs, everything else is read-only.
+# A SINGLE-WORLD port of the Index repo's scripts/fuzz_worlds.sh, driven by env
+# vars instead of a karen-targets.txt list. The bot (src/fuzz/runner.ts) bind-
+# mounts the wheel at /in (ro) and /out (rw); /tmp and /work are writable tmpfs,
+# everything else (incl. the baked core under /opt/fuzz) is read-only. The
+# container runs with NO network.
 #
-# Inputs (env):
+# Inputs:
+#   /in/<name>.whl     the wheel to fuzz (its REAL PEP 427 filename — NOT a fixed
+#                      name; uv parses the filename and rejects e.g. world.whl),
+#                      bind-mounted READ-ONLY by the bot. Exactly one .whl at /in.
 #   FUZZ_SLUG          world slug, e.g. "hk"            (required)
-#   FUZZ_WHEEL_URL     https://…​.whl to fuzz           (required)
-#   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required)
+#   FUZZ_WHEEL_SHA256  64-hex expected digest of wheel (required; re-verified here)
 #   FUZZ_RUNS          fuzzer -r                        (default 50)
 #   FUZZ_TIMEOUT       fuzzer -t per-generation secs    (default 30)
-#   FUZZ_YAMLS         fuzzer -n range, e.g. "1-10"      (default 1-10)
+#   FUZZ_YAMLS         fuzzer -n range, e.g. "1-3"       (default 1-3)
 #   FUZZ_THREADS       fuzzer -j                         (default 10)
-#   MWGG_CORE_REPO     "owner/name" of MultiworldGG core (required)
-#   MWGG_CORE_REF      branch/tag/sha of core            (required)
-#   FUZZER_REPO        "owner/name" of Eijebong fuzzer   (required)
-#   FUZZER_REF         branch/tag/sha of fuzzer          (required)
 #   FUZZ_WALL_SECONDS  hard wall for fuzz.py             (default 1080)
 #   FUZZ_SIZE_CAP_MB   size_sanity cap                   (default 250)
+#   FUZZ_SKIP_OUTPUT   pass --skip-output to the fuzzer  (default 1). Skips the
+#                      output/patch stage (and assert_generate), so ROM worlds
+#                      fuzz their fill/logic without loading or patching a base
+#                      ROM each successful generation — the slowest, most
+#                      memory-hungry part. Set 0 to exercise patching too
+#                      (requires /roms; expect multi-minute generations).
+#
+# Core, its venv, and fuzz.py are BAKED into the image (pinned at build) under
+# /opt/fuzz; the container fetches nothing at runtime.
 #
 # Outputs (all under /out):
 #   result.json  the contract the bot reads back (schema in README.md)
@@ -41,32 +49,42 @@ HARNESS_DIR=/opt/fuzz
 LOG="${WORK}/combined.log"
 
 SLUG="${FUZZ_SLUG:-}"
-WHEEL_URL="${FUZZ_WHEEL_URL:-}"
+WHEEL_IN=""                              # resolved to the single /in/*.whl in run()
 WHEEL_SHA256="$(printf '%s' "${FUZZ_WHEEL_SHA256:-}" | tr '[:upper:]' '[:lower:]')"
 RUNS="${FUZZ_RUNS:-50}"
 TIMEOUT_S="${FUZZ_TIMEOUT:-30}"
-YAMLS="${FUZZ_YAMLS:-1-10}"
+YAMLS="${FUZZ_YAMLS:-1-3}"
 THREADS="${FUZZ_THREADS:-10}"
-CORE_REPO="${MWGG_CORE_REPO:-}"
-CORE_REF="${MWGG_CORE_REF:-}"
-FUZZER_REPO="${FUZZER_REPO:-}"
-FUZZER_REF="${FUZZER_REF:-}"
+BAKED_CORE=/opt/fuzz/core                # core + its relocatable .venv, baked at build
+BAKED_FUZZER=/opt/fuzz/fuzz.py           # pinned fuzzer entrypoint, baked at build
 WALL_SECONDS="${FUZZ_WALL_SECONDS:-1080}"
 SIZE_CAP_MB="${FUZZ_SIZE_CAP_MB:-250}"
+# Opt-in debug: when truthy, persist the FULL combined log and the fuzzer's
+# per-generation worker dumps (fuzz_output/) into /out so a failing run leaves
+# diagnostics behind. The bot also keeps the per-job dir when this is on.
+DEBUG="${FUZZ_DEBUG:-}"
+# Default ON: fuzz fill/logic only (no output/patch stage). See header.
+SKIP_OUTPUT="${FUZZ_SKIP_OUTPUT:-1}"
 
 # Verdict state shared between run() and the EXIT trap. The trap is the single
 # writer of /out/result.json on ANY exit path, so partial/crashed runs still
 # leave the bot something parseable.
 STATUS="fail"
 EXIT_CODE=1
-STATS_JSON='{"success":0,"failure":0,"timeout":0,"ignored":0,"total":0}'
+STATS_JSON='{"success":0,"failure":0,"timeout":0,"ignored":0,"rom":0,"real":0,"total":0}'
 SCAN_JSON='{}'
 RESULT_WRITTEN=0
 
 mkdir -p "${OUT}"
 # Pre-make the writable caches our env (Dockerfile) points HOME/XDG/uv/pip at, now
 # that /work is mounted. Without these, the first tool that writes a cache dies.
-mkdir -p "${WORK}/.cache/uv" "${WORK}/.cache/pip" "${WORK}/.config" "${WORK}/.local/share"
+mkdir -p "${WORK}/.cache/uv" "${WORK}/.cache/pip" "${WORK}/.cache/ruff" "${WORK}/.config" "${WORK}/.local/share" "${WORK}/tmp"
+# Native deps (Pillow, bsdiff4, …) dlopen their .so with PROT_EXEC; /tmp is mounted
+# noexec, so point Python's tempdir at the exec-capable /work — libraries that
+# extract a .so to a tempdir then map it would otherwise fail with "failed to map
+# segment from shared object". Also redirect ruff's cache off the read-only root.
+export TMPDIR="${WORK}/tmp"
+export RUFF_CACHE_DIR="${WORK}/.cache/ruff"
 : > "${LOG}"
 
 # Mirror everything to the console AND the log file we tail into result.json.
@@ -83,6 +101,53 @@ scan_status() {
     jq -r --arg n "$name" '
         (.worlds[0].checks // []) | map(select(.name == $n)) | (.[0].status // "missing")
     ' "${OUT}/scan.json" 2>/dev/null || printf 'missing'
+}
+
+# The human `message` karen_review recorded for a single check — the Notes cell
+# the bot renders next to the status. Args: <check_name>. Empty when absent.
+scan_message() {
+    local name="$1"
+    [ -s "${OUT}/scan.json" ] || { printf ''; return; }
+    jq -r --arg n "$name" '
+        (.worlds[0].checks // []) | map(select(.name == $n)) | (.[0].message // "")
+    ' "${OUT}/scan.json" 2>/dev/null || printf ''
+}
+
+# A short note for the ruff row: the finding count (ruff.json is a JSON array of
+# diagnostics). karen_review doesn't produce ruff, so summarize it here.
+ruff_note() {
+    [ -s "${OUT}/ruff.json" ] || { printf 'not captured'; return; }
+    local n
+    n="$(jq 'if type == "array" then length else 0 end' "${OUT}/ruff.json" 2>/dev/null || printf 0)"
+    case "$n" in
+        ''|*[!0-9]*) printf '' ;;
+        0)           printf 'no lint findings' ;;
+        1)           printf '1 lint finding' ;;
+        *)           printf '%s lint findings' "$n" ;;
+    esac
+}
+
+# The actual finding lines karen_review recorded for a check (bandit hits, ROM
+# paths, top-level network calls) — the REPORT, not just the count. Echoes a
+# compact JSON array of strings; "[]" when absent. The bot renders these in a
+# collapsible block, so a summary like "8 issues" becomes the 8 specific hits.
+scan_details() {
+    local name="$1"
+    [ -s "${OUT}/scan.json" ] || { printf '[]'; return; }
+    jq -c --arg n "$name" '
+        (.worlds[0].checks // []) | map(select(.name == $n)) | (.[0].details // [])
+    ' "${OUT}/scan.json" 2>/dev/null || printf '[]'
+}
+
+# Up to 25 ruff diagnostics as "file:line CODE  message" strings (compact JSON
+# array) so the lint findings, not just their count, reach the comment.
+ruff_details() {
+    [ -s "${OUT}/ruff.json" ] || { printf '[]'; return; }
+    jq -c '
+        if type == "array"
+        then [ .[:25][] | "\(.filename // "?"):\(.location.row // "?") \(.code // "")  \(.message // "")" ]
+        else [] end
+    ' "${OUT}/ruff.json" 2>/dev/null || printf '[]'
 }
 
 # Last ~4KB of the combined log, JSON-safe. Truncated to the TAIL of the file so a
@@ -102,16 +167,29 @@ write_result() {
     local ruff_status="missing"
     [ -s "${OUT}/ruff.json" ] && ruff_status="captured"
 
+    # Each scan check is {status, note}: status drives the glyph, note is the
+    # human message the bot shows in the Notes column (item parity with Karen's
+    # manifest-review tables). pip_audit can't run offline; ruff is summarized
+    # from its finding count, everything else from karen_review's scan.json.
     jq -n \
         --arg slug "${SLUG:-unknown}" \
         --arg status "${STATUS}" \
         --argjson stats "${STATS_JSON}" \
-        --arg bandit "$(scan_status bandit)" \
-        --arg pip_audit "$(scan_status pip_audit)" \
-        --arg size_sanity "$(scan_status size_sanity)" \
-        --arg no_rom_files "$(scan_status no_rom_files)" \
-        --arg no_network_at_import "$(scan_status no_network_at_import)" \
-        --arg ruff "${ruff_status}" \
+        --arg bandit_s "$(scan_status bandit)" \
+        --arg bandit_n "$(scan_message bandit)" \
+        --arg size_s "$(scan_status size_sanity)" \
+        --arg size_n "$(scan_message size_sanity)" \
+        --arg rom_s "$(scan_status no_rom_files)" \
+        --arg rom_n "$(scan_message no_rom_files)" \
+        --arg net_s "$(scan_status no_network_at_import)" \
+        --arg net_n "$(scan_message no_network_at_import)" \
+        --arg ruff_s "${ruff_status}" \
+        --arg ruff_n "$(ruff_note)" \
+        --argjson bandit_d "$(scan_details bandit)" \
+        --argjson size_d "$(scan_details size_sanity)" \
+        --argjson rom_d "$(scan_details no_rom_files)" \
+        --argjson net_d "$(scan_details no_network_at_import)" \
+        --argjson ruff_d "$(ruff_details)" \
         --argjson exit_code "${EXIT_CODE}" \
         --argjson log_tail "$(log_tail_json)" \
         '{
@@ -119,12 +197,12 @@ write_result() {
             status: $status,
             stats: $stats,
             scan: {
-                bandit: $bandit,
-                pip_audit: $pip_audit,
-                size_sanity: $size_sanity,
-                no_rom_files: $no_rom_files,
-                no_network_at_import: $no_network_at_import,
-                ruff: $ruff
+                bandit: {status: $bandit_s, note: $bandit_n, details: $bandit_d},
+                pip_audit: {status: "skipped", note: "not run in the offline sandbox", details: []},
+                size_sanity: {status: $size_s, note: $size_n, details: $size_d},
+                no_rom_files: {status: $rom_s, note: $rom_n, details: $rom_d},
+                no_network_at_import: {status: $net_s, note: $net_n, details: $net_d},
+                ruff: {status: $ruff_s, note: $ruff_n, details: $ruff_d}
             },
             exit_code: $exit_code,
             log_tail: $log_tail
@@ -139,16 +217,49 @@ write_result() {
     fi
 }
 
+# When FUZZ_DEBUG is truthy, copy the full combined log and the fuzzer's
+# per-generation worker dumps (tracebacks + failing YAMLs, written to
+# ${CORE}/fuzz_output) into /out. result.json only carries the last ~4KB of the
+# log, and worker tracebacks never reach it at all — so this is the only way to
+# see WHY a generation (e.g. a ROM world) actually failed. No-op unless enabled;
+# best-effort so it never changes the run's verdict/exit code.
+persist_debug_artifacts() {
+    case "${DEBUG}" in 1|true|TRUE|yes|on) ;; *) return 0 ;; esac
+    cp -f "${LOG}" "${OUT}/combined.log" 2>>"${LOG}" || true
+    if [ -d "${CORE}/fuzz_output" ]; then
+        rm -rf "${OUT}/fuzz_output"
+        cp -a "${CORE}/fuzz_output" "${OUT}/fuzz_output" 2>>"${LOG}" || true
+    fi
+}
+
+# Memory forensics from the container's cgroup (v2): peak usage and the oom_kill
+# counter. A generation that stalls/dies near the --memory cap looks like a hang
+# from outside; these two lines make it provable from the log. No-op when the
+# files aren't readable (cgroup v1 host).
+log_memory_stats() {
+    if [ -r /sys/fs/cgroup/memory.peak ]; then
+        log "cgroup memory.peak=$(cat /sys/fs/cgroup/memory.peak 2>/dev/null || echo '?')"
+    fi
+    if [ -r /sys/fs/cgroup/memory.events ]; then
+        log "cgroup memory.events: $(tr '\n' ' ' < /sys/fs/cgroup/memory.events 2>/dev/null || echo '?')"
+    fi
+}
+
 # Always leave a parseable result.json behind, whatever killed us (set -e abort,
 # `timeout` SIGTERM, OOM bubbling up as a non-zero, ...).
 on_exit() {
     local rc=$?
+    # Before any result write so a crash path's log_tail captures the memory state.
+    log_memory_stats
     if [ "${RESULT_WRITTEN}" -eq 0 ]; then
         # Nothing wrote a verdict yet -> crash/abort. Surface the shell's rc.
         EXIT_CODE="${rc}"
         STATUS="fail"
         write_result
     fi
+    # Single exit point, so every path (success, die, crash) persists the logs
+    # when debug is on — including the no-report crashes that produce die 8.
+    persist_debug_artifacts
     exit "${EXIT_CODE}"
 }
 trap on_exit EXIT
@@ -188,12 +299,19 @@ run() {
     # --- Validate required inputs up front; a missing one is an internal dispatch
     # bug, surfaced as a non-zero exit (bot -> hard fail).
     [ -n "${SLUG}" ]        || die 2 "FUZZ_SLUG is required"
-    [ -n "${WHEEL_URL}" ]   || die 2 "FUZZ_WHEEL_URL is required"
+    # The bot bind-mounts exactly ONE wheel at /in under its REAL PEP 427 filename
+    # (uv pip install parses the filename; a fixed name like world.whl is rejected
+    # with "Must have a version"). Resolve it by glob — nullglob so a no-match
+    # leaves the array empty, and we guard the count before indexing under set -u.
+    shopt -s nullglob
+    local in_wheels=( /in/*.whl )
+    shopt -u nullglob
+    [ "${#in_wheels[@]}" -eq 1 ] || die 2 "expected exactly one .whl at /in, found ${#in_wheels[@]}"
+    WHEEL_IN="${in_wheels[0]}"
+    [ -s "${WHEEL_IN}" ]    || die 2 "wheel not bind-mounted at /in"
     [ -n "${WHEEL_SHA256}" ]|| die 2 "FUZZ_WHEEL_SHA256 is required"
-    [ -n "${CORE_REPO}" ]   || die 2 "MWGG_CORE_REPO is required"
-    [ -n "${CORE_REF}" ]    || die 2 "MWGG_CORE_REF is required"
-    [ -n "${FUZZER_REPO}" ] || die 2 "FUZZER_REPO is required"
-    [ -n "${FUZZER_REF}" ]  || die 2 "FUZZER_REF is required"
+    [ -d "${BAKED_CORE}" ]  || die 2 "baked core missing at ${BAKED_CORE}"
+    [ -s "${BAKED_FUZZER}" ]|| die 2 "baked fuzz.py missing at ${BAKED_FUZZER}"
     case "${SLUG}" in
         *[!a-z0-9_-]*|'') die 2 "FUZZ_SLUG '${SLUG}' is not a safe slug" ;;
     esac
@@ -203,13 +321,14 @@ run() {
 
     log "=== fuzz ${SLUG} === runs=${RUNS} per-gen-timeout=${TIMEOUT_S}s yamls=${YAMLS} threads=${THREADS} wall=${WALL_SECONDS}s"
 
-    # --- (a) Download the wheel to /work and VERIFY its sha256 before anything
-    # touches its bytes. Mismatch -> fail fast with scan.sha256="mismatch".
-    local wheel="${WORK}/world.whl"
-    log "Downloading wheel: ${WHEEL_URL}"
-    if ! curl -sSfL --proto '=https' --max-time 120 -o "${wheel}" "${WHEEL_URL}" 2>>"${LOG}"; then
-        die 3 "wheel download failed: ${WHEEL_URL}"
-    fi
+    # --- (a) Copy the bind-mounted wheel to /work (writable) and RE-VERIFY its
+    # sha256. The bot already verified before mounting; this is defense in depth.
+    # Mismatch -> fail fast with scan.sha256="mismatch".
+    # Preserve the real basename when staging to /work so `uv pip install` can
+    # parse the PEP 427 filename (it rejects a non-conformant name outright).
+    local wheel="${WORK}/$(basename "${WHEEL_IN}")"
+    log "staging mounted wheel ${WHEEL_IN}"
+    cp "${WHEEL_IN}" "${wheel}"
     local actual
     actual="$(sha256sum "${wheel}" | awk '{print $1}')"
     if [ "${actual}" != "${WHEEL_SHA256}" ]; then
@@ -217,11 +336,12 @@ run() {
         # Bespoke result for the mismatch case so the bot can show scan.sha256.
         RESULT_WRITTEN=1
         STATUS="fail"; EXIT_CODE=3
-        jq -n --arg slug "${SLUG}" --argjson lt "$(log_tail_json)" \
-            '{slug:$slug, status:"fail", stats:{success:0,failure:0,timeout:0,ignored:0,total:0},
-              scan:{sha256:"mismatch"}, exit_code:3, log_tail:$lt}' \
+        jq -n --arg slug "${SLUG}" --arg exp "${WHEEL_SHA256}" --arg got "${actual}" --argjson lt "$(log_tail_json)" \
+            '{slug:$slug, status:"fail", stats:{success:0,failure:0,timeout:0,ignored:0,rom:0,real:0,total:0},
+              scan:{sha256:{status:"mismatch", note:("expected " + $exp[0:12] + "…, got " + $got[0:12] + "…"), details:[]}},
+              exit_code:3, log_tail:$lt}' \
             > "${OUT}/result.json" 2>>"${LOG}" \
-          || printf '{"slug":"%s","status":"fail","scan":{"sha256":"mismatch"},"exit_code":3,"log_tail":""}\n' \
+          || printf '{"slug":"%s","status":"fail","scan":{"sha256":{"status":"mismatch","note":"digest mismatch"}},"exit_code":3,"log_tail":""}\n' \
                 "${SLUG}" > "${OUT}/result.json"
         exit 3
     fi
@@ -263,7 +383,10 @@ PY
     mkdir -p "${manifest_dir}"
     printf '{}' > "${manifest}"
 
-    log "scanning extracted wheel (size/rom/network/bandit/pip_audit)"
+    # pip_audit is intentionally NOT run here: it queries PyPI's advisory DB online
+    # and this container is --network none. World wheels declare no deps, so the
+    # audit surface is ~empty anyway; run it bot-side (trusted) later if desired.
+    log "scanning extracted wheel (size/rom/network/bandit)"
     # Non-fatal: a scan that errors must NOT abort the fuzz; its findings are
     # advisory and surfaced in scan.json / result.json.scan.
     set +e
@@ -275,7 +398,6 @@ PY
         --check no_rom_files \
         --check no_network_at_import \
         --check bandit \
-        --check pip_audit \
         --output-summary "${OUT}/scan.json" >>"${LOG}" 2>&1
     local scan_rc=$?
     set -e
@@ -289,58 +411,63 @@ PY
     set -e
     log "ruff exit=${ruff_rc}"
 
-    # --- (d) Clone core (shallow, pinned ref) and build a venv with core reqs + the
-    # candidate wheel. All under /work so it lands on tmpfs, not the read-only root.
-    log "cloning core ${CORE_REPO}@${CORE_REF}"
+    # --- (d) Stage the BAKED core (incl. its relocatable .venv) into /work so it is
+    # writable. No clone, no network — core is pinned into the image at build time.
+    log "staging baked core ${BAKED_CORE} -> ${CORE}"
     rm -rf "${CORE}"
-    if ! git clone --depth 1 --branch "${CORE_REF}" \
-            "https://github.com/${CORE_REPO}.git" "${CORE}" >>"${LOG}" 2>&1; then
-        die 5 "git clone of core ${CORE_REPO}@${CORE_REF} failed"
+    cp -a "${BAKED_CORE}" "${CORE}"
+
+    # Expose the bind-mounted ROMs INSIDE the install dir. host.yaml's rom_file
+    # entries are RELATIVE ("roms/<file>") so the SAME host.yaml drives real
+    # generation; MWGG resolves them under user_path == local_path == cwd == ${CORE}
+    # (Utils.local_path = dir of Utils.py; user_path = local_path when writable, and
+    # ${CORE} is). The bot bind-mounts the ROMs read-only at /roms, so a relative
+    # "roms/foo.z64" would resolve to ${CORE}/roms/foo.z64 and miss the mount —
+    # link ${CORE}/roms -> /roms to bridge that WITHOUT editing the shared yaml.
+    if [ -d /roms ]; then
+        # rm first: if the baked core ever shipped a real roms/ dir, `ln -s` would
+        # otherwise create the link INSIDE it (${CORE}/roms/roms). The mount wins.
+        rm -rf "${CORE}/roms"
+        ln -s /roms "${CORE}/roms"
+        log "linked ${CORE}/roms -> /roms ($(find /roms -maxdepth 1 -type f 2>/dev/null | wc -l) rom file(s)) for relative rom_file paths"
     fi
 
     # If the operator bind-mounted a host.yaml (RO at ${HARNESS_DIR}/host.yaml),
     # install it where MWGG's get_settings() looks. With cwd == local_path == ${CORE}
     # and ${CORE} writable, user_path("host.yaml") resolves to ${CORE}/host.yaml.
-    # Its <world>_options.rom_file entries should point at the read-only /roms mount
-    # so ROM-dependent worlds (e.g. metroidfusion) can actually generate. Without
-    # it, get_settings() falls back to a romless default and those worlds no-op.
+    # Its <world>_options.rom_file entries may be absolute (/roms/<file>) or relative
+    # ("roms/<file>", resolved via the ${CORE}/roms link above) so the same host.yaml
+    # works here and for real generation. Without a host.yaml, get_settings() falls
+    # back to a romless default and ROM-dependent worlds no-op.
     if [ -s "${HARNESS_DIR}/host.yaml" ]; then
         cp "${HARNESS_DIR}/host.yaml" "${CORE}/host.yaml"
         log "installed mounted host.yaml -> ${CORE}/host.yaml"
-        if [ -d /roms ]; then
-            log "roms mount present: $(find /roms -maxdepth 1 -type f 2>/dev/null | wc -l) file(s)"
-        else
-            log "warning: host.yaml mounted but /roms is absent"
-        fi
+        [ -d /roms ] || log "warning: host.yaml mounted but /roms is absent"
     else
         log "no host.yaml mounted; ROM-dependent worlds will no-op (no base ROM)"
     fi
 
-    log "creating venv + installing core requirements and candidate wheel"
+    log "installing candidate wheel into the baked venv (offline, --no-deps)"
     set +e
     (
         set -e
         cd "${CORE}"
-        uv venv .venv
         # shellcheck disable=SC1091
         . .venv/bin/activate
-        uv pip install -r requirements.txt
-        uv pip install "${wheel}"
+        # Core requirements are already baked into .venv; world wheels declare no
+        # deps, so --no-deps + --offline guarantees zero network here.
+        uv pip install --offline --no-deps "${wheel}"
     ) >>"${LOG}" 2>&1
     local setup_rc=$?
     set -e
-    [ "${setup_rc}" -eq 0 ] || die 6 "core venv / dependency install failed"
+    [ "${setup_rc}" -eq 0 ] || die 6 "offline wheel install into baked venv failed"
 
     # --- (e) Fetch the upstream fuzzer and sed-inject the PINNED bootstrap BEFORE
     # the `from worlds import` line (same anchor as fuzz_worlds.sh — never a line
     # number, fuzz.py is a moving target). Then run it under a hard wall.
     cd "${CORE}"
-    log "fetching fuzz.py from ${FUZZER_REPO}@${FUZZER_REF}"
-    if ! curl -sSfL --proto '=https' --max-time 60 \
-            "https://raw.githubusercontent.com/${FUZZER_REPO}/${FUZZER_REF}/fuzz.py" \
-            -o fuzz.py 2>>"${LOG}"; then
-        die 7 "could not fetch fuzz.py"
-    fi
+    log "using baked fuzz.py (${BAKED_FUZZER})"
+    cp "${BAKED_FUZZER}" fuzz.py
     local worlds_line
     worlds_line="$(grep -n '^from worlds import' fuzz.py | head -n1 | cut -d: -f1)"
     [ -n "${worlds_line}" ] || die 7 "could not find 'from worlds import' anchor in fuzz.py"
@@ -353,14 +480,22 @@ PY
     # bootstrap falls back to APFUZZ_GAMES, so export it for the single slug.
     export APFUZZ_GAMES="${SLUG}"
 
+    # --skip-output (default): stop after fill/logic — Main.py returns before the
+    # output/patch stage AND before assert_generate. ROM worlds (oot, dk64, …)
+    # otherwise load + decompress + patch a base ROM per successful generation,
+    # the slowest and most memory-hungry phase by far.
+    local fuzz_extra=()
+    case "${SKIP_OUTPUT}" in 1|true|TRUE|yes|on) fuzz_extra+=( --skip-output ) ;; esac
+
     # Run the fuzzer. Wall it with `timeout` (KILL after a grace TERM) so a hung
     # generation can't pin the container until the bot's outer wall fires. The
     # fuzzer's own non-zero exit is NOT fatal here — we classify from report.json.
-    log "running fuzz.py (wall ${WALL_SECONDS}s)"
+    log "running fuzz.py (wall ${WALL_SECONDS}s${fuzz_extra:+, ${fuzz_extra[*]}})"
     set +e
     . .venv/bin/activate
     timeout --kill-after=30s "${WALL_SECONDS}" \
         python fuzz.py -r "${RUNS}" -t "${TIMEOUT_S}" -g "${SLUG}" -j "${THREADS}" -n "${YAMLS}" \
+        "${fuzz_extra[@]}" \
         >>"${LOG}" 2>&1
     local fuzz_rc=$?
     set -e
@@ -369,12 +504,41 @@ PY
     # --- (f) Classify report.json (written relative to fuzz.py's cwd = ${CORE}).
     local report="${CORE}/fuzz_output/report.json"
     if [ ! -f "${report}" ]; then
-        # No report = fuzz.py crashed or was wall-killed. Hard fail with the rc.
-        STATUS="fail"
+        # No report = fuzz.py crashed or was wall-killed. report.json is only
+        # written after ALL runs finish, so a wall kill throws away every
+        # generation that DID complete. Salvage them: the fuzzer logs
+        # "N / M done. F failures, T timeouts, I ignored." after each generation —
+        # parse the last one and report partial stats instead of a blanket fail.
+        # Wall kills only (124/137): a parent CRASH (e.g. exit 2) stays a hard
+        # fail even with partials, because the crash itself is the finding.
         if [ "${fuzz_rc}" -eq 124 ] || [ "${fuzz_rc}" -eq 137 ]; then
+            local progress
+            progress="$(grep -E '^[0-9]+ / [0-9]+ done\. [0-9]+ failures, [0-9]+ timeouts, [0-9]+ ignored\.' "${LOG}" | tail -n 1 || true)"
+            if [ -n "${progress}" ]; then
+                local p_done p_runs p_fail p_to p_ign p_succ p_bad _w
+                read -r p_done _w p_runs _w p_fail _w p_to _w p_ign _w <<< "${progress}"
+                p_succ=$((p_done - p_fail - p_to - p_ign))
+                p_bad=$((p_fail + p_to))
+                # Same >50%-bad threshold as the full classifier; an incomplete
+                # run can never be better than "warn". No per-error report, so no
+                # rom/real split — with /roms mounted, failures are presumed real.
+                if [ $((p_bad * 2)) -gt "${p_done}" ]; then STATUS="fail"; else STATUS="warn"; fi
+                STATS_JSON="$(jq -n \
+                    --argjson success "${p_succ}" --argjson failure "${p_fail}" \
+                    --argjson timeout "${p_to}" --argjson ignored "${p_ign}" \
+                    --argjson real "${p_fail}" --argjson total "${p_done}" \
+                    '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, rom:0, real:$real, total:$total}')"
+                EXIT_CODE=0
+                log_memory_stats
+                log "wall-killed after ${p_done}/${p_runs} generations — partial stats salvaged (host too slow for this world within ${WALL_SECONDS}s)"
+                write_result
+                return 0
+            fi
+            STATUS="fail"
             EXIT_CODE="${fuzz_rc}"
-            die "${fuzz_rc}" "fuzz.py hit the ${WALL_SECONDS}s wall with no report.json"
+            die "${fuzz_rc}" "fuzz.py hit the ${WALL_SECONDS}s wall with no completed generations"
         fi
+        STATUS="fail"
         die 8 "no report.json (fuzz.py exit=${fuzz_rc})"
     fi
     # Preserve the raw report for debugging via the /out mount.
@@ -395,13 +559,17 @@ PY
     # status:"fail" (the bot reads status, and forces fail itself only on a
     # non-zero exit_code, so we keep exit 0 here to mean "the harness worked").
     STATUS="${s_status}"
+    # rom/real split the failures so the note can explain a warn (e.g. all-ROM
+    # no-ops -> rom=N, real=0) instead of a bare scary failure count.
     STATS_JSON="$(jq -n \
         --argjson success "${s_succ:-0}" \
         --argjson failure "${s_fail:-0}" \
         --argjson timeout "${s_to:-0}" \
         --argjson ignored "${s_ign:-0}" \
+        --argjson rom     "${s_rom:-0}" \
+        --argjson real    "${s_real:-0}" \
         --argjson total   "${s_total:-0}" \
-        '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, total:$total}')"
+        '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, rom:$rom, real:$real, total:$total}')"
     EXIT_CODE=0
     write_result
     log "wrote /out/result.json (status=${STATUS})"

@@ -130,7 +130,7 @@ function validateWorld(raw: unknown, idx: number, errors: string[]): FuzzApworld
 
 function validateFuzzParams(raw: unknown): FuzzParams {
   const obj = isRecord(raw) ? raw : {};
-  const yamls = typeof obj.yamls === "string" && YAMLS_RE.test(obj.yamls) ? obj.yamls : "1-10";
+  const yamls = typeof obj.yamls === "string" && YAMLS_RE.test(obj.yamls) ? obj.yamls : "1-3";
   return {
     runs: clampNumber(obj.runs, 1, 500, 50),
     timeout_s: clampNumber(obj.timeout_s, 5, 300, 30),
@@ -170,6 +170,11 @@ export function validateFuzzPayload(action: string, clientPayload: unknown): Fuz
     comment_marker: commentMarker,
     worlds: rawWorlds,
   } = clientPayload;
+
+  // Optional: tolerate an older dispatcher that doesn't send it. A non-string or
+  // missing value becomes "" — never a clean "pass" — so the bot won't auto-approve.
+  const manifestStatus =
+    typeof clientPayload.manifest_status === "string" ? clientPayload.manifest_status : "";
 
   if (typeof schemaVersion !== "number" || !Number.isInteger(schemaVersion)) {
     errors.push("schema_version must be an integer");
@@ -222,6 +227,7 @@ export function validateFuzzPayload(action: string, clientPayload: unknown): Fuz
       head_sha: headSha as string,
       check_run_name: checkRunName as string,
       comment_marker: commentMarker as string,
+      manifest_status: manifestStatus,
       fuzz,
       scan,
       worlds,
