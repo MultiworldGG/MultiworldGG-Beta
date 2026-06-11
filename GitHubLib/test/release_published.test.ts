@@ -237,12 +237,15 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-release-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Make the asset-digest wait instant in tests (no real backoff sleeps).
+  process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
+  delete process.env.OLIVER_DIGEST_WAIT_MS;
 });
 
 function readEvents(): any[] {
@@ -466,5 +469,295 @@ describe("handleReleasePublished", () => {
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "release_lookup_404", slug: "myclgm" });
     expect(probot.auth).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bundled multi-world release (tag `worlds-wheels-<date>`)
+// ---------------------------------------------------------------------------
+
+const BUNDLE_TAG = "worlds-wheels-2026-06-06";
+
+// A bundle wheel is `worlds_<module>-<version>-py3-none-any.whl`; the Index slug
+// is <module>.
+function bundleWheel(module: string, opts: { digest?: string | null } = {}) {
+  return wheelAsset({ slug: `worlds_${module}`, version: "1.0.0", tag: BUNDLE_TAG, digest: opts.digest });
+}
+
+function bundleIndexManifest(game: string): string {
+  return JSON.stringify({ game, world_version: "1.0.0", igdb_id: 1, module_location: "old" }, null, 2);
+}
+
+// Karen-token Index client for the bundle path: repo/git ops over a tiny
+// present-manifests map. `present[path]` decides whether a world is on the Index
+// (copy+edit) or skipped.
+function makeBundleKarenIndexOctokit(present: Record<string, string>, writes: string[]): any {
+  return {
+    rest: {
+      repos: {
+        get: async () => ({ data: { default_branch: "main" } }),
+        getContent: async ({ path }: { path: string }) => {
+          if (present[path] !== undefined) {
+            return {
+              data: {
+                type: "file",
+                sha: `sha-${path}`,
+                content: Buffer.from(present[path], "utf-8").toString("base64"),
+                encoding: "base64",
+              },
+            };
+          }
+          throw Object.assign(new Error("404"), { status: 404 });
+        },
+        createOrUpdateFileContents: async ({ path }: { path: string }) => {
+          writes.push(`commit:${path}`);
+          return { data: {} };
+        },
+      },
+      git: {
+        getRef: async ({ ref }: { ref: string }) => {
+          if (ref === "heads/main") return { data: { object: { sha: "main-sha", type: "commit" } } };
+          throw Object.assign(new Error("404"), { status: 404 }); // branch absent → createRef
+        },
+        createRef: async () => {
+          writes.push("createRef");
+          return { data: {} };
+        },
+      },
+    },
+  };
+}
+
+// Same split as single-world: Karen commits, Oliver opens. Both share one writes
+// log so assertions can check createRef/commit (Karen) and pulls.create (Oliver).
+function makeBundleProbots(present: Record<string, string>, writes: string[]) {
+  const oliverIndexOctokit = makeOliverIndexOctokit(writes);
+  const karenIndexOctokit = makeBundleKarenIndexOctokit(present, writes);
+  const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
+  const karenProbot = {
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
+    }),
+    log: fakeLog,
+  } as any;
+  return { probot, karenProbot };
+}
+
+describe("handleReleasePublished — bundled multi-world release", () => {
+  it("opens one combined Index PR (Oliver token) for worlds already on the Index", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("oot"), bundleWheel("crosscode")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const present = {
+      "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64"),
+      "worlds/oot.json": bundleIndexManifest("Ocarina of Time"),
+      "worlds/crosscode.json": bundleIndexManifest("CrossCode"),
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(present, writes);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    expect(writes).toContain("createRef");
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).length).toBe(3);
+    expect(writes).toContain("pulls.create");
+
+    const events = readEvents();
+    expect(events.find((e) => e.kind === "ok")).toMatchObject({
+      kind: "ok",
+      release_tag: BUNDLE_TAG,
+      index_pr: 99,
+    });
+    expect(events.filter((e) => e.kind === "ok")).toHaveLength(1);
+  });
+
+  it("skips a wheel missing a digest but still opens the PR for the rest", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("oot", { digest: null })],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "asset_digest_missing",
+        slug: "oot",
+        wheel_asset: "worlds_oot-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("skips an unrecognized wheel name and opens the PR for the recognized worlds", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          // The second asset has no `worlds_` dist prefix → unrecognized.
+          assets: [bundleWheel("dk64"), wheelAsset({ slug: "random", version: "1.0.0", tag: BUNDLE_TAG })],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "bundle_wheel_unrecognized",
+        wheel_asset: "random-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("skips a bundled world that is not on the Index, still opening the PR for the rest", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("ghost")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    // Only dk64 is on the Index; ghost has no manifest to copy.
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "skip", reason: "bundle_world_not_on_index", slug: "ghost" }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes.filter((w) => w.startsWith("commit:worlds/"))).toEqual(["commit:worlds/dk64.json"]);
+  });
+
+  it("logs bundle_no_valid_worlds and opens no PR when no wheel is on the Index", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("ghost1"), bundleWheel("ghost2")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots({}, writes); // nothing on the Index
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "skip", reason: "bundle_no_valid_worlds" }),
+    );
+    expect(writes).not.toContain("pulls.create");
+  });
+
+  it("waits for a lagging asset digest, then includes that world once GitHub finishes hashing", async () => {
+    const validDigest = `sha256:${"a".repeat(64)}`;
+    const dl = (name: string) =>
+      `https://github.com/MultiworldGG/myclgm-test/releases/download/${BUNDLE_TAG}/${name}`;
+    let releaseFetches = 0;
+
+    const state: RepoState = {
+      releases: [{ tag_name: BUNDLE_TAG, tagSha: "bundle-sha" }],
+      indexInstall: { id: 12345 },
+    };
+    const octokit = makeContextOctokit(state);
+    // oot's digest is still being computed on the first read; it lands on the second.
+    octokit.rest.repos.getReleaseByTag = async () => {
+      releaseFetches += 1;
+      const ootDigest = releaseFetches >= 2 ? validDigest : null;
+      return {
+        data: {
+          tag_name: BUNDLE_TAG,
+          assets: [
+            {
+              name: "worlds_dk64-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_dk64-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: validDigest,
+            },
+            {
+              name: "worlds_oot-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_oot-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: ootDigest,
+            },
+          ],
+        },
+      };
+    };
+
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      {
+        "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64"),
+        "worlds/oot.json": bundleIndexManifest("Ocarina of Time"),
+      },
+      writes,
+    );
+
+    const ctx = {
+      octokit,
+      payload: { release: { tag_name: BUNDLE_TAG, draft: false } },
+      log: fakeLog,
+      repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
+    };
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx as any);
+
+    expect(releaseFetches).toBeGreaterThanOrEqual(2); // re-fetched after the lagging digest
+    const events = readEvents();
+    expect(events.some((e) => e.reason === "asset_digest_missing")).toBe(false); // oot not dropped
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).sort()).toEqual([
+      "commit:worlds/dk64.json",
+      "commit:worlds/oot.json",
+    ]);
+    expect(writes).toContain("pulls.create");
   });
 });

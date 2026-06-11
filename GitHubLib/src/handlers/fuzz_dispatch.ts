@@ -27,9 +27,10 @@ import {
   type FuzzConclusion,
 } from "../fuzz/check-run";
 import { renderFuzzRegion, upsertFuzzComment } from "../fuzz/comment";
+import { decideFuzzReview, submitFuzzReview } from "../fuzz/review";
 import { toFuzzJob, validateFuzzPayload } from "../fuzz/payload";
 import { getFuzzQueue } from "../fuzz/queue";
-import { runFuzzContainer, type RunFuzzOptions } from "../fuzz/runner";
+import { ensureImageAvailable, runFuzzContainer, type RunFuzzOptions } from "../fuzz/runner";
 import type { FuzzClientPayload, FuzzWorldResult } from "../fuzz/types";
 
 export interface HandleRepositoryDispatchArgs {
@@ -66,6 +67,21 @@ function envOpt(name: string): string | undefined {
   return raw !== undefined && raw.trim() !== "" ? raw : undefined;
 }
 
+/** Optional int env var: undefined when unset/blank/non-numeric (so the cap is off). */
+function envOptNum(name: string): number | undefined {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return undefined;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+/** Truthy env flag: 1/true/yes/on (case-insensitive) → true; otherwise `def`. */
+function envBool(name: string, def: boolean): boolean {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return def;
+  return /^(1|true|yes|on)$/i.test(raw.trim());
+}
+
 /** Assemble the runner options for one batch from the process environment. */
 function runnerOptionsFromEnv(
   log: (m: string) => void,
@@ -73,21 +89,25 @@ function runnerOptionsFromEnv(
 ): RunFuzzOptions {
   return {
     // Defaults mirror deploy/docker-compose.yml's github-bots env so a missing
-    // var falls back to the same value prod sets explicitly.
+    // var falls back to the same value prod sets explicitly. The container is
+    // `--network none`: core/fuzzer/deps are baked into FUZZ_IMAGE at build time,
+    // so there's no FUZZ_NET / MWGG_CORE_* / FUZZER_* to pass.
     image: envStr("FUZZ_IMAGE", "ghcr.io/multiworldgg/multiworldgg-fuzz:latest"),
     workDir: envStr("FUZZ_WORK_DIR", "/var/lib/mwgg-fuzz"),
-    net: envStr("FUZZ_NET", "bridge"),
     cpus: envStr("FUZZ_CPUS", "2"),
     memory: envStr("FUZZ_MEMORY", "4g"),
     pids: envNum("FUZZ_PIDS", 512),
+    // Operator ceilings on the fuzzer -j / -r so a small host bounds resource use
+    // no matter what the Index dispatch asked for. Unset → use the payload value.
+    maxThreads: envOptNum("FUZZ_MAX_THREADS"),
+    maxRuns: envOptNum("FUZZ_MAX_RUNS"),
     wallSeconds: envNum("FUZZ_WALL_SECONDS", 1200),
-    mwggCoreRepo: envStr("MWGG_CORE_REPO", "MultiworldGG/MultiworldGG"),
-    mwggCoreRef: envStr("MWGG_CORE_REF", "main"),
-    fuzzerRepo: envStr("FUZZER_REPO", "Eijebong/Archipelago-fuzzer"),
-    fuzzerRef: envStr("FUZZER_REF", "main"),
     // Optional RO mounts so ROM-dependent worlds can generate; unset → no mount.
     romDir: envOpt("FUZZ_ROM_DIR"),
     hostYaml: envOpt("FUZZ_HOST_YAML"),
+    // Opt-in: persist each container's full log + worker dumps and keep the
+    // per-job dir for inspection. Off by default; see deploy/docker-compose.yml.
+    debug: envBool("FUZZ_DEBUG", false),
     log,
     signal,
   };
@@ -269,8 +289,34 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
   const options = runnerOptionsFromEnv(runnerLog, signal);
   const results: FuzzWorldResult[] = [];
 
+  // One-time pre-flight: a missing FUZZ_IMAGE would 125 every world with a
+  // cryptic "no result.json". Inspect-or-pull once; if it's truly unavailable,
+  // every world fails fast below with one actionable reason instead of N 125s.
+  const preflight = await ensureImageAvailable(options.image, runnerLog);
+  if (!preflight.ok) {
+    eventLog.emit({
+      kind: "error",
+      source_repo: indexRepoSpec,
+      pr_number: fuzz.pr_number,
+      reason: "fuzz_image_unavailable",
+      message:
+        `FUZZ_IMAGE ${options.image} is not available on the host (${preflight.detail ?? "not present"}); ` +
+        `pull or build it — see deploy/README.md. Failing all ${fuzz.worlds.length} world(s).`,
+    });
+  }
+
   for (const world of fuzz.worlds) {
     const job = toFuzzJob(fuzz, world);
+    if (!preflight.ok) {
+      results.push({
+        slug: job.slug,
+        status: "fail",
+        detail: `${job.slug}: FUZZ_IMAGE ${options.image} unavailable — ${preflight.detail ?? "not present"}`,
+        exitCode: 125,
+        timedOut: false,
+      });
+      continue;
+    }
     try {
       const result = await runFuzzContainer(job, options);
       results.push(result);
@@ -319,6 +365,9 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       marker: fuzz.comment_marker,
       headSha: fuzz.head_sha,
       region: renderFuzzRegion(results),
+      // Karen's isolated checks live in their OWN sticky comment, separate from
+      // her manifest review; this heading titles it when the bot creates it.
+      title: "Karen: Isolated QA Checks",
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -328,6 +377,46 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       pr_number: fuzz.pr_number,
       reason: "fuzz_check_run_error",
       message: `Failed to upsert fuzz comment region: ${message}`,
+    });
+  }
+
+  // Karen's FINAL verdict lands AFTER the isolated checks — the whole reason they
+  // run in the bot. Approve only when the manifest checks (verdict from the
+  // dispatch payload) AND these isolated checks are green; request changes when
+  // either is red. (The workflow only reviews synchronously on the no-fuzz path.)
+  // Guard on the PR head exactly like the comment splice: a batch that finished
+  // after a newer push must NOT land a stale APPROVE on now-superseded code — the
+  // newer batch owns the review (the queue keys on head_sha, so it ran separately).
+  try {
+    const decision = decideFuzzReview(fuzz.manifest_status, status);
+    if (decision) {
+      const pull = await octokit.rest.pulls.get({ owner, repo, pull_number: fuzz.pr_number });
+      if (pull.data.head.sha === fuzz.head_sha) {
+        await submitFuzzReview(octokit, {
+          owner,
+          repo,
+          prNumber: fuzz.pr_number,
+          event: decision.event,
+          body: decision.body,
+        });
+      } else {
+        eventLog.emit({
+          kind: "skip",
+          source_repo: indexRepoSpec,
+          pr_number: fuzz.pr_number,
+          release_sha: fuzz.head_sha,
+          message: "Skipped Karen's final review: PR head moved since dispatch.",
+        });
+      }
+    }
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    eventLog.emit({
+      kind: "error",
+      source_repo: indexRepoSpec,
+      pr_number: fuzz.pr_number,
+      reason: "fuzz_check_run_error",
+      message: `Failed to submit Karen's final review: ${message}`,
     });
   }
 
