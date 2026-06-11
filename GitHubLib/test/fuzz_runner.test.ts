@@ -12,7 +12,13 @@ vi.mock("child_process", () => ({
   execFile: (...args: unknown[]) => execFileMock(...args),
 }));
 
-import { runFuzzContainer, buildDockerArgs, type RunFuzzOptions } from "../src/fuzz/runner";
+import {
+  runFuzzContainer,
+  buildDockerArgs,
+  ensureImageAvailable,
+  wheelFileName,
+  type RunFuzzOptions,
+} from "../src/fuzz/runner";
 import type { FuzzJob } from "../src/fuzz/types";
 
 const VALID_WHEEL =
@@ -41,10 +47,11 @@ function options(overrides: Partial<RunFuzzOptions> = {}): RunFuzzOptions {
   return {
     image: "ghcr.io/multiworldgg/fuzz:latest",
     workDir: tmpDir,
-    mwggCoreRepo: "MultiworldGG/MultiworldGG",
-    mwggCoreRef: "main",
-    fuzzerRepo: "Eijebong/Archipelago-fuzzer",
-    fuzzerRef: "main",
+    // Offline runner fetches the wheel itself; inject a no-network fake that just
+    // writes the bind file so runFuzzContainer tests never touch the network.
+    fetchWheel: async (_url: string, _sha: string, dest: string) => {
+      fs.writeFileSync(dest, "wheel-bytes");
+    },
     log: (m: string) => logs.push(m),
     ...overrides,
   };
@@ -78,7 +85,7 @@ function envPairs(args: string[]): Record<string, string> {
  * the callback to simulate the container exiting with `exitCode`. `docker rm …`
  * (and any non-run call) just succeeds. Returns the fake ChildProcess.
  */
-function mockRun(produce: () => unknown, exitCode = 0): void {
+function mockRun(produce: () => unknown, exitCode = 0, stderr = ""): void {
   execFileMock.mockImplementation(
     (_file: string, args: string[], a3?: unknown, a4?: unknown) => {
       const cb = (typeof a3 === "function" ? a3 : a4) as
@@ -100,7 +107,7 @@ function mockRun(produce: () => unknown, exitCode = 0): void {
           exitCode === 0
             ? null
             : (Object.assign(new Error(`exit ${exitCode}`), { code: exitCode }) as Error);
-        queueMicrotask(() => cb?.(err, "", ""));
+        queueMicrotask(() => cb?.(err, "", stderr));
       } else {
         queueMicrotask(() => cb?.(null, "", ""));
       }
@@ -122,7 +129,7 @@ afterEach(() => {
 
 describe("buildDockerArgs — hardening flags", () => {
   it("emits every required hardening flag", () => {
-    const args = buildDockerArgs(job(), options(), "mwgg-fuzz-42-hk-x", "/work/out");
+    const args = buildDockerArgs(job(), options(), "mwgg-fuzz-42-hk-x", "/work/out", "/work/in");
 
     expect(args[0]).toBe("run");
     expect(args).toContain("--rm");
@@ -141,22 +148,50 @@ describe("buildDockerArgs — hardening flags", () => {
     expect(pairAfter("--memory")).toBe("4g");
     expect(pairAfter("--memory-swap")).toBe("4g");
     expect(pairAfter("--ulimit")).toBe("nofile=4096:4096");
-    expect(pairAfter("--network")).toBe("bridge");
+    expect(pairAfter("--network")).toBe("none");
+    // wheel arrives as a read-only bind mount at /in.
+    expect(args).toContain("/work/in:/in:ro");
 
     // both tmpfs mounts present
     const tmpfs = args.filter((_, i) => args[i - 1] === "--tmpfs");
-    expect(tmpfs).toContain("/tmp:rw,noexec,nosuid,size=512m");
-    expect(tmpfs).toContain("/work:rw,nosuid,size=4g");
+    expect(tmpfs).toContain("/tmp:rw,noexec,nosuid,size=512m,mode=1777");
+    expect(tmpfs).toContain("/work:rw,exec,nosuid,size=4g,mode=1777");
 
     // the out bind and the image come last (image is the final arg).
     expect(outBindHostPath(args)).toBe("/work/out");
     expect(args[args.length - 1]).toBe("ghcr.io/multiworldgg/fuzz:latest");
   });
 
+  it("caps FUZZ_THREADS / FUZZ_RUNS at the operator ceilings (min of payload, cap)", () => {
+    const env = envPairs(
+      buildDockerArgs(
+        job({ threads: 10, runs: 50 }),
+        options({ maxThreads: 1, maxRuns: 25 }),
+        "n",
+        "/work/out",
+        "/work/in",
+      ),
+    );
+    expect(env.FUZZ_THREADS).toBe("1");
+    expect(env.FUZZ_RUNS).toBe("25");
+  });
+
+  it("leaves payload threads/runs intact when caps are unset or higher than the payload", () => {
+    const uncapped = envPairs(buildDockerArgs(job({ threads: 4, runs: 30 }), options(), "n", "/o", "/i"));
+    expect(uncapped.FUZZ_THREADS).toBe("4");
+    expect(uncapped.FUZZ_RUNS).toBe("30");
+
+    const higher = envPairs(
+      buildDockerArgs(job({ threads: 4, runs: 30 }), options({ maxThreads: 8, maxRuns: 100 }), "n", "/o", "/i"),
+    );
+    expect(higher.FUZZ_THREADS).toBe("4"); // min(4, 8)
+    expect(higher.FUZZ_RUNS).toBe("30"); // min(30, 100)
+  });
+
   it("adds READ-ONLY rom + host.yaml mounts only when romDir/hostYaml are set", () => {
     const vmounts = (a: string[]): string[] => a.filter((_, i) => a[i - 1] === "-v");
 
-    const without = buildDockerArgs(job(), options(), "n", "/work/out");
+    const without = buildDockerArgs(job(), options(), "n", "/work/out", "/work/in");
     expect(vmounts(without).some((m) => m.includes(":/roms:ro"))).toBe(false);
     expect(vmounts(without).some((m) => m.includes("/opt/fuzz/host.yaml:ro"))).toBe(false);
 
@@ -165,14 +200,22 @@ describe("buildDockerArgs — hardening flags", () => {
       options({ romDir: "/var/lib/mwgg-fuzz-roms", hostYaml: "/var/lib/host.yaml" }),
       "n",
       "/work/out",
+      "/work/in",
     );
     expect(vmounts(withRoms)).toContain("/var/lib/mwgg-fuzz-roms:/roms:ro");
     expect(vmounts(withRoms)).toContain("/var/lib/host.yaml:/opt/fuzz/host.yaml:ro");
   });
 
   it("passes the scan size cap through as FUZZ_SIZE_CAP_MB", () => {
-    const env = envPairs(buildDockerArgs(job({ sizeCapMb: 512 }), options(), "n", "/work/out"));
+    const env = envPairs(buildDockerArgs(job({ sizeCapMb: 512 }), options(), "n", "/work/out", "/work/in"));
     expect(env.FUZZ_SIZE_CAP_MB).toBe("512");
+  });
+
+  it("passes FUZZ_DEBUG only when debug is enabled", () => {
+    expect(envPairs(buildDockerArgs(job(), options(), "n", "/work/out", "/work/in")).FUZZ_DEBUG).toBeUndefined();
+    expect(
+      envPairs(buildDockerArgs(job(), options({ debug: true }), "n", "/work/out", "/work/in")).FUZZ_DEBUG,
+    ).toBe("1");
   });
 
   it("passes one -e per documented input with the job/opts values", () => {
@@ -181,31 +224,32 @@ describe("buildDockerArgs — hardening flags", () => {
       options(),
       "n",
       "/work/out",
+      "/work/in",
     );
     const env = envPairs(args);
 
     expect(env.FUZZ_SLUG).toBe("rop");
-    expect(env.FUZZ_WHEEL_URL).toBe(VALID_WHEEL);
     expect(env.FUZZ_WHEEL_SHA256).toBe("a".repeat(64));
     expect(env.FUZZ_RUNS).toBe("7");
     expect(env.FUZZ_TIMEOUT).toBe("11");
     expect(env.FUZZ_YAMLS).toBe("2-3");
     expect(env.FUZZ_THREADS).toBe("4");
-    expect(env.MWGG_CORE_REPO).toBe("MultiworldGG/MultiworldGG");
-    expect(env.MWGG_CORE_REF).toBe("main");
-    expect(env.FUZZER_REPO).toBe("Eijebong/Archipelago-fuzzer");
-    expect(env.FUZZER_REF).toBe("main");
     expect(env.KIVY_NO_ARGS).toBe("1");
     expect(env.SKIP_ALL_INSTALLS).toBe("1");
     expect(env.MALLOC_ARENA_MAX).toBe("2");
+    // Offline container: no fetch URL / core / fuzzer env is passed.
+    expect(env.FUZZ_WHEEL_URL).toBeUndefined();
+    expect(env.MWGG_CORE_REPO).toBeUndefined();
+    expect(env.FUZZER_REPO).toBeUndefined();
   });
 
   it("honors resource overrides", () => {
     const args = buildDockerArgs(
       job(),
-      options({ net: "none", cpus: "1", memory: "2g", pids: 128 }),
+      options({ cpus: "1", memory: "2g", pids: 128 }),
       "n",
       "/work/out",
+      "/work/in",
     );
     const pairAfter = (flag: string): string => args[args.indexOf(flag) + 1];
     expect(pairAfter("--network")).toBe("none");
@@ -226,7 +270,47 @@ describe("buildDockerArgs — hardening flags", () => {
   });
 });
 
+describe("wheelFileName — use the wheel's own name", () => {
+  it("returns the real wheel filename from the URL", () => {
+    expect(wheelFileName(job())).toBe("hk-1.0.0-py3-none-any.whl");
+  });
+
+  it("excludes a query string (the name lives in the URL path)", () => {
+    expect(
+      wheelFileName(
+        job({
+          wheelUrl:
+            "https://objects.githubusercontent.com/x/crosscode-2.1.0-py3-none-any.whl?token=abc",
+        }),
+      ),
+    ).toBe("crosscode-2.1.0-py3-none-any.whl");
+  });
+
+  it("returns a bare filename — directory components can't traverse the bind dir", () => {
+    const name = wheelFileName(
+      job({ wheelUrl: "https://github.com/o/r/releases/download/v1.2/rop-3.2.1-py3-none-any.whl" }),
+    );
+    expect(name).toBe("rop-3.2.1-py3-none-any.whl");
+    expect(name).not.toContain("/");
+  });
+});
+
 describe("runFuzzContainer — result.json mapping", () => {
+  it("stages the wheel under its real (uv-parseable) name, not world.whl", async () => {
+    let dest = "";
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    await runFuzzContainer(
+      job(),
+      options({
+        fetchWheel: async (_u: string, _s: string, d: string) => {
+          dest = d;
+          fs.writeFileSync(d, "wheel-bytes");
+        },
+      }),
+    );
+    expect(path.basename(dest)).toBe("hk-1.0.0-py3-none-any.whl");
+  });
+
   it("maps a passing result.json to a FuzzWorldResult and cleans up the job dir", async () => {
     mockRun(() => ({
       slug: "hk",
@@ -249,6 +333,47 @@ describe("runFuzzContainer — result.json mapping", () => {
 
     // per-job dir was reclaimed (workDir is left containing nothing).
     expect(fs.readdirSync(tmpDir)).toHaveLength(0);
+  });
+
+  it("keeps the per-job dir for inspection when debug is enabled", async () => {
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    await runFuzzContainer(job(), options({ debug: true }));
+    // not reclaimed — artifacts (result.json, combined.log, fuzz_output/) survive.
+    expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
+  });
+
+  it("makes the rw out dir writable by the unprivileged container user before running", async () => {
+    // The (root) bot creates the per-job out dir 0755/root-owned, but the
+    // container runs --user 65532:65532 and bind-mounts it rw. Capture the dir's
+    // mode at `docker run` time and assert "other" has the write bit, else uid
+    // 65532 can't write /out/result.json. POSIX-only: Windows fs doesn't model
+    // these bits, but the chmod call still runs there.
+    let outMode = -1;
+    execFileMock.mockImplementation(
+      (_file: string, args: string[], a3?: unknown, a4?: unknown) => {
+        const cb = (typeof a3 === "function" ? a3 : a4) as
+          | ((err: Error | null, stdout: string, stderr: string) => void)
+          | undefined;
+        const child = { kill: vi.fn() } as unknown as ChildProcess;
+        if (args[0] === "run") {
+          const hostOut = outBindHostPath(args);
+          outMode = fs.statSync(hostOut).mode & 0o777;
+          fs.writeFileSync(
+            path.join(hostOut, "result.json"),
+            JSON.stringify({ slug: "hk", status: "pass", exit_code: 0 }),
+          );
+        }
+        queueMicrotask(() => cb?.(null, "", ""));
+        return child;
+      },
+    );
+
+    const res = await runFuzzContainer(job(), options());
+    expect(res.status).toBe("pass");
+    expect(outMode).toBeGreaterThanOrEqual(0); // the run actually happened
+    if (process.platform !== "win32") {
+      expect(outMode & 0o002).toBe(0o002); // world-writable: 65532 can write /out
+    }
   });
 
   it("carries a warn verdict through", async () => {
@@ -288,6 +413,35 @@ describe("runFuzzContainer — result.json mapping", () => {
     const res = await runFuzzContainer(job(), options());
     expect(res.status).toBe("fail");
     expect(res.detail).toContain("result.json");
+  });
+
+  it("surfaces docker's stderr when `docker run` itself fails (exit 125, no result.json)", async () => {
+    mockRun(
+      () => undefined, // container never starts → no result.json
+      125,
+      "docker: Error response from daemon: network mwgg-fuzz-egress not found.\nSee 'docker run --help'.",
+    );
+    const res = await runFuzzContainer(job(), options());
+    expect(res.status).toBe("fail");
+    expect(res.exitCode).toBe(125);
+    expect(res.detail).toContain("network mwgg-fuzz-egress not found");
+    expect(logs.some((l) => l.includes("docker exit 125"))).toBe(true);
+  });
+
+  it("fails (without throwing) when the wheel fetch/verify fails", async () => {
+    mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
+    const res = await runFuzzContainer(
+      job(),
+      options({
+        fetchWheel: async () => {
+          throw new Error("wheel sha256 mismatch");
+        },
+      }),
+    );
+    expect(res.status).toBe("fail");
+    expect(res.detail).toContain("fetch/verify wheel");
+    // The container must not run if the wheel couldn't be fetched/verified.
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "run")).toBe(false);
   });
 });
 
@@ -353,6 +507,47 @@ describe("runFuzzContainer — abort signal", () => {
     expect(res.timedOut).toBe(false);
     expect(res.detail).toContain("aborted");
     expect(rmIssued).toBe(true);
+  });
+});
+
+describe("ensureImageAvailable — batch image pre-flight", () => {
+  // execFile callback is the 3rd arg for `image inspect` (no opts) and the 4th
+  // for `pull` (opts present); pick whichever is a function.
+  function wire(handler: (args: string[]) => { err: Error | null; stderr?: string }): void {
+    execFileMock.mockImplementation((_file: string, args: string[], a3?: unknown, a4?: unknown) => {
+      const cb = (typeof a3 === "function" ? a3 : a4) as
+        | ((err: Error | null, stdout: string, stderr: string) => void)
+        | undefined;
+      const { err, stderr } = handler(args);
+      queueMicrotask(() => cb?.(err, "", stderr ?? ""));
+      return { kill: vi.fn() } as unknown as ChildProcess;
+    });
+  }
+  const fail = (msg: string) => Object.assign(new Error(msg), { code: 1 }) as Error;
+
+  it("returns ok without pulling when the image is already present", async () => {
+    wire((args) => (args[0] === "image" ? { err: null } : { err: fail("should not pull") }));
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(true);
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "pull")).toBe(false);
+  });
+
+  it("pulls once when absent and returns ok on a successful pull", async () => {
+    wire((args) => (args[0] === "image" ? { err: fail("No such image") } : { err: null }));
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(true);
+    expect(execFileMock.mock.calls.some((c) => (c[1] as string[])[0] === "pull")).toBe(true);
+  });
+
+  it("reports docker's pull error when the image is absent and unpullable", async () => {
+    wire((args) =>
+      args[0] === "image"
+        ? { err: fail("No such image") }
+        : { err: fail("exit 1"), stderr: "Error response from daemon: manifest unknown" },
+    );
+    const res = await ensureImageAvailable("img:tag", (m) => logs.push(m));
+    expect(res.ok).toBe(false);
+    expect(res.detail).toContain("manifest unknown");
   });
 });
 
