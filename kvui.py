@@ -2,19 +2,83 @@ import os
 import logging
 
 if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
-    # TUI frontend is active. Per-world client wrappers (kh2, albw, ...) still import
-    # GameManager from here and call ctx.run_gui() during their launch. We must preserve
-    # the takeover handshake -- server_loop blocks on `await ctx.takeover_complete.wait()`
-    # until _takeover_existing_ui() runs and sets the event -- but we must NOT pull in
-    # Kivy. Just constructing the real (Kivy-backed) GameManager opens a rogue window on
-    # top of the Textual TUI; that's the leak we're fixing here.
+    # TUI frontend is active. Per-world client wrappers (kh2, albw, kh3, ...) still do
+    # `from kvui import <kivy/kivymd names>` and call ctx.run_gui() during launch. Two
+    # requirements collide: we must NOT import Kivy (merely importing kivy.core.window
+    # opens a rogue window over the Textual TUI), yet those imports must still succeed
+    # and the names stay usable as base classes / dp() / etc., or the client crashes
+    # before the takeover handshake runs (server_loop blocks on
+    # `await ctx.takeover_complete.wait()` until _takeover_existing_ui() sets the event).
+    #
+    # Resolution: hand every Kivy/KivyMD name an inert, non-Kivy stand-in. This is
+    # semantically safe because the Kivy per-world UI is never built under the TUI --
+    # LegacyKvuiClientBuilder.build() returns early when MWGG_FRONTEND=tui -- so the
+    # stand-ins only have to survive import, subclassing, instantiation and attribute
+    # access, never rendering. GameManager stays a real class so the takeover in its
+    # async_run() keeps working.
+
+    class _InertMeta(type):
+        """Metaclass so stand-in *classes* tolerate attribute access too, e.g.
+        ``Clock.schedule_interval`` or ``App.get_running_app`` used on the class."""
+
+        def __getattr__(cls, name):
+            if name.startswith("__") and name.endswith("__"):
+                raise AttributeError(name)
+            return _INERT
+
+    class _Inert(metaclass=_InertMeta):
+        """Universal inert stand-in for a Kivy/KivyMD object under the TUI frontend.
+
+        Usable as a base class; instances accept any constructor args and tolerate
+        being called, attribute-accessed, indexed or iterated. Calling the class
+        (e.g. ``StringProperty("")``) returns an inert instance.
+        """
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __call__(self, *args, **kwargs):
+            return _INERT
+
+        def __getattr__(self, name):
+            if name.startswith("__") and name.endswith("__"):
+                raise AttributeError(name)
+            return _INERT
+
+        def __getitem__(self, key):
+            return _INERT
+
+        def __bool__(self):
+            return False
+
+        def __iter__(self):
+            return iter(())
+
+    _INERT = _Inert()
+
+    def dp(value):
+        """kivy.metrics.dp stand-in -- density is meaningless without a window, and
+        worlds use dp() in class bodies (e.g. ``height=dp(30)``), so return the value."""
+        return value
+
+    sp = dp
+    Clock = _INERT
+    Window = _INERT
 
     class GameManager:
         logging_pairs: list = []
         base_title: str = ""
 
-        def __init__(self, ctx):
+        def __init__(self, ctx, *args, **kwargs):
             self.ctx = ctx
+
+        def __getattr__(self, name):
+            # Per-world GameManager subclasses reach for Kivy-app attributes the GUI
+            # build would have supplied; under the TUI build() never runs, so answer
+            # inertly instead of crashing.
+            if name.startswith("__") and name.endswith("__"):
+                raise AttributeError(name)
+            return _INERT
 
         async def async_run(self):
             if self.ctx._can_takeover_existing_ui():
@@ -40,6 +104,18 @@ if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
 
         def remove_custom_screen(self, button):
             pass
+
+    def __getattr__(name):
+        """Serve an inert stand-in for any Kivy/KivyMD name a world client imports from
+        kvui under the TUI frontend (PEP 562). Cached as a module global so the class
+        identity is stable across imports -- multiple inheritance and any isinstance/
+        issubclass checks depend on it. Never imports Kivy."""
+        if name.startswith("__") and name.endswith("__"):
+            raise AttributeError(name)
+        stub = _InertMeta(name, (_Inert,), {})
+        globals()[name] = stub
+        logging.getLogger("kvui").debug("kvui(tui): served inert stand-in for %r", name)
+        return stub
 
 else:
     from openpyxl.xml.constants import PACKAGE_CHARTSHEETS_RELS
@@ -67,7 +143,6 @@ else:
     from kivymd.uix.gridlayout import MDGridLayout as MainLayout
     from kivymd.uix.floatlayout import MDFloatLayout as ContainerLayout
     from kivymd.uix.recycleview import MDRecycleView
-    from kivymd.uix.behaviors import HoverBehavior
     from kivymd.uix.divider import MDDivider
     from kivymd.uix.label import MDLabel
     from kivymd.uix.progressindicator import MDLinearProgressIndicator
@@ -76,6 +151,56 @@ else:
 
     from kivy.uix.image import AsyncImage as ApAsyncImage
     from kivymd.uix.tooltip import MDTooltipPlain as ToolTip
+
+    # Compatibility re-exports for world clients that do `from kvui import ...`.
+    # MultiworldGG worlds (kh3, etc.) import these canonical kivy/kivymd names from
+    # kvui; the GUI imports above bind some only under MWGG aliases (ToggleButton,
+    # MainLayout) or not at all.
+    from kivy.clock import Clock
+    from kivy.core.window import Window
+    from kivy.factory import Factory
+    from kivymd.uix.button import MDButton, MDButtonText, MDIconButton
+    from kivymd.uix.gridlayout import MDGridLayout
+    from kivymd.uix.textfield.textfield import MDTextField
+
+    # World clients subclass HoverBehavior alongside kivymd widgets, e.g.
+    # `class X(HoverBehavior, MDIconButton)`. kivymd.uix.behaviors.HoverBehavior
+    # shares an MRO-incompatible base with those widgets; this plain object-based
+    # mixin (the original MWGG HoverBehavior) linearizes cleanly and exposes the
+    # hovered/border_point/on_enter/on_leave API those clients expect.
+    class HoverBehavior(object):
+        """originally from https://stackoverflow.com/a/605348110"""
+        hovered = BooleanProperty(False)
+        border_point = ObjectProperty(None)
+
+        def __init__(self, **kwargs):
+            self.register_event_type("on_enter")
+            self.register_event_type("on_leave")
+            Window.bind(mouse_pos=self.on_mouse_pos)
+            Window.bind(on_cursor_leave=self.on_cursor_leave)
+            super(HoverBehavior, self).__init__(**kwargs)
+
+        def on_mouse_pos(self, window, pos):
+            if not self.get_root_window():
+                return  # Abort if not displayed
+            # to_widget translates window pos to within widget pos
+            inside = self.collide_point(*self.to_widget(*pos))
+            if self.hovered == inside:
+                return  # We have already done what was needed
+            self.border_point = pos
+            self.hovered = inside
+            if inside:
+                self.dispatch("on_enter")
+            else:
+                self.dispatch("on_leave")
+
+        def on_cursor_leave(self, *args):
+            # if the mouse left the window, it is no longer inside the hover widget.
+            self.hovered = BooleanProperty(False)
+            self.border_point = ObjectProperty(None)
+            self.dispatch("on_leave")
+
+    Factory.register("HoverBehavior", HoverBehavior)
 
     class GameManager:
         logging_pairs: list = []
