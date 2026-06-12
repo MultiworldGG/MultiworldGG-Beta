@@ -64,10 +64,41 @@ class _GameIndexClass:
         self._games[key] = value
 
     def search(self, query: str) -> dict:
-        return {}
+        # Faithful-enough port of the real GameIndex.search: exact-term AND, then
+        # substring fallback, returning {module_slug: game_data}. The launcher
+        # (mwgg_tui/mwgg_gui) resolves a typed query through here, so the stub must
+        # actually search rather than return {} -- otherwise a regression where a
+        # custom world never lands in the search index would pass unnoticed.
+        if not query:
+            return {}
+        terms = query.lower().split()
+        exact = [self._search_index[t] for t in terms if t in self._search_index]
+        matching: set = set()
+        if exact:
+            matching = set(exact[0])
+            for s in exact[1:]:
+                matching &= s
+        if not matching:
+            for term in terms:
+                for indexed_term, slugs in self._search_index.items():
+                    if term in indexed_term:
+                        matching |= slugs
+        return {slug: self._games.get(slug, {}) for slug in matching}
 
     def get_game(self, game_module: str) -> dict:
         return self._games.get(game_module, {})
+
+    def _index_value(self, game_module: str, value) -> None:
+        # Mirror real GameIndex._index_value: index the full lowercased string and
+        # each whitespace word, so a world is searchable by its display name.
+        if not value:
+            return
+        cleaned = str(value).lower()
+        if not cleaned:
+            return
+        self.search_index = cleaned, game_module
+        for word in cleaned.split():
+            self.search_index = word, game_module
 
     def add_game(self, game_module: str, game_data: dict) -> None:
         self._games[game_module] = game_data
@@ -75,11 +106,9 @@ class _GameIndexClass:
         if name:
             self._game_names[name] = game_module
             self._module_to_name[game_module] = name
-        for term in game_module.lower().split():
-            if term in self._search_index:
-                self._search_index[term].add(game_module)
-            else:
-                self._search_index[term] = {game_module}
+        # Searchable by display name (mirrors the real module) and by slug.
+        self._index_value(game_module, name)
+        self._index_value(game_module, game_module.replace("_", " "))
 
     def get_module_for_game(self, game_name: str, worlds: bool = False):
         module = self._game_names.get(game_name)

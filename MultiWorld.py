@@ -285,7 +285,7 @@ if __name__ == "__main__":
         from Utils import register_custom_worlds
         register_custom_worlds()
     except Exception as e:
-        logger.warning(f"Could not scan custom_worlds on launch: {e}")
+        logger.warning(f"Could not scan custom_worlds on launch: {e}", exc_info=True)
 
     # Run the main client in the current process
     run_client(args, queue=splash_queue)

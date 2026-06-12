@@ -25,7 +25,7 @@ from collections.abc import Iterable
 from typing import Any, List, Optional, TypeVar, override
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, write_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
+from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
 from APContainer import APWorldContainer
 
 # mwgg_igdb package source — orphan branch on the Index repo
@@ -135,16 +135,17 @@ class RequirementsSet(set[_T]):
 requirements_files: RequirementsSet[Path] = RequirementsSet({Path(local_path("requirements.txt"))})
 worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
-# Frozen builds: custom_worlds lives under write_path() — i.e.
-# ~/.local/share/MultiworldGG/custom_worlds on Linux, %LOCALAPPDATA% on Windows,
-# ~/Library/Application Support/ on macOS — so it's user-writable on every
-# install shape (AppImage's `/tmp/.mount_…` mount is read-only; tarball install
-# dirs may be in /opt/ etc.). Dev mode keeps using the in-repo dir for
-# convenience (drop apworlds in <repo>/custom_worlds/ and they're picked up).
-if is_frozen():
-    custom_worlds_dir = Path(write_path("custom_worlds"))
-else:
-    custom_worlds_dir = Path(local_path("custom_worlds"))
+# custom_worlds always lives next to the executable / source checkout -- the
+# upstream location, and where users actually drop their apworlds. This is the
+# single source of truth for the launch scan (register_custom_worlds /
+# get_available_worlds), Utils.set_game_names, and the launch path. Do NOT
+# special-case frozen builds to write_path(): that splits the scan from the launch
+# path and custom worlds silently stop being selectable.
+def _resolve_custom_worlds_dir() -> Path:
+    return Path(local_path("custom_worlds"))
+
+
+custom_worlds_dir = _resolve_custom_worlds_dir()
 
 # Best-effort mkdir. Skipped silently on the rare read-only filesystem; the
 # downstream readers already handle missing directories.
