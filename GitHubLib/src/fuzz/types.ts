@@ -56,6 +56,7 @@ export interface FuzzWorldResult {
   detail: string;                       // human summary line for the comment table
   stats?: Record<string, number>;       // success/failure/timeout/ignored/total
   scan?: Record<string, unknown>;       // bandit/pip-audit/ruff/size/rom/import findings
+  fuzzerDetails?: string[];             // per-error summary ("ErrorKey (N)") for the fuzzer Findings block
   exitCode: number;
   timedOut: boolean;
 }

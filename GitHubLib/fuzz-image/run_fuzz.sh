@@ -73,6 +73,10 @@ STATUS="fail"
 EXIT_CODE=1
 STATS_JSON='{"success":0,"failure":0,"timeout":0,"ignored":0,"rom":0,"real":0,"total":0}'
 SCAN_JSON='{}'
+# The fuzzer's per-error summary ("ErrorKey (count)" lines from report.json),
+# surfaced as the fuzzer's own Findings block in the comment. Empty until a
+# classified report is read in run().
+FUZZER_DETAILS_JSON='[]'
 RESULT_WRITTEN=0
 
 mkdir -p "${OUT}"
@@ -121,9 +125,9 @@ ruff_note() {
     n="$(jq 'if type == "array" then length else 0 end' "${OUT}/ruff.json" 2>/dev/null || printf 0)"
     case "$n" in
         ''|*[!0-9]*) printf '' ;;
-        0)           printf 'no lint findings' ;;
-        1)           printf '1 lint finding' ;;
-        *)           printf '%s lint findings' "$n" ;;
+        0)           printf 'no linter flags' ;;
+        1)           printf '1 linter flag' ;;
+        *)           printf '%s linter flags' "$n" ;;
     esac
 }
 
@@ -139,15 +143,16 @@ scan_details() {
     ' "${OUT}/scan.json" 2>/dev/null || printf '[]'
 }
 
-# Up to 25 ruff diagnostics as "file:line CODE  message" strings (compact JSON
-# array) so the lint findings, not just their count, reach the comment.
+# ruff's "finding" is a single actionable pointer, not the raw diagnostics (which
+# run into the thousands on large worlds) — only emitted when there's something to fix.
 ruff_details() {
     [ -s "${OUT}/ruff.json" ] || { printf '[]'; return; }
-    jq -c '
-        if type == "array"
-        then [ .[:25][] | "\(.filename // "?"):\(.location.row // "?") \(.code // "")  \(.message // "")" ]
-        else [] end
-    ' "${OUT}/ruff.json" 2>/dev/null || printf '[]'
+    local n
+    n="$(jq 'if type == "array" then length else 0 end' "${OUT}/ruff.json" 2>/dev/null || printf 0)"
+    case "$n" in
+        ''|*[!0-9]*|0) printf '[]' ;;
+        *) printf '%s' '["Run `pip install ruff && ruff check --fix` on your repo to fix many of these"]' ;;
+    esac
 }
 
 # Last ~4KB of the combined log, JSON-safe. Truncated to the TAIL of the file so a
@@ -190,12 +195,14 @@ write_result() {
         --argjson rom_d "$(scan_details no_rom_files)" \
         --argjson net_d "$(scan_details no_network_at_import)" \
         --argjson ruff_d "$(ruff_details)" \
+        --argjson fuzzer_d "${FUZZER_DETAILS_JSON}" \
         --argjson exit_code "${EXIT_CODE}" \
         --argjson log_tail "$(log_tail_json)" \
         '{
             slug: $slug,
             status: $status,
             stats: $stats,
+            fuzzer_details: $fuzzer_d,
             scan: {
                 bandit: {status: $bandit_s, note: $bandit_n, details: $bandit_d},
                 pip_audit: {status: "skipped", note: "not run in the offline sandbox", details: []},
@@ -552,6 +559,14 @@ PY
     local s_status s_succ s_fail s_to s_ign s_rom s_real s_total
     read -r s_status s_succ s_fail s_to s_ign s_rom s_real s_total <<< "${classified}"
     log "classified: status=${s_status} success=${s_succ} failure=${s_fail} timeout=${s_to} ignored=${s_ign} rom=${s_rom} real=${s_real} total=${s_total}"
+
+    # Per-error summary for the fuzzer's Findings block: each distinct error key
+    # report.json recorded, with how many generations hit it ("ErrorKey (N)").
+    # Keys truncated + capped so a traceback-shaped key can't bloat the comment.
+    FUZZER_DETAILS_JSON="$(jq -c '
+        [ (.errors // {}) | .[] | to_entries[] | "\(.key | tostring | .[0:200]) (\(.value | length))" ] | .[:20]
+    ' "${report}" 2>>"${LOG}" || printf '[]')"
+    [ -n "${FUZZER_DETAILS_JSON}" ] || FUZZER_DETAILS_JSON='[]'
 
     # --- (g) Assemble the verdict the trap will write. A pass/warn is a SUCCESSFUL
     # run (exit 0); only setup/verification failures are non-zero. A classifier
