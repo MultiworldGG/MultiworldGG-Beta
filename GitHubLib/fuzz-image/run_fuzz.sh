@@ -172,10 +172,11 @@ write_result() {
     local ruff_status="missing"
     [ -s "${OUT}/ruff.json" ] && ruff_status="captured"
 
-    # Each scan check is {status, note}: status drives the glyph, note is the
-    # human message the bot shows in the Notes column (item parity with Karen's
-    # manifest-review tables). pip_audit can't run offline; ruff is summarized
-    # from its finding count, everything else from karen_review's scan.json.
+    # Each scan check is {status, note, details}: status drives the glyph, note is
+    # the one-line summary, details the findings. ruff is summarized from its flag
+    # count; everything else from karen_review's scan.json. (pip_audit is NOT here:
+    # it needs network, so it runs on the CI runner in karen-pr-review.yml, not in
+    # this offline sandbox.)
     jq -n \
         --arg slug "${SLUG:-unknown}" \
         --arg status "${STATUS}" \
@@ -205,7 +206,6 @@ write_result() {
             fuzzer_details: $fuzzer_d,
             scan: {
                 bandit: {status: $bandit_s, note: $bandit_n, details: $bandit_d},
-                pip_audit: {status: "skipped", note: "not run in the offline sandbox", details: []},
                 size_sanity: {status: $size_s, note: $size_n, details: $size_d},
                 no_rom_files: {status: $rom_s, note: $rom_n, details: $rom_d},
                 no_network_at_import: {status: $net_s, note: $net_n, details: $net_d},
