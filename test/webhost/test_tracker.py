@@ -119,11 +119,11 @@ class TestTracker(TestBase):
                 data = response.get_json()
 
         self.assertEqual(set(data), {
-            "aliases", "player_items_received", "player_checks_done", "total_checks_done",
-            "hints", "activity_timers", "connection_timers", "player_status",
+            "aliases", "player_avatars", "player_items_received", "player_checks_done",
+            "total_checks_done", "hints", "activity_timers", "connection_timers", "player_status",
         })
         # No player-type slots, so every per-player list is empty.
-        for key in ("aliases", "player_items_received", "player_checks_done",
+        for key in ("aliases", "player_avatars", "player_items_received", "player_checks_done",
                     "activity_timers", "connection_timers", "player_status"):
             self.assertEqual(data[key], [], key)
         # total_checks_done is keyed by team via get_team_locations_checked_count(); one team, no checks.

@@ -374,8 +374,37 @@ if __name__ == "__main__":
     args.patch_file = None
     if args.launch_file:
         if args.launch_file.startswith(("archipelago://", "mwgg://", "multiworldgg://")):
-            # Launch URLs open the launcher GUI; connection details are entered there.
-            logger.info(f"Launched with URL {args.launch_file}; opening launcher.")
+            # Decompose the launch URL into connection prefs + the website-chosen
+            # avatar. Persist them so the launcher seeds its hostname/port/slot
+            # fields (from last_server_*) and its avatar (from client.avatar), and
+            # set the launch args so the UI-ready routing below auto-connects to
+            # the room when its game is installed.
+            logger.info(f"Launched with URL {args.launch_file}")
+            try:
+                from CommonClient import parse_connect_url, safe_avatar_source
+                from Utils import persistent_store
+                parsed = parse_connect_url(args.launch_file)
+                if parsed:
+                    host, port, name = parsed["hostname"], parsed["port"], parsed["name"]
+                    if host:
+                        persistent_store("client", "last_server_hostname", host)
+                        if port:
+                            persistent_store("client", "last_server_port", port)
+                        host_port = f"{host}:{port}" if port else host
+                        args.server_address = f"{name}@{host_port}" if name else host_port
+                    if name:
+                        persistent_store("client", "last_username", name)
+                        args.slot_name = name
+                    safe_avatar = safe_avatar_source(parsed["avatar"])
+                    if safe_avatar:
+                        persistent_store("client", "avatar", safe_avatar)
+                    if parsed["game"]:
+                        from mwgg_igdb import GameIndex
+                        module_name = GameIndex.get_module_for_game(parsed["game"])
+                        if module_name:
+                            args.game = module_name
+            except Exception:
+                logger.warning("Failed to apply launch URL %r", args.launch_file, exc_info=True)
         elif os.path.isfile(args.launch_file):
             from Utils import read_patch_game_name
             game_name = read_patch_game_name(args.launch_file)

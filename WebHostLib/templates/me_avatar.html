@@ -1,0 +1,51 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>My avatar · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([
+        ('Games Hub', url_for('me')),
+        ('Avatar', none),
+    ]) }}
+
+    <div class="mw-me-page">
+        <h1>Your avatar</h1>
+
+        <nav class="mw-me-subnav" aria-label="Dashboard sections">
+            <a href="{{ url_for('me') }}">Overview</a>
+            <a href="{{ url_for('my_rooms') }}">Rooms</a>
+            <a href="{{ url_for('my_lobbies') }}">Lobbies</a>
+            <a href="{{ url_for('my_seeds') }}">Seeds</a>
+            <a href="{{ url_for('me_avatar') }}" class="active">Avatar</a>
+        </nav>
+
+        <p class="mw-me-subtitle">
+            Uploaded here, your avatar follows this browser session and shows up beside
+            the slots you play. You can also set one from inside the desktop client.
+        </p>
+
+        <div class="mw-avatar-manage">
+            <div class="mw-avatar-current">
+                <img src="{{ avatar_url or url_for('static', filename='static/branding/controller-icon.png') }}"
+                     alt="Your current avatar" width="100" height="100" />
+            </div>
+
+            <form action="{{ url_for('me_avatar_upload') }}" method="post" enctype="multipart/form-data">
+                <label for="avatar-image">Choose an image (PNG/JPG, max 5&nbsp;MB)</label>
+                <input id="avatar-image" type="file" name="image" accept="image/*" required />
+                <button type="submit">Upload</button>
+            </form>
+
+            {% if avatar_url %}
+                <form action="{{ url_for('me_avatar_remove') }}" method="post">
+                    <button type="submit" class="mw-avatar-remove">Remove avatar</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
