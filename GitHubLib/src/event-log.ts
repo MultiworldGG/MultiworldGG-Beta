@@ -30,7 +30,7 @@ export type EventReason =
   // Bundled multi-world release (handlers/shared.ts bundle path).
   | "bundle_wheel_unrecognized"
   | "bundle_no_valid_worlds"
-  | "bundle_world_not_on_index"
+  | "bundle_world_no_manifest"
   // Karen fuzz/scan dispatch (handlers/fuzz_dispatch.ts).
   | "fuzz_bad_payload"
   | "fuzz_not_index_repo"
