@@ -92,9 +92,12 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
     total += charLen(head);
 
     // The actual findings behind the summary counts ("8 issues" -> the 8 hits),
-    // collapsed like Karen's manifest review. Per-check capped, and the whole
-    // block is skipped if it would push the region past the budget.
+    // collapsed like Karen's manifest review. The fuzzer's own per-error summary
+    // leads, then each scan check. Per-section capped, and the whole block is
+    // skipped if it would push the region past the budget.
     const findings = scanDetailSections(r.scan);
+    const fuzzerSection = fuzzerDetailSection(r);
+    if (fuzzerSection) findings.unshift(fuzzerSection);
     if (findings.length === 0) continue;
     const block: string[] = ["<details><summary>Findings</summary>", ""];
     for (const sec of findings) {
@@ -210,6 +213,15 @@ function scanDetailSections(
     sections.push({ label: SCAN_LABELS[key] ?? key, lines: shown });
   }
   return sections;
+}
+
+/** The fuzzer's per-error summary as its own Findings section (capped), or null. */
+function fuzzerDetailSection(r: FuzzWorldResult): { label: string; lines: string[] } | null {
+  const all = (r.fuzzerDetails ?? []).filter((d): d is string => typeof d === "string");
+  if (all.length === 0) return null;
+  const shown = all.slice(0, MAX_DETAIL_LINES);
+  if (all.length > shown.length) shown.push(`…and ${all.length - shown.length} more`);
+  return { label: "fuzzer", lines: shown };
 }
 
 /** Flatten a finding to a single safe Markdown list-item line. */

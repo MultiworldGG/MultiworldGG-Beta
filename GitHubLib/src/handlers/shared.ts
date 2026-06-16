@@ -308,8 +308,8 @@ export async function processReleaseAssets({
           slug: skippedSlug,
           release_tag: releaseTag,
           release_sha: releaseSha,
-          reason: "bundle_world_not_on_index",
-          message: `World '${skippedSlug}' from bundle ${releaseTag} is not on the Index; skipped (no manifest to copy).`,
+          reason: "bundle_world_no_manifest",
+          message: `World '${skippedSlug}' from bundle ${releaseTag} has no archipelago.json in its wheel; skipped (nothing to seed a manifest from).`,
         });
       }
       if (!result.opened) {
@@ -432,10 +432,9 @@ export function slugFromBundleWheelName(name: string): string | null {
 
 // Turn a bundle's wheel assets into per-world entries, logging a per-world skip
 // (and dropping just that world) for an unrecognized wheel name, a duplicate
-// slug, or a missing SHA256 digest. The manifest is NOT fetched here: the
-// bundle copies each world's existing Index manifest and rewrites only the wheel
-// pointer (the Beta repo carries no per-world archipelago.json at the release
-// commit, so there is nothing to fetch from the source side).
+// slug, or a missing SHA256 digest. The manifest is NOT fetched here — the PR
+// opener (openOrUpdateBundleIndexPR) reads each world's archipelago.json out of
+// its wheel to seed/merge the Index manifest.
 function buildBundleWorlds(params: {
   releaseTag: string;
   releaseSha: string;

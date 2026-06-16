@@ -1,5 +1,7 @@
 import type { ProbotOctokit } from "probot";
 
+import { fetchWheelManifest } from "./wheel-manifest";
+
 export interface IndexBotData {
   id: number;
   client_id: string;
@@ -252,6 +254,11 @@ export interface BundleIndexPROpts {
   releaseTag: string;
   // One entry per changed world's wheel; caller guarantees length >= 1.
   worlds: BundleWorld[];
+  // Read a world's archipelago.json out of its wheel. Injected in tests; defaults
+  // to the real download+unzip (wheel-manifest.ts). Returns null when the wheel
+  // can't be fetched/verified or carries no archipelago.json → that world is
+  // skipped (the ONLY skip reason — a world with a manifest is always included).
+  fetchManifest?: (moduleLocation: string, slug: string) => Promise<Record<string, unknown> | null>;
 }
 
 export interface BundleIndexPRResult {
@@ -260,18 +267,19 @@ export interface BundleIndexPRResult {
   branchName: string;
   created: boolean;
   updatedWorldSlugs: string[];
-  // Bundled worlds not yet on the Index (no manifest to copy).
+  // Bundled worlds whose wheel carried no archipelago.json (nothing to seed from).
   skippedSlugs: string[];
 }
 
 // Open (or update) ONE combined Index PR for a bundled multi-world release.
-// Each bundled world already lives on the Index: copy its `worlds/<slug>.json`
-// verbatim and rewrite only `module_location` (the new wheel URL), preserving
-// every other field and the file's indentation so the diff is a single line.
-// A bundled world that isn't on the Index is skipped — the Beta repo carries no
-// per-world archipelago.json at the release commit, so there's nothing to seed a
-// new manifest from. Same split as the single-world path: Karen (Contents:Write)
-// creates the branch and commits the manifests; Oliver opens and labels the PR.
+// Each world's manifest is SEEDED from the `archipelago.json` inside its release
+// wheel (same source of truth as the single-world path), merged with the new
+// wheel's module_location/disk_space_mb and the igdb_id preserved from any
+// existing Index manifest. This adds brand-new worlds (not yet on the Index), not
+// just updates existing ones. A world is skipped ONLY when its wheel carries no
+// archipelago.json (nothing to seed from). Same split as the single-world path:
+// Karen (Contents:Write) creates the branch and commits the manifests; Oliver
+// opens and labels the PR.
 export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promise<BundleIndexPRResult> {
   const {
     karenOctokit,
@@ -285,53 +293,67 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     releaseTag,
     worlds,
   } = opts;
+  const fetchManifest = opts.fetchManifest ?? fetchWheelManifest;
 
   const branchName = `update/${releaseTag}`;
 
   const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
-  // Plan from the canonical default-branch manifests. Reading each manifest from
-  // main (NOT the PR branch) makes every run self-healing: a prior bad commit on
-  // the branch is overwritten with the correct manifest. A world absent from main
-  // is skipped — there is nothing to copy. Copying spreads currentJson first so
-  // every field and module_location's key position survive; only the URL changes.
+  // Plan each world from its wheel's archipelago.json (the author's source of
+  // truth), merged with the new module_location and the igdb_id preserved from
+  // the canonical default-branch manifest. Reading the existing manifest from
+  // main (NOT the PR branch) keeps every run self-healing — a prior bad commit on
+  // the branch is overwritten. A new world has no main manifest ({}), so it's
+  // created. A world is skipped ONLY when its wheel has no archipelago.json.
   const planned: Array<{
     slug: string;
     wheelAssetName: string;
     wheelAssetSize: number;
     content: string;
     needsIgdb: boolean;
+    isNew: boolean;
   }> = [];
   const skippedSlugs: string[] = [];
   for (const w of worlds) {
-    const filePath = `worlds/${w.slug}.json`;
+    const sourceManifest = await fetchManifest(w.moduleLocation, w.slug);
+    if (sourceManifest === null) {
+      skippedSlugs.push(w.slug);
+      continue;
+    }
+    // Existing Index manifest (for igdb_id + indentation); absent/malformed → {}.
     let raw: string | null = null;
     try {
       const f = await karenOctokit.rest.repos.getContent({
         owner: indexOwner,
         repo: indexName,
-        path: filePath,
+        path: `worlds/${w.slug}.json`,
         ref: defaultBranch,
       });
       if (!Array.isArray(f.data) && f.data.type === "file") {
         raw = Buffer.from(f.data.content, f.data.encoding as BufferEncoding).toString("utf-8");
       }
     } catch {
-      // 404 → not on the Index
+      // 404 → brand-new world (seed it from the wheel).
     }
-    if (raw === null) {
-      skippedSlugs.push(w.slug);
-      continue;
+    let currentJson: Record<string, unknown> = {};
+    if (raw !== null) {
+      try {
+        currentJson = JSON.parse(raw) as Record<string, unknown>;
+      } catch {
+        currentJson = {}; // malformed existing manifest — the wheel is canonical
+      }
     }
-    const currentJson = JSON.parse(raw) as Record<string, unknown>;
-    const updated = { ...currentJson, module_location: w.moduleLocation };
+    const merged = mergeWorldManifest(sourceManifest, currentJson, w.moduleLocation, w.wheelAssetSize);
     planned.push({
       slug: w.slug,
       wheelAssetName: w.wheelAssetName,
       wheelAssetSize: w.wheelAssetSize,
-      content: JSON.stringify(updated, null, detectJsonIndent(raw)) + "\n",
-      needsIgdb: !("igdb_id" in updated),
+      // Preserve an existing manifest's indentation (small update diff); a new
+      // world matches the single-world path's two-space style.
+      content: JSON.stringify(merged, null, raw !== null ? detectJsonIndent(raw) : 2) + "\n",
+      needsIgdb: !("igdb_id" in merged),
+      isNew: raw === null,
     });
   }
   if (planned.length === 0) {
@@ -396,7 +418,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     `**Location:** \`${sourceOwner}/${sourceRepo}@${releaseTag}\``,
     `**Release tag:** \`${releaseTag}\``,
     `**APWorlds:** ${updatedWorldSlugs.map((s) => `\`${s}\``).join(", ")}`,
-    ...(skippedSlugs.length ? [`**Skipped (not on Index):** ${skippedSlugs.join(", ")}`] : []),
+    ...(skippedSlugs.length ? [`**Skipped (no archipelago.json in wheel):** ${skippedSlugs.join(", ")}`] : []),
     ``,
     ...bodyWorldLines,
     ``,
@@ -444,7 +466,9 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
     created = false;
   }
 
-  const labels = [UPDATE_WORLD_LABEL];
+  const labels: string[] = [];
+  if (planned.some((p) => p.isNew)) labels.push(NEW_WORLD_LABEL);
+  if (planned.some((p) => !p.isNew)) labels.push(UPDATE_WORLD_LABEL);
   if (anyNeedsIgdb) labels.push(NEEDS_IGDB_ID_LABEL);
   await oliverOctokit.rest.issues.addLabels({
     owner: indexOwner,

@@ -240,6 +240,13 @@ function coerceScan(raw: unknown): Record<string, unknown> | undefined {
   return raw as Record<string, unknown>;
 }
 
+/** Keep only the string members of a JSON array (the fuzzer's per-error lines). */
+function coerceStringArray(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out = raw.filter((v): v is string => typeof v === "string");
+  return out.length > 0 ? out : undefined;
+}
+
 /** A short, single-line excerpt of the container's tail log for the comment detail. */
 function summarizeTail(logTail: unknown): string {
   if (typeof logTail !== "string" || logTail.length === 0) return "";
@@ -357,6 +364,7 @@ interface ContainerResult {
   status: FuzzStatus;
   stats?: Record<string, number>;
   scan?: Record<string, unknown>;
+  fuzzerDetails?: string[];
   exitCode: number;
   detail: string;
 }
@@ -404,6 +412,7 @@ async function readContainerResult(
   const status = coerceStatus(parsed.status);
   const stats = coerceStats(parsed.stats);
   const scan = coerceScan(parsed.scan);
+  const fuzzerDetails = coerceStringArray(parsed.fuzzer_details);
   const tail = summarizeTail(parsed.log_tail);
 
   // A non-zero in-container exit means the wheel sha256 check (or another guard)
@@ -414,6 +423,7 @@ async function readContainerResult(
       status: "fail",
       stats,
       scan,
+      fuzzerDetails,
       exitCode,
       detail: `${job.slug}: container failed (exit ${exitCode}): ${reason}`,
     };
@@ -421,7 +431,7 @@ async function readContainerResult(
 
   const detail =
     tail.length > 0 ? `${job.slug}: ${status} — ${tail}` : `${job.slug}: ${status}`;
-  return { status, stats, scan, exitCode, detail };
+  return { status, stats, scan, fuzzerDetails, exitCode, detail };
 }
 
 /** Best-effort forced removal of a container by name; never rejects. */
@@ -606,6 +616,7 @@ export async function runFuzzContainer(
       detail: result.detail,
       stats: result.stats,
       scan: result.scan,
+      fuzzerDetails: result.fuzzerDetails,
       exitCode: result.exitCode,
       timedOut: false,
     };
