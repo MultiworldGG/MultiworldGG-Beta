@@ -754,8 +754,20 @@ function indexManifest(game: string, extra: Record<string, unknown> = {}) {
   );
 }
 
+// The author's archipelago.json, as read from inside the world's wheel.
+function wheelManifest(game: string, extra: Record<string, unknown> = {}): Record<string, unknown> {
+  return { minimum_ap_version: "0.6.5", world_version: "2.0.0", authors: ["A"], game, ...extra };
+}
+
+// Stand in for the real download+unzip: serve a manifest per slug, null otherwise
+// (null = "wheel has no archipelago.json" = the only skip path).
+function fetchFor(bySlug: Record<string, Record<string, unknown> | null>) {
+  return async (_moduleLocation: string, slug: string): Promise<Record<string, unknown> | null> =>
+    slug in bySlug ? bySlug[slug] : null;
+}
+
 describe("openOrUpdateBundleIndexPR", () => {
-  it("copies each existing Index manifest and rewrites only module_location", async () => {
+  it("seeds each world's manifest from its wheel, preserving igdb_id from the Index", async () => {
     const state = makeFakeIndex({
       files: {
         main: {
@@ -768,6 +780,10 @@ describe("openOrUpdateBundleIndexPR", () => {
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("oot")]),
       ...octokits,
+      fetchManifest: fetchFor({
+        dk64: wheelManifest("Donkey Kong 64"),
+        oot: wheelManifest("Ocarina of Time"),
+      }),
     });
 
     expect(result.opened).toBe(true);
@@ -777,40 +793,44 @@ describe("openOrUpdateBundleIndexPR", () => {
     expect(manifestPaths(state)).toEqual(["worlds/dk64.json", "worlds/oot.json"]);
 
     const dk = manifestWrite(state, "worlds/dk64.json");
-    // Every rich field survives; only module_location changes.
+    // Wheel is canonical (world_version 2.0.0, not the Index's 1.5.7); module_location
+    // + disk_space_mb stamped; igdb_id preserved from the existing Index manifest.
     expect(dk).toMatchObject({
-      minimum_ap_version: "0.6.5",
-      world_version: "1.5.7",
-      authors: ["Dev One", "Dev Two"],
-      igdb_id: 1096,
       game: "Donkey Kong 64",
+      world_version: "2.0.0",
+      authors: ["A"],
+      igdb_id: 1096,
     });
     expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
+    expect(dk.disk_space_mb).toBe(1);
 
     expect(state.writes.filter((w) => w.kind === "branch")).toHaveLength(1);
     expect(state.writes.filter((w) => w.kind === "pulls.create")).toHaveLength(1);
-    expect(state.writes.filter((w) => w.kind === "graphql")).toHaveLength(1);
     const label = state.writes.find((w) => w.kind === "labels");
-    expect(label?.payload.labels).toEqual(["APWorld Update"]);
+    expect(label?.payload.labels).toEqual(["APWorld Update"]); // both already on the Index
     // The bundle never touches CODEOWNERS.
     expect(
       state.writes.find((w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS"),
     ).toBeUndefined();
   });
 
-  it("preserves the manifest's existing indentation (one-line diff)", async () => {
+  it("preserves an existing manifest's indentation", async () => {
     const fourSpace = JSON.stringify({ game: "G", igdb_id: 1, module_location: "old" }, null, 4);
     const state = makeFakeIndex({
       files: { main: { "worlds/dk64.json": { content: fourSpace, sha: "dk" } } },
     });
     const octokits = makeBundleOctokits(state);
-    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), ...octokits });
+    await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
+    });
 
     const write = state.writes.find((w) => w.kind === "file" && w.payload.path === "worlds/dk64.json");
-    expect(write?.payload.content).toContain('\n    "game"'); // 4-space indent retained
+    expect(write?.payload.content).toContain('\n    "'); // 4-space indent retained
   });
 
-  it("skips bundled worlds not on the Index but opens the PR for the rest", async () => {
+  it("seeds a brand-new world (not on the Index) from its wheel alongside an update", async () => {
     const state = makeFakeIndex({
       files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
     });
@@ -818,21 +838,50 @@ describe("openOrUpdateBundleIndexPR", () => {
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("newbie")]),
       ...octokits,
+      fetchManifest: fetchFor({
+        dk64: wheelManifest("Donkey Kong 64"),
+        newbie: wheelManifest("New Game", { igdb_id: 555 }),
+      }),
+    });
+
+    expect(result.opened).toBe(true);
+    expect(result.updatedWorldSlugs).toEqual(["dk64", "newbie"]);
+    expect(result.skippedSlugs).toEqual([]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json", "worlds/newbie.json"]);
+
+    const newbie = manifestWrite(state, "worlds/newbie.json");
+    expect(newbie).toMatchObject({ game: "New Game", igdb_id: 555 });
+    expect(newbie.module_location).toBe(bundleWorld("newbie").moduleLocation);
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld", "APWorld Update"]);
+  });
+
+  it("skips only the world whose wheel has no archipelago.json", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
+    });
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("broken")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64"), broken: null }),
     });
 
     expect(result.opened).toBe(true);
     expect(result.updatedWorldSlugs).toEqual(["dk64"]);
-    expect(result.skippedSlugs).toEqual(["newbie"]);
+    expect(result.skippedSlugs).toEqual(["broken"]);
     expect(manifestPaths(state)).toEqual(["worlds/dk64.json"]);
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeDefined();
   });
 
-  it("opens no PR when no bundled world is on the Index", async () => {
+  it("opens no PR when no wheel carries an archipelago.json", async () => {
     const state = makeFakeIndex(); // empty main
     const octokits = makeBundleOctokits(state);
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta")]),
       ...octokits,
+      fetchManifest: fetchFor({ alpha: null, beta: null }),
     });
 
     expect(result.opened).toBe(false);
@@ -841,7 +890,7 @@ describe("openOrUpdateBundleIndexPR", () => {
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
   });
 
-  it("re-runs from Index main (self-healing) and updates the existing PR", async () => {
+  it("re-runs self-healing: re-seeds from the wheel + main's igdb, updates the existing PR", async () => {
     const branch = `update/${BUNDLE_TAG}`;
     const stripped = JSON.stringify({ module_location: "stale" }, null, 2); // a prior bad commit
     const state = makeFakeIndex({
@@ -856,27 +905,31 @@ describe("openOrUpdateBundleIndexPR", () => {
     const result = await openOrUpdateBundleIndexPR({
       ...bundleBaseOpts([bundleWorld("dk64")]),
       ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
     });
 
     expect(result.created).toBe(false);
     expect(result.prNumber).toBe(42);
     expect(result.updatedWorldSlugs).toEqual(["dk64"]);
-    // The commit restores the rich fields from main, not the stripped branch copy.
+    // Re-seeded from the wheel (world_version 2.0.0); igdb_id restored from main.
     const dk = manifestWrite(state, "worlds/dk64.json");
-    expect(dk).toMatchObject({ game: "Donkey Kong 64", authors: ["Dev One", "Dev Two"], igdb_id: 1096 });
+    expect(dk).toMatchObject({ game: "Donkey Kong 64", world_version: "2.0.0", igdb_id: 1096 });
     expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
     expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
     expect(state.writes.find((w) => w.kind === "pulls.update")).toBeDefined();
-    expect(state.writes.find((w) => w.kind === "graphql")).toBeUndefined();
   });
 
-  it("labels 'Needs IGDB id' when a copied manifest lacks an igdb_id", async () => {
+  it("labels 'Needs IGDB id' when neither the wheel nor the Index manifest has one", async () => {
     const noIgdb = JSON.stringify({ game: "G", world_version: "1.0.0", module_location: "old" }, null, 2);
     const state = makeFakeIndex({
       files: { main: { "worlds/alpha.json": { content: noIgdb, sha: "a" } } },
     });
     const octokits = makeBundleOctokits(state);
-    await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("alpha")]), ...octokits });
+    await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha")]),
+      ...octokits,
+      fetchManifest: fetchFor({ alpha: wheelManifest("G") }), // wheel has no igdb_id either
+    });
 
     const label = state.writes.find((w) => w.kind === "labels");
     expect(label?.payload.labels).toEqual(["APWorld Update", "Needs IGDB id"]);
@@ -887,7 +940,11 @@ describe("openOrUpdateBundleIndexPR", () => {
       files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
     });
     const octokits = makeBundleOctokits(state, { graphqlThrows: new Error("auto_merge disabled") });
-    const result = await openOrUpdateBundleIndexPR({ ...bundleBaseOpts([bundleWorld("dk64")]), ...octokits });
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
+    });
 
     expect(result.created).toBe(true);
     expect(state.writes.find((w) => w.kind === "labels")).toBeDefined();

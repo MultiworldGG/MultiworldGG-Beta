@@ -394,6 +394,25 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     expect(md).not.toContain("<details><summary>Findings</summary>");
   });
 
+  it("leads the Findings block with the fuzzer's per-error summary", () => {
+    const md = renderFuzzRegion([
+      result({
+        slug: "papermario",
+        status: "fail",
+        detail: "fuzzed",
+        stats: { success: 1, failure: 49, timeout: 0, ignored: 0, rom: 0, real: 49, total: 50 },
+        fuzzerDetails: ["FillError: no room for item (37)", "KeyError: 'foo' (12)"],
+        scan: { bandit: { status: "pass", note: "clean", details: [] } },
+      }),
+    ]);
+    expect(md).toContain("<details><summary>Findings</summary>");
+    expect(md).toContain("**fuzzer**");
+    expect(md).toContain("- FillError: no room for item (37)");
+    expect(md).toContain("- KeyError: 'foo' (12)");
+    // the fuzzer section leads the block (before any scan section)
+    expect(md.indexOf("**fuzzer**")).toBeLessThan(md.indexOf("</details>"));
+  });
+
   it("drops Findings blocks (keeping every table) past the region size budget", () => {
     const long = "x".repeat(400);
     const worlds = Array.from({ length: 20 }, (_, i) =>

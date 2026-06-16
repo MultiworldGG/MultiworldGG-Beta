@@ -5,6 +5,20 @@ import * as path from "path";
 import { handleReleasePublished } from "../src/handlers/release_published";
 import { IndexBotData } from "../src/index-pr";
 
+// The bundle path reads each world's archipelago.json out of its wheel (a real
+// download+unzip). Mock that boundary: by default every recognized world has a
+// seedable manifest; a test sets a slug to null to exercise the no-manifest skip.
+const { wheelManifests } = vi.hoisted(() => ({
+  wheelManifests: new Map<string, Record<string, unknown> | null>(),
+}));
+vi.mock("../src/wheel-manifest", () => ({
+  fetchWheelManifest: async (_moduleLocation: string, slug: string) =>
+    wheelManifests.has(slug)
+      ? wheelManifests.get(slug)
+      : { game: slug, world_version: "1.0.0", igdb_id: 1 },
+}));
+beforeEach(() => wheelManifests.clear());
+
 // ---------------------------------------------------------------------------
 // Fixture types
 // ---------------------------------------------------------------------------
@@ -647,7 +661,7 @@ describe("handleReleasePublished — bundled multi-world release", () => {
     expect(writes).toContain("pulls.create");
   });
 
-  it("skips a bundled world that is not on the Index, still opening the PR for the rest", async () => {
+  it("seeds a brand-new world (not on the Index) from its wheel alongside an update", async () => {
     const state: RepoState = {
       releases: [
         {
@@ -659,7 +673,38 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       indexInstall: { id: 12345 },
     };
     const writes: string[] = [];
-    // Only dk64 is on the Index; ghost has no manifest to copy.
+    // Only dk64 is on the Index; ghost is new — both wheels carry archipelago.json
+    // (the mock default), so both are committed.
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events.some((e) => e.reason === "bundle_world_no_manifest")).toBe(false);
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).sort()).toEqual([
+      "commit:worlds/dk64.json",
+      "commit:worlds/ghost.json",
+    ]);
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("skips a world whose wheel has no archipelago.json, still opening the PR for the rest", async () => {
+    wheelManifests.set("ghost", null); // ghost's wheel carries no manifest → skipped
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("ghost")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
     const { probot, karenProbot } = makeBundleProbots(
       { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
       writes,
@@ -669,13 +714,15 @@ describe("handleReleasePublished — bundled multi-world release", () => {
 
     const events = readEvents();
     expect(events).toContainEqual(
-      expect.objectContaining({ kind: "skip", reason: "bundle_world_not_on_index", slug: "ghost" }),
+      expect.objectContaining({ kind: "skip", reason: "bundle_world_no_manifest", slug: "ghost" }),
     );
     expect(events.find((e) => e.kind === "ok")).toBeDefined();
     expect(writes.filter((w) => w.startsWith("commit:worlds/"))).toEqual(["commit:worlds/dk64.json"]);
   });
 
-  it("logs bundle_no_valid_worlds and opens no PR when no wheel is on the Index", async () => {
+  it("opens no PR when no wheel carries an archipelago.json", async () => {
+    wheelManifests.set("ghost1", null);
+    wheelManifests.set("ghost2", null);
     const state: RepoState = {
       releases: [
         {
@@ -687,7 +734,7 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       indexInstall: { id: 12345 },
     };
     const writes: string[] = [];
-    const { probot, karenProbot } = makeBundleProbots({}, writes); // nothing on the Index
+    const { probot, karenProbot } = makeBundleProbots({}, writes);
 
     await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
 

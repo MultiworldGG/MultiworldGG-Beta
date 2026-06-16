@@ -26,8 +26,10 @@ PEP 427 filename — the bot mounts exactly one `.whl` there), under `/work`
 3. **Scan** the extracted dir with the pinned `karen_review.py --world-dir`
    (`size_sanity`, `no_rom_files`, `no_network_at_import`, `bandit`) ⇒
    `/out/scan.json`; plus `ruff check --output-format json` ⇒ `/out/ruff.json`
-   (both advisory, never abort the run). `pip_audit` is **not** run: it queries
-   PyPI's advisory DB online and the container is `--network none`.
+   (both advisory, never abort the run). `pip_audit` is **not** run here: it needs
+   network (OSV) which this `--network none` sandbox lacks, so it runs on the CI
+   runner instead (the Index's `karen-pr-review.yml` → `karen_review.py`, via
+   `uv audit` on the wheel's declared deps).
 4. **Stage** the baked core (`/opt/fuzz/core`, including its relocatable `.venv`)
    into `/work/core` with `cp -a`, then install the candidate wheel into that venv
    with `uv pip install --offline --no-deps`. No clone, no `uv venv`, no network —
@@ -104,7 +106,6 @@ The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
   },
   "scan": {
     "bandit":               { "status": "pass | warn | fail | skip | missing", "note": "karen_review message", "details": ["file:line [ID/sev] …"] },
-    "pip_audit":            { "status": "skipped", "note": "not run in the offline sandbox", "details": [] },
     "size_sanity":          { "status": "pass | warn | fail | skip | missing", "note": "…", "details": [] },
     "no_rom_files":         { "status": "pass | warn | fail | skip | missing", "note": "…", "details": ["rom/path …"] },
     "no_network_at_import": { "status": "pass | warn | fail | skip | missing", "note": "…", "details": ["file: top-level call …"] },
