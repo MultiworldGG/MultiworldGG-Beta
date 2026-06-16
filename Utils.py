@@ -352,6 +352,22 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     return None
 
 
+def read_patch_game_name(patch_path: str) -> Optional[str]:
+    """Read the game name from a patch container's root archipelago.json.
+
+    Every APContainer-derived patch format (.aplttp, .apkh3, .apemerald, ...)
+    is a zip with the manifest at the archive root. Returns None for anything
+    else (multidata, apworlds, stray files) so callers can fall back to
+    component-suffix routing."""
+    try:
+        with zipfile.ZipFile(patch_path, "r") as zf:
+            manifest = json.loads(zf.read("archipelago.json").decode("utf-8"))
+    except (OSError, zipfile.BadZipFile, KeyError, ValueError):
+        return None
+    game = manifest.get("game") if isinstance(manifest, dict) else None
+    return game if isinstance(game, str) and game else None
+
+
 def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
     """
     Returns the inner callable for custom worlds, or None if the wrapper doesn't match the
@@ -407,6 +423,10 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
     Frontend-neutral: worker-thread callbacks marshal back to the asyncio loop
     via loop.call_soon_threadsafe, which works for both the Kivy GUI and the
     Textual TUI (both run inside the same asyncio loop driven by MultiWorld.py).
+
+    A `patch_file` kwarg is forwarded to the resolved client: as a positional
+    CLI arg for entry-point/component launch functions, as `diff_file=` for the
+    SNI client, and as the patch positional for the BizHawk fallback.
     """
     import threading
     import asyncio
@@ -493,23 +513,35 @@ def _fire_pending_error_callback() -> None:
             logging.error(f"Error in error callback: {cb_err}")
 
 
+def _client_launch_argv(server_address, slot_name: typing.Optional[str], label: str,
+                        patch_file: typing.Optional[str] = None) -> typing.List[str]:
+    """Translate launcher-provided kwargs into the CLI argv world clients parse:
+    an optional positional patch file followed by --connect/--name flags."""
+    launch_argv: typing.List[str] = []
+    if patch_file:
+        launch_argv.append(patch_file)
+    if isinstance(server_address, str) and server_address:
+        launch_argv.append(f"--connect={server_address}")
+        if slot_name and label == "universal_tracker":
+            launch_argv.append(f"--name={slot_name}")
+    return launch_argv
+
+
 def _defer_cli_launch(launch_function, label: str, server_address,
                       already_restarted: bool,
                       dep_install_module: typing.Optional[str] = None,
-                      slot_name: typing.Optional[str] = None) -> None:
+                      slot_name: typing.Optional[str] = None,
+                      patch_file: typing.Optional[str] = None) -> None:
     """Defer a CLI-style world launch() to the next asyncio iteration with
-    sys.argv translated from the launcher-provided server_address."""
+    sys.argv translated from the launcher-provided server_address/patch_file."""
     loop = asyncio.get_event_loop()
 
     def _deferred_launch():
         import inspect
         saved_argv = sys.argv[:]
         try:
-            launch_argv: list[str] = []
-            if isinstance(server_address, str) and server_address:
-                launch_argv.append(f"--connect={server_address}")
-                if slot_name and label == "universal_tracker":
-                    launch_argv.append(f"--name={slot_name}")
+            launch_argv = _client_launch_argv(server_address, slot_name, label, patch_file)
+            if launch_argv:
                 sys.argv = [sys.argv[0], *launch_argv]
             try:
                 accepts_positional = any(
@@ -575,6 +607,7 @@ def _perform_module_launch(module_id: str, **kwargs):
         client_type = kwargs.pop("client_type", "text")
         server_address = kwargs.pop("server_address", None)
         slot_name = kwargs.pop("slot_name", None)
+        patch_file = kwargs.pop("patch_file", None)
         already_restarted = kwargs.pop("_restarted", False)
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
@@ -644,6 +677,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                     launch_function, module_id, server_address, already_restarted,
                     dep_install_module=module_id,
                     slot_name=slot_name,
+                    patch_file=patch_file,
                 )
                 return None
 
@@ -655,7 +689,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 if AutoSNIClientRegister.is_sni_world(module_name=game_name):
                     logging.info(f"Detected SNI client for {game_name}")
                     from worlds._sni.context import launch as _sni_launch
-                    return _sni_launch(server_address=server_address)
+                    return _sni_launch(server_address=server_address, diff_file=patch_file)
             except ImportError:
                 logging.debug("SNI client not available")
 
@@ -665,7 +699,8 @@ def _perform_module_launch(module_id: str, **kwargs):
                 if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
                     logging.info(f"Detected BizHawk client for {game_name}")
                     from worlds._bizhawk.context import launch as _bizhawk_launch
-                    _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted)
+                    _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted,
+                                      patch_file=patch_file)
                     return None
             except ImportError:
                 logging.debug("BizHawk client not available")
@@ -680,6 +715,8 @@ def _perform_module_launch(module_id: str, **kwargs):
             return None
 
         # Fallback to text client
+        if patch_file:
+            logging.warning(f"No specialized client claims patch file {patch_file}; it will be ignored.")
         logging.info(f"No specialized client, using text client")
         from CommonClient import main_textclient
         result = main_textclient(server_address)
