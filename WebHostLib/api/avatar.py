@@ -82,41 +82,87 @@ def _avatar_base_url() -> str:
     return f"{base_host}"
 
 
-@api_endpoints.route("/avatar/token", methods=["POST"])
-@limiter.limit("5 per hour", key_func=get_remote_address)
-def avatar_mint_token():
-    token_uuid = uuid.uuid4()
-    AvatarToken(token=token_uuid)
-    commit()
-    return jsonify({
-        "token": str(token_uuid),
-        "upload_url": f"{_avatar_base_url()}/api/avatar/upload",
-    })
+def avatar_public_url(avatar_id: UUID) -> str:
+    """Absolute cross-host wire URL for an avatar (what clients store in profile_data)."""
+    return f"{_avatar_base_url()}/avatar/{avatar_id.hex}{PNG_EXTENSION}"
 
 
-@api_endpoints.route("/avatar/upload", methods=["POST"])
-@limiter.limit("10 per hour", key_func=_bearer_or_ip_key)
-@limiter.limit("30 per hour", key_func=get_remote_address)
-def avatar_upload():
-    token = _resolve_token()
+class AvatarUploadError(Exception):
+    """A validation/moderation failure with the HTTP status to surface it as.
 
+    Lets the shared processing core stay framework-agnostic: the JSON API maps
+    it to ``(jsonify, status)`` and the cookie-authed web form maps it to a
+    ``flash`` + redirect.
+    """
+
+    def __init__(self, message: str, status: int):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+def read_avatar_upload(req, field: str = "image") -> bytes:
+    """Pull and size-check the uploaded image bytes from a request.
+
+    Raises AvatarUploadError on a missing/empty/oversized upload.
+    """
     max_bytes = int(app.config.get("AVATAR_MAX_UPLOAD_BYTES", 5 * 1024 * 1024))
-    content_length = request.content_length
+    content_length = req.content_length
     if content_length and content_length > max_bytes:
-        return jsonify({"error": f"Image too large (max {max_bytes // (1024 * 1024)} MB)"}), 413
+        raise AvatarUploadError(f"Image too large (max {max_bytes // (1024 * 1024)} MB)", 413)
 
-    if "image" not in request.files:
-        return jsonify({"error": "Missing 'image' field"}), 400
-    upload = request.files["image"]
+    if field not in req.files:
+        raise AvatarUploadError(f"Missing '{field}' field", 400)
+    upload = req.files[field]
     if not upload or not upload.filename:
-        return jsonify({"error": "Empty upload"}), 400
+        raise AvatarUploadError("Empty upload", 400)
 
     raw = upload.read(max_bytes + 1)
     if len(raw) > max_bytes:
-        return jsonify({"error": f"Image too large (max {max_bytes // (1024 * 1024)} MB)"}), 413
+        raise AvatarUploadError(f"Image too large (max {max_bytes // (1024 * 1024)} MB)", 413)
     if not raw:
-        return jsonify({"error": "Empty upload"}), 400
+        raise AvatarUploadError("Empty upload", 400)
+    return raw
 
+
+def _screen_for_nsfw(moderation_sample: Image.Image) -> None:
+    """Reject the upload if the NudeNet sidecar flags exposed nudity.
+
+    No-op when AVATAR_NSFW_ENDPOINT is unset (local dev). Raises
+    AvatarUploadError on a hit or when the sidecar is unreachable.
+    """
+    nsfw_endpoint = app.config.get("AVATAR_NSFW_ENDPOINT", "")
+    if not nsfw_endpoint:
+        return
+
+    sample_buf = io.BytesIO()
+    moderation_sample.save(sample_buf, format="JPEG", quality=90)
+    try:
+        resp = requests.post(
+            nsfw_endpoint,
+            files={"f1": ("avatar.jpg", sample_buf.getvalue(), "image/jpeg")},
+            timeout=_NSFW_REQUEST_TIMEOUT,
+        )
+        resp.raise_for_status()
+        predictions = resp.json().get("prediction") or []
+    except (requests.RequestException, ValueError):
+        raise AvatarUploadError("Content moderation unavailable", 503)
+    # /infer returns one detection list per uploaded file; we send only f1.
+    detections = predictions[0] if predictions and isinstance(predictions[0], list) else predictions
+    for detection in detections:
+        if not isinstance(detection, dict):
+            continue
+        if (detection.get("class") in _NSFW_BLOCKED_CLASSES
+                and detection.get("score", 0.0) >= _NSFW_SCORE_THRESHOLD):
+            raise AvatarUploadError("Image rejected by content policy", 422)
+
+
+def store_avatar(raw: bytes, token: AvatarToken) -> Avatar:
+    """Validate, NSFW-screen, re-encode (square PNG, metadata stripped) and persist `raw`.
+
+    Returns the new Avatar row owned by `token`; the caller is responsible for
+    ``commit()``. Raises AvatarUploadError on any rejection.
+    """
     original_sha256 = hashlib.sha256(raw).hexdigest()
 
     Image.MAX_IMAGE_PIXELS = int(app.config.get("AVATAR_MAX_PIXELS", 4_000_000))
@@ -124,9 +170,9 @@ def avatar_upload():
         with Image.open(io.BytesIO(raw)) as probe:
             probe.verify()
     except Image.DecompressionBombError:
-        return jsonify({"error": "Image dimensions exceed safety limit"}), 413
+        raise AvatarUploadError("Image dimensions exceed safety limit", 413)
     except (UnidentifiedImageError, OSError, ValueError):
-        return jsonify({"error": "Could not decode image"}), 400
+        raise AvatarUploadError("Could not decode image", 400)
 
     # Decode once with Pillow, then derive both the moderation sample and the
     # stored avatar from it. We never forward the raw upload to the sidecar:
@@ -145,32 +191,11 @@ def avatar_upload():
             dim = int(app.config.get("AVATAR_OUTPUT_DIM", 100))
             fitted = ImageOps.fit(img.convert("RGBA"), (dim, dim), method=Image.Resampling.LANCZOS)
     except Image.DecompressionBombError:
-        return jsonify({"error": "Image dimensions exceed safety limit"}), 413
+        raise AvatarUploadError("Image dimensions exceed safety limit", 413)
     except (UnidentifiedImageError, OSError, ValueError):
-        return jsonify({"error": "Could not decode image"}), 400
+        raise AvatarUploadError("Could not decode image", 400)
 
-    nsfw_endpoint = app.config.get("AVATAR_NSFW_ENDPOINT", "")
-    if nsfw_endpoint:
-        sample_buf = io.BytesIO()
-        moderation_sample.save(sample_buf, format="JPEG", quality=90)
-        try:
-            resp = requests.post(
-                nsfw_endpoint,
-                files={"f1": ("avatar.jpg", sample_buf.getvalue(), "image/jpeg")},
-                timeout=_NSFW_REQUEST_TIMEOUT,
-            )
-            resp.raise_for_status()
-            predictions = resp.json().get("prediction") or []
-        except (requests.RequestException, ValueError):
-            return jsonify({"error": "Content moderation unavailable"}), 503
-        # /infer returns one detection list per uploaded file; we send only f1.
-        detections = predictions[0] if predictions and isinstance(predictions[0], list) else predictions
-        for detection in detections:
-            if not isinstance(detection, dict):
-                continue
-            if (detection.get("class") in _NSFW_BLOCKED_CLASSES
-                    and detection.get("score", 0.0) >= _NSFW_SCORE_THRESHOLD):
-                return jsonify({"error": "Image rejected by content policy"}), 422
+    _screen_for_nsfw(moderation_sample)
 
     upload_dir = os.path.abspath(app.config["AVATAR_UPLOAD_FOLDER"])
     os.makedirs(upload_dir, exist_ok=True)
@@ -178,7 +203,7 @@ def avatar_upload():
     avatar_id = uuid.uuid4()
     final_path = os.path.abspath(os.path.join(upload_dir, f"{avatar_id.hex}{PNG_EXTENSION}"))
     if not final_path.startswith(upload_dir + os.sep):
-        return jsonify({"error": "Invalid storage path"}), 500
+        raise AvatarUploadError("Invalid storage path", 500)
     temp_path = final_path + ".tmp"
 
     fitted.info = {}
@@ -186,7 +211,7 @@ def avatar_upload():
     file_size = os.path.getsize(temp_path)
     os.replace(temp_path, final_path)
 
-    Avatar(
+    avatar = Avatar(
         id=avatar_id,
         owner_token=token,
         mime_type="image/png",
@@ -194,9 +219,33 @@ def avatar_upload():
         original_sha256=original_sha256,
     )
     token.last_used_at = utcnow()
-    commit()
+    return avatar
 
-    return jsonify({"url": f"{_avatar_base_url()}/avatar/{avatar_id.hex}{PNG_EXTENSION}"})
+
+@api_endpoints.route("/avatar/token", methods=["POST"])
+@limiter.limit("5 per hour", key_func=get_remote_address)
+def avatar_mint_token():
+    token_uuid = uuid.uuid4()
+    AvatarToken(token=token_uuid)
+    commit()
+    return jsonify({
+        "token": str(token_uuid),
+        "upload_url": f"{_avatar_base_url()}/api/avatar/upload",
+    })
+
+
+@api_endpoints.route("/avatar/upload", methods=["POST"])
+@limiter.limit("10 per hour", key_func=_bearer_or_ip_key)
+@limiter.limit("30 per hour", key_func=get_remote_address)
+def avatar_upload():
+    token = _resolve_token()
+    try:
+        raw = read_avatar_upload(request)
+        avatar = store_avatar(raw, token)
+    except AvatarUploadError as exc:
+        return jsonify({"error": exc.message}), exc.status
+    commit()
+    return jsonify({"url": avatar_public_url(avatar.id)})
 
 
 @app.route("/avatar/<avatar_url_id>", methods=["GET"])

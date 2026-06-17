@@ -7,6 +7,7 @@
     </ul>
 {%- endmacro %}
 {% macro list_patches_room(room) %}
+    {% set viewer_avatar = mwgg_viewer_avatar_url() %}
     {% if room.seed.slots %}
         <table id="slots-table">
             <thead>
@@ -22,7 +23,7 @@
             {% for patch in room.seed.slots|list|sort(attribute="player_id") %}
                 <tr>
                     <td>{{ patch.player_id }}</td>
-                    <td data-tooltip="Connect via Game Client"><a href="mwgg://{{ patch.player_name | e}}:None@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}?game={{ patch.game }}&room={{ room.id | suuid }}">{{ patch.player_name }}</a></td>
+                    <td data-tooltip="Connect via Game Client"><a href="mwgg://{{ patch.player_name | e}}:None@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}?game={{ patch.game }}&room={{ room.id | suuid }}{% if viewer_avatar %}&avatar={{ viewer_avatar | urlencode }}{% endif %}">{{ patch.player_name }}</a></td>
                     <td>{{ patch.game }}</td>
                     <td>
                         {% if patch.data %}

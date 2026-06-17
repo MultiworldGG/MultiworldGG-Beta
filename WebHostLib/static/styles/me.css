@@ -736,3 +736,32 @@
 .mw-card-secondary-muted:hover {
     color: var(--mw-sys-color-on-surface-muted);
 }
+
+/* Avatar management (/me/avatar) */
+.mw-avatar-manage {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.mw-avatar-current img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--mw-sys-color-surface-variant);
+    border: 1px solid var(--mw-sys-color-outline);
+}
+
+.mw-avatar-manage form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mw-avatar-remove {
+    color: var(--mw-sys-color-error);
+}

@@ -120,6 +120,11 @@ app.config["AVATAR_OUTPUT_DIM"] = 100
 # When set, uploads are screened for exposed nudity and rejected on a hit;
 # empty disables screening (local dev without the sidecar).
 app.config["AVATAR_NSFW_ENDPOINT"] = os.environ.get("AVATAR_NSFW_ENDPOINT", "")
+# Hosts whose avatar URLs we render on the web. Mirrors the desktop client's
+# safe_avatar_source allowlist (mwgg_gui.constants.TRUSTED_AVATAR_HOSTS): a
+# client-set profile_data avatar is shown on a public page only when it is HTTPS
+# on one of these hosts. SHARE_BASE_HOST is trusted implicitly at render time.
+app.config["AVATAR_TRUSTED_HOSTS"] = ("multiworld.gg", "mw.prismativerse.com")
 
 # WebAuthn / passkey recovery (see WebHostLib/passkeys.py).
 # Production MUST override RP_ID / ORIGIN in host.yaml. The browser rejects

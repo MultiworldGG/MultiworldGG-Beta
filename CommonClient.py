@@ -1832,6 +1832,62 @@ def handle_url_arg(args: "argparse.Namespace",
     return args
 
 
+#: Hosts whose avatar URLs the client is willing to store/render. Mirrors the
+#: desktop GUI's mwgg_gui.constants.TRUSTED_AVATAR_HOSTS so an avatar persisted
+#: from a launch URL is exactly what the client will accept on the render side.
+TRUSTED_AVATAR_HOSTS = ("multiworld.gg", "mw.prismativerse.com")
+
+
+def safe_avatar_source(url: str) -> str:
+    """Return ``url`` only if it is HTTPS on the trusted-host allowlist, else "".
+
+    Mirrors mwgg_gui's ``safe_avatar_source``: legacy/hostile URLs collapse to
+    the empty string so nothing untrusted is persisted or rendered.
+    """
+    if not url:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except ValueError:
+        return ""
+    if parsed.scheme != "https":
+        return ""
+    if (parsed.hostname or "").lower() not in TRUSTED_AVATAR_HOSTS:
+        return ""
+    return url
+
+
+def parse_connect_url(url: "typing.Optional[str]") -> "typing.Optional[dict]":
+    """Decompose a ``mwgg://`` / ``archipelago://`` launch URL into its parts.
+
+    Returns ``{hostname, port, name, password, game, avatar}`` (values may be
+    None/"") or None if ``url`` is empty or not one of our schemes. ``password``
+    is None for the literal ``:None@`` the room links use to mean "no password".
+    """
+    if not url:
+        return None
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("mwgg", "archipelago"):
+        return None
+    query = urllib.parse.parse_qs(parsed.query)
+
+    def _first(key: str) -> str:
+        values = query.get(key)
+        return urllib.parse.unquote(values[0]) if values else ""
+
+    password = urllib.parse.unquote(parsed.password) if parsed.password else None
+    if password == "None":
+        password = None
+    return {
+        "hostname": parsed.hostname,
+        "port": parsed.port,
+        "name": urllib.parse.unquote(parsed.username) if parsed.username else "",
+        "password": password,
+        "game": _first("game"),
+        "avatar": _first("avatar"),
+    }
+
+
 def launch_textclient(server_address: str = None):
     """Launch text client in GUI integration mode like KH2.
 

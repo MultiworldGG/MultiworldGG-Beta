@@ -424,9 +424,11 @@ def render_generic_tracker(tracker_data: TrackerData, team: int, player: int) ->
                                          start=len(starting_inventory)):
         received_items_in_order[network_item.item] = index
 
+    from WebHostLib.avatars import resolve_slot_avatar
     return render_template(
         template_name_or_list="genericTracker.html",
         game_specific_tracker=game in _player_trackers,
+        avatar_url=resolve_slot_avatar(tracker_data, team, player),
         room=tracker_data.room,
         get_slot_info=tracker_data.get_slot_info,
         team=team,
@@ -447,8 +449,10 @@ def render_generic_tracker(tracker_data: TrackerData, team: int, player: int) ->
 
 
 def render_generic_multiworld_tracker(tracker_data: TrackerData, enabled_trackers: List[str]) -> str:
+    from WebHostLib.avatars import compute_slot_avatars
     return render_template(
         "multitracker.html",
+        player_avatars=compute_slot_avatars(tracker_data),
         enabled_trackers=enabled_trackers,
         current_tracker="Generic",
         room=tracker_data.room,
