@@ -25,6 +25,7 @@ if typing.TYPE_CHECKING:
 
 Utils.local_path.cached_path = os.path.dirname(__file__)
 settings.no_gui = True
+settings.skip_autosave = True  # configs are mounted read-only; never rewrite host.yaml on exit
 configpath = os.path.abspath("config.yaml")
 if not os.path.exists(configpath):
     # fall back to config.yaml in user_path if config does not exist in cwd to match settings.py
