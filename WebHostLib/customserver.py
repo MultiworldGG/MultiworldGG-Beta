@@ -295,8 +295,19 @@ class WebHostContext(Context):
                 savegame_data = room.multisave
                 if savegame_data:
                     self.set_save(restricted_loads(savegame_data))
+            self._seed_slot_avatars()
             self._start_async_saving(atexit_save=False)
         asyncio.create_task(self.listen_to_db_commands())
+
+    def _seed_slot_avatars(self) -> None:
+        """Seed profile_data with web-set slot avatars so connected clients
+        render them. Best-effort: a failure here must never block room boot."""
+        try:
+            from WebHostLib.avatars import apply_slot_avatars_to_stored_data
+            with Session(WebHostContext._db_engine) as session:
+                apply_slot_avatars_to_stored_data(session, self.room_id, self.stored_data)
+        except Exception:
+            self.logger.exception("Failed to seed slot avatars from web")
 
     def _save(self, exit_save: bool = False) -> bool:
         engine = WebHostContext._db_engine

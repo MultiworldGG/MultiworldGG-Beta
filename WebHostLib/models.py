@@ -143,6 +143,9 @@ class Room(Base):
     )
     # back-reference from Lobby.room
     lobby: "Lobby | None" = relationship("Lobby", back_populates="room", uselist=False)
+    slot_avatars: list["SlotAvatar"] = relationship(
+        "SlotAvatar", cascade="all, delete-orphan"
+    )
 
 
 class Seed(Base):
@@ -430,6 +433,55 @@ class Avatar(Base):
     created_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow, index=True)
 
     owner_token: AvatarToken = relationship("AvatarToken", back_populates="avatars")
+
+
+class SessionAvatar(Base):
+    """The portable avatar a browser session (``session["_id"]``) currently uses.
+
+    One row per session, pointing at an Avatar uploaded via the website. The
+    same image feeds the nav avatar and (later phases) the slots this session
+    plays. Kept separate from Avatar/AvatarToken so the existing avatar tables
+    need no schema change — only this new table is added (``create_all`` makes
+    it on both fresh SQLite and existing Postgres without a column migration).
+    """
+    __tablename__ = "sessionavatar"
+
+    session_id: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
+    avatar_id: UUID = mapped_column(
+        SA_UUID(as_uuid=True), ForeignKey("avatar.id"), nullable=False, index=True
+    )
+    updated_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+
+    avatar: Avatar = relationship("Avatar")
+
+
+class SlotAvatar(Base):
+    """An avatar pinned to a ``(room, team, slot)``, set via the website.
+
+    Overwritable and non-exclusive: anyone (rate-limited) can set it, and a set
+    just replaces the row — no slot is reserved. Cascade-deleted with the room
+    (``Room.slot_avatars``), so it lives until the room is pruned. The referenced
+    Avatar is intentionally NOT deleted with it: the row may point at a shared
+    SessionAvatar image. Avatars are reclaimed via their owning token / GC.
+    """
+    __tablename__ = "slotavatar"
+
+    room_id: UUID = mapped_column(
+        SA_UUID(as_uuid=True), ForeignKey("room.id", ondelete="CASCADE"), primary_key=True
+    )
+    team: int = mapped_column(Integer, primary_key=True)
+    slot: int = mapped_column(Integer, primary_key=True)
+    avatar_id: UUID = mapped_column(
+        SA_UUID(as_uuid=True), ForeignKey("avatar.id"), nullable=False, index=True
+    )
+    #: Absolute, client-renderable URL captured at set-time. The live room
+    #: process is host-less and can't rebuild it, so it's denormalized here to
+    #: seed profile_data at boot.
+    avatar_url: str | None = mapped_column(String, nullable=True)
+    set_by_session: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
+    updated_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+
+    avatar: Avatar = relationship("Avatar")
 
 
 # ---------------------------------------------------------------------------

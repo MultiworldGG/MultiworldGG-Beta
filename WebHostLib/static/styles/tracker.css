@@ -241,3 +241,34 @@ img.icon-sprite {
         min-height: 10px;
     }
 }
+
+/* Player avatars (multitracker name cell + per-player slot tracker) */
+.slot-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.tracker-slot-avatar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.slot-avatar-large {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.tracker-slot-avatar form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}

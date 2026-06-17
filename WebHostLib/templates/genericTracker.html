@@ -27,6 +27,22 @@
             </a>
             {% endif %}
         </div>
+
+        <div class="tracker-slot-avatar">
+            <img class="slot-avatar-large"
+                 src="{{ avatar_url or url_for('static', filename='static/branding/controller-icon.png') }}"
+                 alt="{{ player_name }}&apos;s avatar" width="48" height="48" />
+            <details>
+                <summary>Set avatar</summary>
+                <form action="{{ url_for('set_slot_avatar', tracker=room.tracker) }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="team" value="{{ team }}" />
+                    <input type="hidden" name="slot" value="{{ player }}" />
+                    <label>Upload an image, or leave the file empty to reuse your own avatar:</label>
+                    <input type="file" name="image" accept="image/*" />
+                    <button type="submit">Set avatar</button>
+                </form>
+            </details>
+        </div>
     </div>
 
     <div id="tracker-wrapper" data-tracker="{{ room.tracker | suuid }}/{{ team }}/{{ player }}" data-second="{{ saving_second }}">
