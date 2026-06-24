@@ -86,27 +86,15 @@ export async function processReleaseAssets({
 
   const isBundle = releaseTag.startsWith(BUNDLE_TAG_PREFIX);
 
-  // Single-world releases carry the slug in the tag (`<slug>-<world_version>`).
-  // Bundles (`worlds-wheels-<date>`) derive a slug per wheel instead.
+  // Single-world releases identify their world by the `<slug>-<world_version>`
+  // tag prefix OR by an attached `<name>.apworld` asset (the Basic Manual fork
+  // flow, where the release tag is arbitrary). The tag prefix is provisional
+  // here — used for error context before the release is fetched; an `.apworld`
+  // asset, once we have the asset list, overrides it (see the non-bundle branch
+  // below). Bundles (`worlds-wheels-<date>`) derive a slug per wheel instead.
   let slug: string | undefined;
   if (!isBundle) {
-    const dashIdx = releaseTag.indexOf("-");
-    if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
-      slug = releaseTag.slice(0, dashIdx);
-    }
-    if (!slug) {
-      oliverLog.emit({
-        kind: "skip",
-        source_repo: sourceRepo,
-        release_sha: releaseSha,
-        release_tag: releaseTag,
-        reason: "no_slug_resolved",
-        message:
-          `Cannot resolve slug for ${sourceRepo}: release tag '${releaseTag}' ` +
-          `does not match '<slug>-<world_version>'.`,
-      });
-      return;
-    }
+    slug = slugFromTagPrefix(releaseTag);
   }
 
   // Path-specific parse results: exactly one is populated below.
@@ -120,7 +108,8 @@ export async function processReleaseAssets({
 
   try {
     const release = await getReleaseWaitingForDigests(octokit, owner, repo, releaseTag);
-    const wheelAssets = release.data.assets.filter((a) => a.name.endsWith(".whl"));
+    const assets = release.data.assets;
+    const wheelAssets = assets.filter((a) => a.name.endsWith(".whl"));
 
     if (isBundle) {
       // Per-world parsing: a bad wheel (unrecognized name or missing digest)
@@ -144,6 +133,46 @@ export async function processReleaseAssets({
         return;
       }
     } else {
+      // The `.apworld` asset, when present, is authoritative over the tag
+      // prefix: the Basic Manual fork flow attaches `<name>.apworld` by hand
+      // under an arbitrary release tag, so the prefix can't be trusted there.
+      // CI builds name the asset `<slug>.apworld` from the same tag prefix, so
+      // the two agree on the automated paths; when only one source is present,
+      // it stands. We do NOT fail on a tag/asset mismatch — an arbitrary tag is
+      // the whole point of the Basic Manual flow, so a "disagreement" is
+      // expected and the asset simply wins.
+      const apworld = slugFromApworldAsset(assets);
+      if (apworld === "ambiguous") {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          slug,
+          release_tag: releaseTag,
+          release_sha: releaseSha,
+          reason: "apworld_asset_ambiguous",
+          message:
+            `Release ${releaseTag} on ${sourceRepo} has multiple .apworld assets; ` +
+            `expected at most one to identify the world.`,
+        });
+        return;
+      }
+      if (apworld) {
+        slug = apworld;
+      }
+      if (!slug) {
+        oliverLog.emit({
+          kind: "skip",
+          source_repo: sourceRepo,
+          release_sha: releaseSha,
+          release_tag: releaseTag,
+          reason: "no_slug_resolved",
+          message:
+            `Cannot resolve slug for ${sourceRepo}: release tag '${releaseTag}' ` +
+            `does not match '<slug>-<world_version>' and no '<name>.apworld' asset is attached.`,
+        });
+        return;
+      }
+
       if (wheelAssets.length === 0) {
         oliverLog.emit({
           kind: "skip",
@@ -415,6 +444,41 @@ export async function fetchSourceManifest(
   } catch {
     return null;
   }
+}
+
+// A world's Index slug / folder name: a lowercase module identifier (the same
+// shape the fuzz client payload validates). Author-controlled inputs that become
+// a file path / git branch — i.e. the `.apworld` asset name — are checked
+// against this before use, so a crafted asset name can't escape `worlds/<slug>`.
+const APWORLD_SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+
+// Slug from the `<slug>-<world_version>` release-tag prefix: everything before
+// the first '-'. Returns undefined when the tag has no usable prefix (no '-', or
+// a leading/trailing '-'). Drives the CI / Standard-Automated / Custom-Automated
+// paths, whose release tags always follow this format.
+export function slugFromTagPrefix(releaseTag: string): string | undefined {
+  const dashIdx = releaseTag.indexOf("-");
+  if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
+    return releaseTag.slice(0, dashIdx);
+  }
+  return undefined;
+}
+
+// The apworld folder name carried by an attached `<name>.apworld` asset — the
+// Basic Manual fork flow's identifier (those authors build and attach the wheel
+// + apworld by hand under an arbitrary release tag). Returns:
+//   - the slug string when exactly one `.apworld` asset has a valid slug stem,
+//   - "ambiguous" when more than one `.apworld` asset is attached,
+//   - null when there is none, or its stem isn't a valid slug (caller falls back
+//     to the tag prefix).
+export function slugFromApworldAsset(
+  assets: ReadonlyArray<{ name: string }>,
+): string | "ambiguous" | null {
+  const apworldAssets = assets.filter((a) => a.name.endsWith(".apworld"));
+  if (apworldAssets.length === 0) return null;
+  if (apworldAssets.length > 1) return "ambiguous";
+  const stem = apworldAssets[0].name.slice(0, -".apworld".length);
+  return APWORLD_SLUG_RE.test(stem) ? stem : null;
 }
 
 // Each beta world's wheel is `worlds_<module>-<version>-py3-none-any.whl` (dist

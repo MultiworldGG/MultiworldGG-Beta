@@ -64,7 +64,7 @@ The author publishes a release whose assets are already attached (e.g. after dis
 1. Receives `release.published` webhook from the per-world repo.
 2. Skips drafts (defensive; GitHub should not send `release.published` for drafts).
 3. Resolves the tag's commit SHA via the Git refs API.
-4. Parses the slug from the release tag prefix (`<slug>-<world_version>`).
+4. Identifies the world (apworld folder name / Index slug) — see [World identification](#world-identification) below.
 5. Fetches the release by tag; selects the single `.whl` asset and reads its `browser_download_url` + SHA256 `digest`. Bails if the digest is missing (`asset_digest_missing`).
 6. Fetches `worlds/<slug>/archipelago.json` at the tag's commit SHA.
 7. Opens or updates a PR on `MultiworldGG/MultiworldGG-Index` via `update/<slug>-<release_tag>` with `module_location = <browser_download_url>#sha256=<hex>`.
@@ -75,6 +75,21 @@ The author publishes a release whose assets are already attached (e.g. after dis
 Fires after the per-world repo's packaging workflow finishes. Oliver only acts if the run references `MultiworldGG/gen-pymod-release/.github/workflows/build.yml`, was triggered by a `release` event, and concluded `success`. It then resolves the head SHA to a release tag and runs the same shared processing logic.
 
 If any step fails (bad release tag, no digest, Oliver not installed on the Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
+
+## World identification
+
+For a single-world release Oliver needs the **apworld folder name** (the Index slug — `worlds/<slug>.json`, `worlds/<slug>/archipelago.json`, branch `update/<slug>-<tag>`). It resolves it from two sources, in this precedence:
+
+1. **An attached `<name>.apworld` asset wins.** `<name>` is used as the slug. This supports the **Basic Manual** author flow (a full Archipelago fork, no CI): the author builds the `.whl` and `.apworld` locally, cuts a release under an **arbitrary** tag, and attaches both assets by hand. The tag prefix is meaningless on that path, so the asset is authoritative.
+   - The stem must be a valid slug (`^[a-z0-9][a-z0-9_-]{0,63}$`). An invalidly-named asset (e.g. GitHub mangles `My Game.apworld` → `My.Game.apworld`) is ignored and Oliver falls back to the tag prefix.
+   - More than one `.apworld` asset on a single-world release is ambiguous → `apworld_asset_ambiguous` skip.
+2. **Otherwise, the `<slug>-<world_version>` tag prefix** (everything before the first `-`). This is the CI / Standard-Automated / Custom-Automated path. `gen-pymod-release`'s `build-apworld.yml` builds the asset as `<slug>.apworld` from this same prefix, so when both signals are present on a CI release they agree by construction.
+
+If neither yields a usable slug, Oliver logs `no_slug_resolved` and stops.
+
+**Why the asset wins instead of failing on a mismatch:** an arbitrary tag is the entire point of the Basic Manual flow, so a tag/asset "disagreement" is expected, not an error. The hand-attached, deliberately-named `.apworld` is the stronger signal. (Bundled `worlds-wheels-*` releases are unaffected — they derive a slug per wheel and never consult `.apworld` assets.)
+
+The `.whl` selection and `module_location` pinning are identical on every path: exactly one `.whl`, its `browser_download_url` plus the GitHub-computed SHA256 `digest`, pinned as `…whl#sha256=<hex>`.
 
 ## Env vars
 
