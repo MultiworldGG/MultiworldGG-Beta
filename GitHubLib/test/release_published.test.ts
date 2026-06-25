@@ -121,11 +121,11 @@ const fakeLog = {
   child: () => fakeLog,
 };
 
-function makeContext(state: RepoState, releaseTag: string, draft = false): any {
+function makeContext(state: RepoState, releaseTag: string, draft = false, prerelease = false): any {
   return {
     octokit: makeContextOctokit(state),
     payload: {
-      release: { tag_name: releaseTag, draft },
+      release: { tag_name: releaseTag, draft, prerelease },
     },
     log: fakeLog,
     repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
@@ -350,6 +350,16 @@ describe("handleReleasePublished", () => {
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
     const ctx = makeContext(state, "myclgm-1.0.0", /* draft= */ true);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(probot.auth).not.toHaveBeenCalled();
+    expect(readEvents()).toEqual([]);
+  });
+
+  it("skips prerelease releases without emitting an event", async () => {
+    const state: RepoState = { releases: [] };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, "myclgm-1.0.0", /* draft= */ false, /* prerelease= */ true);
     await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     expect(probot.auth).not.toHaveBeenCalled();
     expect(readEvents()).toEqual([]);
