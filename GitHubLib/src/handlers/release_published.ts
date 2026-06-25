@@ -21,6 +21,11 @@ export async function handleReleasePublished(
     return;
   }
 
+  if (release.prerelease) {
+    context.log.debug({ tag_name: release.tag_name }, "ignoring prerelease");
+    return;
+  }
+
   const releaseTag = release.tag_name;
 
   let releaseSha: string;
