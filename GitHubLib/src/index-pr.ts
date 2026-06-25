@@ -158,7 +158,9 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     state: "open",
   });
 
-  const gameName = updated.hasOwnProperty('game_name') ? (updated.game_name as string) : '';
+  // The manifest's display name lives in `game` (the author's archipelago.json
+  // field); fall back to the slug so the PR body is never blank.
+  const gameName = typeof updated.game === "string" ? updated.game : slug;
   const prBody = [
     `Hey folks, I found a new update for ${gameName}. I'm gonna grab some info on it for y'all.`,
     ``,
