@@ -340,6 +340,32 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
   });
 });
 
+describe("openOrUpdateIndexPR — PR body game name", () => {
+  it("names the game from the manifest's `game` field in the PR body", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const body = state.writes.find((w) => w.kind === "pulls.create")?.payload.body as string;
+    expect(body).toContain("I found a new update for My Cool Game.");
+    expect(body).toContain("gathering the manifest for My Cool Game and cross referencing");
+    expect(body).not.toContain("for .");
+  });
+
+  it("falls back to the slug when the manifest has no `game` field", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({ sourceManifest: { authors: ["Alice"], world_version: "v1.0.0" } }),
+      ...octokits,
+    });
+
+    const body = state.writes.find((w) => w.kind === "pulls.create")?.payload.body as string;
+    expect(body).toContain("I found a new update for myclgm.");
+    expect(body).not.toContain("for .");
+  });
+});
+
 describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   it("creates CODEOWNERS with header when file does not exist", async () => {
     const state = makeFakeIndex();
