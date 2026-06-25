@@ -9,7 +9,7 @@ export async function handleReleasePublished(
   karenProbot: Probot,
   oliverData: IndexBotData,
   karenData: IndexBotData,
-  context: Context<"release.published">,
+  context: Context<"release.published" | "release.released">,
 ): Promise<void> {
   const oliverLog = new EventLog(oliverProbot.log);
   const { owner, repo } = context.repo();
