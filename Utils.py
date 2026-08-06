@@ -968,6 +968,17 @@ def cache_path(*path: str) -> str:
     return os.path.join(cache_path.cached_path, *path)
 
 
+def players_path(*path: str) -> str:
+    """Returns path to a file in the player-files directory, as resolved by
+    settings (generator.player_files_path — the same dir Generate scans).
+    Deliberately uncached: get_settings() is called lazily on every use so the
+    first call doesn't happen at module import."""
+    from settings import get_settings
+    base = get_settings().generator.player_files_path
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, *path)
+
+
 def output_path(*path: str) -> str:
     if hasattr(output_path, 'cached_path'):
         return os.path.join(output_path.cached_path, *path)

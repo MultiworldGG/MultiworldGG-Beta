@@ -795,6 +795,10 @@ def _y_describe_option(option_name, option_class):
         "display_name": getattr(option_class, "display_name", None) or option_name,
         "docstring": _y_clean_docstring(getattr(option_class, "__doc__", "") or ""),
         "default": _y_serialize_default(getattr(option_class, "default", None)),
+        # Weighted-mode routing hint: handle_option feeds supports_weighting=False
+        # options (the list/set/dict family) their raw YAML value via from_any, so
+        # the GUI must give them direct-value widgets, not {value: weight} rows.
+        "supports_weighting": bool(getattr(option_class, "supports_weighting", True)),
     }
     if issubclass(option_class, Options.Toggle):
         desc["type"] = "toggle"
@@ -863,6 +867,21 @@ def _y_describe_world(world):
     }
 
 
+def _y_describe_presets(world):
+    """`web.options_presets` as JSON-safe {preset_name: {option: value}}.
+    Per-preset try/except so one bad preset can't drop the rest."""
+    presets_out = {}
+    for preset_name, preset in (getattr(world.web, "options_presets", {}) or {}).items():
+        try:
+            presets_out[str(preset_name)] = {
+                str(option_name): _y_serialize_default(value)
+                for option_name, value in (preset or {}).items()
+            }
+        except Exception as e:
+            logging.warning("describe_preset(%s) failed: %s", preset_name, e)
+    return presets_out
+
+
 def _y_emit(payload) -> int:
     _JSON_OUT.write(json.dumps(payload))
     _JSON_OUT.flush()
@@ -870,6 +889,8 @@ def _y_emit(payload) -> int:
 
 
 # "Re-run me in a fresh process" (same convention as Utils.exit_restart_for_update).
+# Keep it 10: mwgg-gui (yaml_creator/world_data.py, launcher generation flow) only
+# retries on 10; a new code would surface as an error dialog instead.
 EXIT_NEEDS_RELOAD = 10
 
 
@@ -931,6 +952,14 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
                         "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
                     })
                 logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
+                # Machine-readable cause for the caller. Additive: old GUIs check
+                # the exit code before parsing stdout, so they never see this.
+                _y_emit({
+                    "ok": False,
+                    "needs_reload": True,
+                    "reason": "world-installed",
+                    "error": f"Installed '{game_name}'; a fresh process is required to load it.",
+                })
                 return EXIT_NEEDS_RELOAD
             # Queue the custom world's load entry before the first `from worlds import`.
             Utils._worlds_to_load.append(entry)
@@ -969,9 +998,16 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
 
         return _y_emit({
             "ok": True,
+            # schema_version/generator_version/world_version are the key fields
+            # for a future GUI-side payload cache; bump schema_version on any
+            # breaking payload change.
+            "schema_version": 1,
+            "generator_version": __version__,
+            "world_version": world.world_version.as_simple_string(),
             "game_name": game_name,
             "world": _y_describe_world(world),
             "groups": groups_out,
+            "presets": _y_describe_presets(world),
         })
     except Exception as e:
         logging.error("dump_yaml_options failed", exc_info=True)
