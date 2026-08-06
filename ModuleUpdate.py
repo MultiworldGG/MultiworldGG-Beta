@@ -132,7 +132,11 @@ class RequirementsSet(set[_T]):
 
 # Initialize file sets
 
-requirements_files: RequirementsSet[Path] = RequirementsSet({Path(local_path("requirements.txt"))})
+# Core requirements.txt doubles as a constraint file for every requirements
+# install below, so additional files (WebHostLib, -a appends) can't upgrade
+# core deps past its pins.
+core_constraints: Path = Path(local_path("requirements.txt"))
+requirements_files: RequirementsSet[Path] = RequirementsSet({core_constraints})
 worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
 # custom_worlds always lives next to the executable / source checkout -- the
@@ -1058,7 +1062,8 @@ def update_requirements(needed_packages: List[str]) -> None:
 
         logger.debug(f"Processing requirements from: {req_file}")
         if update_all:
-            executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file))
+            executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file),
+                                      "--constraint", str(core_constraints))
         else:
             # Resolve the whole file so transitive caps and sibling constraints are
             # respected; --upgrade-package targets only the dists check_for_updates
@@ -1071,7 +1076,8 @@ def update_requirements(needed_packages: List[str]) -> None:
             relevant = [p for p in needed_packages if p in req_pkg_names]
             if not relevant:
                 continue
-            executable_args = _uv_pip("install", "-r", str(req_file))
+            executable_args = _uv_pip("install", "-r", str(req_file),
+                                      "--constraint", str(core_constraints))
             for pkg in relevant:
                 executable_args.extend(["--upgrade-package", pkg])
 
@@ -1101,7 +1107,10 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
             logger.warning(f"Requirements file not found: {req_file}")
             continue
         logger.info(f"Ensuring requirements from {req_file.name} are satisfied")
-        result = _uv_run(_uv_pip("install", "-r", str(req_file)), timeout=30)
+        result = _uv_run(
+            _uv_pip("install", "-r", str(req_file), "--constraint", str(core_constraints)),
+            timeout=30,
+        )
         if result.returncode != 0:
             logger.warning(f"Failed to install requirements from {req_file.name}: {result.stderr}")
             return False
