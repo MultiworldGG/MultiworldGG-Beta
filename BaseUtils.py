@@ -7,15 +7,16 @@ import warnings
 import json
 from pathlib import Path
 
-__all__ = ("Version", 
-           "tuplize_version", 
-           "__version__", 
-           "version_tuple", 
+__all__ = ("Version",
+           "tuplize_version",
+           "__version__",
+           "version_tuple",
            "core_version",
            "core_version_tuple",
-           "instance_name", 
-           "archipelago_guid", 
-           "is_linux", 
+           "instance_name",
+           "archipelago_guid",
+           "FROZEN_TARGETS",
+           "is_linux",
            "is_macos",
            "is_windows",
            "is_frozen",
@@ -99,6 +100,20 @@ core_version_tuple = version_tuple
 
 instance_name = "MultiworldGG"
 archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
+
+# Single source of truth for frozen executable base names (no .exe suffix).
+# Do NOT derive these from instance_name/apname: application.yaml's
+# application_options.app_name (e.g. "MultiworldGG-Test") overrides
+# instance_name at runtime, so any `instance_name + script_name` concatenation
+# used to resolve a built exe silently breaks in non-default channels.
+FROZEN_TARGETS = {
+    "MultiWorld": "MultiWorldGG",
+    "MultiServer": "MultiWorldGGServer",
+    "Generate": "MultiWorldGGGenerate",
+    "Patch": "MultiWorldGGPatch",
+    "MultiWorldDebug": "MultiWorldGGClientDebug",
+    "Launcher": "MultiworldGGLauncher",  # deliberate lowercase-w, matches old-live leftover naming
+}
 
 _default_version = __version__
 _default_instance_name = instance_name
