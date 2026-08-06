@@ -381,6 +381,7 @@ class InitContext:
         self._state = ClientState.INITIAL
         self._is_transitioning = False
         self._splash_queue: Optional[Queue] = None
+        self.launch_mode = os.environ.get("MWGG_ROLE", "launcher")
 
     def _set_server_address(self, server_address: str) -> str:
         prefix = "ws://" if "://" not in server_address else urllib.parse.urlparse(server_address).scheme
@@ -749,6 +750,7 @@ class CommonContext(InitContext):
             cls = resolve_frontend_class()
             app = getattr(cls, "_active_instance", None)
             return (app is not None and
+                    getattr(app, "role", "client") != "launcher" and
                     hasattr(app, 'ctx') and
                     isinstance(app.ctx, InitContext) and
                     app.ctx._state == ClientState.INITIAL and
