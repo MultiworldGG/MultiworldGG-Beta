@@ -6,6 +6,7 @@ from . import setup_solo_multiworld
 
 
 class TestBase(unittest.TestCase):
+    world_relevant = True
     gen_steps = (
         "generate_early",
         "create_regions",
@@ -37,7 +38,7 @@ class TestBase(unittest.TestCase):
 
     def test_all_state_is_available(self):
         """Ensure get_all_state collects the itempool + pre_fill items and honors allow_partial_entrances at each step."""
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             with self.subTest("Game", game=game_name):
                 multiworld = setup_solo_multiworld(world_type, self.gen_steps)
                 for step in self.test_steps:
@@ -58,7 +59,7 @@ class TestBase(unittest.TestCase):
 
                         # The real (sweeping) call only adds reachable placed items on top, so every progression item the
                         # oracle collected must still be present, and the result is a usable CollectionState.
-                        swept = multiworld.get_all_state(False, allow_partial_entrances=True)
+                        swept = multiworld.get_all_state(allow_partial_entrances=True)
                         self.assertIsInstance(swept, CollectionState)
                         for player, counter in expected.prog_items.items():
                             for item_name, amount in counter.items():

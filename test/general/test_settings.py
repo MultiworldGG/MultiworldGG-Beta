@@ -6,11 +6,13 @@ from worlds.AutoWorld import AutoWorldRegister
 
 
 class TestSettings(TestCase):
+    world_relevant = True
+
     def test_settings_can_update(self) -> None:
         """
         Test that every world's settings Group can update from an empty dict without crashing.
         """
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             with self.subTest(game=game_name):
                 if world_type.settings is not None:
                     self.assertIsInstance(world_type.settings, Group)
