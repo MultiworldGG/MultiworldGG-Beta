@@ -76,6 +76,21 @@ SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
 ]
 
 
+# Optional per-repo release-tag pin, keyed by repo name from SIBLING_WHEEL_REPOS.
+# None (the default for every repo below) preserves today's behavior: always
+# fetch the latest release. Set a repo's value to a real tag string (e.g.
+# "v1.2.3") to pin the monorepo build to that sibling release instead of
+# whatever is newest at build time -- useful right before a coordinated
+# release so an in-flight sibling release can't get silently picked up. This
+# file does not choose tags on its own; populate it by hand (or from CI input)
+# when that coordination is needed.
+SIBLING_WHEEL_TAG_PINS: dict[str, str | None] = {
+    "mwgg-gui": None,
+    "mwgg-tui": None,
+    "mwgg-splash": None,
+}
+
+
 # Token for fetching from private sibling repos during beta. Set
 # MWGG_BUILD_GITHUB_TOKEN (locally or via the workflow's `env:` block) to a PAT or
 # GitHub App installation token with `contents: read` on the SIBLING_WHEEL_REPOS.
@@ -182,6 +197,29 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
     return asset
 
 
+def _release_wheel_asset_for_tag(owner: str, repo: str, tag: str) -> dict | None:
+    """Fetch a specific tagged release (see SIBLING_WHEEL_TAG_PINS) and return the
+    chosen wheel asset dict. Mirrors _latest_release_wheel_asset but hits the
+    /releases/tags/{tag} endpoint instead of /releases/latest."""
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
+    req = urllib.request.Request(api_url, headers=_gh_headers())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        logger.warning(f"GET {api_url} failed: {e} (is {tag!r} a real release tag on {owner}/{repo}?)")
+        return None
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+        logger.warning(f"Could not fetch release {tag!r} for {owner}/{repo}: {e}")
+        return None
+
+    asset = _pick_wheel_asset(data.get("assets", []))
+    if asset is None:
+        logger.warning(f"No suitable wheel asset on release {tag!r} of {owner}/{repo}")
+        return None
+    return asset
+
+
 def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     """Download a release asset by id; return the path to a file with the asset's
     original filename (inside a fresh temp dir). Works for private repos.
@@ -268,8 +306,9 @@ def _log_installation_repositories() -> None:
 def install_wheels() -> bool:
     """Install sibling-repo wheels from their latest GitHub releases.
 
-    For each repo in SIBLING_WHEEL_REPOS, GET the latest release, pick a wheel
-    asset compatible with the current platform, download it (authenticated when
+    For each repo in SIBLING_WHEEL_REPOS, GET the latest release (or a pinned
+    release tag from SIBLING_WHEEL_TAG_PINS), pick a wheel asset compatible
+    with the current platform, download it (authenticated when
     MWGG_BUILD_GITHUB_TOKEN is set, anonymous otherwise), and pip-install it
     into the build venv. cx_Freeze then bundles the installed package into the
     frozen build via setup.py's `packages` list.
@@ -283,7 +322,12 @@ def install_wheels() -> bool:
     _log_installation_repositories()
 
     for owner, repo in SIBLING_WHEEL_REPOS:
-        asset = _latest_release_wheel_asset(owner, repo)
+        pinned_tag = SIBLING_WHEEL_TAG_PINS.get(repo)
+        if pinned_tag:
+            logger.info(f"{owner}/{repo} is pinned to tag {pinned_tag!r}")
+            asset = _release_wheel_asset_for_tag(owner, repo, pinned_tag)
+        else:
+            asset = _latest_release_wheel_asset(owner, repo)
         if asset is None:
             return False
         wheel_path = _download_release_asset(owner, repo, asset)
@@ -387,17 +431,30 @@ def verify_build_output() -> bool:
     
     exe_dir = exe_dirs[0]
     logger.debug(f"Checking build output in: {exe_dir}")
-    
+
+    # Import here, not at module top, so this script's version/platform checks
+    # (which run before the venv necessarily has project deps importable) stay
+    # cheap; BaseUtils.FROZEN_TARGETS is the single source of truth for exe
+    # base names, matching setup.py's Executable(...) target_name values.
+    from BaseUtils import FROZEN_TARGETS
+
+    def exe_name(base: str) -> str:
+        return f"{base}.exe" if sys.platform == "win32" else base
+
     expected_exes = [
-        "MultiWorldGG.exe" if sys.platform == "win32" else "MultiWorldGG",
-        "MultiWorldGGServer.exe" if sys.platform == "win32" else "MultiWorldGGServer",
-        "MultiWorldGGGenerate.exe" if sys.platform == "win32" else "MultiWorldGGGenerate",
-        "MultiWorldGGPatch.exe" if sys.platform == "win32" else "MultiWorldGGPatch"
+        exe_name(FROZEN_TARGETS["MultiWorld"]),
+        exe_name(FROZEN_TARGETS["MultiServer"]),
+        exe_name(FROZEN_TARGETS["Generate"]),
+        exe_name(FROZEN_TARGETS["Patch"]),
+        exe_name(FROZEN_TARGETS["Launcher"]),
     ]
-    
+
     if sys.platform == "win32":
-        expected_exes.append("MultiWorldGGClientDebug.exe")
-    
+        expected_exes.append(f"{FROZEN_TARGETS['MultiWorldDebug']}.exe")
+        # LauncherDebug has no FROZEN_TARGETS entry of its own (see setup.py's
+        # _launcher_debug_exe_name) -- same "Launcher" + "Debug" derivation.
+        expected_exes.append(f"{FROZEN_TARGETS['Launcher']}Debug.exe")
+
     missing_exes = []
     for exe in expected_exes:
         exe_path = exe_dir / exe

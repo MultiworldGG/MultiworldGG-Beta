@@ -72,14 +72,20 @@ with additional Components in order to automatically add them to the Launcher. M
 `icon` and `description` can be used to customize display in the Launcher UI, and `file_identifier` can be used to
 launch by file.
 
-Additionally, if you use `func` you have access to LauncherComponent.launch or launch_subprocess to run your
-function as a subprocesses that can be utilized side by side other clients.
+The Launcher is its own standalone process again; anything it launches (clients, the server, tools, etc.) runs as
+a **separate OS process**. A `func` Component itself still runs inside the Launcher process though, so if your
+function has its own long-running lifecycle (e.g. it opens its own window and blocks), use
+`LauncherComponents.launch`/`launch_subprocess` to spawn it in a subprocess instead of blocking the Launcher UI:
 ```py
 def my_func(*args: str):
 	from .client import run_client
-	LauncherComponent.launch(run_client, name="My Client", args=args)
+	from worlds.LauncherComponents import launch
+	launch(run_client, name="My Client", args=args)
 ```
 
+If your Component points at a frozen executable (`frozen_name`) instead of a `func`, that name must exactly match
+a built executable -- see `BaseUtils.FROZEN_TARGETS` for the monorepo's own executables -- and the match is
+case-sensitive on Linux/macOS even though Windows doesn't care.
 
 ## World
 
