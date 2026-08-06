@@ -4,8 +4,9 @@
 # Python-to-C compiler for building extensions
 cython>=3.0.12
 
-# Package building tools
-setuptools>=70.0.0
+# Package building tools (setuptools cap mirrors setup_constraints.txt;
+# setuptools 81 breaks the frozen-build toolchain)
+setuptools>=75,<81
 build>=1.0.0
 
 # cx_Freeze for building executables (if not already installed)
