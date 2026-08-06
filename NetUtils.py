@@ -528,6 +528,70 @@ class KivyRefJSONtoTextParser(KivyMarkupJSONtoTextParser):
         return super()._handle_text(node)
 
 
+# Labels for the six item-class colors, keyed by TEXT_COLORS name — the
+# MarkupTagsTheme.name() vocabulary with the trailing colon stripped. Consumed
+# by the console hover tooltip (GUI) to invert KivyMarkupJSONtoTextParser's
+# [color=hex] emission back into a human-readable item classification.
+# Deliberately excludes command_echo_color (unknown-flag items share it with
+# command/help text) and the player/location/entrance colors.
+ITEM_CLASS_TOOLTIP_LABELS: typing.Dict[str, str] = {
+    "progression_goal_item_color": "Goal Item",
+    "progression_item_color": "Required Item",
+    "progression_deprioritized_item_color": "Logically Required Item",
+    "useful_item_color": "Useful Item",
+    "regular_item_color": "Regular or Filler Item",
+    "trap_item_color": "Trap Item",
+}
+
+
+def find_enclosing_color_span(text: str, index: int, window: int = 4096
+                              ) -> typing.Optional[typing.Tuple[int, int, str]]:
+    """Locate the ``[color=hex]…[/color]`` span of KivyMarkupJSONtoTextParser
+    output that encloses ``index``, scanning at most ``window`` characters to
+    either side.
+
+    Returns ``(start, end, hex)`` where start/end delimit the whole span
+    including both tag literals (end exclusive) and hex is the color value
+    with any leading ``#`` stripped; an index inside either tag literal counts
+    as inside the span. Returns None when the index sits between spans, out of
+    range, or the surrounding markup is malformed/unclosed within the window.
+    Exact only for the parser's escaped emissions; unescaped brackets (e.g.
+    player names) degrade to None or a containing span, never an exception.
+    """
+    open_tag = "[color="
+    close_tag = "[/color]"
+    if index < 0 or index >= len(text):
+        return None
+    lo = max(0, index - window)
+    # An index inside the "[/color]" literal belongs to the span it closes;
+    # rescan as if standing at that literal's opening bracket.
+    probe = index
+    close_overlap = text.rfind(close_tag, max(lo, index - len(close_tag) + 1),
+                               index + len(close_tag))
+    if close_overlap != -1:
+        probe = close_overlap
+    # Nearest open tag starting at or before probe (rfind's exclusive end
+    # admits a tag whose literal contains probe).
+    open_idx = text.rfind(open_tag, lo, probe + len(open_tag))
+    if open_idx == -1:
+        return None
+    # A close tag fully between that open tag and probe means the probe sits
+    # after the span, in unwrapped text.
+    if text.rfind(close_tag, lo, probe) > open_idx:
+        return None
+    value_end = text.find("]", open_idx + len(open_tag),
+                          open_idx + len(open_tag) + 10)
+    if value_end == -1:
+        return None
+    hex_value = text[open_idx + len(open_tag):value_end].removeprefix("#")
+    if len(hex_value) not in (6, 8) or not all(c in "0123456789abcdefABCDEF" for c in hex_value):
+        return None
+    close_idx = text.find(close_tag, value_end + 1, index + window)
+    if close_idx == -1:
+        return None
+    return open_idx, close_idx + len(close_tag), hex_value
+
+
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
                 'magenta': 35, 'cyan': 36, 'white': 37, 'black_bg': 40, 'red_bg': 41, 'green_bg': 42, 'yellow_bg': 43,
