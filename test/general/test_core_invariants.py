@@ -8,6 +8,7 @@ import pickle
 import unittest
 from collections import Counter
 from dataclasses import dataclass
+from tempfile import TemporaryDirectory
 
 import Generate
 from APContainer import APContainer, APPlayerContainer, container_version, parse_client_function
@@ -28,6 +29,7 @@ from Utils import (
     _expand_game_choices,
     get_fuzzy_results,
     is_iterable_except_str,
+    players_path,
     read_snes_rom,
     restricted_dumps,
     restricted_loads,
@@ -117,6 +119,27 @@ class TestGetFuzzyResults(unittest.TestCase):
     def test_get_fuzzy_results_truncates_to_limit(self) -> None:
         words = ["apple", "applf", "applg", "applh"]
         self.assertEqual(len(get_fuzzy_results("apple", words, limit=2)), 2)
+
+
+class TestPlayersPath(unittest.TestCase):
+    def test_players_path_resolves_under_settings_value_and_creates_dir(self) -> None:
+        from settings import get_settings
+        settings = get_settings()
+        with TemporaryDirectory(prefix="AP_players_") as tempdir:
+            target = os.path.join(tempdir, "Players")
+            original = settings.generator.player_files_path
+            # Same monkeypatch shape as test/programs/test_generate.py:
+            # settings.Group's setattr needs the upcast to the APPathLib subclass.
+            settings.generator.player_files_path = settings.generator.PlayerFilesPath(target)
+            settings._filename = None  # don't write to disk
+            try:
+                self.assertFalse(os.path.isdir(target))
+                result = players_path("Player1.yaml")
+                self.assertEqual(result, os.path.join(target, "Player1.yaml"))
+                self.assertTrue(os.path.isdir(target), "players_path must create the base dir")
+                self.assertEqual(players_path(), target)
+            finally:
+                settings.generator.player_files_path = original
 
 
 # --------------------------------------------------------------------------- #
