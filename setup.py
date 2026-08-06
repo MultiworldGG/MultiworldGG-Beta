@@ -176,7 +176,7 @@ executables = [
         script="MultiWorld.py",
         target_name="MultiWorldGG.exe" if is_windows else "MultiWorldGG",
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base="Win32GUI" if is_windows else None,
+        base="gui" if is_windows else None,
         shortcut_name="MultiWorldGG",
         shortcut_dir="DesktopFolder"
     ),
@@ -206,12 +206,12 @@ executables = [
     ),
     # Standalone Launcher process: shows games + tools and stays open, spawning
     # everything else (including MultiWorldGG.exe itself) as separate processes.
-    # Bare double-click behaves like the client did before the split (Win32GUI).
+    # Bare double-click behaves like the client did before the split (gui base).
     Executable(
         script="Launcher.py",
         target_name=_launcher_exe_name,
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base="Win32GUI" if is_windows else None,
+        base="gui" if is_windows else None,
         shortcut_name="MultiworldGG Launcher",
         shortcut_dir="DesktopFolder"
     )
