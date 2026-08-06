@@ -16,14 +16,13 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-import requests
-
 import Utils
-from Utils import normalize_tag, tuplize_version
+from Utils import is_frozen, is_linux, is_macos, is_windows, normalize_tag, tuplize_version
 
 
 GITHUB_OWNER = "MultiworldGG"
 GITHUB_REPO = "MultiworldGG-Beta"
+GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
 ASSET_PATTERNS: dict[str, tuple[str, ...]] = {
     "windows": ("*.exe",),
     "linux": ("*.AppImage",),
@@ -31,6 +30,30 @@ ASSET_PATTERNS: dict[str, tuple[str, ...]] = {
 }
 
 ProgressCallback = Callable[[int, int], None]
+
+
+def can_check_for_updates() -> bool:
+    """Whether this process runs from an installed build the updater can replace.
+
+    Frozen-only: source checkouts always return False. Windows installs are
+    always updatable (Inno installer handoff); Linux only when running from an
+    AppImage; macOS only when running from a .app bundle.
+    """
+    if not is_frozen():
+        return False
+    if is_windows:
+        return True
+    if is_linux:
+        return bool(os.environ.get("APPIMAGE"))
+    if is_macos:
+        return ".app/Contents/MacOS/" in os.path.realpath(sys.executable)
+    return False
+
+
+def get_release_page_url() -> str:
+    """Fallback for platforms without an in-app installer handoff: the release
+    page to open in a browser (non-Windows, until installer paths are ported)."""
+    return GITHUB_RELEASES_PAGE
 
 
 @dataclass(frozen=True)
@@ -105,6 +128,7 @@ def _get_checksum_for_asset(checksum_asset: dict | None, installer_name: str) ->
     checksum_url = str(checksum_asset.get("browser_download_url") or "")
     if not checksum_url:
         return None, None
+    import requests
     try:
         resp = requests.get(checksum_url, timeout=30)
         resp.raise_for_status()
@@ -115,6 +139,7 @@ def _get_checksum_for_asset(checksum_asset: dict | None, installer_name: str) ->
 
 
 def get_latest_release_info() -> ReleaseInfo:
+    import requests
     latest_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
     resp = requests.get(latest_url, headers={"Accept": "application/vnd.github.v3+json"}, timeout=30)
     resp.raise_for_status()
@@ -138,6 +163,7 @@ def get_latest_release_info() -> ReleaseInfo:
 
 
 def _download_update_asset(asset: UpdateAsset, suffix: str, progress_callback: ProgressCallback | None = None) -> Path:
+    import requests
     fd, raw_path = tempfile.mkstemp(prefix="MultiworldGG-update-", suffix=suffix)
     os.close(fd)
     path = Path(raw_path)
