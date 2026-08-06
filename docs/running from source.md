@@ -28,8 +28,15 @@ required modules and after pressing enter proceed to install everything automati
 installs through `uv pip install`, so you'll see uv's resolver output rather than pip's.
 After this, you should be able to run the programs.
 
- * `Launcher.py` gives access to many components, including clients registered in `worlds/LauncherComponents.py`.
-    * The Launcher button "Generate Template Options" will generate default yamls for all worlds.
+ * `Launcher.py` (source) / `MultiworldGGLauncher` (frozen) opens the standalone Launcher: games and tools,
+   including clients registered in `worlds/LauncherComponents.py`. It is its own process and stays open,
+   spawning every game/tool it launches as a separate process in turn.
+    * The Launcher's "Create YAML" tool opens the yaml_creator screen to build a player options file for one
+      game at a time. `Options.generate_yaml_templates` (bulk template generation for every installed world)
+      remains available for WebHost, which still uses it to seed the Players/Templates folder.
+ * `MultiWorld.py` (source) / `MultiWorldGG` (frozen) is the client, and boots directly into a game when
+   launched with `--game <module>` (or a patch/URL it can route), skipping the game-select screen -- only
+   the Launcher shows the full game list.
  * With yaml(s) in the `Players` folder, `Generate.py` will generate the multiworld archive.
  * `MultiServer.py`, with the filename of the generated archive as a command line parameter, will host the multiworld locally.
     * `--log_network` is a command line parameter useful for debugging.

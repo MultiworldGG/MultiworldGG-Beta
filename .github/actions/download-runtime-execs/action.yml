@@ -9,7 +9,7 @@ inputs:
     required: false
     default: '.'
   uv-version:
-    description: 'Pinned uv version to download for the bundled binary on Linux/macOS. Keep in sync with build.yml UV_VERSION.'
+    description: 'Pinned uv version to download for the bundled binary on Linux/macOS. The default below is the canonical pin: release.yml and build-release-test.yml call this action without overriding it. (Windows installs uv unpinned via winget in inno_setup.iss.)'
     required: false
     default: '0.11.15'
 runs:

@@ -58,7 +58,8 @@ installer's `--worlds <selection>` flow (see `inno_setup.iss`).
 
 ### Other workflows
 
-- **`build.yml`** — legacy build path (kept for fallback testing).
+- **`build.yml`** — deprecated; manual-dispatch-only stub that fails immediately and points at
+  `build-release-test.yml` / `release.yml`.
 - **`analyze-modified-files.yml`** — lints PR diffs.
 - **`unittests.yml`** — runs the test suite.
 - **`ctest.yml`** — runs C/Cython speedup tests.
