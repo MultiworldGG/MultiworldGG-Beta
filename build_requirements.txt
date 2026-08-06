@@ -10,10 +10,11 @@ setuptools>=75,<81
 build>=1.0.0
 
 # cx_Freeze for building executables (if not already installed)
-# Pinned to 8.4.0 because cx_custom_hooks/_kivy_.py reaches into private
-# cx_Freeze internals (cx_Freeze.module.Module, cx_Freeze._compat.IS_*) that
-# are not API-stable across major versions.
-cx_Freeze==8.4.0
+# Pinned because cx_custom_hooks/_kivy_.py reaches into private cx_Freeze
+# internals (cx_Freeze.module.Module, cx_Freeze._compat.IS_*) that are not
+# API-stable across major versions. 8.4.0 -> 8.6.4 so charset_normalizer
+# works when frozen; re-verify the _kivy_/_numpy_ hooks at the next build.
+cx_Freeze==8.6.4
 
 # uv is needed at build time: ModuleUpdate.py calls find_uv() at module-load,
 # and build_exe.py imports Utils → ModuleUpdate before cx_Freeze runs. The
