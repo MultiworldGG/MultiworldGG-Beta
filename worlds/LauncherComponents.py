@@ -1,5 +1,3 @@
-import bisect
-import gzip
 import hashlib
 import json
 import logging
@@ -9,20 +7,19 @@ import pkgutil
 import subprocess
 import sys
 import tempfile
-import time
 import weakref
+import webbrowser
 from enum import Enum, auto
 from typing import Any, Optional, Callable, Iterable, Tuple
 
-from Utils import local_path, open_filename, is_frozen, is_kivy_running, is_windows, open_file, user_path, \
-    read_apignore
+from Utils import local_path, open_filename, is_frozen, is_kivy_running, is_windows, is_linux, is_macos, \
+    open_file, user_path, read_apignore, env_cleared_lib_path, FROZEN_TARGETS
 
 try:
     from Utils import instance_name as apname
 except ImportError:
     apname = "Archipelago"
 
-_LAUNCHER_CACHE_PATH = local_path("data", "world_launcher_cache.json.gz")
 _DEFAULT_ICON_PATH = local_path("data", "icon.png")
 _LAUNCHER_ICON_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mwgg_launcher_icons")
 
@@ -219,6 +216,17 @@ def get_exe(component: Component) -> Optional[list[str]]:
     return [sys.executable, local_path(f"{component.script_name}.py")] if component.script_name else None
 
 
+def get_client_exe() -> list[str]:
+    """Resolve the command line that launches the beta's single client entry point.
+
+    Centralizes exe-name resolution (frozen name vs source script) so callers
+    never hardcode "MultiWorldGG(.exe)" themselves."""
+    if is_frozen():
+        suffix = ".exe" if is_windows else ""
+        return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]
+    return [sys.executable, local_path("MultiWorld.py")]
+
+
 def launch_exe(exe: Iterable[str], in_terminal: bool = False) -> bool:
     """Run the command line `exe` in a new process. With `in_terminal`, try to
     run it in a terminal window; the return value reports whether one was used.
@@ -248,95 +256,169 @@ def launch_exe(exe: Iterable[str], in_terminal: bool = False) -> bool:
     return False
 
 
+def spawn_client(game: Optional[str] = None, *, server_address: Optional[str] = None,
+                 slot_name: Optional[str] = None, password: Optional[str] = None,
+                 client_type: str = "game", launch_file: Optional[str] = None,
+                 extra_args: Iterable[str] = ()) -> "subprocess.Popen[Any]":
+    """Spawn a client process, detached from this one.
+
+    Every launch from the Launcher process is a separate OS process, and
+    children deliberately survive launcher exit: closing the launcher window
+    must not kill an in-progress game session. MWGG_NO_SPLASH=1 is set in the
+    child env rather than appended as a CLI flag -- MultiWorld.py's arg parser
+    doesn't know a --no-splash flag yet, only the env var is read (Phase 2)."""
+    argv = list(get_client_exe())
+    if launch_file:
+        argv.append(launch_file)
+    if game is not None:
+        argv += ["--game", game]
+    if server_address is not None:
+        argv += ["--server-address", server_address]
+    if slot_name is not None:
+        argv += ["--slot-name", slot_name]
+    if password is not None:
+        argv += ["--password", password]
+    argv += ["--client-type", client_type]
+    argv += list(extra_args)
+
+    env = os.environ.copy()
+    env["MWGG_ROLE"] = "client"
+    env["MWGG_CLIENT_TYPE"] = client_type
+    env["MWGG_NO_SPLASH"] = "1"
+
+    popen_kwargs: dict[str, Any] = {"env": env}
+    if is_windows:
+        popen_kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    return subprocess.Popen(argv, **popen_kwargs)
+
+
+def run_component(component: Component, *args: str) -> None:
+    """Launch `component`, preferring its func over a script/frozen executable."""
+    if component.func:
+        component.func(*args)
+        return
+
+    if component.script_name:
+        exe = get_exe(component)
+        if not exe:
+            logging.warning(f"Unable to resolve executable for launcher component {component.display_name}.")
+            return
+        launch_exe([*exe, *args], component.cli)
+        return
+
+    logging.warning(f"Component {component.display_name} does not appear to be executable.")
+
+
+_launch_component = run_component  # deprecated alias
+
+
+def find_component(name: str) -> Optional[Component]:
+    """Case-sensitive lookup by display_name or script_name."""
+    for component in components:
+        if component.display_name == name or component.script_name == name:
+            return component
+    return None
+
+
+def builtin_components() -> list[Component]:
+    """Builtin components in registration order, excluding anything appended
+    after world loading starts (see _classify_component_origin)."""
+    return [component for component in components if _component_origin(component) == _COMPONENT_ORIGIN_BUILTIN]
+
+
 def launch_textclient(*args):
-    import CommonClient
-    launch(CommonClient.run_as_textclient, name="TextClient", args=args)
+    spawn_client(client_type="text", extra_args=args)
 
 
-# def _install_apworld(apworld_src: str = "") -> Optional[Tuple[pathlib.Path, pathlib.Path]]:
-#     if not apworld_src:
-#         apworld_src = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
-#         if not apworld_src:
-#             # user closed menu
-#             return
+def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
+    """Validate and copy an .apworld into custom_worlds/, registering its
+    manifest so it's immediately selectable. Returns the installed path, or
+    None if the user cancelled the file picker.
 
-#     if not apworld_src.endswith(".apworld"):
-#         raise Exception(f"Wrong file format, looking for .apworld. File identified: {apworld_src}")
+    Never imports the world's Python module (only the zip manifest is read,
+    via Utils.discover_custom_world_module) -- if a module of the same name is
+    already imported in this process, installation still succeeds but a
+    restart is required to actually use the new code, since Python caches
+    imported modules and this beta has no world-unload mechanism."""
+    if not path:
+        path = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
+        if not path:
+            # user closed menu
+            return None
 
-#     apworld_path = pathlib.Path(apworld_src)
+    if not path.endswith(".apworld"):
+        raise Exception(f"Wrong file format, looking for .apworld. File identified: {path}")
 
-#     try:
-#         import zipfile
-#         zip = zipfile.ZipFile(apworld_path)
-#         directories = [f.name for f in zipfile.Path(zip).iterdir() if f.is_dir()]
-#         if len(directories) == 1 and directories[0] in apworld_path.stem:
-#             module_name = directories[0]
-#             apworld_name = module_name + ".apworld"
-#         else:
-#             raise Exception("APWorld appears to be invalid or damaged. (expected a single directory)")
-#         zip.open(module_name + "/__init__.py")
-#     except ValueError as e:
-#         raise Exception("Archive appears invalid or damaged.") from e
-#     except KeyError as e:
-#         raise Exception("Archive appears to not be an apworld. (missing __init__.py)") from e
+    apworld_path = pathlib.Path(path)
 
-#     import worlds
-#     if worlds.user_folder is None:
-#         raise Exception("Custom Worlds directory appears to not be writable.")
-#     for world_source in worlds.world_sources:
-#         if apworld_path.samefile(world_source.resolved_path):
-#             # Note that this doesn't check if the same world is already installed.
-#             # It only checks if the user is trying to install the apworld file
-#             # that comes from the installation location (worlds or custom_worlds)
-#             raise Exception(f"APWorld is already installed at {world_source.resolved_path}.")
+    import zipfile
+    try:
+        zip_file = zipfile.ZipFile(apworld_path)
+        directories = [f.name for f in zipfile.Path(zip_file).iterdir() if f.is_dir()]
+        if len(directories) == 1 and directories[0] in apworld_path.stem:
+            module_name = directories[0]
+        else:
+            raise Exception("APWorld appears to be invalid or damaged. (expected a single directory)")
+        zip_file.open(module_name + "/__init__.py")
+    except ValueError as e:
+        raise Exception("Archive appears invalid or damaged.") from e
+    except KeyError as e:
+        raise Exception("Archive appears to not be an apworld. (missing __init__.py)") from e
 
-#     # TODO: run generic test suite over the apworld.
-#     # TODO: have some kind of version system to tell from metadata if the apworld should be compatible.
+    import ModuleUpdate
+    custom_worlds_dir = ModuleUpdate.custom_worlds_dir
+    try:
+        custom_worlds_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise Exception("Custom Worlds directory appears to not be writable.") from e
 
-# #     target = pathlib.Path(worlds.user_folder) / apworld_name
-# #     import shutil
-# #     shutil.copyfile(apworld_path, target)
+    target = custom_worlds_dir / f"{module_name}.apworld"
+    if apworld_path.resolve() == target.resolve():
+        # Note that this doesn't check if the same world is already installed
+        # under a different file; it only catches re-installing the file that's
+        # already sitting in custom_worlds/.
+        raise Exception(f"APWorld is already installed at {target}.")
 
-#     # If a module with this name is already loaded, then we can't load it now.
-#     # TODO: We need to be able to unload a world module,
-#     # so the user can update a world without restarting the application.
-#     found_already_loaded = False
-#     for loaded_world in worlds.world_sources:
-#         loaded_name = pathlib.Path(loaded_world.path).stem
-#         if module_name == loaded_name:
-#             found_already_loaded = True
-#             break
-#     if found_already_loaded and is_kivy_running():
-#         raise Exception(f"Installed APWorld successfully, but '{module_name}' is already loaded, "
-#                         "so a Launcher restart is required to use the new installation.")
-#     world_source = worlds.WorldSource(str(target), is_zip=True, relative=False)
-#     bisect.insort(worlds.world_sources, world_source)
-#     world_source.load()
+    # If a module with this name is already imported, we can't hot-swap it in:
+    # Python caches imported modules and this beta has no unload mechanism.
+    already_loaded = f"worlds.{module_name}" in sys.modules
 
-# #     return apworld_path, target
+    import shutil
+    shutil.copyfile(apworld_path, target)
+
+    import Utils
+    Utils.discover_custom_world_module(target)
+
+    if already_loaded and is_kivy_running():
+        raise Exception(f"Installed APWorld successfully, but '{module_name}' is already loaded, "
+                        "so a Launcher restart is required to use the new installation.")
+
+    return target
 
 
-# def install_apworld(apworld_path: str = "") -> None:
-#     try:
-#         res = _install_apworld(apworld_path)
-#         if res is None:
-#             logging.info("Aborting APWorld installation.")
-#             return
-#         source, target = res
-#     except Exception as e:
-#         import Utils
-#         Utils.messagebox("Notice", str(e), error=True)
-#         logging.exception(e)
-#     else:
-#         import Utils
-#         logging.info(f"Installed APWorld successfully, copied {source} to {target}.")
-#         Utils.messagebox("Install complete.", f"Installed APWorld from {source}.")
-        # if _rebuild_launcher_ui and is_kivy_running():
-        #     from kivy.clock import Clock
-        #     def _refresh_after_install(dt):
-        #         _hydrate_launcher_components_from_cache()
-        #         _rebuild_launcher_ui()  # type: ignore[misc]
-        #     Clock.schedule_once(_refresh_after_install, 0)
+def install_apworld(path: str = "") -> None:
+    import Utils
+    try:
+        target = _install_apworld(path)
+        if target is None:
+            logging.info("Aborting APWorld installation.")
+            return
+    except Exception as e:
+        Utils.messagebox("Notice", str(e), error=True)
+        logging.exception(e)
+    else:
+        logging.info(f"Installed APWorld successfully to {target}.")
+        Utils.messagebox("Install complete.", f"Installed APWorld to {target}.")
+        if _rebuild_launcher_ui and is_kivy_running():
+            from kivy.clock import Clock
+
+            def _refresh_after_install(dt):
+                _rebuild_launcher_ui()  # type: ignore[misc]
+
+            Clock.schedule_once(_refresh_after_install, 0)
 
 
 def export_datapackage() -> None:
@@ -351,18 +433,54 @@ def export_datapackage() -> None:
     open_file(path)
 
 
+def open_host_yaml() -> None:
+    import settings
+    s = settings.get_settings()
+    file = s.filename
+    s.save()
+    assert file, "host.yaml missing"
+    from shutil import which
+    if is_linux:
+        exe = which('sensible-editor') or which('gedit') or \
+              which('xdg-open') or which('gnome-open') or which('kde-open')
+    elif is_macos:
+        exe = which("open")
+    else:
+        webbrowser.open(file)
+        return
+
+    env = env_cleared_lib_path()
+    subprocess.Popen([exe, file], env=env)
+
+
+def open_patch() -> None:
+    import Utils
+    try:
+        filename = open_filename("Select patch", (("Patch", "*"),))
+    except Exception as e:
+        Utils.messagebox("Error", str(e), error=True)
+        return
+    if filename:
+        spawn_client(launch_file=filename)
+
+
+def browse_files() -> None:
+    open_file(user_path())
+
+
 components: ComponentList = ComponentList([
     # Launcher
-    Component('Launcher', 'Launcher', component_type=Type.HIDDEN),
+    Component('Launcher', 'Launcher', FROZEN_TARGETS["Launcher"], component_type=Type.HIDDEN),
     # Core
-    Component('Host', 'MultiServer', f'{apname}Server', cli=True,
+    Component('Host', 'MultiServer', FROZEN_TARGETS["MultiServer"], cli=True,
               file_identifier=SuffixIdentifier('.archipelago', '.mwgg', '.zip'),
               description="Host a generated multiworld on your computer."),
-    Component('Generate', 'Generate', cli=True,
+    Component('Generate', 'Generate', FROZEN_TARGETS["Generate"], cli=True,
               description="Generate a multiworld with the YAMLs in the players folder."),
-    # Component("Install APWorld", func=install_apworld, file_identifier=SuffixIdentifier(".apworld"),
-            #   description="Install an APWorld to play games not included with Archipelago by default."),
-    Component('Text Client', 'CommonClient', f'{apname}TextClient', func=launch_textclient,
+    Component("Install APWorld", func=install_apworld, component_type=Type.TOOL,
+              file_identifier=SuffixIdentifier(".apworld"),
+              description="Install an APWorld to play games not included with Archipelago by default."),
+    Component('Text Client', func=launch_textclient,
               description="Connect to a multiworld using the text client."),
     Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL,
             description="Write item/location data for installed worlds to a file and open it."),
@@ -371,6 +489,19 @@ components: ComponentList = ComponentList([
 for component in components:
     setattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, _COMPONENT_ORIGIN_BUILTIN)
 
+components.extend([
+    Component("Open host.yaml", func=open_host_yaml,
+              description="Open the host.yaml file to change settings for generation, games, and more."),
+    Component("Open Patch", func=open_patch,
+              description="Open a patch file, downloaded from the room page or provided by the host."),
+    Component("MultiworldGG Website", func=lambda: webbrowser.open("https://multiworld.gg/"),
+              description="Open multiworld.gg in your browser."),
+    Component("Unofficial AP Discord", icon="discord", func=lambda: webbrowser.open("https://discord.multiworld.gg"),
+              description="Join the Discord server to play public multiworlds, report issues, or just chat!"),
+    Component("Browse Files", func=browse_files,
+              description="Open the MultiworldGG installation folder in your file browser."),
+])
+
 
 # if registering an icon from within an apworld, the format "ap:module.name/path/to/file.png" can be used
 icon_paths = {
@@ -378,396 +509,6 @@ icon_paths = {
     'mcicon': local_path('data', 'mcicon.png'),
     'discord': local_path('data', 'discord-mark-blue.png'),
 }
-
-
-def _component_suffixes(component: Component) -> tuple[str, ...]:
-    if isinstance(component.file_identifier, SuffixIdentifier):
-        return tuple(component.file_identifier.suffixes)
-    return ()
-
-
-def _serializable_callable(func: Optional[Callable]) -> tuple[Optional[str], Optional[str]]:
-    if func is None:
-        return None, None
-
-    module = getattr(func, "__module__", None)
-    qualname = getattr(func, "__qualname__", None)
-    if not isinstance(module, str) or not isinstance(qualname, str):
-        return None, None
-    if "<locals>" in qualname:
-        return None, None
-    return module, qualname
-
-
-def _component_identity(component: Component) -> tuple[Any, ...]:
-    return (
-        component.display_name,
-        component.type.name,
-        component.icon,
-        component.description,
-        bool(component.cli),
-        component.script_name,
-        component.frozen_name,
-        component.game_name,
-        bool(component.supports_uri),
-        _component_suffixes(component),
-    )
-
-
-def _component_identity_from_cache(component_data: dict[str, Any]) -> tuple[Any, ...]:
-    return (
-        component_data["display_name"],
-        component_data["type"],
-        component_data["icon"],
-        component_data["description"],
-        component_data["cli"],
-        component_data["script_name"],
-        component_data["frozen_name"],
-        component_data["game_name"],
-        component_data["supports_uri"],
-        tuple(component_data["file_suffixes"]),
-    )
-
-
-def _serialize_component(component: Component) -> dict[str, Any]:
-    callable_module, callable_qualname = _serializable_callable(component.func)
-    return {
-        "display_name": component.display_name,
-        "type": component.type.name,
-        "icon": component.icon,
-        "description": component.description,
-        "cli": bool(component.cli),
-        "script_name": component.script_name,
-        "frozen_name": component.frozen_name,
-        "game_name": component.game_name,
-        "supports_uri": bool(component.supports_uri),
-        "file_suffixes": list(_component_suffixes(component)),
-        "callable_module": callable_module,
-        "callable_qualname": callable_qualname,
-    }
-
-
-def _load_launcher_cache(check_freshness: bool = True) -> dict[str, Any] | None:
-    if not os.path.isfile(_LAUNCHER_CACHE_PATH):
-        return None
-
-    try:
-        with gzip.open(_LAUNCHER_CACHE_PATH, mode="rt", encoding="utf-8") as cache_file:
-            payload = json.load(cache_file)
-    except Exception as exc:
-        logging.warning(f"Failed to read launcher cache from {_LAUNCHER_CACHE_PATH}: {exc}")
-        return None
-
-    serialized_components = payload.get("components")
-    cached_icon_paths = payload.get("icon_paths")
-    if not isinstance(serialized_components, list) or not isinstance(cached_icon_paths, dict):
-        return None
-
-    if check_freshness:
-        cached_sources = payload.get("world_sources")
-        if isinstance(cached_sources, list):
-            worlds_module = sys.modules.get("worlds")
-            current_sources = sorted(
-                ws.path for ws in getattr(worlds_module, "world_sources", [])
-            )
-            if sorted(cached_sources) != current_sources:
-                logging.debug("Launcher cache is stale (world sources changed), ignoring.")
-                return None
-
-    sanitized_icon_paths: dict[str, str] = {}
-    for icon_key, icon_path in cached_icon_paths.items():
-        if not isinstance(icon_key, str) or not isinstance(icon_path, str):
-            return None
-        sanitized_icon_paths[icon_key] = _normalize_cached_icon_path(icon_path)
-
-    payload["icon_paths"] = sanitized_icon_paths
-
-    for component_data in serialized_components:
-        if not isinstance(component_data, dict):
-            return None
-
-        if not isinstance(component_data.get("display_name"), str):
-            return None
-        if not isinstance(component_data.get("type"), str) or component_data["type"] not in Type.__members__:
-            return None
-        if not isinstance(component_data.get("icon"), str):
-            return None
-        if not isinstance(component_data.get("description"), str):
-            return None
-        if not isinstance(component_data.get("cli"), bool):
-            return None
-        if not isinstance(component_data.get("supports_uri"), bool):
-            return None
-
-        script_name = component_data.get("script_name")
-        frozen_name = component_data.get("frozen_name")
-        game_name = component_data.get("game_name")
-        if script_name is not None and not isinstance(script_name, str):
-            return None
-        if frozen_name is not None and not isinstance(frozen_name, str):
-            return None
-        if game_name is not None and not isinstance(game_name, str):
-            return None
-
-        file_suffixes = component_data.get("file_suffixes")
-        if not isinstance(file_suffixes, list) or any(not isinstance(suffix, str) for suffix in file_suffixes):
-            return None
-
-        callable_module = component_data.get("callable_module")
-        callable_qualname = component_data.get("callable_qualname")
-        if callable_module is not None and not isinstance(callable_module, str):
-            return None
-        if callable_qualname is not None and not isinstance(callable_qualname, str):
-            return None
-
-    logging.debug(f"Loaded launcher cache from {_LAUNCHER_CACHE_PATH}.")
-    return payload
-
-
-def _launch_component(component: Component, launch_args: tuple[str, ...]) -> None:
-    if component.func:
-        component.func(*launch_args)
-        return
-
-    if component.script_name:
-        exe = get_exe(component)
-        if not exe:
-            logging.warning(f"Unable to resolve executable for launcher component {component.display_name}.")
-            return
-        launch_exe([*exe, *launch_args], component.cli)
-        return
-
-    logging.warning(f"Component {component.display_name} does not appear to be executable.")
-
-
-def _find_loaded_component(component_id: tuple[Any, ...]) -> Component | None:
-    for component in components:
-        if _component_origin(component) == _COMPONENT_ORIGIN_CACHE:
-            continue
-        if _component_identity(component) == component_id:
-            return component
-    return None
-
-
-def _find_cached_stub(component_id: tuple[Any, ...]) -> Component | None:
-    for component in components:
-        if _component_origin(component) != _COMPONENT_ORIGIN_CACHE:
-            continue
-        if _component_identity(component) == component_id:
-            return component
-    return None
-
-
-def _launch_cached_script_stub(component: Component, launch_args: tuple[str, ...]) -> tuple[bool, subprocess.Popen[Any] | None]:
-    if not (component.script_name or component.frozen_name):
-        return False, None
-
-    exe = get_exe(component)
-    if not exe:
-        return False, None
-    if is_frozen():
-        if not os.path.isfile(exe[0]):
-            logging.debug("Cached launcher executable is missing for component %s.", component.display_name)
-            return False, None
-    elif len(exe) > 1 and not os.path.isfile(exe[1]):
-        logging.debug("Cached launcher script is missing for component %s.", component.display_name)
-        return False, None
-
-    if component.cli:
-        launch_exe([*exe, *launch_args], component.cli)
-        return True, None
-    try:
-        return True, subprocess.Popen([*exe, *launch_args])
-    except FileNotFoundError:
-        logging.debug("Cached launcher executable is missing for component %s.", component.display_name)
-        return False, None
-
-
-def _launch_cached_callable_stub(callable_module: str | None, callable_qualname: str | None,
-                                 launch_args: tuple[str, ...]) -> tuple[bool, subprocess.Popen[Any] | None]:
-    # Upstream relaunches cached callables through a separate Launcher process
-    # (`Launcher.launch_component_callable`). Beta has no Launcher executable and
-    # runs clients in-process, so report "not launched" and let
-    # _run_cached_component fall through to the script stub or the fully loaded
-    # component instead.
-    return False, None
-
-
-def _run_cached_component(component_id: tuple[Any, ...], callable_module: str | None,
-                          callable_qualname: str | None, *launch_args: str) -> subprocess.Popen[Any] | None:
-    launched, launched_process = _launch_cached_callable_stub(callable_module, callable_qualname, tuple(launch_args))
-    if launched:
-        return launched_process
-
-    stub = _find_cached_stub(component_id)
-    if stub is not None:
-        launched, launched_process = _launch_cached_script_stub(stub, tuple(launch_args))
-        if launched:
-            return launched_process
-
-    # Resolve through fully loaded world components so launch behavior matches the real component.
-    component = _find_loaded_component(component_id)
-    if component is None:
-        logging.warning("Failed to resolve cached launcher component after world loading completed.")
-        return None
-    _launch_component(component, tuple(launch_args))
-    return None
-
-
-def _make_cached_component_func(component_id: tuple[Any, ...], callable_module: str | None,
-                                callable_qualname: str | None) -> Callable[..., subprocess.Popen[Any] | None]:
-    def _launch_cached(*launch_args: str) -> subprocess.Popen[Any] | None:
-        return _run_cached_component(component_id, callable_module, callable_qualname, *launch_args)
-
-    return _launch_cached
-
-
-def prepare_for_worlds_load() -> None:
-    if not components:
-        return
-
-    non_cached_components = [
-        component for component in components
-        if _component_origin(component) != _COMPONENT_ORIGIN_CACHE
-    ]
-    if len(non_cached_components) != len(components):
-        components[:] = non_cached_components
-
-
-def _hydrate_launcher_components_from_cache() -> None:
-    if _is_worlds_loading():
-        return
-
-    worlds_module = sys.modules.get("worlds")
-    if worlds_module is None:
-        return
-
-    payload = _load_launcher_cache()
-    if payload is None:
-        return
-
-    prepare_for_worlds_load()
-    icon_paths.update(payload["icon_paths"])
-
-    known_components = {_component_identity(component) for component in components}
-    for component_data in payload["components"]:
-        component_id = _component_identity_from_cache(component_data)
-        if component_id in known_components:
-            continue
-
-        suffixes = tuple(component_data["file_suffixes"])
-        file_identifier = SuffixIdentifier(*suffixes) if suffixes else None
-        cached_component = Component(
-            component_data["display_name"],
-            script_name=component_data["script_name"],
-            frozen_name=component_data["frozen_name"],
-            cli=component_data["cli"],
-            icon=component_data["icon"],
-            component_type=Type[component_data["type"]],
-            func=_make_cached_component_func(
-                component_id,
-                component_data.get("callable_module"),
-                component_data.get("callable_qualname"),
-            ),
-            file_identifier=file_identifier,
-            game_name=component_data["game_name"],
-            supports_uri=component_data["supports_uri"],
-            description=component_data["description"],
-        )
-        setattr(cached_component, _COMPONENT_ORIGIN_ATTRIBUTE, _COMPONENT_ORIGIN_CACHE)
-        components.append(cached_component)
-        known_components.add(component_id)
-
-
-def _write_cache_payload(payload: dict[str, Any]) -> None:
-    cache_dir = os.path.dirname(_LAUNCHER_CACHE_PATH)
-    if cache_dir:
-        os.makedirs(cache_dir, exist_ok=True)
-
-    temp_file_path = ""
-    try:
-        file_descriptor, temp_file_path = tempfile.mkstemp(
-            prefix="world_launcher_cache.",
-            suffix=".tmp",
-            dir=cache_dir or None,
-        )
-        with os.fdopen(file_descriptor, mode="wb") as temp_file:
-            with gzip.GzipFile(fileobj=temp_file, mode="wb") as gzip_file:
-                gzip_file.write(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8"))
-            temp_file.flush()
-            if hasattr(os, "fsync"):
-                os.fsync(temp_file.fileno())
-
-        os.replace(temp_file_path, _LAUNCHER_CACHE_PATH)
-        logging.debug(f"Wrote launcher cache to {_LAUNCHER_CACHE_PATH}.")
-    except Exception as exc:
-        logging.warning(f"Failed to write launcher cache to {_LAUNCHER_CACHE_PATH}: {exc}")
-    finally:
-        if temp_file_path and os.path.exists(temp_file_path):
-            try:
-                os.unlink(temp_file_path)
-            except OSError:
-                pass
-
-
-def write_launcher_cache() -> None:
-    worlds_module = sys.modules.get("worlds")
-    world_source_paths = sorted(
-        ws.path for ws in getattr(worlds_module, "world_sources", [])
-    )
-    serialized_components = [
-        _serialize_component(component)
-        for component in components
-        if _component_origin(component) == _COMPONENT_ORIGIN_WORLD
-    ]
-    serialized_icon_paths = {
-        icon_key: icon_path
-        for icon_key, icon_path in icon_paths.items()
-        if isinstance(icon_key, str) and isinstance(icon_path, str)
-    }
-    _write_cache_payload({
-        "components": serialized_components,
-        "icon_paths": serialized_icon_paths,
-        "world_sources": world_source_paths,
-    })
-
-
-def _merge_installed_world_components_into_cache(new_components: list[Component]) -> None:
-    """Merge newly installed world's components into the existing launcher cache."""
-    if not new_components:
-        return
-
-    new_entries = {
-        _component_identity(c): _serialize_component(c)
-        for c in new_components
-    }
-
-    # Skip freshness check — we're updating the cache after adding a new source.
-    payload = _load_launcher_cache(check_freshness=False)
-    if payload is None:
-        payload = {"components": [], "icon_paths": {}}
-
-    merged_components: dict[tuple, dict[str, Any]] = {}
-    for entry in payload["components"]:
-        merged_components[_component_identity_from_cache(entry)] = entry
-    merged_components.update(new_entries)
-
-    worlds_module = sys.modules.get("worlds")
-    world_source_paths = sorted(
-        ws.path for ws in getattr(worlds_module, "world_sources", [])
-    )
-
-    merged_icon_paths = dict(payload.get("icon_paths", {}))
-    merged_icon_paths.update({
-        k: v for k, v in icon_paths.items()
-        if isinstance(k, str) and isinstance(v, str)
-    })
-
-    _write_cache_payload({
-        "components": list(merged_components.values()),
-        "icon_paths": merged_icon_paths,
-        "world_sources": world_source_paths,
-    })
 
 
 def _normalize_cached_icon_path(icon_path: str) -> str:
@@ -818,13 +559,6 @@ def _materialize_ap_icon(icon_path: str) -> str:
         return _DEFAULT_ICON_PATH
 
     return icon_path_on_disk
-
-
-def has_world_components() -> bool:
-    return any(
-        _component_origin(component) in {_COMPONENT_ORIGIN_WORLD, _COMPONENT_ORIGIN_CACHE}
-        for component in components
-    )
 
 
 if not is_frozen():
@@ -894,3 +628,9 @@ if not is_frozen():
 
     components.append(Component("Build APWorlds", func=_build_apworlds, cli=True,
                                 description="Build APWorlds from loose-file world folders."))
+
+
+# Builtin registration is complete: anything appended to `components` from here on
+# (world modules importing worlds.LauncherComponents at load time, custom-world
+# installs, etc.) is not a builtin, so builtin_components() stays trustworthy.
+_INITIALIZING_COMPONENTS = False
