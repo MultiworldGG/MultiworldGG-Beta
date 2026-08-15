@@ -126,7 +126,9 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy"],
+    # cffi/pycparser must stay outside the zip for pythonnet (BFBB lib freezing)
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy",
+                             "cffi", "pycparser"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -162,7 +164,7 @@ executables = [
         script="MultiWorld.py",
         target_name="MultiWorldGG.exe" if is_windows else "MultiWorldGG",
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base="Win32GUI" if is_windows else None,
+        base="gui" if is_windows else None,
         shortcut_name="MultiWorldGG",
         shortcut_dir="DesktopFolder"
     ),

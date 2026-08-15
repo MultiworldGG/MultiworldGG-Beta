@@ -27,13 +27,13 @@ from WebHostLib.models import (
 from . import TestBase
 
 
-def _make_apworld_bytes(game_name: str, world_version: str = "1.2.3") -> bytes:
+def _make_apworld_bytes(game_name: str, world_version: str = "1.2.3", package_name: str | None = None) -> bytes:
     payload = io.BytesIO()
     with zipfile.ZipFile(payload, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(
-            "archipelago.json",
-            json.dumps({"game": game_name, "world_version": world_version}),
-        )
+        manifest_path = f"{package_name}/archipelago.json" if package_name else "archipelago.json"
+        if package_name:
+            zf.writestr(f"{package_name}/__init__.py", "")
+        zf.writestr(manifest_path, json.dumps({"game": game_name, "world_version": world_version}))
     return payload.getvalue()
 
 

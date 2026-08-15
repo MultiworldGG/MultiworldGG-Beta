@@ -6,13 +6,14 @@ import multiprocessing
 import os
 import queue
 import shutil
+import sys
 import typing
 from datetime import timedelta, datetime
 from threading import Event, Thread
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import create_engine, select, desc
+from sqlalchemy import create_engine, select, desc, or_
 from sqlalchemy.orm import Session
 
 from Utils import restricted_loads, utcnow
@@ -221,18 +222,19 @@ def init_generator(config: dict[str, Any]) -> None:
 
     setproctitle("Generator (idle)")
 
-    try:
-        import resource
-    except ModuleNotFoundError:
-        pass  # unix only module
-    else:
-        # set soft limit for memory to from config (default 4GiB)
-        soft_limit = config["GENERATOR_MEMORY_LIMIT"]
-        old_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
-        if soft_limit != old_limit:
-            resource.setrlimit(resource.RLIMIT_AS, (soft_limit, hard_limit))
-            logging.debug(f"Changed AS mem limit {old_limit} -> {soft_limit}")
-        del resource, soft_limit, hard_limit
+    if sys.platform != "darwin":
+        try:
+            import resource
+        except ModuleNotFoundError:
+            pass  # unix only module
+        else:
+            # set soft limit for memory to from config (default 4GiB)
+            soft_limit = config["GENERATOR_MEMORY_LIMIT"]
+            old_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
+            if soft_limit != old_limit:
+                resource.setrlimit(resource.RLIMIT_AS, (soft_limit, hard_limit))
+                logging.debug(f"Changed AS mem limit {old_limit} -> {soft_limit}")
+            del resource, soft_limit, hard_limit
 
     pony_config = config["PONY"]
     from WebHost import _pony_config_to_sqlalchemy_uri
@@ -250,20 +252,27 @@ def init_generator(config: dict[str, Any]) -> None:
         db.init_app(flask_app)
 
 
-def cleanup():
-    """delete unowned user-content and expired lobbies"""
+def cleanup(config: dict[str, Any] | None = None):
+    """delete unowned or old user-content and expired lobbies"""
+    auto_delete: int = (config or {}).get("ROOM_AUTO_DELETE", 0)
     engine = _get_engine()
     with Session(engine) as session:
         null_owner = UUID(int=0)
+        room_where = Room.owner == null_owner
+        seed_where = Seed.owner == null_owner
+        if auto_delete > 0:
+            cutoff = utcnow() - timedelta(days=auto_delete)
+            room_where = or_(room_where, Room.last_activity < cutoff)
+            seed_where = or_(seed_where, Seed.creation_time < cutoff)
         rooms_to_delete = session.scalars(
-            select(Room).where(Room.owner == null_owner)
+            select(Room).where(room_where)
         ).all()
         rooms_count = len(rooms_to_delete)
         for room in rooms_to_delete:
             session.delete(room)
 
         seeds_to_delete = session.scalars(
-            select(Seed).where(Seed.owner == null_owner)
+            select(Seed).where(seed_where)
         ).all()
         seeds_count = 0
         for seed in seeds_to_delete:
@@ -360,7 +369,7 @@ def autohost(config: dict):
                 db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
                 _engine = create_engine(db_uri)
 
-                cleanup()
+                cleanup(config)
                 hosters = []
                 for x in range(config["HOSTERS"]):
                     hoster = MultiworldInstance(config, x)
@@ -501,6 +510,7 @@ class MultiworldInstance():
         self.cert = config["SELFLAUNCHCERT"]
         self.key = config["SELFLAUNCHKEY"]
         self.host = config["HOST_ADDRESS"]
+        self.game_ports = config["GAME_PORTS"]
         self.rooms_to_start = multiprocessing.Queue()
         self.rooms_shutting_down = multiprocessing.Queue()
         self.name = f"MultiHoster{id}"
@@ -513,7 +523,7 @@ class MultiworldInstance():
 
         process = multiprocessing.Process(group=None, target=run_server_process,
                                           args=(self.name, self.ponyconfig, get_static_server_data(),
-                                                self.cert, self.key, self.host,
+                                                self.cert, self.key, self.host, self.game_ports,
                                                 self.rooms_to_start, self.rooms_shutting_down),
                                           name=self.name)
         process.start()
