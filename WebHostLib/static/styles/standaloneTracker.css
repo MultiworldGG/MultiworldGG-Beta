@@ -1,14 +1,16 @@
-html {
-    background-image: url('../static/backgrounds/ocean.png');
-    background-repeat: repeat;
-    background-size: 126px 126px;
-}
+/* Shared chrome for the standalone per-game trackers, which render outside
+   the site wrapper and so pull in the palette tokens themselves. base.css
+   supplies the surface and text colors for `body`. */
+@import "themes/base.css";
 
-body {
-    background-color: transparent !important;
-    color: #ffffff;
+html {
+    background-color: var(--mw-sys-color-background);
 }
 
 a {
-    color: #ea166c;
+    color: var(--mw-sys-color-primary);
+}
+
+a:hover {
+    color: var(--mw-sys-color-primary-container);
 }

@@ -23,7 +23,7 @@ from Utils import normalize_tag, tuplize_version
 
 
 GITHUB_OWNER = "MultiworldGG"
-GITHUB_REPO = "MultiworldGG"
+GITHUB_REPO = "MultiworldGG-Beta"
 ASSET_PATTERNS: dict[str, tuple[str, ...]] = {
     "windows": ("*.exe",),
     "linux": ("*.AppImage",),
