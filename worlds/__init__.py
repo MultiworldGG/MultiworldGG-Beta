@@ -5,7 +5,7 @@ import logging
 import os
 import time
 import dataclasses
-from typing import Optional, Union
+from typing import Union
 
 from NetUtils import DataPackage
 from BaseUtils import (local_path, user_path, Version, version_tuple, tuplize_version,
@@ -37,7 +37,6 @@ __all__ = [
     "local_folder",
     "user_folder",
     "failed_world_loads",
-    "ensure_worlds_loaded",
 ]
 
 failed_world_loads: list[str] = []
@@ -114,20 +113,3 @@ network_data_package_single_game: dict[str, DataPackage] = {
     game_name: {"games": {game_name: pkg_data}}
     for game_name, pkg_data in network_data_package["games"].items()
 }
-
-
-# Compatibility shims for callers written against the upstream lazy loader.
-# Worlds are resolved by Utils.set_game_names() and loaded eagerly when this
-# package is imported, so by the time anything can call these, loading has
-# already happened.
-
-_current_loading_world: Optional[str] = None
-
-
-def _set_current_loading_world(world_name: Optional[str]) -> None:
-    global _current_loading_world
-    _current_loading_world = world_name
-
-
-def ensure_worlds_loaded(write_launcher_cache: bool = True) -> None:
-    """No-op under the eager resolver; write_launcher_cache kept for signature parity."""
