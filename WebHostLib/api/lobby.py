@@ -424,6 +424,45 @@ def _is_manual_apworld(original_filename: str, apworld_data: bytes) -> bool:
         return False
 
 
+def _apworld_package_root(apworld_data: bytes) -> str | None:
+    """Return the top-level package folder an APWorld expects its filename to match."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(apworld_data)) as apzip:
+            roots_with_init: set[str] = set()
+            for name in apzip.namelist():
+                parts = [part for part in name.replace("\\", "/").split("/") if part]
+                if len(parts) != 2:
+                    continue
+                root, filename = parts
+                if filename == "__init__.py":
+                    roots_with_init.add(root)
+    except Exception:
+        return None
+
+    if len(roots_with_init) == 1:
+        return next(iter(roots_with_init))
+    return None
+
+
+def _apworld_package_filename(apworld: LobbyApworld, apworld_data: bytes | None = None) -> str:
+    """Name APWorlds in host packages by their import package, except manuals keep their uploaded filename."""
+    if apworld.game_name.startswith("Manual_"):
+        return _safe_zip_name(os.path.basename(apworld.original_filename))
+
+    package_root = _apworld_package_root(apworld_data) if apworld_data else None
+    if package_root:
+        filename = _safe_zip_name(package_root)
+    else:
+        original_filename = os.path.basename(apworld.original_filename)
+        if original_filename.lower().endswith(".apworld"):
+            return _safe_zip_name(original_filename)
+        filename = _safe_zip_name(apworld.game_name)
+
+    if not filename.lower().endswith(".apworld"):
+        filename = f"{filename}.apworld"
+    return filename
+
+
 def _parse_apworld_upload(apworld_data: bytes, original_filename: str = "") -> tuple[str, str | None]:
     if not zipfile.is_zipfile(io.BytesIO(apworld_data)):
         raise ValueError("File is not a valid .apworld (must be a ZIP archive)")
@@ -814,6 +853,20 @@ def _get_player_in_lobby(lobby: Lobby) -> LobbyPlayer | None:
     ).first()
 
 
+def _get_lobby_owner_name(lobby: Lobby) -> str | None:
+    owner_player = LobbyPlayer.get(lobby=lobby, session_id=lobby.owner)
+    return owner_player.player_name if owner_player else None
+
+
+def _lobby_meta_with_host_display_name(lobby: Lobby) -> dict:
+    meta = json.loads(lobby.meta)
+    owner_name = _get_lobby_owner_name(lobby)
+    if owner_name and meta.get("host_display_name") != owner_name:
+        meta["host_display_name"] = owner_name
+        lobby.meta = json.dumps(meta)
+    return meta
+
+
 @api_endpoints.route('/lobbies/eligible', methods=['GET'])
 def eligible_lobbies():
     """Return lobbies where the current session user can upload more YAMLs."""
@@ -836,13 +889,7 @@ def eligible_lobbies():
             continue
         remaining = lobby.max_yamls_per_player - len(player.yamls)
         if remaining > 0:
-            owner_player = db.session.scalars(
-                select(LobbyPlayer).where(
-                    LobbyPlayer.lobby_id == lobby.id,
-                    LobbyPlayer.session_id == lobby.owner,
-                ).limit(1)
-            ).first()
-            owner_name = owner_player.player_name if owner_player else "Unknown"
+            owner_name = _get_lobby_owner_name(lobby) or "Unknown"
             result.append({
                 "id": str(lobby.id),
                 "title": lobby.title,
@@ -934,6 +981,18 @@ def lobby_status(lobby: UUID):
             yaml_info["apworld_is_own"] = True
         elif y_game and y_game in apworld_by_game:
             yaml_info["apworld"] = apworld_by_game[y_game]
+        active_apworld_info = yaml_info.get("apworld")
+        if active_apworld_info and y_requires_version and active_apworld_info.get("world_version"):
+            try:
+                active_apworld_version = tuplize_version(str(active_apworld_info["world_version"]))
+                if _version_mismatch_direction(y_requires_version, active_apworld_version):
+                    yaml_info["apworld_version_warning"] = (
+                        f"requires v{_required_version_label(y_requires_version)}, "
+                        f"APWorld has v{active_apworld_info['world_version']}"
+                    )
+                    yaml_info["apworld_replacement_required"] = True
+            except Exception:
+                pass
         if y_id in yaml_ids_with_pending_request:
             yaml_info["apworld_request_pending"] = True
         if y_requires_version:
@@ -987,7 +1046,7 @@ def lobby_status(lobby: UUID):
     ) or 0
     version = f"{int(lobby.last_activity.timestamp() * 1000)}-{latest_msg_id}"
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
     pending_request_count = db.session.scalar(
@@ -1215,7 +1274,7 @@ def lobby_upload_yaml(lobby: UUID):
                 standard_options[filename] = content
                 standard_info[filename] = (player_name, game or "")
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     plando_options = set(meta.get("plando_options", []))
     new_names: dict[str, str] = {}
     new_games: dict[str, str] = {}
@@ -1642,7 +1701,7 @@ def lobby_generate(lobby: UUID):
         options[unique_key] = yaml_record.content
 
     # Validate all options together
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     plando_options = set(meta.get("plando_options", []))
     results, gen_options = roll_options(options, plando_options)
 
@@ -1774,6 +1833,11 @@ def lobby_update_settings(lobby: UUID):
         server_opts["release_mode"] = data["release_mode"]
     if data.get("collect_mode") in _collect:
         server_opts["collect_mode"] = data["collect_mode"]
+    if "release_threshold" in data:
+        try:
+            server_opts["release_threshold"] = max(0, min(int(data["release_threshold"]), 100))
+        except (ValueError, TypeError):
+            pass
     if data.get("remaining_mode") in _remaining:
         if lobby.race:
             server_opts["remaining_mode"] = "disabled"
@@ -1796,6 +1860,12 @@ def lobby_update_settings(lobby: UUID):
     if "spoiler" in data:
         try:
             gen_opts["spoiler"] = 0 if lobby.race else max(0, min(int(data["spoiler"]), 3))
+        except (ValueError, TypeError):
+            pass
+
+    if "progression_equalization" in data:
+        try:
+            gen_opts["progression_equalization"] = max(0, min(int(data["progression_equalization"]), 100))
         except (ValueError, TypeError):
             pass
 
@@ -2377,6 +2447,8 @@ def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/download-package', methods=['GET'])
+@limiter.limit("20 per hour")
+@limiter.limit("2 per minute")
 def lobby_download_package(lobby: UUID):
     lobby = Lobby.get(id=lobby)
     if not lobby:
@@ -2411,6 +2483,7 @@ def lobby_download_package(lobby: UUID):
             "hint_cost": server_opts.get("hint_cost", 10),
             "release_mode": server_opts.get("release_mode", "auto"),
             "collect_mode": server_opts.get("collect_mode", "auto"),
+            "release_threshold": server_opts.get("release_threshold", 0),
             "remaining_mode": server_opts.get("remaining_mode", "goal"),
             "countdown_mode": server_opts.get("countdown_mode", "auto"),
             "hint_mode": server_opts.get("hint_mode", "default"),
@@ -2421,12 +2494,14 @@ def lobby_download_package(lobby: UUID):
             "player_files_path": "Players",
             "spoiler": gen_opts.get("spoiler", 3),
             "race": 1 if gen_opts.get("race") else 0,
+            "progression_equalization": gen_opts.get("progression_equalization", 20),
             "plando_options": ", ".join(sorted(plando_opts)),
         },
     }, default_flow_style=False, allow_unicode=True)
 
     zip_buffer = io.BytesIO()
     seen_apworld_games: set[str] = set()
+    seen_apworld_filenames: set[str] = set()
 
     with zipfile.ZipFile(zip_buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("host.yaml", host_yaml)
@@ -2450,12 +2525,17 @@ def lobby_download_package(lobby: UUID):
             if a.game_name in seen_apworld_games:
                 continue
             seen_apworld_games.add(a.game_name)
-            safe_filename = _safe_zip_name(a.original_filename)
             try:
                 with open(a.storage_path, 'rb') as apf:
-                    zf.writestr(f"custom_worlds/{safe_filename}", apf.read())
+                    apworld_data = apf.read()
             except OSError:
-                pass
+                continue
+            safe_filename = _apworld_package_filename(a, apworld_data)
+            if safe_filename in seen_apworld_filenames:
+                root, ext = os.path.splitext(safe_filename)
+                safe_filename = f"{root}_{a.id}{ext or '.apworld'}"
+            seen_apworld_filenames.add(safe_filename)
+            zf.writestr(f"custom_worlds/{safe_filename}", apworld_data)
 
     zip_buffer.seek(0)
     safe_title = _safe_zip_name(lobby.title)
@@ -2488,7 +2568,7 @@ def lobby_upload_game(lobby: UUID):
     if not f.filename or not allowed_generation(f.filename):
         return jsonify({"error": "Invalid file type. Expected .archipelago, .mwgg, or .zip"}), 400
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
 
     try:
         file_bytes = f.read()

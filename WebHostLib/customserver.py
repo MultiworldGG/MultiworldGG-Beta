@@ -4,6 +4,7 @@ import asyncio
 import collections
 import datetime
 import functools
+import itertools
 import logging
 import multiprocessing
 import pickle
@@ -13,7 +14,9 @@ import threading
 import time
 import typing
 import sys
+from collections.abc import Iterable
 
+import psutil
 import websockets
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
@@ -25,6 +28,7 @@ from MultiServer import (
     server_per_message_deflate_factory,
 )
 from Utils import restricted_loads, cache_argsless
+
 from .locker import Locker
 from .models import Command, GameDataPackage, Room
 
@@ -196,12 +200,8 @@ class WebHostContext(Context):
         self.tags = ["AP", "WebHost"]
 
     def __del__(self):
-        try:
-            import psutil
-            from Utils import format_SI_prefix
-            self.logger.debug(f"Context destroyed, Mem: {format_SI_prefix(psutil.Process().memory_info().rss, 1024)}iB")
-        except ImportError:
-            self.logger.debug("Context destroyed")
+        from Utils import format_SI_prefix
+        self.logger.debug(f"Context destroyed, Mem: {format_SI_prefix(psutil.Process().memory_info().rss, 1024)}iB")
 
     def _load_game_data(self):
         for key, value in self.static_server_data.items():
@@ -331,6 +331,103 @@ def get_random_port():
     return random.randint(49152, 65535)
 
 
+class GameRangePorts(typing.NamedTuple):
+    valid_ports: list[int]
+    ephemeral_allowed: bool
+
+
+class RandomPortSocketCreator:
+    """ Creates server sockets on random available ports from a configured range. """
+
+    _next_port_index: int
+    _used_ports_cache: tuple[frozenset[int], int] | None
+    _parsed_ports: GameRangePorts
+
+    def __init__(self, game_ports: Iterable[str | int]) -> None:
+        self._next_port_index = 0
+        self._used_ports_cache = None
+        self._parsed_ports = self._parse_game_ports(game_ports)
+
+    @property
+    def ephemeral_allowed(self) -> bool:
+        return self._parsed_ports.ephemeral_allowed
+
+    @staticmethod
+    def _parse_game_ports(game_ports: Iterable[str | int]) -> GameRangePorts:
+        """ Parse the game ports configuration into a structured format. """
+        valid_ports: list[int] = []
+        ephemeral_allowed = False
+
+        for item in game_ports:
+            if isinstance(item, str) and "-" in item:
+                start, end = map(int, item.split("-"))
+                x = range(start, end + 1)
+                valid_ports.extend(x)
+            elif int(item) == 0:
+                ephemeral_allowed = True
+            else:
+                valid_ports.append(int(item))
+
+        random.shuffle(valid_ports)
+        return GameRangePorts(valid_ports, ephemeral_allowed)
+
+    @staticmethod
+    def _try_conns_per_process(p: psutil.Process) -> Iterable[int]:
+        """ Get ports from a single process's connections. """
+        try:
+            return (c.laddr.port for c in p.net_connections("tcp4") if c.laddr)
+        except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
+            return ()
+
+    @staticmethod
+    def _get_active_net_connections() -> Iterable[int]:
+        """ Get all active TCP4 connections on the system. """
+        # Don't even try to check if system using AIX
+        if psutil.AIX:
+            return ()
+
+        try:
+            return (c.laddr.port for c in psutil.net_connections("tcp4") if c.laddr)
+        # raises AccessDenied when done on macOS
+        except psutil.AccessDenied:
+            # flatten the list of iterables
+            return itertools.chain.from_iterable(map(
+                RandomPortSocketCreator._try_conns_per_process,
+                psutil.process_iter(["net_connections"])
+            ))
+
+    def _get_used_ports(self) -> frozenset[int]:
+        """ Get currently used ports with 90-second caching. """
+        t_hash = round(time.monotonic() / 90)
+        if self._used_ports_cache is None or self._used_ports_cache[1] != t_hash:
+            self._used_ports_cache = (frozenset(self._get_active_net_connections()), t_hash)
+
+        return self._used_ports_cache[0]
+
+    def create(self, host: str) -> socket.socket:
+        """ Create a server socket on an available port. """
+        valid_ports, ephemeral_allowed = self._parsed_ports
+        used_ports = self._get_used_ports()
+
+        next_index = self._next_port_index
+        for i, port in enumerate(itertools.chain(valid_ports[next_index:], valid_ports[:next_index])):
+            if port in used_ports:
+                continue
+
+            try:
+                res = socket.create_server((host, port))
+                next_index = (next_index + i + 1) % len(valid_ports)
+                self._next_port_index = next_index
+                return res
+            except OSError:
+                pass
+
+        if ephemeral_allowed:
+            return socket.create_server((host, 0))
+
+        raise OSError(98, "No available ports")
+
+
 @cache_argsless
 def get_static_server_data() -> dict:
     import worlds
@@ -393,7 +490,8 @@ def tear_down_logging(room_id):
 
 def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                        cert_file: typing.Optional[str], cert_key_file: typing.Optional[str],
-                       host: str, rooms_to_run: multiprocessing.Queue, rooms_shutting_down: multiprocessing.Queue):
+                       host: str, game_ports: Iterable[str | int],
+                       rooms_to_run: multiprocessing.Queue, rooms_shutting_down: multiprocessing.Queue):
     from setproctitle import setproctitle
 
     setproctitle(name)
@@ -446,6 +544,7 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
     # when there is no current loop on 3.12+).
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+    socket_creator = RandomPortSocketCreator(game_ports)
 
     async def start_room(room_id):
         with Locker(f"RoomLocker {room_id}"):
@@ -466,14 +565,33 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                         extensions=[server_per_message_deflate_factory],
                         logger=ctx.logger,
                     )
-                except OSError:  # likely port in use — retry on an ephemeral port
-                    ctx.server = await _serve_dual_stack(
-                        handler,
-                        0,
-                        ssl=ssl_ctx,
-                        extensions=[server_per_message_deflate_factory],
-                        logger=ctx.logger,
-                    )
+                except OSError:  # likely port in use — retry on a port from the configured range
+                    # RandomPortSocketCreator verifies availability by binding; take the
+                    # port it found and rebind dual-stack (v4+v6). The close-to-rebind
+                    # window is a tolerable race — _serve_dual_stack retries internally.
+                    probe = socket_creator.create(ctx.host)
+                    retry_port = probe.getsockname()[1]
+                    probe.close()
+                    try:
+                        ctx.server = await _serve_dual_stack(
+                            handler,
+                            retry_port,
+                            ssl=ssl_ctx,
+                            extensions=[server_per_message_deflate_factory],
+                            logger=ctx.logger,
+                        )
+                    except OSError:
+                        # Lost the rebind race. Only fall through to an ephemeral port if
+                        # the GAME_PORTS config allows ports outside the configured range.
+                        if not socket_creator.ephemeral_allowed:
+                            raise
+                        ctx.server = await _serve_dual_stack(
+                            handler,
+                            0,
+                            ssl=ssl_ctx,
+                            extensions=[server_per_message_deflate_factory],
+                            logger=ctx.logger,
+                        )
                 # Both sockets share the same port; just read it from the first socket.
                 port = ctx.server.sockets[0].getsockname()[1]
                 if port:

@@ -20,7 +20,11 @@ def launch_client(*args):
     from .TrackerClient import launch as TCMain
     launch(TCMain, name="Universal Tracker client", args=args)
 
-UT_VERSION = "v0.2.32"
+from Utils import tuplize_version
+
+UT_VERSION = "v0.3.3"
+
+UT_VERSION_TUPLE = tuplize_version(UT_VERSION[1:].split("-",1)[0])
 
 class CurrentTrackerState(NamedTuple):
     all_items: Counter
@@ -50,6 +54,12 @@ class DeferredEntranceMode(Enum):
     forced = "on"
     default = "default"
     disabled = "off"
+
+class TrackerException(Exception):
+
+    def __init__(self, *args: object, message:str) -> None:
+        self.message = message
+        super().__init__(*args)
 
 class TrackerSettings(Group):
     class TrackerPlayersPath(UserFolderPath):
@@ -171,7 +181,7 @@ class UTMapTabData:
     location_setting_key: str
     """Data storage key used to determine where to place the location indicator"""
 
-    location_icon_coords: Callable[[int, Any], tuple[int,int,str]|None]
+    location_icon_coords: Callable[[int, Any], tuple[int,int,str]|list[tuple[int,int,str]]|None]
     """Function used to convert between the map and the value in data storage into coords (or none to hide it) the return is [x, y, override path string]"""
 
     def __init__(

@@ -8,6 +8,9 @@
 # 2048
 /worlds/2048/ @Ishigh1
 
+# Archipelaballs
+/worlds/archipelaballs/ @StellatedCUBE
+
 # Adventure
 /worlds/adventure/ @JusticePS
 
@@ -22,6 +25,7 @@
 
 # A Link to the Past
 /worlds/alttp/ @Berserker66
+/worlds/alttpr/ @aurabot24
 
 # AM2R
 /worlds/am2r/ @Ehseezed
@@ -136,6 +140,9 @@
 # Dark Souls III
 /worlds/dark_souls_3/ @Marechal-L @nex3
 
+# DELTARUNE
+/worlds/deltarune/ @theemeraldsword85
+
 # Diddy Kong Racing
 /worlds/diddy_kong_racing/ @zakwiz
 
@@ -158,10 +165,10 @@
 /worlds/dontstarvetogether/ @DragonWolfLeo
 
 # DOOM 1993
-/worlds/doom_1993/ @Daivuk @KScl
+/worlds/doom_1993_beta/ @Daivuk @KScl
 
 # DOOM II
-/worlds/doom_ii/ @Daivuk @KScl
+/worlds/doom_ii_beta/ @Daivuk @KScl
 
 # Doronko Wanko
 /worlds/doronko_wanko/ @Vendily
@@ -206,14 +213,26 @@
 # Frogmonster
 /worlds/frogmonster @Rooby-Roo
 
+# Funi Raccoon Game
+/worlds/funi_raccoon/ @robotzurg
+
+# Gauntlet Legends
+/worlds/gl/ @jamesbrq
+
 # Getting Over It
 /worlds/getting_over_it/ @BlastSlimey
 
 # Golden Sun: The Lost Age
 /worlds/gstla/ @cjmang
 
+# The Grinch
+/worlds/grinch/ @MarioSpore
+
 # Hades
 /worlds/hades/ @Naixgames
+
+# Hades II (Rogue)
+/worlds/hades2rouge/ @BrittisH39
 
 # Hatsune Miku Project Diva Mega Mix+
 /worlds/megamix/ @Cynichill
@@ -222,7 +241,7 @@
 /worlds/hcniko/ @niieli
 
 # Heretic
-/worlds/heretic/ @Daivuk @KScl
+/worlds/heretic_beta/ @Daivuk @KScl
 
 # HITMAN World of Assassination
 /worlds/hitman_woa/ @BenDipp
@@ -351,6 +370,9 @@
 # Noita
 /worlds/noita/ @ScipioWright @heinermann
 
+# Ocarina of Time
+/worlds/oot/ @trezc0_
+
 # Old School Runescape
 /worlds/osrs/ @digiholic
 
@@ -407,6 +429,9 @@
 
 # Phoenotopia
 /worlds/phoa/ @Amphyros
+
+# Pikuniku
+/worlds/pikuniku/ @@robotzurg
 
 # Pinball FX3
 /worlds/pinball_fx3/ @SerpentAI
@@ -501,6 +526,9 @@
 # Sims 4
 /worlds/sims4/ @benny-dreamly
 
+# Skul: The Hero Slayer
+/worlds/skul/ @robotzurg
+
 # Skyward Sword
 /worlds/ss/ @Battlecats59
 
@@ -559,6 +587,9 @@
 
 # Spicy Mycena Waffles (SMW Fork)
 /worlds/waffles/ @TheLX5
+
+# Super Smash Bros. Melee
+/worlds/melee/ @PinkSwitch
 
 # SMZ3
 /worlds/smz3/ @lordlou
@@ -667,16 +698,6 @@
 
 # Zork Grand Inquisitor
 /worlds/zork_grand_inquisitor/ @nbrochu
-
-
-## Active Unmaintained Worlds
-
-# The following worlds in this repo are currently unmaintained, but currently still work in core. If any update breaks
-# compatibility, these worlds may be deleted. If you are interested in stepping up as maintainer for
-# any of these worlds, please review `/docs/world maintainer.md` documentation.
-
-# Ocarina of Time
-# /worlds/oot/
 
 ###################
 ## Documentation ##

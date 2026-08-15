@@ -95,15 +95,6 @@ RUN apt-get purge -y \
     g++ && \
     apt-get autoremove -y
 
-# Copy necessary components
-COPY --from=enemizer /release/EnemizerCLI /tmp/EnemizerCLI
-
-# No release for arm architecture. Skip.
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    cp -r /tmp/EnemizerCLI EnemizerCLI; \
-    fi; \
-    rm -rf /tmp/EnemizerCLI
-
 # Define health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:${PORT:-80} || exit 1

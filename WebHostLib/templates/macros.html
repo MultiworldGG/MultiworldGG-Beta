@@ -75,6 +75,10 @@
                             <a class="room-action-link"
                                href="https://yacht-dice-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}&go=LS"
                                data-tooltip="yacht-dice-ap.netlify.app">Connect Game</a>
+                            {% elif patch.game == "Archipelaballs" %}
+                            <a class="room-action-link"
+                               href="https://archipelaballs.shinten.moe/?host={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&slot={{ patch.player_name | e}}"
+                               data-tooltip="archipelaballs.shinten.moe">Connect Game</a>
                             {% else %}
                                 No file to download for this game.
                             {% endif %}

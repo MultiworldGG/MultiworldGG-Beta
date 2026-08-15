@@ -11,6 +11,8 @@ __all__ = ("Version",
            "tuplize_version", 
            "__version__", 
            "version_tuple", 
+           "core_version",
+           "core_version_tuple",
            "instance_name", 
            "archipelago_guid", 
            "is_linux", 
@@ -89,8 +91,11 @@ def tuplize_version(version: str) -> Version:
     except (ValueError, IndexError):
         return Version(0, 0, 0)
 
-__version__ = "0.6.8"
+__version__ = "0.6.7"
 version_tuple = tuplize_version(__version__)
+# Core compatibility should ignore application.yaml branding/version overrides.
+core_version = __version__
+core_version_tuple = version_tuple
 
 instance_name = "MultiworldGG"
 archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"

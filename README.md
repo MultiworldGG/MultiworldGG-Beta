@@ -1,4 +1,4 @@
-# [MultiworldGG](https://multiworld.gg) ![Discord Shield](https://discordapp.com/api/guilds/1345801058609270794/widget.png?style=shield) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
+# [MultiworldGG](https://multiworld.gg) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
 
 MultiworldGG is a cross-game modification system which randomizes different games, then uses the result to build a single unified multi-player game, or, simpler,
 a **Multi-Game Multiworld Randomizer**.
@@ -16,6 +16,7 @@ It is a project forked from the 'Archipelago' project.
 Currently, the following games are supported:
 
 * 2048
+* Archipelaballs
 * Adventure
 * Against the Storm
 * A Hat in Time
@@ -55,6 +56,7 @@ Currently, the following games are supported:
 * Dark Souls II
 * Dark Souls III
 * Dark Souls Remastered
+* DELTARUNE
 * Diddy Kong Racing
 * Digimon World
 * Donkey Kong Country
@@ -79,9 +81,12 @@ Currently, the following games are supported:
 * Final Fantasy V (Career Day)
 * Flipwitch
 * Frogmonster
+* Funi Raccoon Game
+* Gauntlet Legends
 * Getting Over It
 * Golden Sun: The Lost Age
 * Hades
+* Hades II
 * Hatsune Miku: Project Diva Mega Mix+
 * Here comes Niko!
 * Heretic
@@ -139,6 +144,7 @@ Currently, the following games are supported:
 * Peggle Deluxe
 * Peggle Nights
 * Phoenotopia: Awakening
+* Pikuniku
 * Pinball FX3
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
@@ -168,6 +174,7 @@ Currently, the following games are supported:
 * Secret of Evermore
 * Shapez
 * Shivers
+* Skul The Hero Slayer
 * Slay the Spire
 * Sly Cooper and the Thievius Raccoonus
 * Sonic Adventure 2: Battle
@@ -191,10 +198,12 @@ Currently, the following games are supported:
 * Super Mario World (+ Spicy Mycena Waffles Fork)
 * Super Metroid
 * Super Metroid/A Link to the Past Combo
+* Super Smash Bros. Melee
 * The Binding of Isaac: Rebirth
 * Terraria
 * Tetris Attack
 * Timespinner
+* The Grinch
 * The Legend of Zelda
 * The Legend of Zelda: A Link Between Worlds
 * The Legend of Zelda: A Link to the Past

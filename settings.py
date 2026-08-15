@@ -614,6 +614,16 @@ class ServerOptions(Group):
         "auto" -> !countdown will be available for any room with less than 30 slots.
         """
 
+    class ReleaseThreshold(int):
+        """
+        Minimum percentage of checks a player must have found before being allowed to use !release or !collect.
+        Also applies to automatic releases/collects if those are enabled.
+
+        For example, a value of 0 means that a player can release/collect at any time (if also allowed by the release/collect mode),
+        a value of 50 means that a player must have found at least half of their locations before being allowed to release/collect,
+        and a value of 100 means that a player must have found all of their locations before being allowed to collect.
+        """
+
     class AutoShutdown(int):
         """Automatically shut down the server after this many seconds without new location checks, 0 to keep running"""
 
@@ -651,6 +661,7 @@ class ServerOptions(Group):
     hint_mode: HintMode = HintMode("default")
     remaining_mode: RemainingMode = RemainingMode("goal")
     countdown_mode: CountdownMode = CountdownMode("auto")
+    release_threshold: ReleaseThreshold = ReleaseThreshold(0)
     auto_shutdown: AutoShutdown = AutoShutdown(0)
     compatibility: Compatibility = Compatibility(2)
     log_network: LogNetwork = LogNetwork(0)
@@ -724,6 +735,7 @@ class GeneratorOptions(Group):
         100 means that each slot will have the same number of progression items in it, regardless of location count.
         Values between 0 and 100 linearly interpolate between the two.
         """
+
     player_files_path: PlayerFilesPath = PlayerFilesPath("Players")
     players: Players = Players(0)
     allow_quantity: AllowQuantity | bool = False
@@ -733,7 +745,7 @@ class GeneratorOptions(Group):
     race: Race = Race(0)
     plando_options: PlandoOptions = PlandoOptions("bosses, connections, texts")
     panic_method: PanicMethod = PanicMethod("swap")
-    progression_equalization = ProgressionEqualization(20)
+    progression_equalization: ProgressionEqualization = ProgressionEqualization(20)
     loglevel: str = "info"
     logtime: bool = False
 
@@ -928,6 +940,7 @@ class Settings(Group):
 
 def get_settings() -> Settings:
     """Returns settings from the default host.yaml"""
+    save_location: str | None = None
     with _lock:  # make sure we only have one instance
         res = getattr(get_settings, "_cache", None)
         if not res:
@@ -946,6 +959,16 @@ def get_settings() -> Settings:
             else:
                 warnings.warn(f"Could not find {filenames[1]} to load options. Creating a new one.")
                 res = Settings(None)
-                res.save(user_path(filenames[1]))
+                save_location = user_path(filenames[1])
             setattr(get_settings, "_cache", res)
-        return res
+
+    if save_location:
+        try:
+            res.save(save_location)
+        except Exception:
+            with _lock:
+                if getattr(get_settings, "_cache", None) is res:
+                    delattr(get_settings, "_cache")
+            raise
+
+    return res
