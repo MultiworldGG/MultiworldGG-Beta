@@ -9,7 +9,7 @@ export async function handleReleasePublished(
   karenProbot: Probot,
   oliverData: IndexBotData,
   karenData: IndexBotData,
-  context: Context<"release.published">,
+  context: Context<"release.published" | "release.released">,
 ): Promise<void> {
   const oliverLog = new EventLog(oliverProbot.log);
   const { owner, repo } = context.repo();
@@ -18,6 +18,11 @@ export async function handleReleasePublished(
 
   if (release.draft) {
     context.log.debug({ tag_name: release.tag_name }, "ignoring draft release");
+    return;
+  }
+
+  if (release.prerelease) {
+    context.log.debug({ tag_name: release.tag_name }, "ignoring prerelease");
     return;
   }
 

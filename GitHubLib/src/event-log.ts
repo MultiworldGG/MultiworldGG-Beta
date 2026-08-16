@@ -20,6 +20,7 @@ export type EventReason =
   | "tag_missing"
   | "wheel_asset_missing"
   | "wheel_asset_ambiguous"
+  | "apworld_asset_ambiguous"
   | "asset_digest_missing"
   | "release_lookup_404"
   | "release_not_found"

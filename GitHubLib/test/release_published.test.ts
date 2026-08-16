@@ -121,11 +121,11 @@ const fakeLog = {
   child: () => fakeLog,
 };
 
-function makeContext(state: RepoState, releaseTag: string, draft = false): any {
+function makeContext(state: RepoState, releaseTag: string, draft = false, prerelease = false): any {
   return {
     octokit: makeContextOctokit(state),
     payload: {
-      release: { tag_name: releaseTag, draft },
+      release: { tag_name: releaseTag, draft, prerelease },
     },
     log: fakeLog,
     repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
@@ -183,6 +183,20 @@ function wheelAsset(opts: {
     browser_download_url: `https://github.com/${repo}/releases/download/${opts.tag}/${name}`,
     size: opts.size ?? 158_720,
     digest: opts.digest === undefined ? `sha256:${"a".repeat(64)}` : opts.digest,
+  };
+}
+
+// A `<name>.apworld` release asset (the Basic Manual fork flow attaches one by
+// hand). Identifies the world; not pinned with a sha256, so its digest is null.
+// Pass `name` directly to test a raw asset filename (e.g. an invalid stem).
+function apworldAsset(opts: { slug?: string; name?: string; tag: string; repo?: string; size?: number }) {
+  const repo = opts.repo ?? "MultiworldGG/myclgm-test";
+  const name = opts.name ?? `${opts.slug}.apworld`;
+  return {
+    name,
+    browser_download_url: `https://github.com/${repo}/releases/download/${opts.tag}/${name}`,
+    size: opts.size ?? 64_000,
+    digest: null,
   };
 }
 
@@ -341,6 +355,16 @@ describe("handleReleasePublished", () => {
     expect(readEvents()).toEqual([]);
   });
 
+  it("skips prerelease releases without emitting an event", async () => {
+    const state: RepoState = { releases: [] };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, "myclgm-1.0.0", /* draft= */ false, /* prerelease= */ true);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(probot.auth).not.toHaveBeenCalled();
+    expect(readEvents()).toEqual([]);
+  });
+
   it("logs skip when the tag cannot be resolved to a commit SHA", async () => {
     // State has no matching release → git.getRef returns 404 → TagLookupError
     const state: RepoState = { releases: [] };
@@ -482,6 +506,203 @@ describe("handleReleasePublished", () => {
     await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx as any);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "release_lookup_404", slug: "myclgm" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// World identification from a `<name>.apworld` release asset
+// (the Basic Manual fork flow — author attaches the .whl and .apworld by hand
+// under an arbitrary release tag, with no CI and no `<slug>-<version>` tag).
+// ---------------------------------------------------------------------------
+
+// Index-side probots wired so Karen commits and Oliver opens — mirrors the
+// single-world happy-path setup above, shared across the apworld-asset tests.
+function makeOpeningProbots(karenWrites: string[], oliverWrites: string[]) {
+  const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+  const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+  const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
+  const karenProbot = {
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
+    }),
+    log: fakeLog,
+  } as any;
+  return { probot, karenProbot };
+}
+
+describe("handleReleasePublished — .apworld-asset identification", () => {
+  it("uses the <name>.apworld asset as the slug under an arbitrary tag, pinning the wheel sha256", async () => {
+    // Arbitrary tag with no usable `<slug>-<version>` prefix: only the .apworld
+    // asset can identify the world.
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ slug: "myclgm", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game", authors: ["Berserker"] },
+      indexInstall: { id: 12345 },
+    };
+
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+    const { probot, karenProbot } = makeOpeningProbots(karenWrites, oliverWrites);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    expect(karenWrites).toContain("createRef");
+    expect(karenWrites).toContain("commit");
+    expect(oliverWrites).toContain("pulls.create");
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "ok",
+      slug: "myclgm",
+      release_tag: "v1.0.0",
+      release_sha: "manual-sha",
+      wheel_asset: "myclgm-1.0.0-py3-none-any.whl",
+      module_location:
+        "https://github.com/MultiworldGG/myclgm-test/releases/download/v1.0.0/myclgm-1.0.0-py3-none-any.whl" +
+        `#sha256=${"a".repeat(64)}`,
+    });
+  });
+
+  it("the .apworld asset wins over a disagreeing <slug>-<version> tag prefix", async () => {
+    // Tag prefix says `wrongslug`; the attached asset says `rightslug`. The
+    // asset is authoritative.
+    const tag = "wrongslug-9.9.9";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "rightslug", version: "9.9.9", tag }),
+            apworldAsset({ slug: "rightslug", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "Right Game" },
+      indexInstall: { id: 12345 },
+    };
+
+    const { probot, karenProbot } = makeOpeningProbots([], []);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "ok", slug: "rightslug", release_tag: "wrongslug-9.9.9" });
+  });
+
+  it("logs skip when more than one .apworld asset is attached", async () => {
+    const tag = "myclgm-1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ slug: "myclgm", tag }),
+            apworldAsset({ slug: "extra", tag }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "skip",
+      reason: "apworld_asset_ambiguous",
+      slug: "myclgm", // provisional, from the tag prefix
+    });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the tag prefix when the .apworld stem is not a valid slug", async () => {
+    // GitHub turns spaces into dots, so a display-name apworld lands as
+    // `My.Game.apworld` — an invalid slug. The `<slug>-<version>` tag prefix
+    // still identifies the world (keeps the CI path working when both exist).
+    const tag = "myclgm-1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ name: "My.Game.apworld", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game" },
+      indexInstall: { id: 12345 },
+    };
+
+    const { probot, karenProbot } = makeOpeningProbots([], []);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "ok", slug: "myclgm" });
+  });
+
+  it("logs no_slug_resolved when the only signal is an invalidly-named .apworld asset", async () => {
+    // Arbitrary tag (no prefix) AND an invalid apworld stem → nothing trustworthy
+    // to use as a folder name. Refuse rather than treat the raw asset name as a
+    // path.
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ name: "Bad.Name.apworld", tag }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("logs skip when the .apworld identifies the world but no .whl is attached", async () => {
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [apworldAsset({ slug: "myclgm", tag })],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "wheel_asset_missing", slug: "myclgm" });
     expect(probot.auth).not.toHaveBeenCalled();
   });
 });
