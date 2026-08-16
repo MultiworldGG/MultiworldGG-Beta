@@ -73,12 +73,16 @@ for entry in sorted(worlds_dir.iterdir()):
 # were explicitly requested. Upstream defines AutoWorldRegister.testable_worlds in
 # worlds/AutoWorld.py + worlds/__init__.py; beta's loader is driven by the
 # _worlds_to_load list this bootstrap populates, so the snapshot lives here instead.
-from worlds.AutoWorld import AutoWorldRegister
+# pytest-only: the hosting job (`python test/hosting`) also imports this package —
+# including inside spawned MultiHoster children, where importing worlds trips
+# customserver's "Worlds system should not be loaded" guard and no room can start.
+if "pytest" in sys.modules:
+    from worlds.AutoWorld import AutoWorldRegister
 
-if _requested_worlds:
-    AutoWorldRegister.testable_worlds = {
-        game: world for game, world in AutoWorldRegister.world_types.items()
-        if pathlib.Path(world.__file__).parent.name in _requested_worlds
-    }
-else:
-    AutoWorldRegister.testable_worlds = dict(AutoWorldRegister.world_types)
+    if _requested_worlds:
+        AutoWorldRegister.testable_worlds = {
+            game: world for game, world in AutoWorldRegister.world_types.items()
+            if pathlib.Path(world.__file__).parent.name in _requested_worlds
+        }
+    else:
+        AutoWorldRegister.testable_worlds = dict(AutoWorldRegister.world_types)

@@ -8,11 +8,12 @@ from . import TestBase
 
 class TestGenerate(TestBase):
     def test_generate_page_marks_race_mode_for_settings_cache(self) -> None:
-        normal_response = self.client.get("/generate")
+        # upstream serves this page at /generate; beta renamed it to /play/new
+        normal_response = self.client.get("/play/new")
         self.assertEqual(normal_response.status_code, 200)
         self.assertIn('data-race="0"', normal_response.get_data(as_text=True))
 
-        race_response = self.client.get("/generate/True")
+        race_response = self.client.get("/play/new/True")
         self.assertEqual(race_response.status_code, 200)
         self.assertIn('data-race="1"', race_response.get_data(as_text=True))
 
