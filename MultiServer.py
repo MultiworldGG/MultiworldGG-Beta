@@ -242,6 +242,7 @@ class Context:
                       "release_mode": str,
                       "remaining_mode": str,
                       "collect_mode": str,
+                      "release_threshold": int,
                       "countdown_mode": str,
                       "hint_mode": str,
                       "item_cheat": bool,
@@ -275,8 +276,9 @@ class Context:
 
     def __init__(self, host: str, port: int, admin_password: str, password: str, location_check_points: int,
                  hint_cost: int, item_cheat: bool, release_mode: str = "disabled", collect_mode="disabled", hint_mode: str = "default",
-                 countdown_mode: str = "auto", remaining_mode: str = "disabled", auto_shutdown: typing.SupportsFloat = 0, 
-                 compatibility: int = 2, log_network: bool = False, logger: logging.Logger = logging.getLogger()):
+                 countdown_mode: str = "auto", remaining_mode: str = "disabled", release_threshold: int = 0, 
+                 auto_shutdown: typing.SupportsFloat = 0, compatibility: int = 2, log_network: bool = False, 
+                 logger: logging.Logger = logging.getLogger()):
         self.logger = logger
         super(Context, self).__init__()
         self.slot_info = {}
@@ -313,6 +315,7 @@ class Context:
         self.collect_mode: str = collect_mode
         self.countdown_mode: str = countdown_mode
         self.hint_mode: str = hint_mode
+        self.release_threshold: int = release_threshold
         self.item_cheat = item_cheat
         self.exit_event = asyncio.Event()
         self.client_activity_timers: typing.Dict[
@@ -649,31 +652,36 @@ class Context:
                 self.logger.exception(e)
             self._start_async_saving()
 
-    def _start_async_saving(self, atexit_save: bool = True):
-        if not self.auto_saver_thread:
-            def save_regularly():
-                # time.time() is platform dependent, so using the expensive datetime method instead
-                def get_datetime_second():
-                    now = datetime.datetime.now()
-                    return now.second + now.microsecond * 0.000001
+    def _save_regularly(self, atexit_save: bool) -> None:
+        # time.time() is platform dependent, so using the expensive datetime method instead
+        def get_datetime_second() -> float:
+            now = datetime.datetime.now()
+            return now.second + now.microsecond * 0.000001
 
-                second = get_saving_second(self.seed_name, self.auto_save_interval)
-                while not self.exit_event.is_set():
-                    try:
-                        next_wakeup = (second - get_datetime_second()) % self.auto_save_interval
-                        time.sleep(max(1.0, next_wakeup))
-                        if self.save_dirty:
-                            self.logger.debug("Saving via thread.")
-                            self._save()
-                    except OperationalError as e:
-                        self.logger.exception(e)
+        second = get_saving_second(self.seed_name, self.auto_save_interval)
+        while not self.exit_event.is_set():
+            next_wakeup = (second - get_datetime_second()) % self.auto_save_interval
+            time.sleep(max(1.0, next_wakeup))
+            if self.save_dirty:
+                self.logger.debug("Saving via thread.")
+                # Clear this before saving so activity during the save leaves the context dirty.
+                self.save_dirty = False
+                try:
+                    if not self._save():
+                        self.save_dirty = True
                         self.logger.info(f"Saving failed. Retry in {self.auto_save_interval} seconds.")
-                    else:
-                        self.save_dirty = False
-                if not atexit_save:  # if atexit is used, that keeps a reference anyway
-                    queue_gc()
+                except Exception as e:
+                    # A failed save must not terminate the autosaver or discard pending progress.
+                    self.save_dirty = True
+                    self.logger.exception(e)
+                    self.logger.info(f"Saving failed. Retry in {self.auto_save_interval} seconds.")
+        if not atexit_save:  # if atexit is used, that keeps a reference anyway
+            queue_gc()
 
-            self.auto_saver_thread = threading.Thread(target=save_regularly, daemon=True)
+    def _start_async_saving(self, atexit_save: bool = True) -> None:
+        if not self.auto_saver_thread:
+            self.auto_saver_thread = threading.Thread(
+                target=self._save_regularly, args=(atexit_save,), daemon=True)
             self.auto_saver_thread.start()
 
             if atexit_save:
@@ -704,8 +712,10 @@ class Context:
                              "server_password": self.admin_password, #backwards compatibility
                              "release_mode": self.release_mode,
                              "remaining_mode": self.remaining_mode, "collect_mode": self.collect_mode,
-                             "countdown_mode": self.countdown_mode, "hint_mode": self.hint_mode,
-                             "item_cheat": self.item_cheat, "compatibility": self.compatibility}
+                             "countdown_mode": self.countdown_mode, "hint_mode": self.hint_mode, 
+                             "release_threshold": self.release_threshold, "item_cheat": self.item_cheat, 
+                             "compatibility": self.compatibility},
+            "allow_collecting_from": self.allow_collecting_from
 
         }
 
@@ -741,6 +751,7 @@ class Context:
             self.collect_mode = savedata["game_options"]["collect_mode"]
             self.countdown_mode = savedata["game_options"].get("countdown_mode", self.countdown_mode)
             self.hint_mode = savedata["game_options"].get("hint_mode", self.hint_mode)
+            self.release_threshold = savedata["game_options"].get("release_threshold", self.release_threshold)
             self.item_cheat = savedata["game_options"]["item_cheat"]
             self.compatibility = savedata["game_options"]["compatibility"]
 
@@ -752,6 +763,9 @@ class Context:
 
         if "stored_data" in savedata:
             self.stored_data = savedata["stored_data"]
+
+        if "allow_collecting_from" in savedata:
+            self.allow_collecting_from = savedata["allow_collecting_from"]
         # count items and slots from lists for items_handling = remote
         self.logger.info(
             f'Loaded save file with {sum([len(v) for k, v in self.received_items.items() if k[2]])} received items '
@@ -880,22 +894,24 @@ class Context:
             if hint.location == seeked_location and hint.finding_player == finding_player:
                 return hint
         return None
-    
+
     def replace_hint(self, team: int, slot: int, old_hint: Hint, new_hint: Hint) -> None:
         if old_hint in self.hints[team, slot]:
             self.hints[team, slot].remove(old_hint)
             self.hints[team, slot].add(new_hint)
-    
+
     # "events"
 
     def on_goal_achieved(self, client: Client):
         finished_msg = f'{self.get_aliased_name(client.team, client.slot)} (Team #{client.team + 1})' \
                        f' has completed their goal.'
         self.broadcast_text_all(finished_msg, {"type": "Goal", "team": client.team, "slot": client.slot})
-        if "auto" in self.collect_mode:
-            collect_player(self, client.team, client.slot)
-        if "auto" in self.release_mode:
-            release_player(self, client.team, client.slot)
+        if len(self.location_checks[client.team, client.slot]) / len(self.locations[client.slot]) * 100 \
+                >= self.release_threshold:
+            if "auto" in self.collect_mode:
+                collect_player(self, client.team, client.slot)
+            if "auto" in self.release_mode:
+                release_player(self, client.team, client.slot)
         self.save()  # save goal completion flag
 
     def on_new_hint(self, team: int, slot: int):
@@ -1351,7 +1367,7 @@ def format_hint(ctx: Context, team: int, hint: Hint) -> str:
 
     if hint.entrance:
         text += f" at {hint.entrance}"
-    
+
     return text + ". " + status_names.get(hint.status, "(unknown)")
 
 
@@ -1591,6 +1607,11 @@ class ClientMessageProcessor(CommonCommandProcessor):
         if self.ctx.allow_releases.get((self.client.team, self.client.slot), False):
             release_player(self.ctx, self.client.team, self.client.slot)
             return True
+        if len(self.ctx.location_checks[self.client.team, self.client.slot]) / len(self.ctx.locations[self.client.slot]) * 100 \
+                < self.ctx.release_threshold:
+            self.output("Sorry, you are not allowed to release your items until you have checked "
+                        f"{self.ctx.release_threshold}% of your locations.")
+            return False
         if "enabled" in self.ctx.release_mode:
             release_player(self.ctx, self.client.team, self.client.slot)
             return True
@@ -1610,6 +1631,11 @@ class ClientMessageProcessor(CommonCommandProcessor):
 
     def _cmd_collect(self) -> bool:
         """Send your remaining items to yourself"""
+        if len(self.ctx.location_checks[self.client.team, self.client.slot]) / len(self.ctx.locations[self.client.slot]) * 100 \
+                < self.ctx.release_threshold:
+            self.output("Sorry, you are not allowed to collect your items until you have checked "
+                        f"{self.ctx.release_threshold}% of your locations.")
+            return False
         if "enabled" in self.ctx.collect_mode:
             collect_player(self.ctx, self.client.team, self.client.slot)
             return True
@@ -2210,7 +2236,7 @@ async def process_client_cmd(ctx: Context, client: Client, args: dict):
             # As of writing this code, only_new=True does not update status for existing hints
             ctx.notify_hints(client.team, hints, only_new=True, persist_even_if_found=True)
             ctx.save()
-        
+
         elif cmd == 'UpdateHint':
             location = args["location"]
             player = args["player"]
@@ -2710,6 +2736,9 @@ class ServerCommandProcessor(CommonCommandProcessor):
             if option_value.lower() not in valid_values:
                 self.output(f"Unrecognized {option_name} value '{option_value}', known: {', '.join(valid_values)}")
                 return False
+        elif option_name == "release_threshold":
+            def value_type(input_text: str):
+                return max(0, min(int(input_text), 100))
         elif value_type == str and option_name.endswith("mode"):
             valid_values = {"goal", "enabled", "disabled"}
             valid_values.update(("auto", "auto_enabled") if option_name != "remaining_mode" else [])
@@ -2721,7 +2750,16 @@ class ServerCommandProcessor(CommonCommandProcessor):
         self.output(f"Set option {option_name} to {getattr(self.ctx, option_name)}")
         if option_name in {"release_mode", "remaining_mode", "collect_mode"}:
             self.ctx.broadcast_all([{"cmd": "RoomUpdate", 'permissions': get_permissions(self.ctx)}])
-        elif option_name in {"hint_mode", "hint_cost", "location_check_points"}:
+        elif option_name in {"hint_cost", "location_check_points"}:
+            # Update hint point amounts per slot
+            for team, players in self.ctx.clients.items():
+                for slot, clients in players.items():
+                    self.ctx.broadcast(clients, [{
+                        "cmd": "RoomUpdate",
+                        option_name: getattr(self.ctx, option_name),
+                        "hint_points": get_slot_points(self.ctx, team, slot),
+                    }])
+        elif option_name in {"hint_mode", "release_threshold"}:
             self.ctx.broadcast_all([{"cmd": "RoomUpdate", option_name: getattr(self.ctx, option_name)}])
         return True
 
@@ -2791,6 +2829,7 @@ def parse_args() -> argparse.Namespace:
                              goal:     !release can be used after goal completion
                              auto-enabled: !release is available and automatically triggered on goal completion
                              ''')
+    parser.add_argument('--release-threshold', default=defaults["release_threshold"], type=int)
     parser.add_argument('--collect-mode', default=defaults["collect_mode"], nargs='?',
                         choices=['auto', 'enabled', 'disabled', "goal", "auto-enabled"], help='''\
                              Select !collect Accessibility. (default: %(default)s)
@@ -2881,8 +2920,9 @@ async def main(args: argparse.Namespace):
 
     ctx = Context(args.host, args.port, args.admin_password, args.password, args.location_check_points,
                   args.hint_cost, not args.disable_item_cheat, args.release_mode, args.collect_mode,
-                  args.countdown_mode, args.remaining_mode, args.hint_mode,
-                  args.auto_shutdown, args.compatibility, args.log_network)
+                  hint_mode=args.hint_mode, countdown_mode=args.countdown_mode, remaining_mode=args.remaining_mode,
+                  release_threshold=args.release_threshold, auto_shutdown=args.auto_shutdown,
+                  compatibility=args.compatibility, log_network=args.log_network)
     data_filename = args.multidata
 
     if not data_filename:

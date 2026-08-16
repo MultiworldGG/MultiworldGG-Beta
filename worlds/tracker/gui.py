@@ -158,15 +158,14 @@ def build_tracker_view(ctx):
 def build_map_view(ctx):
     """Build the Map Page widget (VisualTracker) and wire it into the context.
 
-    Sets ctx.location_icon and ctx.map_page_coords_func so load_map() can drive
-    the new map widget.
+    Sets ctx.map_page and ctx.map_page_coords_func so load_map() and
+    update_location_icon_coords() can drive the new map widget.
     """
     _ensure_widgets()
     load_tracker_kv()
 
     map_widget = _VisualTracker()
-    ctx.location_icon = _ApLocationIcon()
-    map_widget.location_icon = ctx.location_icon
+    ctx.map_page = map_widget
     ctx.map_page_coords_func = map_widget.load_coords
     return map_widget
 
@@ -440,7 +439,7 @@ def _ensure_widgets():
                 self.color_4 = "#" + get_ut_color("collected")
 
     class VisualTracker(BoxLayout):
-        location_icon: ApLocationIcon
+        location_icons: list  # pooled ApLocationIcon widgets, see update_location_icon_widgets
 
         def load_coords(self, coords, defered_coords, ldefered_coords, use_split, default_loc_size: int = 65):
             self.ids.location_canvas.clear_widgets()
@@ -466,8 +465,30 @@ def _ensure_widgets():
                 self.ids.location_canvas.add_widget(temp_loc)
                 for event_name in sections:
                     ldeferredDict[event_name].append(temp_loc)
-            self.ids.location_canvas.add_widget(self.location_icon)
+            # The canvas was just cleared, so any previously pooled icon widgets
+            # are gone too; update_location_icon_widgets() rebuilds the pool
+            # against this fresh empty list (it's called again right after
+            # load_coords() on every map switch, see TrackerClient.load_map()).
+            self.location_icons = []
             return returnDict, deferredDict, ldeferredDict
+
+        def update_location_icon_widgets(self, ctx, location_icons):
+            # Reuse existing pooled widgets where possible, only adding/removing
+            # when the number of simultaneous icons actually changes.
+            for i, (x, y, ref) in enumerate(location_icons):
+                if i < len(self.location_icons):
+                    self.location_icons[i].source = f"{ctx.root_pack_path}/{ref}"
+                    self.location_icons[i].pos = (x, y)
+                else:
+                    location_icon = ApLocationIcon(source=f"{ctx.root_pack_path}/{ref}", pos=(x, y),
+                                                    size=(ctx.ui.loc_icon_size, ctx.ui.loc_icon_size))
+                    self.ids.location_canvas.add_widget(location_icon)
+                    self.location_icons.append(location_icon)
+
+            if len(self.location_icons) > len(location_icons):
+                for icon in self.location_icons[len(location_icons):]:
+                    self.ids.location_canvas.remove_widget(icon)
+                del self.location_icons[len(location_icons):]
 
     _CheckItem = CheckItem
     _TrackerLayout = TrackerLayout

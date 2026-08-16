@@ -48,6 +48,8 @@ def _absent_world_name() -> str:
 
 
 class TestPatches(unittest.TestCase):
+    world_relevant = True
+
     def test_patch_name_matches_game(self) -> None:
         """Every registered patch's `game` must be the name of a registered world.
 

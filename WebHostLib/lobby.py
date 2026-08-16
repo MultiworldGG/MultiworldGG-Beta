@@ -213,6 +213,7 @@ def lobby_create():
             return redirect(url_for('lobby_create'))
 
         meta = get_meta(request.form, race)
+        meta["host_display_name"] = creator_name
 
         lobby = Lobby(
             title=title,
@@ -360,7 +361,11 @@ def lobby_view_auth(lobby: UUID):
 @app.route('/lobby/<suuid:lobby>/join', methods=['POST'])
 @limiter.limit("5 per minute")
 def lobby_join(lobby: UUID):
-    lobby = Lobby.get(id=lobby)
+    lobby_id = lobby
+    # Serialize joins for this lobby so capacity and name checks cannot race.
+    lobby = db.session.scalars(
+        select(Lobby).where(Lobby.id == lobby_id).with_for_update()
+    ).first()
     if not lobby:
         abort(404)
 
@@ -433,7 +438,12 @@ def lobby_join(lobby: UUID):
         content=f"{player_name} joined the lobby.",
     )
     lobby.last_activity = utcnow()
-    commit()
+    try:
+        commit()
+    except OptimisticCheckError:
+        # The failed commit has already rolled back the player and message.
+        flash('The lobby changed while you were joining. Please try again.')
+        return redirect(url_for('lobby_view', lobby=lobby_id))
 
     session.pop(f"lobby_{lobby.id}_viewer", None)
     return redirect(url_for('lobby_view', lobby=lobby.id))

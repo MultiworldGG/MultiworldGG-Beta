@@ -38,6 +38,8 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         "release_mode": str(options_source.get("release_mode", ServerOptions.release_mode)),
         "remaining_mode": str(options_source.get("remaining_mode", ServerOptions.remaining_mode)),
         "collect_mode": str(options_source.get("collect_mode", ServerOptions.collect_mode)),
+        "release_threshold": _clamp_int(options_source.get("release_threshold", ServerOptions.release_threshold),
+                                        ServerOptions.release_threshold, 0, 100),
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
         "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
@@ -47,6 +49,9 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
     generator_options = {
         "spoiler": int(options_source.get("spoiler", GeneratorOptions.spoiler)),
         "race": race,
+        "progression_equalization": _clamp_int(
+            options_source.get("progression_equalization", GeneratorOptions.progression_equalization),
+            GeneratorOptions.progression_equalization, 0, 100),
     }
 
     if race:
@@ -179,7 +184,8 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
             args.name[player] = handle_name(args.name[player], player, name_counter)
         if len(set(args.name.values())) != len(args.name):
             raise Exception(f"Names have to be unique. Names: {Counter(args.name.values())}")
-        ERmain(args, seed, baked_server_options=meta["server_options"])
+        ERmain(args, seed, baked_server_options=meta["server_options"],
+               baked_generator_options=meta["generator_options"])
 
         # task() runs in a DaemonThreadPoolExecutor sub-thread; Flask app contexts are
         # contextvar/thread-local and don't propagate from the calling thread, so push

@@ -6,10 +6,12 @@ from Options import OptionCounter, NamedRange, NumericOption, OptionList, Option
 
 
 class TestOptionPresets(unittest.TestCase):
+    world_relevant = True
+
     def test_option_presets_have_valid_options(self):
         """Test that all predefined option presets are valid options."""
         checked = 0
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             presets = world_type.web.options_presets
             for preset_name, preset in presets.items():
                 for option_name, option_value in preset.items():
@@ -46,7 +48,7 @@ class TestOptionPresets(unittest.TestCase):
         value.
         """
         checked = 0
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             presets = world_type.web.options_presets
             for preset_name, preset in presets.items():
                 for option_name, option_value in preset.items():

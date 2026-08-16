@@ -902,9 +902,12 @@ class CommonContext(InitContext):
         Send a `Connect` packet to log in to the server,
         additional keyword args can override any value in the connection packet
         """
+        server_hostname = urllib.parse.urlparse(self.server_address or "").hostname or ""
+        is_multiworld_host = server_hostname == "multiworld.gg" or server_hostname.endswith(".multiworld.gg") or server_hostname == "localhost"
+        connect_version = Utils.version_tuple if is_multiworld_host else Utils.core_version_tuple
         payload = {
             'cmd': 'Connect',
-            'password': self.password, 'name': self.auth, 'version': Utils.version_tuple,
+            'password': self.password, 'name': self.auth, 'version': connect_version,
             'tags': self.tags, 'items_handling': self.items_handling,
             'uuid': Utils.get_unique_identifier(), 'game': self.game, "slot_data": self.want_slot_data,
         }
@@ -1703,9 +1706,12 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
     elif cmd == "Bounced":
         tags = args.get("tags", [])
-        # we can skip checking "DeathLink" in ctx.tags, as otherwise we wouldn't have been send this
-        if "DeathLink" in tags and ctx.last_death_link != args["data"]["time"]:
-            ctx.on_deathlink(args["data"])
+        # we can skip checking "DeathLink" in ctx.tags, as otherwise we wouldn't have been sent this
+        if "DeathLink" in tags:
+            data = args.get("data", {})
+            time = data.get("time")
+            if time is not None and ctx.last_death_link != time:
+                ctx.on_deathlink(args["data"])
 
     elif cmd == "Retrieved":
         ctx.stored_data.update(args["keys"])

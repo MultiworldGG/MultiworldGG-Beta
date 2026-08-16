@@ -1,0 +1,16 @@
+/* Shared chrome for the standalone per-game trackers, which render outside
+   the site wrapper and so pull in the palette tokens themselves. base.css
+   supplies the surface and text colors for `body`. */
+@import "themes/base.css";
+
+html {
+    background-color: var(--mw-sys-color-background);
+}
+
+a {
+    color: var(--mw-sys-color-primary);
+}
+
+a:hover {
+    color: var(--mw-sys-color-primary-container);
+}
