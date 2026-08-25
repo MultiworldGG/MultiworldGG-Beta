@@ -69,7 +69,74 @@ async function getReleaseWaitingForDigests(octokit: Octokit, owner: string, repo
   return release;
 }
 
-export async function processReleaseAssets({
+// One release publish reaches this module TWICE: GitHub fires `release.published`
+// and `release.released` for the same full release, and both route through
+// handleReleasePublished (the `workflow_run.completed` legacy path can add a
+// third). The deliveries land within ~1s of each other, so they run
+// concurrently — which is how two branch-creates raced on the Index and the
+// loser 422'd ("Reference already exists"), and why every skip on /status was
+// logged twice. Coalesce on release identity: the first delivery does the work,
+// any overlapping duplicate returns immediately.
+//
+// The key is held for a short grace period AFTER a run settles successfully,
+// because the fast paths (a skip after one API call) can finish before the
+// sibling delivery even arrives. The window is deliberately only a few seconds:
+// the published/released pair lands ~1s apart, while the OTHER delivery for the
+// same tag — `workflow_run.completed`, once the per-world repo has finished
+// building and uploading the wheel — is minutes behind and MUST still be
+// processed (it is what rescues a release that published before its assets
+// existed). A run that REJECTED is evicted at once, so an operator redelivering
+// to retry a genuine failure is never swallowed.
+const RELEASE_COALESCE_GRACE_MS_DEFAULT = 5000;
+
+const inFlightReleases = new Map<string, Promise<void>>();
+
+export async function processReleaseAssets(params: ProcessReleaseAssetsParams): Promise<void> {
+  const { oliverProbot, owner, repo, releaseTag } = params;
+  const key = `${owner}/${repo}@${releaseTag}`;
+
+  const running = inFlightReleases.get(key);
+  if (running !== undefined) {
+    oliverProbot.log.debug(
+      { source_repo: `${owner}/${repo}`, release_tag: releaseTag },
+      "duplicate release delivery coalesced into the in-flight run",
+    );
+    return;
+  }
+
+  const graceMs = parseEnvInt(
+    process.env.OLIVER_RELEASE_COALESCE_MS,
+    RELEASE_COALESCE_GRACE_MS_DEFAULT,
+    0,
+  );
+
+  const run = processReleaseAssetsUncoalesced(params).then(
+    () => {
+      // Hold the key briefly so a sibling delivery arriving just after a fast
+      // run finishes is still recognised as the duplicate it is.
+      const timer = setTimeout(() => inFlightReleases.delete(key), graceMs);
+      // Don't keep the event loop alive just for the grace window.
+      if (typeof timer.unref === "function") timer.unref();
+    },
+    (err: unknown) => {
+      inFlightReleases.delete(key);
+      throw err;
+    },
+  );
+  inFlightReleases.set(key, run);
+  return run;
+}
+
+/**
+ * Test-only: forget every coalesced release so each case starts clean. Without
+ * it the module-level map (and its post-success grace window) would leak state
+ * between cases that reuse the same repo + tag.
+ */
+export function resetReleaseCoalescingForTests(): void {
+  inFlightReleases.clear();
+}
+
+async function processReleaseAssetsUncoalesced({
   octokit,
   oliverProbot,
   karenProbot,
@@ -160,6 +227,21 @@ export async function processReleaseAssets({
         slug = apworld;
       }
       if (!slug) {
+        // A release carrying neither a wheel nor an apworld was never a
+        // candidate for an Index PR — it is somebody's app/client/tooling
+        // release, not a world release. Oliver is installed on repos that cut
+        // both kinds (MultiworldGG/MultiworldGG's own 0.7.x releases are the
+        // bulk of them), and logging each one as a skip buried the actionable
+        // entries in /status's last-50 table. Debug-log and drop instead. A
+        // world release that DID ship a wheel still reports no_slug_resolved,
+        // because that one is the author's to fix.
+        if (wheelAssets.length === 0 && !assets.some((a) => a.name.endsWith(".apworld"))) {
+          oliverProbot.log.debug(
+            { source_repo: sourceRepo, release_tag: releaseTag },
+            "release has no .whl or .apworld asset; not a world release, ignoring",
+          );
+          return;
+        }
         oliverLog.emit({
           kind: "skip",
           source_repo: sourceRepo,
