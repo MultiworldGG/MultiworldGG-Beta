@@ -23,6 +23,7 @@ import time
 import typing
 import weakref
 import zlib
+from functools import reduce
 
 if typing.TYPE_CHECKING:
     import ssl
@@ -77,6 +78,40 @@ server_per_message_deflate_factory = ServerPerMessageDeflateFactory(
     client_max_window_bits=11,
     compress_settings={"memLevel": 4},
 )
+
+OPERATOR_NAME_TO_OPERATOR = {
+    "or": operator.or_,
+    "and": operator.and_,
+}
+
+class BounceTarget(typing.NamedTuple):
+    teams: set[int]
+    games: set[str]
+    tags: set[str]
+    slots: set[int]
+
+    def _teams_match(self, target: Client) -> bool:
+        return target.team in self.teams
+
+    def _games_match(self, target: Client) -> bool:
+        return len(self.games) == 0 or target.ctx.games[target.slot] in self.games
+
+    def _tags_match(self, target: Client) -> bool:
+        return len(self.tags) == 0 or bool(set(target.tags) & self.tags)
+
+    def _slots_match(self, target: Client) -> bool:
+        return len(self.slots) == 0 or target.slot in self.slots
+
+    def matches_client_legacy(self, target: Client) -> bool:
+        return self._teams_match(target) and (
+            self._games_match(target) or self._tags_match(target) or self._slots_match(target)
+        )
+
+    def matches_client_operator(self, target: Client, op: typing.Callable[[typing.Any, typing.Any], bool]):
+        return reduce(
+            op,
+            (self._teams_match(target), self._games_match(target), self._tags_match(target), self._slots_match(target)),
+        )
 
 
 def remove_from_list(container, value):
@@ -1334,7 +1369,7 @@ def collect_hint_location_id(ctx: Context, team: int, slot: int, seeked_location
 
         found = seeked_location in ctx.location_checks[team, slot]
         entrance = ctx.er_hint_data.get(slot, {}).get(seeked_location, "")
-        hidden_display = (
+        hidden_item = (
             allow_hidden
             and ((ctx.hint_mode == "own" and slot == receiving_player) or ctx.hint_mode == "all")
             and not found
@@ -1348,7 +1383,8 @@ def collect_hint_location_id(ctx: Context, team: int, slot: int, seeked_location
             else:
                 status = HintStatus.HINT_PRIORITY
 
-        return [Hint(receiving_player, slot, seeked_location, item_id, found, entrance, item_flags, status, hidden_display)]
+        return [Hint(receiving_player, slot, seeked_location, item_id, found, entrance, item_flags, status,
+                     item_hidden=hidden_item)]
     return []
 
 
@@ -1360,13 +1396,26 @@ status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_PRIORITY: "(priority)",
 }
 def format_hint(ctx: Context, team: int, hint: Hint) -> str:
-    text = f"[Hint]: {ctx.player_names[team, hint.receiving_player]}'s " \
-           f"{ctx.item_names[ctx.slot_info[hint.receiving_player].game][hint.item]} is " \
-           f"at {ctx.location_names[ctx.slot_info[hint.finding_player].game][hint.location]} " \
-           f"in {ctx.player_names[team, hint.finding_player]}'s World"
+    receiving_name = ctx.player_names[team, hint.receiving_player]
+    finding_name = ctx.player_names[team, hint.finding_player]
+    item_name = ctx.item_names[ctx.slot_info[hint.receiving_player].game][hint.item]
+    location_name = ctx.location_names[ctx.slot_info[hint.finding_player].game][hint.location]
 
-    if hint.entrance:
-        text += f" at {hint.entrance}"
+    if hint.item_hidden:
+        item_display = f"one of {finding_name}'s items" if hint.local else f"one of {receiving_name}'s items"
+        text = f"[Hint]: {location_name} in {finding_name}'s World"
+        if hint.entrance:
+            text += f" at {hint.entrance}"
+        text += f" contains {item_display} ({hint.item_classification})"
+    else:
+        text = f"[Hint]: {receiving_name}'s {item_name}"
+        if hint.hidden:
+            world_display = f"{receiving_name}'s own World" if hint.local else f"{finding_name}'s World"
+            text += f" is in {world_display}"
+        else:
+            text += f" is at {location_name} in {finding_name}'s World"
+            if hint.entrance:
+                text += f" at {hint.entrance}"
 
     return text + ". " + status_names.get(hint.status, "(unknown)")
 
@@ -1866,15 +1915,15 @@ class ClientMessageProcessor(CommonCommandProcessor):
         if hints:
             new_hints = set(hints) - self.ctx.hints[self.client.team, self.client.slot]
             old_hints = list(set(hints) - new_hints)
-            hidden_old_hints = [hint for hint in old_hints if hint.hidden]
-            truly_old_hints = [hint for hint in old_hints if not hint.hidden]
+            hidden_old_hints = [hint for hint in old_hints if hint.hidden or hint.item_hidden]
+            truly_old_hints = [hint for hint in old_hints if not hint.hidden and not hint.item_hidden]
             if new_hints or hidden_old_hints:
                 # Remove hidden old hints from store so they can be re-added as fully revealed
                 for hint in hidden_old_hints:
                     self.ctx.hints[self.client.team, hint.finding_player].discard(hint)
                     for player in self.ctx.slot_set(hint.receiving_player):
                         self.ctx.hints[self.client.team, player].discard(hint)
-                revealed_hints = [hint._replace(hidden=False) for hint in hidden_old_hints]
+                revealed_hints = [hint._replace(hidden=False, item_hidden=False) for hint in hidden_old_hints]
 
                 found_hints = [hint for hint in new_hints if hint.found]
                 not_found_hints = [hint for hint in new_hints if not hint.found] + revealed_hints
@@ -2298,17 +2347,66 @@ async def process_client_cmd(ctx: Context, client: Client, args: dict):
             client.messageprocessor(args["text"])
 
         elif cmd == "Bounce":
-            games = set(args.get("games", []))
-            tags = set(args.get("tags", []))
-            slots = set(args.get("slots", []))
+            games = args.get("games", [])
+            if not isinstance(games, (list, set)) or not all(isinstance(entry, str) for entry in games):
+                await ctx.send_msgs(client, [{
+                    "cmd": "InvalidPacket", "type": "arguments",
+                    "text": "Bounce: Games list provided did not have the correct format.",
+                    "original_cmd": cmd}])
+                return
+
+            games = set(games)
+
+            tags = args.get("tags", [])
+            if not isinstance(tags, (list, set)) or not all(isinstance(entry, str) for entry in tags):
+                await ctx.send_msgs(client, [{
+                    "cmd": "InvalidPacket", "type": "arguments",
+                    "text": "Bounce: Tags list provided did not have the correct format.",
+                    "original_cmd": cmd}])
+                return
+
+            tags = set(tags)
+
+            slots = args.get("slots", [])
+            if not isinstance(slots, (list, set)) or not all(isinstance(entry, int) for entry in slots):
+                await ctx.send_msgs(client, [{
+                    "cmd": "InvalidPacket", "type": "arguments",
+                    "text": "Bounce: Slots list provided did not have the correct format.",
+                    "original_cmd": cmd}])
+                return
+
+            slots = set(slots)
+
+            teams = args.get("teams", [client.team])
+            if not isinstance(teams, (list, set)) or not all(isinstance(entry, int) for entry in teams):
+                await ctx.send_msgs(client, [{
+                    "cmd": "InvalidPacket", "type": "arguments",
+                    "text": "Bounce: Teams list provided did not have the correct format.",
+                    "original_cmd": cmd}])
+                return
+
+            teams = set(teams)
+
+            bounce_target = BounceTarget(teams, games, tags, slots)
+
             args["cmd"] = "Bounced"
             msg = ctx.dumper([args])
 
-            for bounceclient in ctx.endpoints:
-                if client.team == bounceclient.team and (ctx.games[bounceclient.slot] in games or
-                                                         set(bounceclient.tags) & tags or
-                                                         bounceclient.slot in slots):
-                    await ctx.send_encoded_msgs(bounceclient, msg)
+            boolean_operator = args.get("operator", "legacy")
+
+            if boolean_operator == "legacy":
+                for bounce_client in ctx.endpoints:
+                    if bounce_target.matches_client_legacy(bounce_client):
+                        await ctx.send_encoded_msgs(bounce_client, msg)
+            elif boolean_operator in OPERATOR_NAME_TO_OPERATOR:
+                op = OPERATOR_NAME_TO_OPERATOR[boolean_operator]
+                for bounce_client in ctx.endpoints:
+                    if bounce_target.matches_client_operator(bounce_client, op):
+                        await ctx.send_encoded_msgs(bounce_client, msg)
+            else:
+                await ctx.send_msgs(client, [{'cmd': 'InvalidPacket', "type": "arguments",
+                                              "text": "Bounce", "original_cmd": cmd}])
+                return
 
         elif cmd == "Get":
             if "keys" not in args or type(args["keys"]) != list:
@@ -2855,11 +2953,11 @@ def parse_args() -> argparse.Namespace:
                              ''')
     parser.add_argument('--hint_mode', default=defaults["hint_mode"], nargs='?',
                     choices=['default', 'own', 'all'], help='''\
-                            Select hint detail display for hints (default: %(default)s)
-                            default: hints show up in full, no matter the world
-                            own: hints in the hinting player's world do not display their full location
-                            all: hints in all worlds do not display their full location
-                            ''')
+                             Select hint detail display for hints (default: %(default)s)
+                             default: hints show up in full
+                             own: hide locations from item hints and items from location hints for local placements
+                             all: hide locations from item hints and items from location hints for all placements
+                             ''')
     parser.add_argument('--auto_shutdown', default=defaults["auto_shutdown"], type=int,
                         help="automatically shut down the server after this many seconds without new location checks. "
                              "0 to keep running.")
