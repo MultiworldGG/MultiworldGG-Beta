@@ -23,22 +23,15 @@ except ImportError:
 _DEFAULT_ICON_PATH = local_path("data", "icon.png")
 _LAUNCHER_ICON_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mwgg_launcher_icons")
 
-_COMPONENT_ORIGIN_ATTRIBUTE = "_mwgg_component_origin"
-_COMPONENT_ORIGIN_BUILTIN = "builtin"
-_COMPONENT_ORIGIN_WORLD = "world"
-_COMPONENT_ORIGIN_OTHER = "other"
-_COMPONENT_ORIGIN_CACHE = "cache_stub"
+_BUILTIN_ATTRIBUTE = "_mwgg_builtin_component"
 
+# True while this module runs its own top-level registrations; flipped to False
+# at the end of the module. Components appended while True are the builtin
+# ("native") set, known before any world is imported. Everything registered
+# later (worlds at import time, runtime code) is non-builtin; which world or
+# install source a component came from is the installer/index's business, not
+# tracked here.
 _INITIALIZING_COMPONENTS = True
-
-
-class APWorldInstallRestartRequired(Exception):
-    def __init__(self, module_name: str) -> None:
-        self.module_name = module_name
-        super().__init__(
-            f"Installed APWorld successfully, but '{module_name}' is already loaded, "
-            "so a Launcher restart is required to use the new installation."
-        )
 
 
 class Type(str, Enum):
@@ -120,34 +113,19 @@ class Component:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.display_name})"
 
-def _is_worlds_loading() -> bool:
-    worlds_module = sys.modules.get("worlds")
-    return bool(getattr(worlds_module, "_worlds_loading", False))
-
-
-def _classify_component_origin() -> str:
-    if _is_worlds_loading():
-        return _COMPONENT_ORIGIN_WORLD
-    if _INITIALIZING_COMPONENTS:
-        return _COMPONENT_ORIGIN_BUILTIN
-    return _COMPONENT_ORIGIN_OTHER
-
-
-def _component_origin(component: Component) -> str:
-    origin = getattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, None)
-    return origin if isinstance(origin, str) else _COMPONENT_ORIGIN_OTHER
-
-
-def _tag_component(component: Component) -> None:
-    origin = getattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, None)
-    if not isinstance(origin, str):
-        origin = _classify_component_origin()
-    setattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, origin)
+def _tag_builtin(component: Component) -> None:
+    if getattr(component, _BUILTIN_ATTRIBUTE, None) is None:
+        setattr(component, _BUILTIN_ATTRIBUTE, _INITIALIZING_COMPONENTS)
 
 
 class ComponentList(list[Component]):
+    def __init__(self, iterable: Iterable[Component] = ()) -> None:
+        # list.__init__ would bypass append, skipping the builtin tagging.
+        super().__init__()
+        self.extend(iterable)
+
     def append(self, component: Component) -> None:
-        _tag_component(component)
+        _tag_builtin(component)
         super().append(component)
 
     def extend(self, components: Iterable[Component]) -> None:
@@ -155,7 +133,7 @@ class ComponentList(list[Component]):
             self.append(component)
 
     def insert(self, index: int, component: Component) -> None:
-        _tag_component(component)
+        _tag_builtin(component)
         super().insert(index, component)
 
 
@@ -196,9 +174,8 @@ class SuffixIdentifier:
 def identify(path: Optional[str]) -> Optional[Component]:
     """Return the first registered component whose file_identifier claims `path`.
 
-    Works against whatever is currently registered: with worlds unloaded that is
-    the builtin components plus any launcher-cache stubs (their suffixes are
-    serialized, so suffix lookups need no world import)."""
+    Works against whatever is currently registered: builtins only, until worlds
+    have been imported."""
     if not path:
         return None
     for component in components:
@@ -327,9 +304,9 @@ def find_component(name: str) -> Optional[Component]:
 
 
 def builtin_components() -> list[Component]:
-    """Builtin components in registration order, excluding anything appended
-    after world loading starts (see _classify_component_origin)."""
-    return [component for component in components if _component_origin(component) == _COMPONENT_ORIGIN_BUILTIN]
+    """Builtin components in registration order: the set registered while this
+    module was initializing, known without importing any world."""
+    return [component for component in components if getattr(component, _BUILTIN_ATTRIBUTE, False)]
 
 
 def launch_textclient(*args):
@@ -488,9 +465,6 @@ components: ComponentList = ComponentList([
     Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL,
             description="Write item/location data for installed worlds to a file and open it."),
 ])
-
-for component in components:
-    setattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, _COMPONENT_ORIGIN_BUILTIN)
 
 components.extend([
     Component("Open host.yaml", func=open_host_yaml,
