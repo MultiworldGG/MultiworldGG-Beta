@@ -97,24 +97,7 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
   });
   const baseSha = baseRef.data.object.sha;
 
-  let branchExists = true;
-  try {
-    await karenOctokit.rest.git.getRef({
-      owner: indexOwner,
-      repo: indexName,
-      ref: `heads/${branchName}`,
-    });
-  } catch {
-    branchExists = false;
-  }
-  if (!branchExists) {
-    await karenOctokit.rest.git.createRef({
-      owner: indexOwner,
-      repo: indexName,
-      ref: `refs/heads/${branchName}`,
-      sha: baseSha,
-    });
-  }
+  await ensureBranch(karenOctokit, indexOwner, indexName, branchName, baseSha);
 
   const { json: currentJson, sha: currentSha } = await readJsonOnBranch(
     karenOctokit,
@@ -369,24 +352,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   });
   const baseSha = baseRef.data.object.sha;
 
-  let branchExists = true;
-  try {
-    await karenOctokit.rest.git.getRef({
-      owner: indexOwner,
-      repo: indexName,
-      ref: `heads/${branchName}`,
-    });
-  } catch {
-    branchExists = false;
-  }
-  if (!branchExists) {
-    await karenOctokit.rest.git.createRef({
-      owner: indexOwner,
-      repo: indexName,
-      ref: `refs/heads/${branchName}`,
-      sha: baseSha,
-    });
-  }
+  await ensureBranch(karenOctokit, indexOwner, indexName, branchName, baseSha);
 
   let anyNeedsIgdb = false;
   const bodyWorldLines: string[] = [];
@@ -496,6 +462,43 @@ function formatWheelSize(bytes: number): string {
   if (kb < 1024) return `${kb.toFixed(kb < 10 ? 1 : 0)} KB`;
   const mb = kb / 1024;
   return `${mb.toFixed(mb < 10 ? 2 : 1)} MB`;
+}
+
+/** True for the 422 GitHub returns when `createRef` targets an existing ref. */
+function isRefAlreadyExists(err: unknown): boolean {
+  const e = err as { status?: number; message?: string };
+  return e?.status === 422 && /reference already exists/i.test(e?.message ?? "");
+}
+
+/**
+ * Ensure `branchName` exists on the Index, creating it at `baseSha` if not.
+ *
+ * Create-then-tolerate-422 rather than check-then-create: GitHub fires both
+ * `release.published` and `release.released` for one full-release publish, so
+ * two deliveries can reach this line at the same moment. A check-then-create
+ * loses that race — both see the branch missing, and the loser's createRef
+ * fails with "Reference already exists", sinking the whole Index PR (the
+ * `github_api_error` entries on /status). An existing branch is exactly the
+ * post-condition we want, and as before it is never reset onto `baseSha`, so a
+ * re-push of an open PR branch keeps its history.
+ */
+async function ensureBranch(
+  octokit: ProbotOctokit,
+  owner: string,
+  repo: string,
+  branchName: string,
+  baseSha: string,
+): Promise<void> {
+  try {
+    await octokit.rest.git.createRef({
+      owner,
+      repo,
+      ref: `refs/heads/${branchName}`,
+      sha: baseSha,
+    });
+  } catch (err: unknown) {
+    if (!isRefAlreadyExists(err)) throw err;
+  }
 }
 
 async function fileExistsOnRef(

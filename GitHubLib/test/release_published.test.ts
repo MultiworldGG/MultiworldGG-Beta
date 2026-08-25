@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { handleReleasePublished } from "../src/handlers/release_published";
+import { resetReleaseCoalescingForTests } from "../src/handlers/shared";
 import { IndexBotData } from "../src/index-pr";
 
 // The bundle path reads each world's archipelago.json out of its wheel (a real
@@ -205,6 +206,7 @@ function apworldAsset(opts: { slug?: string; name?: string; tag: string; repo?: 
 // ---------------------------------------------------------------------------
 
 function makeKarenIndexOctokit(writes: string[]): any {
+  const createdRefs = new Set<string>();
   return {
     rest: {
       repos: {
@@ -222,7 +224,13 @@ function makeKarenIndexOctokit(writes: string[]): any {
           if (ref.endsWith("/main")) return { data: { object: { sha: "main-sha" } } };
           throw Object.assign(new Error("404"), { status: 404 });
         },
-        createRef: async () => {
+        createRef: async ({ ref }: { ref: string }) => {
+          // GitHub 422s a second create of the same ref. Modelled here because
+          // that response is exactly what the duplicate release delivery hits.
+          if (createdRefs.has(ref)) {
+            throw Object.assign(new Error("Reference already exists"), { status: 422 });
+          }
+          createdRefs.add(ref);
           writes.push("createRef");
           return { data: {} };
         },
@@ -265,6 +273,8 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-release-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Cases reuse the same repo+tag; drop the duplicate-delivery coalescing state.
+  resetReleaseCoalescingForTests();
   // Make the asset-digest wait instant in tests (no real backoff sleeps).
   process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
@@ -274,6 +284,7 @@ afterEach(() => {
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
   delete process.env.OLIVER_DIGEST_WAIT_MS;
+  delete process.env.OLIVER_RELEASE_COALESCE_MS;
 });
 
 function readEvents(): any[] {
@@ -385,7 +396,15 @@ describe("handleReleasePublished", () => {
   it("logs skip when the release tag has no slug prefix", async () => {
     const tag = "v1.0.0";
     const state: RepoState = {
-      releases: [{ tag_name: tag, tagSha: "release-sha-abc" }],
+      // A wheel IS attached, so this is a world release whose tag the author
+      // needs to fix — the case that still belongs on /status.
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag })],
+        },
+      ],
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
@@ -393,6 +412,22 @@ describe("handleReleasePublished", () => {
     await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("ignores a release with neither a wheel nor an apworld asset without logging", async () => {
+    // MultiworldGG/MultiworldGG's own 0.7.x app releases look like this: no
+    // slug in the tag and no world artifacts. They were never Index-PR
+    // candidates, so they must not consume a row on /status.
+    const tag = "0.7.267";
+    const state: RepoState = {
+      releases: [{ tag_name: tag, tagSha: "release-sha-abc", assets: [] }],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, tag);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(readEvents()).toEqual([]);
     expect(probot.auth).not.toHaveBeenCalled();
   });
 
@@ -1027,5 +1062,95 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       "commit:worlds/oot.json",
     ]);
     expect(writes).toContain("pulls.create");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate-delivery coalescing
+//
+// GitHub fires `release.published` AND `release.released` for one full-release
+// publish, ~1s apart. Both route here, so without coalescing the two runs race:
+// they both created the Index branch and the loser's createRef 422'd
+// ("Reference already exists"), which is the github_api_error on /status.
+// ---------------------------------------------------------------------------
+
+describe("handleReleasePublished duplicate deliveries", () => {
+  function makeDuplicateHarness(tag: string) {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag })],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game", authors: ["Berserker"] },
+      indexInstall: { id: 12345 },
+    };
+
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+    const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+    const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+
+    const probot = {
+      auth: vi.fn().mockResolvedValue(oliverIndexOctokit),
+      log: fakeLog,
+    } as any;
+    const karenAppOctokit = {
+      rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+    };
+    const karenProbot = {
+      auth: vi.fn().mockImplementation((id?: number) => {
+        if (id === undefined) return Promise.resolve(karenAppOctokit);
+        if (id === 67890) return Promise.resolve(karenIndexOctokit);
+        throw new Error(`unexpected karen auth id: ${id}`);
+      }),
+      log: fakeLog,
+    } as any;
+
+    return { state, probot, karenProbot, karenWrites, oliverWrites };
+  }
+
+  it("processes the release once when published and released arrive concurrently", async () => {
+    const tag = "myclgm-1.0.0";
+    const h = makeDuplicateHarness(tag);
+
+    // Both deliveries in flight at the same time, as they are in production.
+    await Promise.all([
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+    ]);
+
+    expect(h.karenWrites.filter((w) => w === "createRef")).toHaveLength(1);
+    expect(h.oliverWrites.filter((w) => w === "pulls.create")).toHaveLength(1);
+    expect(readEvents()).toHaveLength(1);
+  });
+
+  it("logs a skip once when the duplicate pair both fail to resolve a slug", async () => {
+    const tag = "0.7.267"; // core-repo style tag: no '<slug>-<version>' prefix
+    const h = makeDuplicateHarness(tag);
+
+    await Promise.all([
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+    ]);
+
+    const events = readEvents();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+  });
+
+  it("still processes a later redelivery once the grace window has lapsed", async () => {
+    process.env.OLIVER_RELEASE_COALESCE_MS = "0";
+    const tag = "myclgm-1.0.0";
+    const h = makeDuplicateHarness(tag);
+
+    await handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag));
+    // Let the zero-length grace timer fire before the redelivery lands.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag));
+
+    expect(readEvents()).toHaveLength(2);
   });
 });

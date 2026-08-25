@@ -68,6 +68,11 @@ function makeKarenOctokit(state: FakeIndex): any {
         },
         createRef: async ({ ref, sha }: { ref: string; sha: string }) => {
           const head = ref.replace(/^refs\/heads\//, "");
+          if (state.branches[head]) {
+            // GitHub's response when the ref is already there — the shape the
+            // caller's already-exists tolerance keys on.
+            throw Object.assign(new Error("Reference already exists"), { status: 422 });
+          }
           state.branches[head] = sha;
           // Inherit files from main (simulate branch-from-main)
           state.files[head] = { ...state.files[state.defaultBranch] };
