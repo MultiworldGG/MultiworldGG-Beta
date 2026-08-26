@@ -12,8 +12,11 @@ read-only, runs with SKIP_ALL_INSTALLS=1, and waits for this to exit 0
 Refresh on demand:  docker compose up mwgg_upgrader
                     docker compose run --rm mwgg_upgrader
 
-Exit code is 0 only when the index installed and the worlds venv is populated,
-so a failed run blocks the consumers from starting against a broken venv.
+Exit code is 0 only when the index installed, the worlds venv is populated, and no
+world regressed, so a failed run blocks the consumers from starting against a broken
+venv. Individual worlds that fail to install are tolerated up to a threshold — one bad
+wheel costs that one game, not the deploy — but every run logs a WORLD_INSTALL_SUMMARY
+line, so failures are greppable rather than silent.
 """
 import logging
 import os
@@ -38,6 +41,40 @@ import ModuleUpdate
 
 VARIANT = "ao"
 
+# Fraction of the index allowed to fail before the run is treated as systemic breakage
+# (bad network, unusable index) rather than a handful of bad wheels. Override with an
+# absolute count via MWGG_UPGRADE_MAX_WORLD_FAILURES.
+FAILURE_FRACTION = 0.1
+
+
+def _installed_world_slugs() -> set[str]:
+    """Slugs currently unpacked in the venv worlds dir.
+
+    A missing dir is an empty venv (first run). Any other OSError propagates so the
+    failure is reported as what it is — a silently-empty result here would read as
+    "every world regressed" and block the deploy with a misleading message.
+    """
+    try:
+        return {
+            entry.name for entry in ModuleUpdate._venv_worlds_dir().iterdir()
+            if entry.is_dir() and not entry.name.startswith("_")
+        }
+    except FileNotFoundError:
+        return set()
+
+
+def _max_tolerated_failures(world_count: int) -> int:
+    override = os.environ.get("MWGG_UPGRADE_MAX_WORLD_FAILURES")
+    if override:
+        try:
+            return int(override)
+        except ValueError:
+            logger.error(
+                "MWGG_UPGRADE_MAX_WORLD_FAILURES=%r is not an integer; using the default tolerance",
+                override,
+            )
+    return int(world_count * FAILURE_FRACTION)
+
 
 def main() -> int:
     ModuleUpdate.set_variant(VARIANT)
@@ -55,16 +92,45 @@ def main() -> int:
         return 1
 
     slugs = [f"worlds.{slug}" for slug in GameIndex.get_all_games()]
+    if not slugs:
+        # The venv may still hold yesterday's worlds, so the downstream checks would
+        # trivially pass; an empty index is index breakage, not a clean run.
+        logger.error("Game index has no worlds; aborting")
+        return 1
     logger.info("Installing/updating %d worlds (+ requirements) in the worlds venv", len(slugs))
+    installed_before = _installed_world_slugs()
     # with_deps=True runs `uv pip install <wheel> --upgrade` for every world, so
     # each world AND its already-installed dependencies are checked for updates
     # and upgraded when outdated. uv skips packages already current — nothing is
     # force-reinstalled. (with_deps=False would skip up-to-date worlds entirely,
     # leaving their deps unchecked.)
-    ModuleUpdate.install_worlds(slugs, with_deps=True)
+    result = ModuleUpdate.install_worlds(slugs, with_deps=True)
+
+    failed = sorted(result.failed)
+    logger.info(
+        "WORLD_INSTALL_SUMMARY requested=%d failed=%d apworld_fallback=%d",
+        len(slugs), len(failed), len(result),
+    )
+    if failed:
+        logger.error("Worlds that could not be installed (%d): %s", len(failed), ", ".join(failed))
 
     if not ModuleUpdate._venv_has_worlds():
         logger.error("Worlds venv is empty after install; aborting")
+        return 1
+
+    # A world that was serving before this run and is gone now is a regression however
+    # few there are: the consumers would come up having lost a game the site already had.
+    regressed = sorted(installed_before - _installed_world_slugs())
+    if regressed:
+        logger.error("Worlds lost during this run (%d): %s", len(regressed), ", ".join(regressed))
+        return 1
+
+    tolerated = _max_tolerated_failures(len(slugs))
+    if len(failed) > tolerated:
+        logger.error(
+            "%d worlds failed to install, over the tolerance of %d; treating as systemic and aborting",
+            len(failed), tolerated,
+        )
         return 1
 
     logger.info("mwgg_venv ready")

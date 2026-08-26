@@ -142,10 +142,10 @@ def _installed_worlds_count() -> int:
 def _reexec_for_clean_world_load() -> int:
     """Re-run this generator in a fresh process and return its exit code.
 
-    set_game_names imports the `worlds` package (via find_spec) while probing for
-    worlds that aren't installed yet, so this process's one-shot world load loop runs
-    before the freshly-installed worlds are queued and can never load them. They are
-    on disk now, so a clean process loads them on its first `import worlds`. Stdio is
+    Safety net for a stale world queue: if anything imported the `worlds` package
+    before the freshly-installed worlds were queued, this process's one-shot load loop
+    has already run against the old queue and can never load them. They are on disk
+    now, so a clean process loads them on its first `import worlds`. Stdio is
     inherited so output keeps streaming to the caller; the MWGG_GENERATE_RELOADED env
     guard prevents a reload loop. Frozen cx_Freeze argv[0] is the exe (== sys.executable),
     so drop it; a script run keeps argv[0] (the .py path).
@@ -289,12 +289,13 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     set_game_names(games_to_load)
     if (__name__ == "__main__" and not os.environ.get("MWGG_GENERATE_RELOADED")
             and _installed_worlds_count() > worlds_installed_before):
-        # set_game_names pip-installed a world that wasn't present yet, but its find_spec
-        # probe imported `worlds` before the new world was queued, so this process's
-        # one-shot load loop missed it and roll_settings can't find it. It's installed
-        # now — hand off to a fresh process that loads it cleanly, silently retrying
-        # instead of erroring out. (Worlds already on disk never reach here, so dev runs
-        # and post-install retries proceed in-process unchanged.)
+        # set_game_names pip-installed a world that wasn't present yet. It no longer
+        # imports `worlds` while queueing, so the load loop below normally picks the new
+        # world up in-process — but if anything else imported `worlds` first, the loop
+        # already ran against the old queue and roll_settings can't find it. It's
+        # installed now — hand off to a fresh process that loads it cleanly, silently
+        # retrying instead of erroring out. (Worlds already on disk never reach here, so
+        # dev runs and post-install retries proceed in-process unchanged.)
         import atexit
         atexit.unregister(input)  # this proxy process must not prompt "Press enter to close."
         sys.exit(_reexec_for_clean_world_load())
@@ -942,7 +943,7 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
     metadata and can't be "installed", but the launcher only offers worlds found
     on disk, so they already exist. We queue their load entry onto
     `Utils._worlds_to_load` directly and load them in this same process — no
-    install, no reload, no find_spec.
+    install, no reload.
     """
     import traceback
     try:
@@ -956,19 +957,18 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
 
         if _y_world_installed(module):
             # Pip-installed (index) world: set_game_names takes the
-            # importlib.metadata path (no find_spec), and `from worlds import` is
-            # the first import of the package, so the load loop picks it up.
+            # importlib.metadata path, and `from worlds import` is the first import
+            # of the package, so the load loop picks it up.
             set_game_names([game_name], strict=False)
         else:
             entry = _y_custom_world_entry(module)
             if entry is None:
-                # Genuinely-missing index world: install directly via
-                # ModuleUpdate, which reads importlib.metadata and never imports
-                # `worlds` — unlike set_game_names, whose find_spec would import
-                # `worlds` before the install is queued, so the load loop misses
-                # the new world and the cached module never re-loads. We can't
-                # load in this process, so install and ask the caller to re-run;
-                # the fresh process sees it installed and loads it cleanly.
+                # Genuinely-missing index world: install directly via ModuleUpdate,
+                # which reads importlib.metadata and never imports `worlds`. The
+                # install has to land before the load loop runs, and this process may
+                # already have imported `worlds` elsewhere, so we don't try to load
+                # here: install and ask the caller to re-run; the fresh process sees it
+                # installed and loads it cleanly.
                 apworlds = ModuleUpdate.install_worlds([module])
                 if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
                     return _y_emit({
@@ -978,9 +978,7 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
                 logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
                 return EXIT_NEEDS_RELOAD
             # Already-present custom world: queue its load entry BEFORE the first
-            # `from worlds import` so worlds/__init__'s load loop picks it up,
-            # bypassing set_game_names' find_spec (which would import `worlds`
-            # before the world is queued and miss it).
+            # `from worlds import` so worlds/__init__'s load loop picks it up.
             Utils._worlds_to_load.append(entry)
 
         from worlds import AutoWorldRegister, failed_world_loads

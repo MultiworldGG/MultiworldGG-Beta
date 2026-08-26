@@ -16,6 +16,8 @@ from pathlib import Path
 # Some imports are "unnecessary", but they may be imported by random world modules.
 
 # Extend __path__ to include python installed worlds for namespace package behavior.
+# Keep in lockstep with Utils._worlds_search_paths, which mirrors these dirs to
+# probe for worlds without importing this package.
 local_folder = Path(__file__).parent
 user_folder = None
 

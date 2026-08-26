@@ -17,6 +17,7 @@ import functools
 import io
 import collections
 import importlib
+import importlib.machinery
 import importlib.util
 import logging
 import warnings
@@ -97,6 +98,27 @@ def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
             expanded.append(entry)
     return list(dict.fromkeys(expanded))
 
+def _worlds_search_paths() -> typing.List[str]:
+    """The directories worlds/__init__.py puts on the `worlds` package __path__."""
+    bundled = local_path("lib", "worlds") if is_frozen() else local_path("worlds")
+    return [bundled, str(ModuleUpdate._venv_worlds_dir())]
+
+
+def _world_module_on_disk(slug: str) -> bool:
+    """True if `worlds.<slug>` is importable, WITHOUT importing the `worlds` package.
+
+    importlib.util.find_spec("worlds.<slug>") imports the parent package as a side
+    effect, and worlds/__init__.py is one-shot: on import it snapshots
+    _worlds_to_load, loads it and builds the data package. Probing mid-queue
+    therefore truncates the catalog to whatever was queued so far. PathFinder takes
+    explicit search paths and imports nothing.
+    """
+    spec = importlib.machinery.PathFinder().find_spec(slug, _worlds_search_paths())
+    # A bare directory matches as a namespace package (loader None); worlds are real
+    # packages, so that is a stray directory rather than an installed world.
+    return spec is not None and spec.loader is not None
+
+
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
 
@@ -128,7 +150,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             _unknown_worlds.append(game)
             return
         except importlib.metadata.PackageNotFoundError:
-            if importlib.util.find_spec(f"worlds.{_worlds_to_install[game]}") is not None:
+            if _world_module_on_disk(_worlds_to_install[game]):
                 _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
                 _worlds_to_install.pop(game)
             return
@@ -146,7 +168,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                     _unlisted_worlds_names[dist.metadata.json['summary'].removeprefix("MultiWorld: ")] = module_name
             except importlib.metadata.PackageNotFoundError:
                 # Bundled world with no pip metadata; try the archipelago.json
-                if importlib.util.find_spec(f"worlds.{module_name}") is not None:
+                if _world_module_on_disk(module_name):
                     manifest = get_apworld_manifest(module_name)
                     game_name = manifest.get("game") if manifest else None
                     if game_name:
