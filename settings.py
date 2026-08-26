@@ -25,27 +25,26 @@ __all__ = [
 
 no_gui = False
 skip_autosave = False
-_world_settings_name_cache: dict[str, str] = {}
-_world_settings_name_cache_updated = False
 _lock = Lock()
 
 
-def _update_cache() -> None:
-    """Load world settings metadata from currently loaded worlds."""
-    global _world_settings_name_cache_updated
-    if _world_settings_name_cache_updated:
-        return
+def _loaded_world_settings_names() -> dict[str, str]:
+    """{settings_key: "module.WorldClass"} for worlds that are already imported.
 
-    try:
-        from worlds import AutoWorldRegister
-        _world_settings_name_cache.clear()
-        for world in AutoWorldRegister.world_types.values():
-            annotation = world.__annotations__.get("settings", None)
-            if annotation is None or annotation == "ClassVar[Optional['Group']]":
-                continue
-            _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
-    finally:
-        _world_settings_name_cache_updated = True
+    Resolves purely against sys.modules. Users load only the worlds they play, and
+    the webhost queues its full catalog before `worlds` may be imported (the
+    package's load loop is one-shot), so a settings access must never trigger a
+    world load.
+    """
+    # getattr: a partially-initialized worlds.AutoWorld (mid-import) is "not loaded yet"
+    register = getattr(sys.modules.get("worlds.AutoWorld"), "AutoWorldRegister", None)
+    if register is None:
+        return {}
+    return {
+        world.settings_key: f"{world.__module__}.{world.__name__}"
+        for world in register.world_types.values()
+        if world.__annotations__.get("settings") not in (None, "ClassVar[Optional['Group']]")
+    }
 
 
 def fmt_doc(cls: type, level: int) -> str:
@@ -803,19 +802,16 @@ class Settings(Group):
             # not a group or a hard-coded group
             pass
         elif key not in dir(self) or isinstance(super().__getattribute__(key), dict):
-            # settings class not loaded yet
-            if key not in _world_settings_name_cache:
-                # find world that provides the settings class
-                _update_cache()
-                # check for missing keys to update _changed
-                for world_settings_name in _world_settings_name_cache:
-                    if world_settings_name not in dir(self):
-                        self._changed = True
-            if key not in _world_settings_name_cache:
-                # not a world group
+            # settings class not materialized yet
+            world_settings_names = _loaded_world_settings_names()
+            existing = dir(self)
+            if any(name not in existing for name in world_settings_names):
+                self._changed = True  # a loaded world's section is new -> write on next save
+            if key not in world_settings_names:
+                # not the settings group of a loaded world
                 return super().__getattribute__(key)
-            # directly import world and grab settings class
-            world_mod, world_cls_name = _world_settings_name_cache[key].rsplit(".", 1)
+            # grab the settings class off the already-imported world module
+            world_mod, world_cls_name = world_settings_names[key].rsplit(".", 1)
             try:
                 world = cast(type, getattr(__import__(world_mod, fromlist=[world_cls_name]), world_cls_name))
             except AttributeError:
@@ -925,10 +921,11 @@ class Settings(Group):
         self._filename = location
 
     def dump(self, f: TextIO, level: int = 0) -> None:
-        # load all world setting classes
-        _update_cache()
-        for key in _world_settings_name_cache:
-            self.__getattribute__(key)  # load all worlds
+        # Materialize the settings groups of already-loaded worlds; sections of
+        # worlds not loaded stay the raw dicts read from the yaml and round-trip
+        # as-is. Never triggers a world load.
+        for key in _loaded_world_settings_names():
+            self.__getattribute__(key)
         super().dump(f, level)
 
     @property

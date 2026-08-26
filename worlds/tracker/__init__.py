@@ -1,5 +1,5 @@
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess, icon_paths
-from settings import Group, Bool, UserFolderPath, _world_settings_name_cache
+from settings import Group, Bool, UserFolderPath
 from typing import Any, ClassVar, NamedTuple, Callable,Optional
 from worlds.AutoWorld import World
 from BaseClasses import CollectionState,Entrance
