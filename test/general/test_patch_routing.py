@@ -20,6 +20,7 @@ import zipfile
 
 import MultiWorld
 import Utils
+import worlds.LauncherComponents as launcher_components
 from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, get_exe, identify
 
 
@@ -124,6 +125,12 @@ def test_identify_unknown_suffix_returns_none():
     assert identify("") is None
 
 
+def test_identify_routes_apworld_to_install_apworld():
+    component = identify("some_world.apworld")
+    assert component is not None
+    assert component.display_name == "Install APWorld"
+
+
 def test_identify_world_registered_suffix():
     component = Component("Patch Routing Test Client", func=lambda *args: None,
                           component_type=Type.CLIENT, file_identifier=SuffixIdentifier(".aproutingtest"))
@@ -145,3 +152,18 @@ def test_get_exe_resolves_script_component_in_dev():
 def test_get_exe_func_only_component_has_no_exe():
     component = Component("Func Only", func=lambda *args: None)
     assert get_exe(component) is None
+
+
+def test_get_exe_resolves_literal_frozen_names_when_frozen(monkeypatch):
+    """Host/Generate must resolve to the exact built exe name under a frozen
+    build regardless of the (possibly test-channel-overridden) instance_name --
+    application.yaml's app_name overriding instance_name at runtime was exactly
+    the bug that made frozen_name resolution silently match nothing."""
+    monkeypatch.setattr(launcher_components, "is_frozen", lambda: True)
+    monkeypatch.setattr(launcher_components, "is_windows", True)
+
+    host = next(c for c in components if c.display_name == "Host")
+    generate = next(c for c in components if c.display_name == "Generate")
+
+    assert get_exe(host) == [launcher_components.local_path("MultiWorldGGServer.exe")]
+    assert get_exe(generate) == [launcher_components.local_path("MultiWorldGGGenerate.exe")]

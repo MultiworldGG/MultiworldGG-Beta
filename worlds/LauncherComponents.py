@@ -1,4 +1,3 @@
-import bisect
 import hashlib
 import json
 import logging
@@ -8,13 +7,13 @@ import pkgutil
 import subprocess
 import sys
 import tempfile
-import time
 import weakref
+import webbrowser
 from enum import Enum
-from typing import Any, Optional, Callable, Iterable, Tuple
+from typing import Any, Optional, Callable, Iterable
 
-from Utils import local_path, open_filename, is_frozen, is_kivy_running, is_windows, open_file, user_path, \
-    read_apignore
+from Utils import local_path, open_filename, is_frozen, is_kivy_running, is_windows, is_linux, is_macos, \
+    open_file, user_path, read_apignore, env_cleared_lib_path, FROZEN_TARGETS
 
 try:
     from Utils import instance_name as apname
@@ -24,22 +23,15 @@ except ImportError:
 _DEFAULT_ICON_PATH = local_path("data", "icon.png")
 _LAUNCHER_ICON_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mwgg_launcher_icons")
 
-_COMPONENT_ORIGIN_ATTRIBUTE = "_mwgg_component_origin"
-_COMPONENT_ORIGIN_BUILTIN = "builtin"
-_COMPONENT_ORIGIN_WORLD = "world"
-_COMPONENT_ORIGIN_OTHER = "other"
-_COMPONENT_ORIGIN_CACHE = "cache_stub"
+_BUILTIN_ATTRIBUTE = "_mwgg_builtin_component"
 
+# True while this module runs its own top-level registrations; flipped to False
+# at the end of the module. Components appended while True are the builtin
+# ("native") set, known before any world is imported. Everything registered
+# later (worlds at import time, runtime code) is non-builtin; which world or
+# install source a component came from is the installer/index's business, not
+# tracked here.
 _INITIALIZING_COMPONENTS = True
-
-
-class APWorldInstallRestartRequired(Exception):
-    def __init__(self, module_name: str) -> None:
-        self.module_name = module_name
-        super().__init__(
-            f"Installed APWorld successfully, but '{module_name}' is already loaded, "
-            "so a Launcher restart is required to use the new installation."
-        )
 
 
 class Type(str, Enum):
@@ -121,34 +113,19 @@ class Component:
     def __repr__(self):
         return f"{self.__class__.__name__}({self.display_name})"
 
-def _is_worlds_loading() -> bool:
-    worlds_module = sys.modules.get("worlds")
-    return bool(getattr(worlds_module, "_worlds_loading", False))
-
-
-def _classify_component_origin() -> str:
-    if _is_worlds_loading():
-        return _COMPONENT_ORIGIN_WORLD
-    if _INITIALIZING_COMPONENTS:
-        return _COMPONENT_ORIGIN_BUILTIN
-    return _COMPONENT_ORIGIN_OTHER
-
-
-def _component_origin(component: Component) -> str:
-    origin = getattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, None)
-    return origin if isinstance(origin, str) else _COMPONENT_ORIGIN_OTHER
-
-
-def _tag_component(component: Component) -> None:
-    origin = getattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, None)
-    if not isinstance(origin, str):
-        origin = _classify_component_origin()
-    setattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, origin)
+def _tag_builtin(component: Component) -> None:
+    if getattr(component, _BUILTIN_ATTRIBUTE, None) is None:
+        setattr(component, _BUILTIN_ATTRIBUTE, _INITIALIZING_COMPONENTS)
 
 
 class ComponentList(list[Component]):
+    def __init__(self, iterable: Iterable[Component] = ()) -> None:
+        # list.__init__ would bypass append, skipping the builtin tagging.
+        super().__init__()
+        self.extend(iterable)
+
     def append(self, component: Component) -> None:
-        _tag_component(component)
+        _tag_builtin(component)
         super().append(component)
 
     def extend(self, components: Iterable[Component]) -> None:
@@ -156,7 +133,7 @@ class ComponentList(list[Component]):
             self.append(component)
 
     def insert(self, index: int, component: Component) -> None:
-        _tag_component(component)
+        _tag_builtin(component)
         super().insert(index, component)
 
 
@@ -197,9 +174,8 @@ class SuffixIdentifier:
 def identify(path: Optional[str]) -> Optional[Component]:
     """Return the first registered component whose file_identifier claims `path`.
 
-    Works against whatever is currently registered: with worlds unloaded that is
-    the builtin components plus any launcher-cache stubs (their suffixes are
-    serialized, so suffix lookups need no world import)."""
+    Works against whatever is currently registered: builtins only, until worlds
+    have been imported."""
     if not path:
         return None
     for component in components:
@@ -218,6 +194,17 @@ def get_exe(component: Component) -> Optional[list[str]]:
         suffix = ".exe" if is_windows else ""
         return [local_path(f"{component.frozen_name}{suffix}")] if component.frozen_name else None
     return [sys.executable, local_path(f"{component.script_name}.py")] if component.script_name else None
+
+
+def get_client_exe() -> list[str]:
+    """Resolve the command line that launches the beta's single client entry point.
+
+    Centralizes exe-name resolution (frozen name vs source script) so callers
+    never hardcode "MultiWorldGG(.exe)" themselves."""
+    if is_frozen():
+        suffix = ".exe" if is_windows else ""
+        return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]
+    return [sys.executable, local_path("MultiWorld.py")]
 
 
 def launch_exe(exe: Iterable[str], in_terminal: bool = False) -> bool:
@@ -249,95 +236,161 @@ def launch_exe(exe: Iterable[str], in_terminal: bool = False) -> bool:
     return False
 
 
+def spawn_client(game: Optional[str] = None, *, server_address: Optional[str] = None,
+                 slot_name: Optional[str] = None, password: Optional[str] = None,
+                 client_type: str = "game", launch_file: Optional[str] = None,
+                 extra_args: Iterable[str] = ()) -> "subprocess.Popen[Any]":
+    """Spawn a client process, detached from this one.
+
+    Every launch from the Launcher process is a separate OS process, and
+    children deliberately survive launcher exit: closing the launcher window
+    must not kill an in-progress game session. MWGG_NO_SPLASH=1 is set in the
+    child env rather than appended as a CLI flag -- MultiWorld.py's arg parser
+    doesn't know a --no-splash flag yet, only the env var is read (Phase 2)."""
+    argv = list(get_client_exe())
+    if launch_file:
+        argv.append(launch_file)
+    if game is not None:
+        argv += ["--game", game]
+    if server_address is not None:
+        argv += ["--server-address", server_address]
+    if slot_name is not None:
+        argv += ["--slot-name", slot_name]
+    if password is not None:
+        argv += ["--password", password]
+    argv += ["--client-type", client_type]
+    argv += list(extra_args)
+
+    env = os.environ.copy()
+    env["MWGG_ROLE"] = "client"
+    env["MWGG_CLIENT_TYPE"] = client_type
+    env["MWGG_NO_SPLASH"] = "1"
+
+    popen_kwargs: dict[str, Any] = {"env": env}
+    if is_windows:
+        popen_kwargs["creationflags"] = subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        popen_kwargs["start_new_session"] = True
+
+    return subprocess.Popen(argv, **popen_kwargs)
+
+
+def run_component(component: Component, *args: str) -> None:
+    """Launch `component`, preferring its func over a script/frozen executable."""
+    if component.func:
+        component.func(*args)
+        return
+
+    if component.script_name:
+        exe = get_exe(component)
+        if not exe:
+            logging.warning(f"Unable to resolve executable for launcher component {component.display_name}.")
+            return
+        launch_exe([*exe, *args], component.cli)
+        return
+
+    logging.warning(f"Component {component.display_name} does not appear to be executable.")
+
+
+_launch_component = run_component  # deprecated alias
+
+
+def find_component(name: str) -> Optional[Component]:
+    """Case-sensitive lookup by display_name or script_name."""
+    for component in components:
+        if component.display_name == name or component.script_name == name:
+            return component
+    return None
+
+
+def builtin_components() -> list[Component]:
+    """Builtin components in registration order: the set registered while this
+    module was initializing, known without importing any world."""
+    return [component for component in components if getattr(component, _BUILTIN_ATTRIBUTE, False)]
+
+
 def launch_textclient(*args):
-    import CommonClient
-    launch(CommonClient.run_as_textclient, name="TextClient", args=args)
+    spawn_client(client_type="text", extra_args=args)
 
 
-# def _install_apworld(apworld_src: str = "") -> Optional[Tuple[pathlib.Path, pathlib.Path]]:
-#     if not apworld_src:
-#         apworld_src = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
-#         if not apworld_src:
-#             # user closed menu
-#             return
+def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
+    """Validate and copy an .apworld into custom_worlds/, registering its
+    manifest so it's immediately selectable. Returns the installed path, or
+    None if the user cancelled the file picker.
 
-#     if not apworld_src.endswith(".apworld"):
-#         raise Exception(f"Wrong file format, looking for .apworld. File identified: {apworld_src}")
+    Never imports the world's Python module (only the zip manifest is read,
+    via Utils.discover_custom_world_module). A module of the same name already
+    imported in this process doesn't matter: clients and component scans run
+    in freshly spawned processes, which pick up the new file; the launcher
+    only needs a list refresh (see install_apworld)."""
+    if not path:
+        path = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
+        if not path:
+            # user closed menu
+            return None
 
-#     apworld_path = pathlib.Path(apworld_src)
+    if not path.endswith(".apworld"):
+        raise Exception(f"Wrong file format, looking for .apworld. File identified: {path}")
 
-#     try:
-#         import zipfile
-#         zip = zipfile.ZipFile(apworld_path)
-#         directories = [f.name for f in zipfile.Path(zip).iterdir() if f.is_dir()]
-#         if len(directories) == 1 and directories[0] in apworld_path.stem:
-#             module_name = directories[0]
-#             apworld_name = module_name + ".apworld"
-#         else:
-#             raise Exception("APWorld appears to be invalid or damaged. (expected a single directory)")
-#         zip.open(module_name + "/__init__.py")
-#     except ValueError as e:
-#         raise Exception("Archive appears invalid or damaged.") from e
-#     except KeyError as e:
-#         raise Exception("Archive appears to not be an apworld. (missing __init__.py)") from e
+    apworld_path = pathlib.Path(path)
 
-#     import worlds
-#     if worlds.user_folder is None:
-#         raise Exception("Custom Worlds directory appears to not be writable.")
-#     for world_source in worlds.world_sources:
-#         if apworld_path.samefile(world_source.resolved_path):
-#             # Note that this doesn't check if the same world is already installed.
-#             # It only checks if the user is trying to install the apworld file
-#             # that comes from the installation location (worlds or custom_worlds)
-#             raise Exception(f"APWorld is already installed at {world_source.resolved_path}.")
+    import zipfile
+    try:
+        zip_file = zipfile.ZipFile(apworld_path)
+        directories = [f.name for f in zipfile.Path(zip_file).iterdir() if f.is_dir()]
+        if len(directories) == 1 and directories[0] in apworld_path.stem:
+            module_name = directories[0]
+        else:
+            raise Exception("APWorld appears to be invalid or damaged. (expected a single directory)")
+        zip_file.open(module_name + "/__init__.py")
+    except ValueError as e:
+        raise Exception("Archive appears invalid or damaged.") from e
+    except KeyError as e:
+        raise Exception("Archive appears to not be an apworld. (missing __init__.py)") from e
 
-#     # TODO: run generic test suite over the apworld.
-#     # TODO: have some kind of version system to tell from metadata if the apworld should be compatible.
+    import ModuleUpdate
+    custom_worlds_dir = ModuleUpdate.custom_worlds_dir
+    try:
+        custom_worlds_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise Exception("Custom Worlds directory appears to not be writable.") from e
 
-# #     target = pathlib.Path(worlds.user_folder) / apworld_name
-# #     import shutil
-# #     shutil.copyfile(apworld_path, target)
+    target = custom_worlds_dir / f"{module_name}.apworld"
+    if apworld_path.resolve() == target.resolve():
+        # Note that this doesn't check if the same world is already installed
+        # under a different file; it only catches re-installing the file that's
+        # already sitting in custom_worlds/.
+        raise Exception(f"APWorld is already installed at {target}.")
 
-#     # If a module with this name is already loaded, then we can't load it now.
-#     # TODO: We need to be able to unload a world module,
-#     # so the user can update a world without restarting the application.
-#     found_already_loaded = False
-#     for loaded_world in worlds.world_sources:
-#         loaded_name = pathlib.Path(loaded_world.path).stem
-#         if module_name == loaded_name:
-#             found_already_loaded = True
-#             break
-#     if found_already_loaded and is_kivy_running():
-#         raise Exception(f"Installed APWorld successfully, but '{module_name}' is already loaded, "
-#                         "so a Launcher restart is required to use the new installation.")
-#     world_source = worlds.WorldSource(str(target), is_zip=True, relative=False)
-#     bisect.insort(worlds.world_sources, world_source)
-#     world_source.load()
+    import shutil
+    shutil.copyfile(apworld_path, target)
 
-# #     return apworld_path, target
+    import Utils
+    Utils.discover_custom_world_module(target)
+
+    return target
 
 
-# def install_apworld(apworld_path: str = "") -> None:
-#     try:
-#         res = _install_apworld(apworld_path)
-#         if res is None:
-#             logging.info("Aborting APWorld installation.")
-#             return
-#         source, target = res
-#     except Exception as e:
-#         import Utils
-#         Utils.messagebox("Notice", str(e), error=True)
-#         logging.exception(e)
-#     else:
-#         import Utils
-#         logging.info(f"Installed APWorld successfully, copied {source} to {target}.")
-#         Utils.messagebox("Install complete.", f"Installed APWorld from {source}.")
-        # if _rebuild_launcher_ui and is_kivy_running():
-        #     from kivy.clock import Clock
-        #     def _refresh_after_install(dt):
-        #         _hydrate_launcher_components_from_cache()
-        #         _rebuild_launcher_ui()  # type: ignore[misc]
-        #     Clock.schedule_once(_refresh_after_install, 0)
+def install_apworld(path: str = "") -> None:
+    import Utils
+    try:
+        target = _install_apworld(path)
+        if target is None:
+            logging.info("Aborting APWorld installation.")
+            return
+    except Exception as e:
+        Utils.messagebox("Notice", str(e), error=True)
+        logging.exception(e)
+    else:
+        logging.info(f"Installed APWorld successfully to {target}.")
+        Utils.messagebox("Install complete.", f"Installed APWorld to {target}.")
+        if _rebuild_launcher_ui and is_kivy_running():
+            from kivy.clock import Clock
+
+            def _refresh_after_install(dt):
+                _rebuild_launcher_ui()  # type: ignore[misc]
+
+            Clock.schedule_once(_refresh_after_install, 0)
 
 
 def export_datapackage() -> None:
@@ -351,25 +404,72 @@ def export_datapackage() -> None:
 
     open_file(path)
 
+
+def open_host_yaml() -> None:
+    import settings
+    s = settings.get_settings()
+    file = s.filename
+    s.save()
+    assert file, "host.yaml missing"
+    from shutil import which
+    if is_linux:
+        exe = which('sensible-editor') or which('gedit') or \
+              which('xdg-open') or which('gnome-open') or which('kde-open')
+    elif is_macos:
+        exe = which("open")
+    else:
+        webbrowser.open(file)
+        return
+
+    env = env_cleared_lib_path()
+    subprocess.Popen([exe, file], env=env)
+
+
+def open_patch() -> None:
+    import Utils
+    try:
+        filename = open_filename("Select patch", (("Patch", "*"),))
+    except Exception as e:
+        Utils.messagebox("Error", str(e), error=True)
+        return
+    if filename:
+        spawn_client(launch_file=filename)
+
+
+def browse_files() -> None:
+    open_file(user_path())
+
+
 components: ComponentList = ComponentList([
     # Launcher
-    Component('Launcher', 'Launcher', component_type=Type.HIDDEN),
+    Component('Launcher', 'Launcher', FROZEN_TARGETS["Launcher"], component_type=Type.HIDDEN),
     # Core
-    Component('Host', 'MultiServer', f'{apname}Server', cli=True,
+    Component('Host', 'MultiServer', FROZEN_TARGETS["MultiServer"], cli=True,
               file_identifier=SuffixIdentifier('.archipelago', '.mwgg', '.zip'),
               description="Host a generated multiworld on your computer."),
-    Component('Generate', 'Generate', cli=True,
+    Component('Generate', 'Generate', FROZEN_TARGETS["Generate"], cli=True,
               description="Generate a multiworld with the YAMLs in the players folder."),
-    # Component("Install APWorld", func=install_apworld, file_identifier=SuffixIdentifier(".apworld"),
-            #   description="Install an APWorld to play games not included with Archipelago by default."),
-    Component('Text Client', 'CommonClient', f'{apname}TextClient', func=launch_textclient,
+    Component("Install APWorld", func=install_apworld, component_type=Type.TOOL,
+              file_identifier=SuffixIdentifier(".apworld"),
+              description="Install an APWorld to play games not included with Archipelago by default."),
+    Component('Text Client', func=launch_textclient,
               description="Connect to a multiworld using the text client."),
     Component("Export Datapackage", func=export_datapackage, component_type=Type.TOOL,
             description="Write item/location data for installed worlds to a file and open it."),
 ])
 
-for component in components:
-    setattr(component, _COMPONENT_ORIGIN_ATTRIBUTE, _COMPONENT_ORIGIN_BUILTIN)
+components.extend([
+    Component("Open host.yaml", func=open_host_yaml,
+              description="Open the host.yaml file to change settings for generation, games, and more."),
+    Component("Open Patch", func=open_patch,
+              description="Open a patch file, downloaded from the room page or provided by the host."),
+    Component("MultiworldGG Website", func=lambda: webbrowser.open("https://multiworld.gg/"),
+              description="Open multiworld.gg in your browser."),
+    Component("Unofficial AP Discord", icon="discord", func=lambda: webbrowser.open("https://discord.multiworld.gg"),
+              description="Join the Discord server to play public multiworlds, report issues, or just chat!"),
+    Component("Browse Files", func=browse_files,
+              description="Open the MultiworldGG installation folder in your file browser."),
+])
 
 
 # if registering an icon from within an apworld, the format "ap:module.name/path/to/file.png" can be used
@@ -428,13 +528,6 @@ def _materialize_ap_icon(icon_path: str) -> str:
         return _DEFAULT_ICON_PATH
 
     return icon_path_on_disk
-
-
-def has_world_components() -> bool:
-    return any(
-        _component_origin(component) in {_COMPONENT_ORIGIN_WORLD, _COMPONENT_ORIGIN_CACHE}
-        for component in components
-    )
 
 
 if not is_frozen():
@@ -504,3 +597,9 @@ if not is_frozen():
 
     components.append(Component("Build APWorlds", func=_build_apworlds, cli=True,
                                 description="Build APWorlds from loose-file world folders."))
+
+
+# Builtin registration is complete: anything appended to `components` from here on
+# (world modules importing worlds.LauncherComponents at load time, custom-world
+# installs, etc.) is not a builtin, so builtin_components() stays trustworthy.
+_INITIALIZING_COMPONENTS = False

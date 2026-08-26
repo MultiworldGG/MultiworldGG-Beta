@@ -115,13 +115,20 @@ python build_exe.py --skip-requirements --skip-wheels --skip-modules
 
 ## Generated Executables
 
-The build process creates the following executables:
+The build process creates the following executables (see `BaseUtils.FROZEN_TARGETS` for the
+single source of truth these names are derived from):
 
-- **MultiWorld.exe** - GUI application (main client)
-- **MultiWorldDebug.exe** - Console version for debugging (Windows only)
-- **MultiServer.exe** - Command-line server
-- **Generate.exe** - Command-line generator
-- **Patch.exe** - Command-line patcher
+- **MultiWorldGG.exe** - the client. Boots straight into a game when launched with `--game`
+  (or a routable patch/URL); with no game it opens the reconnect UI, not a game list.
+- **MultiWorldGGClientDebug.exe** - console version of the client, for debugging (Windows only)
+- **MultiWorldGGServer.exe** - command-line server
+- **MultiWorldGGGenerate.exe** - command-line generator
+- **MultiWorldGGPatch.exe** - command-line patcher
+- **MultiworldGGLauncher.exe** - the standalone Launcher (deliberately lowercase-w). Shows the
+  game list and tools, stays open, and spawns everything else -- including the client -- as a
+  separate process.
+- **MultiworldGGLauncherDebug.exe** - console version of the Launcher, for debugging and CI
+  smoke tests (Windows only)
 
 ## Build Output
 
@@ -188,7 +195,7 @@ ls build/exe.*/*.exe
 ls build/exe.*/
 
 # Test an executable
-./build/exe.*/MultiWorld.exe --help
+./build/exe.*/MultiworldGGLauncher.exe --version
 ```
 
 ## Platform Support
@@ -207,8 +214,8 @@ Edit `setup.py` to modify executable configurations:
 executables = [
     Executable(
         script="MultiWorld.py",
-        target_name="MultiWorld.exe",
-        icon="data/khapicon.ico",
+        target_name="MultiWorldGG.exe",
+        icon="data/icon.ico",
         base="Win32GUI",  # GUI mode
         # base=None,      # Console mode
     ),
