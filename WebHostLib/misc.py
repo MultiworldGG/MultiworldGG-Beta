@@ -8,6 +8,7 @@ from typing import Any, IO, Dict, Iterator, List, Tuple, Union, TYPE_CHECKING
 
 import jinja2.exceptions
 from flask import request, redirect, url_for, render_template, Response, session, abort, send_from_directory
+from mwgg_igdb import GameIndex
 from sqlalchemy import select, func
 from werkzeug.utils import secure_filename
 from Utils import __version__
@@ -114,11 +115,29 @@ def get_world_authors(world: type(World)) -> str:
     return getattr(world, 'author', '')
 
 
+# Age-rating tiers mirror VARIANT_FILTERS in MultiworldGG-Index scripts/build_variants.py.
+# The games list shows the sixteen tier by default, renders the nsfw (nr-only) tier
+# hidden behind the client-side NSFW toggle, and never renders AO or unindexed games.
+SIXTEEN_AGE_RATINGS = frozenset({"MW", "3", "7", "12", "16", "E", "T"})
+NSFW_AGE_RATINGS = frozenset({"18", "M", "NR"})
+LISTED_AGE_RATINGS = SIXTEEN_AGE_RATINGS | NSFW_AGE_RATINGS
+
+
+def get_game_age_rating(game: str) -> str | None:
+    module = GameIndex.game_names.get(game)
+    return GameIndex.get_game(module).get("age_rating") if module else None
+
+
+def is_game_nsfw(game: str) -> bool:
+    return get_game_age_rating(game) in NSFW_AGE_RATINGS
+
+
 def get_visible_worlds() -> dict[str, type(World)]:
     from worlds.AutoWorld import AutoWorldRegister
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
-        if not world.hidden and game not in app.config["HIDDEN_WEBWORLDS"]:
+        if (not world.hidden and game not in app.config["HIDDEN_WEBWORLDS"]
+                and get_game_age_rating(game) in LISTED_AGE_RATINGS):
             worlds[game] = world
     return worlds
 
@@ -214,7 +233,7 @@ def game_info(game):
 @cache.cached()
 def games():
     """List of supported games"""
-    return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors, get_world_version=get_world_version)
+    return render_template("supportedGames.html", worlds=get_visible_worlds(), get_world_authors=get_world_authors, get_world_version=get_world_version, is_game_nsfw=is_game_nsfw)
 
 
 def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]:
@@ -307,9 +326,11 @@ def tutorial_landing(lang: str):
     tutorials = {}
     worlds = AutoWorldRegister.world_types
 
-    # Filter worlds based on hidden webworlds config
+    # Filter worlds based on hidden webworlds config. Unindexed worlds (e.g. the
+    # generic Archipelago meta world) stay listed; AO-rated games never show.
     visible_worlds = {name: world for name, world in worlds.items()
-                     if name not in app.config["HIDDEN_WEBWORLDS"]}
+                     if name not in app.config["HIDDEN_WEBWORLDS"]
+                     and get_game_age_rating(name) != "AO"}
 
     for world_name, world_type in visible_worlds.items():
         current_world = tutorials[world_name] = {}
@@ -349,7 +370,7 @@ def tutorial_landing(lang: str):
         key=lambda element: "\x00" if element[0] == "Archipelago" else (getattr(element[1].web, 'display_name', None) or element[1].game)
     ))
 
-    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials, lang=lang)
+    return render_template("tutorialLanding.html", worlds=sorted_worlds, tutorials=tutorials, lang=lang, is_game_nsfw=is_game_nsfw)
 
 
 @app.route('/learn/<string:lang>/faq')

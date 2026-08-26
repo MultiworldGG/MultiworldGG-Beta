@@ -14,7 +14,7 @@
     <p><a href="#" id="toggle-nsfw">Show NSFW games</a></p>
     {% for world_name, world_type in worlds.items() %}
         {% if tutorials[world_name] %}
-        <div class="tutorial-section" data-game="{{ world_name }}" {% if world_type.web.rating == "nsfw" %} data-nsfw="true"{% endif %}>
+        <div class="tutorial-section" data-game="{{ world_name }}" {% if is_game_nsfw(world_name) %} data-nsfw="true"{% endif %}>
             <h2 id="{{ (world_type.web.display_name | default(world_name)) | encodeURIComponent }}">{{ world_type.web.display_name | default(world_type.game) }}</h2>
             {% for tutorial_name, tutorial_data in tutorials[world_name].items() %}
                 <h3>{{ tutorial_name }}</h3>
