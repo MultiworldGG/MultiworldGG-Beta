@@ -60,8 +60,9 @@ class TestUpdaterReleaseInfo(unittest.TestCase):
         }
         checksum = "a" * 64
 
+        # Updater imports requests at function level, so patch the real module.
         with patch.object(Updater, "_platform_key", return_value="linux"), \
-                patch.object(Updater.requests, "get", side_effect=[
+                patch("requests.get", side_effect=[
                     _Response(json_data=release_json),
                     _Response(text=f"{checksum}  MultiworldGG_0.7.252_linux-x86_64.AppImage\n"),
                 ]):
