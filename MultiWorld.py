@@ -335,7 +335,9 @@ if __name__ == "__main__":
 
     if is_windows and args.frontend == "gui":
         from mwgg_splash import main as splash_main
-        set_start_method("spawn")
+        # force: on Python 3.13+ the freeze_support() call above already fixed the
+        # default context (cpython gh-76327), so a plain set_start_method raises.
+        set_start_method("spawn", force=True)
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
         
