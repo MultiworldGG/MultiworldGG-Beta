@@ -604,6 +604,7 @@ body {
 .mdi-key::before                 { content: "\F0306"; }
 .mdi-gamepad::before             { content: "\F02B4"; }
 .mdi-information::before         { content: "\F02FC"; }
+.mdi-sprout::before              { content: "\F0E66"; }
 
 /* /play and /learn hub icons (Phase 7) */
 .mdi-account-group::before       { content: "\F0849"; }
