@@ -23,18 +23,18 @@
         <div class="mw-hub-grid">
             <a href="{{ url_for('lobby_list') }}" class="mw-hub-card">
                 <div class="mw-hub-icon"><i class="mdi mdi-account-group"></i></div>
-                <h3>Browse lobbies</h3>
-                <p>Join a lobby that other people have started, or watch one to learn.</p>
+                <h3>Lobby Home</h3>
+                <p>Browse open lobbies, join friends, or create your own.</p>
             </a>
 
-            <a href="{{ url_for('lobby_create') }}" class="mw-hub-card">
-                <div class="mw-hub-icon"><i class="mdi mdi-plus-circle"></i></div>
-                <h3>Create a lobby</h3>
-                <p>Start a lobby and invite friends. Generates a seed when everyone's ready.</p>
+            <a href="{{ url_for('games') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-gamepad"></i></div>
+                <h3>Games</h3>
+                <p>See every supported game, with options pages and setup guides.</p>
             </a>
 
             <a href="{{ url_for('generate') }}" class="mw-hub-card primary">
-                <div class="mw-hub-icon"><i class="mdi mdi-gamepad"></i></div>
+                <div class="mw-hub-icon"><i class="mdi mdi-rocket-launch"></i></div>
                 <h3>Generate a new game</h3>
                 <p>Skip the lobby. Generate a seed directly from your YAML.</p>
             </a>

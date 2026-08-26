@@ -8,8 +8,8 @@ def test_play_hub_renders(client):
     body = response.get_data(as_text=True)
     assert "Multiworld Play" in body                  # hub heading
     assert "Click here for Setup Instructions" in body  # quickstart CTA
-    assert "Browse lobbies" in body
-    assert "Create a lobby" in body
+    assert "Lobby Home" in body
+    assert "<h3>Games</h3>" in body
     assert "Generate a new game" in body
     assert "Host a pre-generated game" in body
     assert "Validate YAML" in body
