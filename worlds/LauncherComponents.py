@@ -319,10 +319,10 @@ def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
     None if the user cancelled the file picker.
 
     Never imports the world's Python module (only the zip manifest is read,
-    via Utils.discover_custom_world_module) -- if a module of the same name is
-    already imported in this process, installation still succeeds but a
-    restart is required to actually use the new code, since Python caches
-    imported modules and this beta has no world-unload mechanism."""
+    via Utils.discover_custom_world_module). A module of the same name already
+    imported in this process doesn't matter: clients and component scans run
+    in freshly spawned processes, which pick up the new file; the launcher
+    only needs a list refresh (see install_apworld)."""
     if not path:
         path = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
         if not path:
@@ -362,19 +362,11 @@ def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
         # already sitting in custom_worlds/.
         raise Exception(f"APWorld is already installed at {target}.")
 
-    # If a module with this name is already imported, we can't hot-swap it in:
-    # Python caches imported modules and this beta has no unload mechanism.
-    already_loaded = f"worlds.{module_name}" in sys.modules
-
     import shutil
     shutil.copyfile(apworld_path, target)
 
     import Utils
     Utils.discover_custom_world_module(target)
-
-    if already_loaded and is_kivy_running():
-        raise Exception(f"Installed APWorld successfully, but '{module_name}' is already loaded, "
-                        "so a Launcher restart is required to use the new installation.")
 
     return target
 
