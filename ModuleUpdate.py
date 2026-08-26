@@ -800,7 +800,17 @@ def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
             logger.warning(f"Could not prune stale apworld {entry}: {e}")
 
 
-def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = False) -> list[str]:
+class WorldInstallResult(List[str]):
+    """The list of apworld fallbacks `install_worlds` has always returned, plus
+    `.failed`: `worlds.<slug>` targets that neither installed nor fell back, so the
+    venv is missing them. Subclassing list keeps existing callers working unchanged.
+    """
+    def __init__(self, *args: Any) -> None:
+        super().__init__(*args)
+        self.failed: list[str] = []
+
+
+def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = False) -> WorldInstallResult:
     """
     Install worlds by resolving each apworld's `module_location` from mwgg_igdb and pip-installing the URL.
 
@@ -818,11 +828,28 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             for worlds that were already present.
 
     Returns:
-        List of apworlds that fell back to a custom apworld.
+        The apworlds that fell back to a custom apworld, carrying `.failed` -- the
+        targets that could not be installed at all. Callers that gate a deploy on a
+        complete venv must check `.failed`; a non-empty list means worlds are missing.
     """
     if _skip_all_installs():
-        return []
-    apworlds: list[str] = []
+        return WorldInstallResult()
+    apworlds = WorldInstallResult()
+
+    def fall_back_to_apworld(slug: str, target: str) -> None:
+        """Last resort after an install failure: extract custom_worlds/<slug>.apworld
+        into the venv. Records the target as failed when that is not possible."""
+        apworld_file = custom_worlds_dir / f"{slug}.apworld"
+        if apworld_file.exists():
+            logger.info(f"Found apworld file: {apworld_file}")
+            if _install_apworld_to_venv(apworld_file, slug):
+                apworlds.append(target)
+                return
+            logger.warning(f"Could not extract apworld fallback {apworld_file}")
+        else:
+            logger.warning(f"Custom apworld file not found at {apworld_file}")
+        logger.warning(f"{target} could not be installed and has no apworld fallback")
+        apworlds.failed.append(target)
 
     world_slugs: list[str] = []
     selected_variant: Optional[str] = None
@@ -874,13 +901,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
         if not module_location:
             logger.warning(f"No module_location for {slug} in mwgg_igdb; checking custom_worlds")
-            apworld_file = custom_worlds_dir / f"{slug}.apworld"
-            if apworld_file.exists():
-                logger.info(f"Found apworld file: {apworld_file}")
-                if _install_apworld_to_venv(apworld_file, slug):
-                    apworlds.append(target)
-            else:
-                logger.warning(f"Custom apworld file not found at {apworld_file}, {slug} cannot be installed")
+            fall_back_to_apworld(slug, target)
             continue
 
         install_args = ["install"]
@@ -894,11 +915,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         except subprocess.TimeoutExpired:
             logger.warning(f"uv install of {target} timed out; treating as failure.")
             logger.warning(_format_manual_install_hint(module_location))
-            apworld_file = custom_worlds_dir / f"{slug}.apworld"
-            if apworld_file.exists():
-                logger.info(f"Found apworld file: {apworld_file}")
-                if _install_apworld_to_venv(apworld_file, slug):
-                    apworlds.append(target)
+            fall_back_to_apworld(slug, target)
             continue
         logger.info(result.stdout)
 
@@ -906,13 +923,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
             logger.warning(f"World {target} failed to install from {module_location}:\n{stderr_text}")
             logger.warning(_format_manual_install_hint(module_location))
-            apworld_file = custom_worlds_dir / f"{slug}.apworld"
-            if apworld_file.exists():
-                logger.info(f"Found apworld file: {apworld_file}")
-                if _install_apworld_to_venv(apworld_file, slug):
-                    apworlds.append(target)
-            else:
-                logger.warning(f"Custom apworld file not found at {apworld_file}")
+            fall_back_to_apworld(slug, target)
         else:
             logger.info(f"Successfully installed {target}")
 
