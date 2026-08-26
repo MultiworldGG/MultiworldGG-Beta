@@ -56,7 +56,7 @@
 
         {% for game_name in worlds | world_list_sorted(worlds=worlds) %}
         {% set world = worlds[game_name] %}
-        <details data-game="{{ game_name }}" data-display-name="{{ world.web.display_name | default(game_name) }}" {% if world.web.rating == "nsfw" %} data-nsfw="true"{% endif %}>
+        <details data-game="{{ game_name }}" data-display-name="{{ world.web.display_name | default(game_name) }}" {% if is_game_nsfw(game_name) %} data-nsfw="true"{% endif %}>
             <summary class="h2">
                 {{ world.web.display_name | default(game_name) }}
                 <span class="star-icon" data-game="{{ game_name }}" title="Add to favorites">★</span>
