@@ -8,6 +8,8 @@ name: Build (deprecated)
 on:
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   deprecated:
     runs-on: ubuntu-latest
