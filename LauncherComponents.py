@@ -543,45 +543,33 @@ def world_manifest_components(include: tuple[str, ...] = _MANIFEST_COMPONENT_TYP
     """Import-free scan of the `components` declared in world manifests, all
     types by default (filter with `include`).
 
-    Sources, in order: custom_worlds/*.apworld zip manifests (per-file
-    try/except -- one bad file never aborts the scan), then GameIndex entries
-    whose dist is actually installed (per-slug importlib.metadata probe --
-    never ModuleUpdate.find_world_modules, which shells out to uv). Dedup by
-    module slug, custom apworld wins. Never imports world code: the launcher
+    All data comes from the in-memory GameIndex: build-time index entries plus
+    custom_worlds manifests, which Utils.register_custom_worlds folds into the
+    index (idempotent, zip-manifest-only; rescanning here picks up newly
+    dropped or replaced apworlds, with the custom manifest authoritative for
+    its components even on an indexed slug). Index entries count only when
+    their dist is actually installed (per-slug importlib.metadata probe --
+    never ModuleUpdate.find_world_modules, which shells out to uv); custom
+    worlds are present by definition. Never imports world code: the launcher
     must render without running any world's code -- the import happens only in
     a spawned client process or on an explicit, warned tool click
     (run_world_tool)."""
     import importlib.metadata
-    import zipfile
 
-    import ModuleUpdate
-    from APContainer import APWorldContainer
+    from Utils import register_custom_worlds
     from mwgg_igdb import GameIndex
 
+    custom_modules = set(register_custom_worlds())
+
     entries: list[WorldTool] = []
-    seen_modules: set[str] = set()
-
-    custom_worlds_dir = ModuleUpdate.custom_worlds_dir
-    if custom_worlds_dir.exists():
-        for file in custom_worlds_dir.iterdir():
-            if file.suffix != ".apworld":
-                continue
-            try:
-                with zipfile.ZipFile(file, "r") as zipf:
-                    manifest = APWorldContainer(file).read_contents(zipf)
-            except Exception as e:
-                logging.warning(f"Skipping world components scan of {file.name}: {e}")
-                continue
-            seen_modules.add(file.stem)
-            entries.extend(_manifest_world_tools(manifest, file.stem, file.name, include))
-
     for module, game_data in GameIndex.get_all_games().items():
-        if module in seen_modules or not isinstance(game_data, dict) or not game_data.get("components"):
+        if not isinstance(game_data, dict) or not game_data.get("components"):
             continue
-        try:
-            importlib.metadata.distribution(f"worlds.{module}")
-        except importlib.metadata.PackageNotFoundError:
-            continue
+        if module not in custom_modules:
+            try:
+                importlib.metadata.distribution(f"worlds.{module}")
+            except importlib.metadata.PackageNotFoundError:
+                continue
         entries.extend(_manifest_world_tools(game_data, module, f"GameIndex[{module}]", include))
 
     return entries

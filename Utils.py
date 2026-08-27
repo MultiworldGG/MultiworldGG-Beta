@@ -353,9 +353,13 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             metadata["game_name"] = metadata.pop("game", module_name)
             metadata["cover_url"] = metadata.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (e.g. registered by a previous
-                # call this run). Idempotent no-op; return the module name so callers
-                # still see it as a discovered world.
+                # Already known to the in-memory index (built index or a previous
+                # call this run). The custom manifest stays authoritative for its
+                # declared components: a dropped-in archive surfaces its tools
+                # even when it shadows an indexed slug, and a replaced file
+                # refreshes them on the next scan.
+                if "components" in metadata:
+                    GameIndex.get_game(module_name)["components"] = metadata["components"]
                 return module_name
             GameIndex.add_game(module_name, metadata)
             return module_name
@@ -366,9 +370,13 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (e.g. registered by a previous
-                # call this run). Idempotent no-op; return the module name so callers
-                # still see it as a discovered world.
+                # Already known to the in-memory index (built index or a previous
+                # call this run). The custom manifest stays authoritative for its
+                # declared components: a dropped-in apworld surfaces its tools
+                # even when it shadows an indexed slug, and a replaced file
+                # refreshes them on the next scan.
+                if "components" in manifest:
+                    GameIndex.get_game(module_name)["components"] = manifest["components"]
                 return module_name
             GameIndex.add_game(module_name, manifest)
             return module_name
