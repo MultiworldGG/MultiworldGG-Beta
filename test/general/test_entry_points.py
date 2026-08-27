@@ -17,7 +17,7 @@ import BaseUtils
 import Launcher
 import MultiWorld
 import Utils
-import worlds.LauncherComponents as lc
+import LauncherComponents as lc
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

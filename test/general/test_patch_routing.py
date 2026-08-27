@@ -18,10 +18,10 @@ import json
 import sys
 import zipfile
 
+import LauncherComponents as launcher_components
 import MultiWorld
 import Utils
-import worlds.LauncherComponents as launcher_components
-from worlds.LauncherComponents import Component, SuffixIdentifier, Type, components, get_exe, identify
+from LauncherComponents import Component, SuffixIdentifier, Type, components, get_exe, identify
 
 
 def _make_patch_container(path, game_name: str) -> None:

@@ -14,21 +14,31 @@ there. This has regressed repeatedly, so the guarantees are pinned here:
   * the scan never imports the world module -- only the zip manifest is read.
 """
 import importlib
+import importlib.metadata
 import json
+import logging
 import sys
 import zipfile
 from pathlib import Path
 
 import pytest
 
+import LauncherComponents as lc
 import ModuleUpdate
 import Utils
 from mwgg_igdb import GameIndex
 
 
-def _make_apworld(path, game_name: str) -> None:
+def _make_apworld(path, game_name: str, components: "list | None" = None,
+                  extra_members: "dict[str, bytes] | None" = None) -> None:
+    slug = Path(path).stem
+    manifest: dict = {"game": game_name, "compatible_version": 5}
+    if components is not None:
+        manifest["components"] = components
     with zipfile.ZipFile(path, "w") as zf:
-        zf.writestr("archipelago.json", json.dumps({"game": game_name, "compatible_version": 5}))
+        zf.writestr(f"{slug}/archipelago.json", json.dumps(manifest))
+        for member, data in (extra_members or {}).items():
+            zf.writestr(f"{slug}/{member}", data)
 
 
 @pytest.fixture(autouse=True)
@@ -157,6 +167,193 @@ def test_custom_worlds_dir_is_executable_folder_even_when_frozen(monkeypatch):
 
     assert resolved == Path(ModuleUpdate.local_path("custom_worlds"))
     assert resolved != Path(write_path("custom_worlds"))
+
+
+def test_world_tool_entries_finds_declared_tools(tmp_path, monkeypatch):
+    _make_apworld(tmp_path / "toolworld.apworld", "Tool World", components=[
+        {"name": "Tool World Client", "type": "client"},
+        {"name": "Tool World Manager", "type": "adjuster", "description": "Edit things."},
+        {"name": "Tool World Spriter", "type": "tool"},
+    ])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    entries = lc.world_tool_entries()
+
+    # client entries are the game list's business -- only tool/adjuster get cards
+    assert [(e.module, e.world_name, e.name, e.type) for e in entries] == [
+        ("toolworld", "Tool World", "Tool World Manager", "adjuster"),
+        ("toolworld", "Tool World", "Tool World Spriter", "tool"),
+    ]
+    assert entries[0].description == "Edit things."
+    assert entries[1].description == ""
+
+
+def test_world_manifest_components_includes_clients(tmp_path, monkeypatch):
+    """world_manifest_components returns all declared types (the play page's
+    per-game strip needs clients too); the world_tool_entries wrapper keeps
+    its historical tool/adjuster-only view."""
+    _make_apworld(tmp_path / "toolworld.apworld", "Tool World", components=[
+        {"name": "Tool World Client", "type": "client"},
+        {"name": "Tool World Manager", "type": "adjuster", "description": "Edit things."},
+        {"name": "Tool World Spriter", "type": "tool"},
+    ])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    entries = lc.world_manifest_components()
+
+    assert [(e.module, e.name, e.type) for e in entries] == [
+        ("toolworld", "Tool World Client", "client"),
+        ("toolworld", "Tool World Manager", "adjuster"),
+        ("toolworld", "Tool World Spriter", "tool"),
+    ]
+    assert [(e.name, e.type) for e in lc.world_tool_entries()] == [
+        ("Tool World Manager", "adjuster"),
+        ("Tool World Spriter", "tool"),
+    ]
+
+
+def test_world_manifest_components_include_filter(tmp_path, monkeypatch):
+    _make_apworld(tmp_path / "toolworld.apworld", "Tool World", components=[
+        {"name": "Tool World Client", "type": "client"},
+        {"name": "Tool World Spriter", "type": "tool"},
+    ])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    entries = lc.world_manifest_components(include=("client",))
+
+    assert [(e.name, e.type) for e in entries] == [("Tool World Client", "client")]
+
+
+def test_world_manifest_components_never_imports_world_module(tmp_path, monkeypatch):
+    slug = "manifestworld_noimport"
+    _make_apworld(tmp_path / f"{slug}.apworld", "No Import World", components=[
+        {"name": "No Import Client", "type": "client"},
+        {"name": "No Import Tool", "type": "tool"},
+    ])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    assert f"worlds.{slug}" not in sys.modules
+    imported: list[str] = []
+    real_import_module = importlib.import_module
+
+    def _spy_import_module(module_name, *args, **kwargs):
+        imported.append(module_name)
+        return real_import_module(module_name, *args, **kwargs)
+
+    monkeypatch.setattr(importlib, "import_module", _spy_import_module)
+
+    entries = lc.world_manifest_components()
+
+    assert [e.name for e in entries] == ["No Import Client", "No Import Tool"]
+    assert f"worlds.{slug}" not in sys.modules
+    assert not any(m == f"worlds.{slug}" or m.startswith(f"worlds.{slug}.") for m in imported)
+
+
+def test_world_tool_entries_skips_malformed_entries_keeps_valid(tmp_path, monkeypatch, caplog):
+    _make_apworld(tmp_path / "toolworld.apworld", "Tool World", components=[
+        "not-a-mapping",
+        {"type": "tool"},                     # missing name
+        {"name": "Weird", "type": "banana"},  # unknown type
+        {"name": "Typeless"},                 # missing type
+        {"name": "Survivor", "type": "tool"},
+    ])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    with caplog.at_level(logging.WARNING):
+        entries = lc.world_tool_entries()
+
+    assert [e.name for e in entries] == ["Survivor"]
+    assert len(caplog.records) == 4
+
+
+def test_world_tool_entries_survives_corrupt_zip(tmp_path, monkeypatch, caplog):
+    (tmp_path / "broken.apworld").write_bytes(b"this is not a zip")
+    _make_apworld(tmp_path / "goodworld.apworld", "Good World",
+                  components=[{"name": "Good Tool", "type": "tool"}])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    with caplog.at_level(logging.WARNING):
+        entries = lc.world_tool_entries()
+
+    assert [e.name for e in entries] == ["Good Tool"]
+    assert any("broken.apworld" in record.message for record in caplog.records)
+
+
+def test_world_tool_entries_never_imports_world_module(tmp_path, monkeypatch):
+    slug = "toolworld_noimport"
+    _make_apworld(tmp_path / f"{slug}.apworld", "No Import World",
+                  components=[{"name": "No Import Tool", "type": "tool"}])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    assert f"worlds.{slug}" not in sys.modules
+    imported: list[str] = []
+    real_import_module = importlib.import_module
+
+    def _spy_import_module(module_name, *args, **kwargs):
+        imported.append(module_name)
+        return real_import_module(module_name, *args, **kwargs)
+
+    monkeypatch.setattr(importlib, "import_module", _spy_import_module)
+
+    entries = lc.world_tool_entries()
+
+    assert [e.name for e in entries] == ["No Import Tool"]
+    assert f"worlds.{slug}" not in sys.modules
+    assert not any(m == f"worlds.{slug}" or m.startswith(f"worlds.{slug}.") for m in imported)
+
+
+def test_world_tool_entries_dedups_custom_over_index(tmp_path, monkeypatch):
+    """A slug present both as a custom apworld and a GameIndex entry must only
+    contribute the custom manifest's components (custom wins)."""
+    slug = "dedup_world"
+    _make_apworld(tmp_path / f"{slug}.apworld", "Dedup World",
+                  components=[{"name": "Custom Tool", "type": "tool"}])
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    GameIndex.add_game(slug, {"game_name": "Dedup World",
+                              "components": [{"name": "Index Tool", "type": "tool"}]})
+    # Pretend the indexed dist is installed; the custom apworld must still win.
+    real_distribution = importlib.metadata.distribution
+    monkeypatch.setattr(importlib.metadata, "distribution",
+                        lambda name: object() if name == f"worlds.{slug}" else real_distribution(name))
+
+    entries = lc.world_tool_entries()
+
+    names = [e.name for e in entries]
+    assert "Custom Tool" in names
+    assert "Index Tool" not in names
+
+
+def test_world_tool_entries_reads_index_entries_only_when_installed(tmp_path, monkeypatch):
+    """GameIndex entries carrying `components` surface only for installed dists,
+    probed per slug -- never via the uv-backed find_world_modules."""
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)  # empty dir
+    GameIndex.add_game("installed_index_world",
+                       {"game_name": "Installed Index World",
+                        "components": [{"name": "Indexed Tool", "type": "tool"}]})
+    GameIndex.add_game("absent_index_world",
+                       {"game_name": "Absent Index World",
+                        "components": [{"name": "Absent Tool", "type": "tool"}]})
+
+    def fake_distribution(name):
+        if name == "worlds.installed_index_world":
+            return object()
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.setattr(importlib.metadata, "distribution", fake_distribution)
+
+    def _fail_find_world_modules():
+        raise AssertionError("world_tool_entries must not shell out via find_world_modules")
+
+    monkeypatch.setattr(ModuleUpdate, "find_world_modules", _fail_find_world_modules)
+
+    entries = lc.world_tool_entries()
+
+    names = [e.name for e in entries]
+    assert "Indexed Tool" in names
+    assert "Absent Tool" not in names
+    indexed = next(e for e in entries if e.name == "Indexed Tool")
+    assert indexed.module == "installed_index_world"
+    assert indexed.world_name == "Installed Index World"
 
 
 def test_add_game_indexes_into_search_index():

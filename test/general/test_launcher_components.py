@@ -1,13 +1,17 @@
-"""Tests for worlds.LauncherComponents: the standalone Launcher process (Phase 1
-foundations) contract -- FROZEN_TARGETS as the single source of truth for built
-exe names, spawn_client's argv/env/detach construction, and the builtin/other
-component-origin classification that keeps builtin_components() trustworthy.
+"""Tests for the launcher component surface: the standalone Launcher process
+(Phase 1 foundations) contract -- FROZEN_TARGETS as the single source of truth
+for built exe names, BaseUtils.spawn_client's argv/env/detach construction, the
+builtin/other component-origin classification that keeps builtin_components()
+trustworthy, and the worlds.LauncherComponents re-export shim.
 """
 import re
+import sys
+
+import pytest
 
 import BaseUtils
+import LauncherComponents as lc
 import Utils
-import worlds.LauncherComponents as lc
 
 
 def _setup_py_target_names() -> set[str]:
@@ -65,10 +69,10 @@ def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
     # module under `if _mswindows:`, so they're absent on POSIX Pythons; CI runs this
     # suite on ubuntu/macos too, so stand in real Windows values (raising=False handles
     # the on-Windows case where the attributes already exist).
-    monkeypatch.setattr(lc.subprocess, "DETACHED_PROCESS", 0x00000008, raising=False)
-    monkeypatch.setattr(lc.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False)
-    monkeypatch.setattr(lc, "is_frozen", lambda: False)
-    monkeypatch.setattr(lc, "is_windows", True)
+    monkeypatch.setattr(BaseUtils.subprocess, "DETACHED_PROCESS", 0x00000008, raising=False)
+    monkeypatch.setattr(BaseUtils.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False)
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", True)
     captured = {}
 
     def fake_popen(argv, **kwargs):
@@ -76,13 +80,13 @@ def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
         captured["kwargs"] = kwargs
         return object()
 
-    monkeypatch.setattr(lc.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
 
-    lc.spawn_client("kh2", server_address="localhost:38281", slot_name="P1", password="secret",
-                    client_type="game")
+    BaseUtils.spawn_client("kh2", server_address="localhost:38281", slot_name="P1", password="secret",
+                           client_type="game")
 
     argv = captured["argv"]
-    assert argv[:2] == [lc.sys.executable, lc.local_path("MultiWorld.py")]
+    assert argv[:2] == [sys.executable, BaseUtils.local_path("MultiWorld.py")]
     assert argv[argv.index("--game") + 1] == "kh2"
     assert argv[argv.index("--server-address") + 1] == "localhost:38281"
     assert argv[argv.index("--slot-name") + 1] == "P1"
@@ -94,14 +98,14 @@ def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
     assert env["MWGG_CLIENT_TYPE"] == "game"
     assert env["MWGG_NO_SPLASH"] == "1"
     assert captured["kwargs"]["creationflags"] == (
-        lc.subprocess.DETACHED_PROCESS | lc.subprocess.CREATE_NEW_PROCESS_GROUP
+        BaseUtils.subprocess.DETACHED_PROCESS | BaseUtils.subprocess.CREATE_NEW_PROCESS_GROUP
     )
     assert "start_new_session" not in captured["kwargs"]
 
 
 def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
-    monkeypatch.setattr(lc, "is_frozen", lambda: False)
-    monkeypatch.setattr(lc, "is_windows", False)
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
     captured = {}
 
     def fake_popen(argv, **kwargs):
@@ -109,9 +113,9 @@ def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
         captured["kwargs"] = kwargs
         return object()
 
-    monkeypatch.setattr(lc.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
 
-    lc.spawn_client(client_type="text", extra_args=("--foo",))
+    BaseUtils.spawn_client(client_type="text", extra_args=("--foo",))
 
     argv = captured["argv"]
     assert "--game" not in argv
@@ -127,18 +131,57 @@ def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
     assert "creationflags" not in captured["kwargs"]
 
 
+def test_spawn_client_component_flag(monkeypatch):
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client(game="kh2", component="Map Tracker")
+
+    argv = captured["argv"]
+    assert argv[argv.index("--game") + 1] == "kh2"
+    assert argv[argv.index("--component") + 1] == "Map Tracker"
+    # Additive contract: --component goes after --client-type, so component-less
+    # argv stays byte-identical to older cores.
+    assert argv.index("--component") > argv.index("--client-type")
+
+    env = captured["kwargs"]["env"]
+    assert env["MWGG_ROLE"] == "client"
+    assert env["MWGG_NO_SPLASH"] == "1"
+
+
+def test_spawn_client_component_requires_game(monkeypatch):
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+
+    def _fail_popen(*args, **kwargs):
+        raise AssertionError("Popen must not run when spawn_client validation fails")
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", _fail_popen)
+
+    with pytest.raises(ValueError):
+        BaseUtils.spawn_client(component="Map Tracker")
+
+
 def test_spawn_client_launch_file_is_positional_before_flags(monkeypatch):
-    monkeypatch.setattr(lc, "is_frozen", lambda: False)
-    monkeypatch.setattr(lc, "is_windows", False)
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
     captured = {}
 
     def fake_popen(argv, **kwargs):
         captured["argv"] = argv
         return object()
 
-    monkeypatch.setattr(lc.subprocess, "Popen", fake_popen)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
 
-    lc.spawn_client(launch_file="C:/seed.apkh3")
+    BaseUtils.spawn_client(launch_file="C:/seed.apkh3")
 
     argv = captured["argv"]
     launch_index = argv.index("C:/seed.apkh3")
@@ -171,3 +214,32 @@ def test_find_component_matches_display_name_and_script_name():
 
 def test_find_component_no_match_returns_none():
     assert lc.find_component("Definitely Not A Real Component") is None
+
+
+# --- worlds.LauncherComponents re-export shim ---
+
+def test_worlds_shim_shares_objects_with_top_level_module():
+    """World modules keep importing worlds.LauncherComponents; the shim must
+    hand them the very same objects (identity, not equality) so registrations
+    land in the one live registry the launcher renders."""
+    import worlds.LauncherComponents as wlc
+
+    assert wlc.components is lc.components
+    assert wlc.Component is lc.Component
+    assert wlc.Type is lc.Type
+    assert wlc.spawn_client is BaseUtils.spawn_client
+    assert wlc.find_component is lc.find_component
+
+
+def test_top_level_module_never_imports_worlds_package():
+    """The point of the top-level module: launcher-side consumers import it
+    without executing worlds/__init__, whose one-shot world load belongs to
+    client processes only. Subprocess because this suite already has worlds
+    in sys.modules."""
+    import subprocess
+    code = ("import sys\n"
+            "import LauncherComponents\n"
+            "assert 'worlds' not in sys.modules\n")
+    result = subprocess.run([sys.executable, "-c", code], cwd=Utils.local_path(),
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

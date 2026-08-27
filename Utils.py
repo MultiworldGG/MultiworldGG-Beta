@@ -21,6 +21,7 @@ import importlib.machinery
 import importlib.util
 import logging
 import warnings
+import webbrowser
 import zipfile
 
 import re
@@ -440,6 +441,31 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
     return candidate if callable(candidate) else None
 
 
+def _resolve_named_client_component(module_id: str, component_name: str) -> Optional[callable]:
+    """Resolve a specific client Component registered by module_id (an import
+    side effect of _perform_module_launch's import). Module-scoped on
+    func.__module__ -- deliberately not a global find_component: other worlds'
+    registrations must not be reachable by name from a client launch. Returns
+    the (unwrapped) launch callable, or None with a warning so the caller
+    falls back to default client resolution."""
+    try:
+        from LauncherComponents import components, Type as ComponentType
+    except ImportError:
+        return None
+    for component in components:
+        if component.display_name != component_name:
+            continue
+        if component.type is not ComponentType.CLIENT or component.func is None:
+            continue
+        func_module = getattr(component.func, "__module__", "") or ""
+        if func_module == module_id or func_module.startswith(module_id + "."):
+            inner = _resolve_launch_from_custom_world(component.func, module_id)
+            return inner if inner is not None else component.func
+    logging.warning(f"Component {component_name!r} is not a client registered by {module_id}; "
+                    "falling back to default client resolution.")
+    return None
+
+
 def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
     """Discover and launch module via entrypoints.
 
@@ -631,6 +657,7 @@ def _perform_module_launch(module_id: str, **kwargs):
         server_address = kwargs.pop("server_address", None)
         slot_name = kwargs.pop("slot_name", None)
         patch_file = kwargs.pop("patch_file", None)
+        component_name = kwargs.pop("component", None)
         already_restarted = kwargs.pop("_restarted", False)
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
@@ -659,15 +686,21 @@ def _perform_module_launch(module_id: str, **kwargs):
             #      ever show up in (2). Match by func.__module__ so we pick the
             #      Component that lives in the just-imported module.
             launch_function = None
-            entry_points = importlib.metadata.entry_points(group="mwgg.client")
-            entry_point_name = "{}.Client".format(module_id)
-            for entry_point in entry_points:
-                if entry_point.name == entry_point_name:
-                    launch_function = entry_point.load()
-                    break
+            if component_name:
+                # A named component (spawn_client(component=...) / --component)
+                # narrows the scan below to one display_name; unknown names
+                # fall through to default resolution rather than dying.
+                launch_function = _resolve_named_client_component(module_id, component_name)
+            if launch_function is None:
+                entry_points = importlib.metadata.entry_points(group="mwgg.client")
+                entry_point_name = "{}.Client".format(module_id)
+                for entry_point in entry_points:
+                    if entry_point.name == entry_point_name:
+                        launch_function = entry_point.load()
+                        break
             if launch_function is None:
                 try:
-                    from worlds.LauncherComponents import (
+                    from LauncherComponents import (
                         components as _components,
                         Type as _ComponentType,
                     )
@@ -986,6 +1019,22 @@ def open_file(filename: typing.Union[str, "pathlib.Path"]) -> None:
 
         env = env_cleared_lib_path()
         subprocess.call([open_command, filename], env=env)
+
+
+def open_in_text_editor(filename: str) -> None:
+    from shutil import which
+    if is_linux:
+        exe = which('sensible-editor') or which('gedit') or \
+              which('xdg-open') or which('gnome-open') or which('kde-open')
+    elif is_macos:
+        exe = which("open")
+    else:
+        # Windows: hands the path to the default handler for its file type.
+        webbrowser.open(filename)
+        return
+
+    env = env_cleared_lib_path()
+    subprocess.Popen([exe, filename], env=env)
 
 
 # from https://gist.github.com/pypt/94d747fe5180851196eb#gistcomment-4015118 with some changes

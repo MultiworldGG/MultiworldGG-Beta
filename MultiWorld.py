@@ -137,6 +137,10 @@ def make_arg_parser() -> ArgumentParser:
                         choices=["game", "text", "universal_tracker", "manual"],
                         help="Which client to boot directly into: a game module's client (default when --game "
                              "is given), the text client, the universal tracker, or a manual client")
+    parser.add_argument("--component", type=str, default=None, required=False,
+                        help="Display name of a specific client component registered by --game's world "
+                             "module, e.g. a map tracker. Requires --game; unknown names fall back to the "
+                             "module's default client")
     parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
     parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
     parser.add_argument("--loglevel", default="debug",
@@ -246,6 +250,7 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
                 route_kwargs = {"server_address": composed_address,
                                 "slot_name": args.slot_name,
                                 "client_type": client_type or "game",
+                                "component": getattr(args, "component", None),
                                 "_restarted": getattr(args, "no_restart", False)}
             else:
                 logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
@@ -542,7 +547,8 @@ def main(argv: "list[str] | None" = None) -> None:
                     logger.warning(f"No installed or indexed world handles game {game_name!r} "
                                    f"from {args.launch_file}; opening launcher.")
             else:
-                from worlds.LauncherComponents import identify, get_exe, launch_exe
+                from LauncherComponents import identify, get_exe
+                from BaseUtils import launch_exe
                 component = identify(args.launch_file)
                 if component is not None:
                     logger.info(f"Routing {args.launch_file} to component {component.display_name}")
