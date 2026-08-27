@@ -490,11 +490,26 @@ class WorldTool:
     module: str
     world_name: str
     name: str
-    type: str  # "client" | "tool" | "adjuster"
+    type: str  # a _MANIFEST_COMPONENT_TYPES member, or "yaml" (see yaml_component)
     description: str = ""
 
 
 _MANIFEST_COMPONENT_TYPES = ("client", "tool", "adjuster")
+
+YAML_COMPONENT_NAME = "Create YAML"
+
+
+def yaml_component(module: str, world_name: str = "") -> WorldTool:
+    """The YAML-creator entry for a selected game's component strip.
+
+    Synthesized per selection rather than scanned: it belongs to whichever
+    game is selected, so worlds that declare nothing still get one. "yaml" is
+    deliberately not a _MANIFEST_COMPONENT_TYPES member -- it is the frontend's
+    own entry, never something a world may declare. Core owns the shape and
+    label so every frontend renders the same entry; mapping the type to a YAML
+    editor is the frontend's half."""
+    return WorldTool(module=module, world_name=world_name or module,
+                     name=YAML_COMPONENT_NAME, type="yaml")
 
 
 def _coerce_manifest_component(entry: Any, source: str) -> Optional[dict[str, str]]:

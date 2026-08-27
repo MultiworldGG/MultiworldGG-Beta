@@ -216,6 +216,27 @@ def test_find_component_no_match_returns_none():
     assert lc.find_component("Definitely Not A Real Component") is None
 
 
+# --- the synthesized YAML strip entry ---
+
+def test_yaml_component_is_a_world_tool():
+    """Frontends render it through the same WorldTool shape as scanned
+    components, so there is one dataclass rather than a per-frontend clone."""
+    entry = lc.yaml_component("oot")
+
+    assert isinstance(entry, lc.WorldTool)
+    assert entry.module == "oot"
+    assert entry.type == "yaml"
+    assert entry.name == lc.YAML_COMPONENT_NAME
+
+
+def test_yaml_type_is_not_manifest_declarable():
+    """The YAML entry is the frontend's own; a world must not be able to
+    declare one and have it rendered as if core synthesized it."""
+    assert "yaml" not in lc._MANIFEST_COMPONENT_TYPES
+    assert lc._coerce_manifest_component(
+        {"name": "Sneaky", "type": "yaml"}, "world.apworld") is None
+
+
 # --- worlds.LauncherComponents re-export shim ---
 
 def test_worlds_shim_shares_objects_with_top_level_module():
