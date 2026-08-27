@@ -75,7 +75,7 @@ def main(argv: "list[str] | None" = None) -> int:
         return 2
 
     if argv and not argv[0].startswith("-"):
-        from worlds.LauncherComponents import find_component, processes, run_component
+        from LauncherComponents import find_component, processes, run_component
         component = find_component(argv[0])
         if component is not None:
             from Utils import init_logging

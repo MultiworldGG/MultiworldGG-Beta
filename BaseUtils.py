@@ -5,6 +5,7 @@ import logging
 import io
 import warnings
 import json
+import subprocess
 from pathlib import Path
 
 __all__ = ("Version",
@@ -32,7 +33,10 @@ __all__ = ("Version",
            "get_frontend_versions",
            "init_logging",
            "loglevel_mapping",
-           "ByValue")
+           "ByValue",
+           "get_client_exe",
+           "launch_exe",
+           "spawn_client")
 
 class Version(typing.NamedTuple):
     major: int
@@ -615,4 +619,96 @@ def get_apworld_manifest(world: str) -> dict[str, object]:
         return data
     except FileNotFoundError:
         return {}
+
+
+def _detached_popen_kwargs() -> dict[str, typing.Any]:
+    """Popen kwargs that detach the child from this process. Children
+    deliberately survive launcher exit: closing the launcher window must not
+    kill an in-progress game session or tool."""
+    if is_windows:
+        return {"creationflags": subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {"start_new_session": True}
+
+
+def get_client_exe() -> list[str]:
+    """Resolve the command line that launches the beta's single client entry point.
+
+    Centralizes exe-name resolution (frozen name vs source script) so callers
+    never hardcode "MultiWorldGG(.exe)" themselves."""
+    if is_frozen():
+        suffix = ".exe" if is_windows else ""
+        return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]
+    return [sys.executable, local_path("MultiWorld.py")]
+
+
+def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False) -> bool:
+    """Run the command line `exe` in a new process. With `in_terminal`, try to
+    run it in a terminal window; the return value reports whether one was used.
+    Beta equivalent of upstream Launcher.launch (which the monorepo lacks)."""
+    exe = list(exe)
+    if in_terminal:
+        if is_windows:
+            # intentionally using a window title with a space so it gets quoted and treated as a title
+            subprocess.Popen(["start", f"Running {instance_name}", *exe], shell=True)
+            return True
+        elif sys.platform.startswith("linux"):
+            from shutil import which
+            xdg = which("xdg-terminal-exec")
+            if xdg:
+                subprocess.Popen([xdg, "--", *exe])
+                return True
+            terminal = which("x-terminal-emulator") or which("konsole") or which("gnome-terminal") or which("xterm")
+            if terminal:
+                import shlex
+                subprocess.Popen([terminal, "-e", shlex.join(exe)])
+                return True
+        elif sys.platform == "darwin":
+            from shutil import which
+            subprocess.Popen([which("open"), "-W", "-a", "Terminal.app", *exe])
+            return True
+    subprocess.Popen(exe)
+    return False
+
+
+def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Optional[str] = None,
+                 slot_name: typing.Optional[str] = None, password: typing.Optional[str] = None,
+                 client_type: str = "game", component: typing.Optional[str] = None,
+                 launch_file: typing.Optional[str] = None,
+                 extra_args: typing.Iterable[str] = ()) -> "subprocess.Popen[typing.Any]":
+    """Spawn a client process, detached from this one.
+
+    Every launch from the Launcher process is a separate OS process, and
+    children deliberately survive launcher exit: closing the launcher window
+    must not kill an in-progress game session. MWGG_NO_SPLASH=1 is set in the
+    child env rather than appended as a CLI flag -- MultiWorld.py's arg parser
+    doesn't know a --no-splash flag yet, only the env var is read (Phase 2).
+
+    `component` names a specific `Component.display_name` registered by
+    `game`'s world module (e.g. a second client such as a map tracker); the
+    child resolves it after its ordered world load and falls back to default
+    client resolution if the name doesn't match."""
+    argv = list(get_client_exe())
+    if launch_file:
+        argv.append(launch_file)
+    if game is not None:
+        argv += ["--game", game]
+    if server_address is not None:
+        argv += ["--server-address", server_address]
+    if slot_name is not None:
+        argv += ["--slot-name", slot_name]
+    if password is not None:
+        argv += ["--password", password]
+    argv += ["--client-type", client_type]
+    if component is not None:
+        if game is None:
+            raise ValueError("spawn_client(component=...) requires game=")
+        argv += ["--component", component]
+    argv += list(extra_args)
+
+    env = os.environ.copy()
+    env["MWGG_ROLE"] = "client"
+    env["MWGG_CLIENT_TYPE"] = client_type
+    env["MWGG_NO_SPLASH"] = "1"
+
+    return subprocess.Popen(argv, env=env, **_detached_popen_kwargs())
 

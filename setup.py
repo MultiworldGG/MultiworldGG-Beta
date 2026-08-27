@@ -98,6 +98,7 @@ build_exe_options = {
     "includes": [
         "ModuleUpdate",
         "BaseUtils",
+        "LauncherComponents",
         "CommonClient",
         "ClientBuilder",
         "BaseClasses",
