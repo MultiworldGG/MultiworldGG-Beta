@@ -1034,6 +1034,28 @@ def test_update_worlds_returns_none_when_current():
     install.assert_not_called()
 
 
+def test_update_locked_skips_all_update_work_under_skip_update(monkeypatch):
+    """SKIP_REQUIREMENTS_UPDATE children (yaml-options spawns, clients under a
+    live launcher) must not re-run any updater work."""
+    monkeypatch.setattr(ModuleUpdate, "_skip_update", True)
+    with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
+            mock.patch.object(ModuleUpdate, "install_mwgg_igdb") as igdb, \
+            mock.patch.object(ModuleUpdate, "update_worlds") as worlds:
+        ModuleUpdate._update_locked(yes=True, force=False, worlds=None)
+    igdb.assert_not_called()
+    worlds.assert_not_called()
+
+
+def test_update_locked_runs_world_update_when_not_skipped(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_skip_update", False)
+    monkeypatch.setattr(ModuleUpdate, "update_ran", True)
+    with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
+            mock.patch.object(ModuleUpdate, "install_mwgg_igdb"), \
+            mock.patch.object(ModuleUpdate, "update_worlds", return_value=None) as worlds:
+        ModuleUpdate._update_locked(yes=True, force=False, worlds=None)
+    worlds.assert_called_once_with()
+
+
 def test_update_worlds_installs_outdated_worlds():
     result = ModuleUpdate.WorldInstallResult()
     with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \

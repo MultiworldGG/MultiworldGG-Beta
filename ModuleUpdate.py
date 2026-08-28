@@ -227,7 +227,11 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
                 cmd,
                 check=check,
                 capture_output=True,
-                text=True,
+                # uv emits UTF-8 (box-drawing error art); the locale default
+                # (cp1252 on Windows) mis-decodes it into undecodable bytes
+                # for anything re-reading our log stream.
+                encoding="utf-8",
+                errors="replace",
                 stdin=subprocess.DEVNULL,
                 timeout=timeout,
                 creationflags=creationflags,
@@ -1190,12 +1194,16 @@ def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = 
 def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
     if _skip_all_installs():
         return
-    # Install/refresh mwgg_igdb upfront
-    install_mwgg_igdb(upgrade=True)
-
     if worlds:
+        install_mwgg_igdb(upgrade=True)
         install_worlds(worlds, update=force)
         return
+    if _skip_update and not force:
+        # Children spawned under a live launcher (SKIP_REQUIREMENTS_UPDATE,
+        # multiprocessing children) must not re-run the updater; the launcher
+        # owns the world update via update_worlds() on cold start.
+        return
+    install_mwgg_igdb(upgrade=True)
 
     if is_frozen() and (exe_dir / "custom_wheels").exists():
         logger.debug("Custom Worlds found, checking...")
