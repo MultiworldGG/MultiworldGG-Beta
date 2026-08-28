@@ -87,9 +87,8 @@ class Group:
     def __getattribute__(self, item: str) -> Any:
         attr = super().__getattribute__(item)
         if isinstance(attr, APPathLib) and not super().__getattribute__("_dumping"):
-            # normalize once, here: expand env vars (%USERPROFILE%, $VAR), wrap as
-            # pathlib.Path, and expanduser() for ~. The existence check below and the
-            # final return both use this same canonical form.
+            # normalize once (expandvars + expanduser); the existence check below and
+            # the final return both use this same canonical form.
             resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
             if attr.required and not resolved.exists() and not super().__getattribute__("_has_attr"):
                 # if a file is required, and the one from settings does not exist, ask the user to provide it
@@ -861,9 +860,8 @@ class Settings(Group):
                     options = parse_yaml(f.read())
                 except MarkedYAMLError as ex:
                     # A malformed host.yaml must not take down everything that reads
-                    # settings (tracker, settings UI, generation). Warn with the
-                    # offending line, then fall back to defaults and leave the file
-                    # untouched (no _filename) so the user can repair it by hand.
+                    # settings: fall back to defaults and skip _filename so autosave
+                    # can't clobber the file the user needs to repair by hand.
                     import logging
                     detail = ""
                     if ex.problem_mark:
@@ -921,9 +919,8 @@ class Settings(Group):
         self._filename = location
 
     def dump(self, f: TextIO, level: int = 0) -> None:
-        # Materialize the settings groups of already-loaded worlds; sections of
-        # worlds not loaded stay the raw dicts read from the yaml and round-trip
-        # as-is. Never triggers a world load.
+        # Materialize settings groups of already-loaded worlds; unloaded worlds'
+        # sections stay raw dicts and round-trip as-is. Never triggers a world load.
         for key in _loaded_world_settings_names():
             self.__getattribute__(key)
         super().dump(f, level)

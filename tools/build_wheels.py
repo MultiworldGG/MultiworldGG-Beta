@@ -136,9 +136,8 @@ def main():
                     skipped_builds.append(world)
                     continue
 
-        # Create MANIFEST.in for this world.
-        # The exclude pattern is *.py[co] (not *.py[cod]) — [cod] would also
-        # match `.pyd`, i.e. Windows native extensions, which we want to ship.
+        # MANIFEST.in exclude is *.py[co], not *.py[cod]: [cod] would also match
+        # .pyd, the Windows native extensions we want to ship.
         manifest_content = f"""global-exclude *
 graft src/worlds/{world}
 global-exclude *~ *.py[co]

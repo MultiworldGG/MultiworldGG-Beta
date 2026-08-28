@@ -2,20 +2,10 @@ import os
 import logging
 
 if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
-    # TUI frontend is active. Per-world client wrappers (kh2, albw, kh3, ...) still do
-    # `from kvui import <kivy/kivymd names>` and call ctx.run_gui() during launch. Two
-    # requirements collide: we must NOT import Kivy (merely importing kivy.core.window
-    # opens a rogue window over the Textual TUI), yet those imports must still succeed
-    # and the names stay usable as base classes / dp() / etc., or the client crashes
-    # before the takeover handshake runs (server_loop blocks on
-    # `await ctx.takeover_complete.wait()` until _takeover_existing_ui() sets the event).
-    #
-    # Resolution: hand every Kivy/KivyMD name an inert, non-Kivy stand-in. This is
-    # semantically safe because the Kivy per-world UI is never built under the TUI --
-    # LegacyKvuiClientBuilder.build() returns early when MWGG_FRONTEND=tui -- so the
-    # stand-ins only have to survive import, subclassing, instantiation and attribute
-    # access, never rendering. GameManager stays a real class so the takeover in its
-    # async_run() keeps working.
+    # Per-world clients still `from kvui import <kivy names>`; importing Kivy here
+    # would open a rogue window over the TUI, so serve inert non-Kivy stand-ins.
+    # Safe because the Kivy per-world UI is never built under the TUI; GameManager
+    # stays a real class so the takeover in its async_run() keeps working.
 
     class _InertMeta(type):
         """Metaclass so stand-in *classes* tolerate attribute access too, e.g.
@@ -73,9 +63,8 @@ if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
             self.ctx = ctx
 
         def __getattr__(self, name):
-            # Per-world GameManager subclasses reach for Kivy-app attributes the GUI
-            # build would have supplied; under the TUI build() never runs, so answer
-            # inertly instead of crashing.
+            # Subclasses reach for Kivy-app attributes the GUI build would supply;
+            # under the TUI build() never runs, so answer inertly instead of crashing.
             if name.startswith("__") and name.endswith("__"):
                 raise AttributeError(name)
             return _INERT
@@ -126,10 +115,8 @@ else:
     from mwgg_gui.overrides.markuptextfield import MarkupTextField as ResizableTextField
 
     from mwgg_gui.app import MultiMDApp as ThemedApp, MainScreenMgr as MDScreenManagerBase
-    # Legacy widget shapes preserved for world kv files that reference them
-    # by bare class name (Tracker.kv, Manual.kv, etc.). Importing them here
-    # registers them with the kivy Factory and keeps the original
-    # `from kvui import SelectableLabel` import path working.
+    # Legacy widget shapes for world kv files that reference them by bare class name;
+    # importing registers them with the kivy Factory and keeps the old import path working.
     from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout
     from NetUtils import KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
     from kivymd.uix.scrollview import MDScrollView as ScrollBox
@@ -152,10 +139,8 @@ else:
     from kivy.uix.image import AsyncImage as ApAsyncImage
     from kivymd.uix.tooltip import MDTooltipPlain as ToolTip
 
-    # Compatibility re-exports for world clients that do `from kvui import ...`.
-    # MultiworldGG worlds (kh3, etc.) import these canonical kivy/kivymd names from
-    # kvui; the GUI imports above bind some only under MWGG aliases (ToggleButton,
-    # MainLayout) or not at all.
+    # Compatibility re-exports: worlds import these canonical kivy/kivymd names from
+    # kvui; the GUI imports above bind some only under MWGG aliases or not at all.
     from kivy.clock import Clock
     from kivy.core.window import Window
     from kivy.factory import Factory
@@ -163,11 +148,8 @@ else:
     from kivymd.uix.gridlayout import MDGridLayout
     from kivymd.uix.textfield.textfield import MDTextField
 
-    # World clients subclass HoverBehavior alongside kivymd widgets, e.g.
-    # `class X(HoverBehavior, MDIconButton)`. kivymd.uix.behaviors.HoverBehavior
-    # shares an MRO-incompatible base with those widgets; this plain object-based
-    # mixin (the original MWGG HoverBehavior) linearizes cleanly and exposes the
-    # hovered/border_point/on_enter/on_leave API those clients expect.
+    # kivymd's HoverBehavior shares an MRO-incompatible base with the widgets worlds
+    # mix it into; this plain object-based mixin (the original MWGG one) linearizes cleanly.
     class HoverBehavior(object):
         """originally from https://stackoverflow.com/a/605348110"""
         hovered = BooleanProperty(False)

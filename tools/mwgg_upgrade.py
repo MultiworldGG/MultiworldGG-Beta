@@ -14,8 +14,8 @@ Refresh on demand:  docker compose up mwgg_upgrader
 
 Exit code is 0 only when the index installed, the worlds venv is populated, and no
 world regressed, so a failed run blocks the consumers from starting against a broken
-venv. Individual worlds that fail to install are tolerated up to a threshold — one bad
-wheel costs that one game, not the deploy — but every run logs a WORLD_INSTALL_SUMMARY
+venv. Individual worlds that fail to install are tolerated up to a threshold (one bad
+wheel costs that one game, not the deploy), but every run logs a WORLD_INSTALL_SUMMARY
 line, so failures are greppable rather than silent.
 """
 import logging
@@ -41,9 +41,8 @@ import ModuleUpdate
 
 VARIANT = "ao"
 
-# Fraction of the index allowed to fail before the run is treated as systemic breakage
-# (bad network, unusable index) rather than a handful of bad wheels. Override with an
-# absolute count via MWGG_UPGRADE_MAX_WORLD_FAILURES.
+# Fraction of the index allowed to fail before the run counts as systemic breakage
+# rather than bad wheels. Override with an absolute count via MWGG_UPGRADE_MAX_WORLD_FAILURES.
 FAILURE_FRACTION = 0.1
 
 
@@ -51,7 +50,7 @@ def _installed_world_slugs() -> set[str]:
     """Slugs currently unpacked in the venv worlds dir.
 
     A missing dir is an empty venv (first run). Any other OSError propagates so the
-    failure is reported as what it is — a silently-empty result here would read as
+    failure is reported as what it is; a silently-empty result here would read as
     "every world regressed" and block the deploy with a misleading message.
     """
     try:
@@ -99,11 +98,8 @@ def main() -> int:
         return 1
     logger.info("Installing/updating %d worlds (+ requirements) in the worlds venv", len(slugs))
     installed_before = _installed_world_slugs()
-    # with_deps=True runs `uv pip install <wheel> --upgrade` for every world, so
-    # each world AND its already-installed dependencies are checked for updates
-    # and upgraded when outdated. uv skips packages already current — nothing is
-    # force-reinstalled. (with_deps=False would skip up-to-date worlds entirely,
-    # leaving their deps unchecked.)
+    # with_deps=True upgrades each world AND its already-installed deps when outdated
+    # (uv skips current packages); with_deps=False would leave deps unchecked.
     result = ModuleUpdate.install_worlds(slugs, with_deps=True)
 
     failed = sorted(result.failed)

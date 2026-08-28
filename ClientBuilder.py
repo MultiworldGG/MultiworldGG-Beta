@@ -103,12 +103,6 @@ class GameClient(ClientBuilder):
         self._is_running = True
         
         try:
-            # Access ui, ui_task, and exit_event from global app reference when needed
-            # MDApp.get_running_app().ctx.ui
-            # MDApp.get_running_app().ctx.ui_task
-            # MDApp.get_running_app().ctx.exit_event
-            
-            # Set up game-specific features
             await self._setup_game_features()
 
             legacy_builder = LegacyKvuiClientBuilder(
@@ -117,10 +111,8 @@ class GameClient(ClientBuilder):
             )
             legacy_result = await legacy_builder.build()
 
-            # ExtrasBuilder runs as a sibling of the legacy path -- it operates
-            # on ctx.client.features and doesn't care which UI builder wired
-            # the per-game frontend (legacy kvui, explicit build_gui, future
-            # non-legacy kvui, or TUI).
+            # ExtrasBuilder is a sibling of the legacy path: it operates on
+            # ctx.client.features regardless of which builder wired the per-game frontend.
             extras_builder = ExtrasBuilder(
                 self.ctx,
                 {"ui": self._init_data.get("ui")},

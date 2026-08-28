@@ -60,7 +60,7 @@ class FrontendProtocol(Protocol):
 
         Each frontend chooses its own widget: Kivy uses an MDDialog-based
         MessageBox, Textual uses a ModalScreen. Callers must never assume a
-        specific widget type — only the handle round-trip is portable.
+        specific widget type; only the handle round-trip is portable.
         """
         ...
 
@@ -70,30 +70,9 @@ class FrontendProtocol(Protocol):
         ...
 
     # --- NOT-YET-IMPLEMENTED: per-world custom UI surface ---
-    #
-    # Reserved for future work to fully deprecate `kvui`. The methods below are the
-    # Kivy-only hooks that per-world client wrappers (kh2, albw, ...) currently reach for
-    # when they subclass `kvui.GameManager` -- they pass a `kivy.uix.widget.Widget` as
-    # `content`, which is exactly what locks those worlds to Kivy. A frontend-neutral
-    # rewrite would have to:
-    #
-    #   1. Define a frontend-neutral "content" type (probably a small dataclass: title,
-    #      logging-source name, optional structured data, and a renderer callback the
-    #      frontend invokes with its own widget toolkit). Right now `content` is just
-    #      `Any` so each frontend can decide what it accepts; do NOT take `Widget` here.
-    #   2. Implement the methods on both `MultiMDApp` (Kivy) and `MultiTUIApp` (Textual).
-    #      Kivy already has working bodies in `kvui.GameManager`; the TUI side needs new
-    #      Screen/Tab widgets and a registry that survives takeover.
-    #   3. Update per-world client wrappers to call `ctx.ui.add_client_tab(...)` instead
-    #      of subclassing `kvui.GameManager`, then drop the `from kvui import GameManager`
-    #      import. Once every world is migrated, `kvui.py` (and the stub it contains for
-    #      the TUI path) can be deleted.
-    #
-    # Until that work happens, these are *protocol stubs only* -- `FrontendProtocol` is a
-    # `runtime_checkable` Protocol, so adding them here is harmless: frontends that don't
-    # implement them simply fail `isinstance(app, FrontendProtocol)`, which nothing in the
-    # codebase currently relies on at runtime. Worlds that need custom UI must still go
-    # through `kvui.GameManager` for now.
+    # Protocol stubs reserved for deprecating kvui.GameManager. `content` stays `Any`,
+    # never a kivy Widget; nothing checks isinstance(app, FrontendProtocol) at runtime,
+    # so frontends may omit these. Worlds still go through kvui.GameManager for now.
 
     def add_client_tab(self, title: str, content: Any, index: int = -1) -> Any:
         """Add a per-world tab/panel to the running frontend.
@@ -122,18 +101,9 @@ class FrontendProtocol(Protocol):
 
 
 # --- Pre-flight slot/game verification ---------------------------------------
-#
-# Used by launcher frontends (Kivy GUI, Textual TUI) to validate a slot/game
-# pairing against a live MultiServer BEFORE flipping the launcher into a per-game
-# client. The slot/game mismatch is the bug this guards against: users who pick
-# the wrong game from the launcher list have no way back to the launcher once
-# the client takes over the window.
-#
-# The MultiServer Connect handler (off-limits to edit) rejects with
-# {"cmd": "ConnectionRefused", "errors": [...]} containing one or more of:
-# "InvalidPassword", "InvalidSlot", "InvalidGame", "IncompatibleVersion",
-# "InvalidItemsHandling". We close the socket immediately after the verdict
-# (success or refusal) — the real per-game client opens a fresh connection.
+# Launcher frontends validate a slot/game pairing against a live MultiServer
+# BEFORE the client takes over the window (there is no way back to the launcher).
+# The socket is closed right after the verdict; the real client reconnects fresh.
 
 
 _verify_logger = logging.getLogger("frontend_protocol.verify_slot")
@@ -147,7 +117,7 @@ class SlotVerifyResult:
     closed immediately; the caller still needs to launch the real client.
 
     `ok=False` with `errors` populated means the server returned
-    `ConnectionRefused` — `errors` is the verbatim list from that packet.
+    `ConnectionRefused`; `errors` is the verbatim list from that packet.
 
     `ok=False` with `transport_error` populated means the handshake never
     completed (DNS failure, refused TCP, TLS error, timeout, ...). `errors` is
@@ -212,9 +182,8 @@ async def _attempt_verify(address: str, packet: dict) -> SlotVerifyResult:
     )
     try:
         await socket.send(encode([packet]))
-        # The server unconditionally sends RoomInfo on open. Drain frames until
-        # we see the verdict (Connected or ConnectionRefused) — anything else
-        # (RoomInfo, PrintJSON) is ignored.
+        # The server unconditionally sends RoomInfo on open; drain frames until
+        # the verdict (Connected or ConnectionRefused), ignoring anything else.
         async for raw in socket:
             for msg in decode(raw):
                 cmd = msg.get("cmd") if isinstance(msg, dict) else None
@@ -266,7 +235,7 @@ async def verify_slot(
             try:
                 return await _attempt_verify(address, packet)
             except websockets.InvalidMessage:
-                # Probably a TLS mismatch — try the next address (ws → wss).
+                # Probably a TLS mismatch; try the next address (ws → wss).
                 last_error = "Server speaks a different protocol on that port (TLS mismatch?)."
                 continue
             except websockets.InvalidURI as exc:
@@ -286,6 +255,6 @@ async def verify_slot(
         return await asyncio.wait_for(_run(), timeout=timeout)
     except asyncio.TimeoutError:
         return SlotVerifyResult(ok=False, transport_error=f"Timed out after {timeout:.0f}s waiting for the server.")
-    except Exception as exc:  # defensive — never let the launcher see a raw exception
+    except Exception as exc:  # defensive: never let the launcher see a raw exception
         _verify_logger.exception("verify_slot crashed")
         return SlotVerifyResult(ok=False, transport_error=f"Unexpected error: {exc}")

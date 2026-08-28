@@ -13,29 +13,18 @@ from argparse import ArgumentParser
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_LOG_ENABLE"] = "1"
-# Disable Kivy's own CLI argument parsing so our argparse (and --frontend in
-# particular) doesn't get intercepted on dev runs. Frozen builds already set
-# this below; doing it unconditionally is safe since we never use Kivy's CLI args.
+# Disable Kivy's CLI parsing so our argparse (--frontend) isn't intercepted on dev runs.
 os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
-# Force the SDL2 clipboard provider on Linux. Without this, Kivy probes
-# clipboard_xclip / clipboard_xsel / clipboard_dbusklipper / clipboard_gtk3
-# first and logs noisy FileNotFoundError tracebacks when xclip/xsel aren't
-# installed; it then falls back to sdl2 anyway. Selecting sdl2 explicitly
-# skips the probes. macOS keeps its native provider; Windows is unaffected.
+# Force the SDL2 clipboard provider on Linux: skips Kivy's noisy xclip/xsel
+# probes (it falls back to sdl2 anyway when they're absent).
 if sys.platform.startswith("linux"):
     os.environ.setdefault("KIVY_CLIPBOARD", "sdl2")
 
-# Frozen builds: point OpenSSL at certifi's CA bundle. The bundled Python
-# interpreter ships its own OpenSSL, whose compiled-in default cert paths
-# point at the *build runner's* filesystem (e.g. /etc/ssl/certs/...), so
-# any caller that uses Python's default SSL context — kivy.loader fetching
-# IGDB box art, urllib.request, requests, websockets — fails with
-# "CERTIFICATE_VERIFY_FAILED: unable to get local issuer certificate" on
-# the user's machine. Setting SSL_CERT_FILE / REQUESTS_CA_BUNDLE before
-# the ssl module is loaded patches every call site at once.
+# Frozen builds: the bundled OpenSSL's compiled-in cert paths point at the
+# build runner's filesystem, so point it at certifi's CA bundle before ssl loads.
 if use_worlds_venv():
     try:
         import certifi
@@ -43,17 +32,13 @@ if use_worlds_venv():
         os.environ.setdefault("SSL_CERT_FILE", _ca_bundle)
         os.environ.setdefault("REQUESTS_CA_BUNDLE", _ca_bundle)
     except ImportError:
-        pass  # certifi unavailable — leave OpenSSL defaults in place
+        pass  # certifi unavailable; leave OpenSSL defaults in place
 
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
 
-# Linux frozen build: pre-load libmtdev.so.1 by absolute path BEFORE Kivy is
-# imported. Kivy's `kivy/lib/mtdev.py` does `ctypes.CDLL("libmtdev.so.1")`
-# without a path, which only succeeds if the lib is on the dlopen search
-# path. setup.py's post_build_setup() copies it to the bundle root; loading
-# it here registers the SONAME with ld.so, so Kivy's later name-only CDLL
-# call gets the cached handle instead of OSError.
+# Linux frozen build: pre-load libmtdev.so.1 by absolute path before Kivy's
+# name-only ctypes.CDLL, so ld.so has the SONAME cached (see setup.py).
 if sys.platform.startswith("linux") and use_worlds_venv():
     _bundled_mtdev = local_path("libmtdev.so.1")
     if os.path.exists(_bundled_mtdev):
@@ -69,8 +54,7 @@ def _ensure_writable_kivy_data(src: str) -> str:
     On the Linux AppImage (and macOS .app), `local_path(...)` resolves under a
     read-only mount, but Kivy needs to write to its data dir at startup
     (recoloring `defaulttheme-0.png`). We mirror it under `write_path()`
-    — the parent of `mwgg_venv` in `~/.local/share/MultiworldGG/` — and
-    re-sync whenever the bundled copy is newer than the mirror.
+    (the parent of `mwgg_venv`) and re-sync whenever the bundled copy is newer.
     """
     import shutil
     dst = write_path("kivy", "data")
@@ -82,13 +66,8 @@ def _ensure_writable_kivy_data(src: str) -> str:
         and os.path.getmtime(src_marker) > os.path.getmtime(dst_marker)
     )
     if needs_copy:
-        # Overlay-copy instead of rmtree+copytree. On Windows a font in `dst`
-        # may be locked by another MWGG process or the Windows Font Cache
-        # service, and rmtree/overwrite of an open file raises PermissionError
-        # [WinError 32]. POSIX read-only mounts (AppImage/.app) tolerate
-        # unlinking open files; Windows does not. Skipping a locked file is
-        # safe — bundled fonts are byte-identical to the in-use copy; only
-        # defaulttheme-0.png actually changes.
+        # Overlay-copy, not rmtree+copytree: Windows raises PermissionError on files
+        # locked by another MWGG process; skipping is safe (bundled copy is identical).
         os.makedirs(dst, exist_ok=True)
         for root, _dirs, files in os.walk(src):
             rel = os.path.relpath(root, src)
@@ -202,9 +181,8 @@ def _compose_connect_address(server_address: "str | None", slot_name: "str | Non
     if not slot_name:
         return server_address
     if ":" in slot_name:
-        # Userinfo cannot escape a ':' in this form: _set_server_address
-        # partitions it at the first colon, so everything after it becomes
-        # the password downstream. Warn but compose as-is (do not reject).
+        # ':' cannot be escaped in userinfo (_set_server_address splits at the
+        # first colon); warn but compose as-is.
         logging.getLogger("MultiWorld").warning(
             f"Slot name {slot_name!r} contains ':'; the client splits user info at the "
             f"first colon, so the text after it will be treated as the password")
@@ -218,20 +196,13 @@ def _compose_connect_address(server_address: "str | None", slot_name: "str | Non
 
 
 def _resolve_client_route(args) -> "tuple[str | None, dict]":
-    """Resolve a requested module launch (CLI --game / --client-type, or a
-    routed patch file) to a (route_module, route_kwargs) pair for
-    _route_module_when_ui_ready. route_module "" is the text-client sentinel
-    (a valid route: it makes discover_and_launch_module skip the
-    specialized-client gate and land at the main_textclient fallback);
-    None means no route.
+    """Resolve a requested module launch (CLI --game / --client-type, or a routed
+    patch file) to (route_module, route_kwargs) for _route_module_when_ui_ready.
+    "" is the text-client sentinel (a valid route); None means no route.
 
-    Must run BEFORE InitContext is constructed: a client-role process that
-    resolves no route (--game not available, --client-type
-    universal_tracker/manual without a routable game, or a resolution error)
-    would otherwise boot a dead client-role GUI — console plus a permanent
-    loading overlay, no launcher screen, nothing ever launches. The guard at
-    the end re-assigns MWGG_ROLE="launcher" for that whole class, so
-    ctx.launch_mode and the frontend role both see the fallback."""
+    Must run BEFORE InitContext is constructed: a client-role process with no
+    resolvable route is re-assigned MWGG_ROLE="launcher" here, else it would
+    boot a dead client-role GUI with nothing to launch."""
     logger = logging.getLogger("MultiWorld")
     route_module = None
     route_kwargs: dict = {}
@@ -280,13 +251,10 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
 async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
     """Launch a world module's client once the launcher frontend is up.
 
-    Beta clients cannot run standalone — they take over the launcher UI — so
-    this mirrors the GUI's own launch flow (mwgg_gui launcher._launch_module):
-    wait for the frontend, then route through Utils.discover_and_launch_module,
-    which installs the world on demand and forwards `launch_kwargs` (e.g.
-    patch_file from a double-clicked patch, or server_address from a CLI
-    --game launch) to the resolved client. The screen-flip hooks are
-    feature-detected so the TUI (or an older GUI) simply skips them."""
+    Beta clients take over the launcher UI rather than running standalone: wait
+    for the frontend, then route through Utils.discover_and_launch_module, which
+    installs the world on demand and forwards `launch_kwargs` to the resolved
+    client. The screen-flip hooks are feature-detected so the TUI skips them."""
     from frontend_protocol import resolve_frontend_class
 
     logger = logging.getLogger("MultiWorld")
@@ -345,12 +313,8 @@ def run_client(args=None, queue=None):
 
         logger = logging.getLogger("MultiWorld")
 
-        # Resolve a requested module launch (CLI --game / --client-type, or a
-        # routed patch file) BEFORE constructing InitContext, so a fallback to
-        # launcher role is already visible in MWGG_ROLE when the context and
-        # frontend read it. Beta clients take over the launcher UI rather than
-        # running standalone, so the launch itself is deferred until the
-        # frontend is up.
+        # Resolve the route BEFORE constructing InitContext so a launcher-role
+        # fallback is visible in MWGG_ROLE; the launch itself waits for the frontend.
         route_module, route_kwargs = _resolve_client_route(args)
 
         ctx = InitContext()
@@ -403,18 +367,15 @@ def main(argv: "list[str] | None" = None) -> None:
 
     `argv` defaults to sys.argv[1:]; Launcher.py delegates here with its own
     argv when the positional it received is not a component name."""
-    # Multiprocessing protection for frozen executables
-    # This prevents fork bombs when creating subprocesses in cx_Freeze builds
+    # Prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
 
-    # Parse the command line arguments
     parser = make_arg_parser()
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
     if args.update_modules:
-        # Inno's predownload step. Worlds also install on demand at first
-        # launch, so any failure here is non-fatal: show a friendly note and
-        # exit 0 rather than letting a traceback escape to the installer.
+        # Inno's predownload step. Non-fatal: worlds also install on demand at
+        # first launch, so show a friendly note and exit 0.
         try:
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
@@ -444,19 +405,14 @@ def main(argv: "list[str] | None" = None) -> None:
     logger = logging.getLogger("MultiWorld")
 
     if not is_windows:
-        # need to check for mwgg_igdb and install it if it's not installed
         try:
             import mwgg_igdb
         except ImportError:
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
 
-    # Start the splash screen process — Windows + Kivy GUI only.
-    # Skipped on Mac/Linux: the splash crashes there, and the long Kivy load
-    # the splash exists to mask is much shorter on those platforms anyway.
-    # TUI also skips it (no Kivy load to hide), as do clients spawned by the
-    # standalone Launcher (MWGG_NO_SPLASH=1 in the child env, see
-    # should_show_splash) — only cold starts splash and run the update check.
+    # Splash is Windows + Kivy GUI cold starts only: it crashes on Mac/Linux,
+    # TUI has nothing to hide, and spawned clients set MWGG_NO_SPLASH=1.
     splash_queue = None
 
     if should_show_splash(args.frontend):
@@ -482,31 +438,22 @@ def main(argv: "list[str] | None" = None) -> None:
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
         
-    # Scan custom_worlds/ on launch and register each into the in-memory index
-    # (GameIndex.add_game per world) so locally-dropped apworlds are selectable.
-    # The apworlds are zip files; only their manifest is read — nothing is imported.
+    # Register custom_worlds/ apworlds into the in-memory index so they're
+    # selectable; only the zip manifest is read, nothing is imported.
     try:
         from Utils import register_custom_worlds
         register_custom_worlds()
     except Exception as e:
         logger.warning(f"Could not scan custom_worlds on launch: {e}", exc_info=True)
 
-    # Route a double-clicked / positional file before the GUI comes up. Patch
-    # containers carry their game name in their root archipelago.json (same
-    # pre-load pattern as Patch.py), which resolves to a world module without
-    # importing any worlds; the client launch itself is deferred until the
-    # launcher UI is running (beta clients take over the launcher UI). Files
-    # claimed by a builtin tool component (.archipelago/.mwgg/.zip multidata ->
-    # Host) launch that component directly instead.
+    # Route a double-clicked / positional file: patches resolve via their manifest
+    # (no world import); files claimed by a builtin tool component launch directly.
     args.patch_module = None
     args.patch_file = None
     if args.launch_file:
         if args.launch_file.startswith(("archipelago://", "mwgg://", "multiworldgg://")):
-            # Decompose the launch URL into connection prefs + the website-chosen
-            # avatar. Persist them so the launcher seeds its hostname/port/slot
-            # fields (from last_server_*) and its avatar (from client.avatar), and
-            # set the launch args so the UI-ready routing below auto-connects to
-            # the room when its game is installed.
+            # Decompose the launch URL into connection prefs + avatar; persist them to
+            # seed the launcher fields and set launch args so routing auto-connects.
             logger.info(f"Launched with URL {args.launch_file}")
             try:
                 from CommonClient import parse_connect_url, safe_avatar_source
@@ -565,13 +512,10 @@ def main(argv: "list[str] | None" = None) -> None:
         else:
             logger.warning(f"File not found: {args.launch_file}; opening launcher.")
 
-    # Role is computed after launch-file routing (a routed patch counts as a
-    # client launch) and always assigned, never setdefault: see assign_role_env.
-    # The unroutable-file/URL warnings above leave game/patch_module unset, so
-    # those fallbacks compute back to "launcher" here by construction.
+    # Computed after launch-file routing (a routed patch counts as a client
+    # launch) and always assigned, never setdefault: see assign_role_env.
     assign_role_env(args)
 
-    # Run the main client in the current process
     run_client(args, queue=splash_queue)
 
 
