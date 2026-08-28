@@ -403,27 +403,6 @@ class RawJSONtoTextParser(JSONtoTextParser):
         return self._handle_text(node)
 
 
-# Named colors the network protocol sends (the ansi color_codes vocabulary),
-# with kivy hex_colormap's exact values: the Kivy parsers must seed without
-# kivy loaded (takeover-only clients, tests).
-PROTOCOL_COLOR_HEX = {
-    "black": "#000000",
-    "red": "#ff0000",
-    "green": "#008000",
-    "yellow": "#ffff00",
-    "blue": "#0000ff",
-    "magenta": "#ff00ff",
-    "cyan": "#00ffff",
-    "white": "#ffffff",
-    "plum": "#dda0dd",
-    "slateblue": "#6a5acd",
-    "salmon": "#fa8072",
-    "limegreen": "#32cd32",
-    "lightgray": "#d3d3d3",
-    "gold": "#ffd700",
-}
-
-
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
     color_codes: typing.ClassVar[typing.Optional[dict]] = None
@@ -432,13 +411,8 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
         super().__init__(ctx)
         cls = type(self)
         if cls.color_codes is None:
-            try:
-                from kivy.utils import hex_colormap
-                colors = dict(hex_colormap)
-            except ModuleNotFoundError:
-                # the bundled kivy/ dir is an importable namespace-package
-                # decoy, so this is reached via missing kivy.utils
-                colors = dict(PROTOCOL_COLOR_HEX)
+            from kivy.utils import hex_colormap
+            colors = dict(hex_colormap)
             for key, value in TEXT_COLORS.items():
                 colors[key] = value
             cls.color_codes = colors
