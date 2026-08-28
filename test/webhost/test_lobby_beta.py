@@ -7,14 +7,16 @@ backfill_short_ids script. The upstream apworld-queue suite stays in
 test_lobby_apworld_queue.py.
 """
 import json
+from unittest import mock
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import select, func
+from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import generate_password_hash
 
 from Utils import Version
-from WebHostLib import to_url
+from WebHostLib import lobby as lobby_module, to_url
 from WebHostLib.api.lobby import (
     _extract_game_info,
     _has_name_template,
@@ -370,6 +372,61 @@ class TestLobbyRoutes(TestBase):
                         LobbyPlayer.session_id == self.viewer_session,
                     ).limit(1)
                 ).first()
+            )
+
+    def test_join_commit_conflict_rolls_back_and_allows_retry(self) -> None:
+        lobby_id = self._make_lobby(title="Race Lobby")
+
+        def failing_commit():
+            db.session.flush()
+            raise StaleDataError("expected to update 1 row(s); 0 were matched")
+
+        with mock.patch.object(lobby_module, "commit", side_effect=failing_commit):
+            resp = self.viewer_client.post(
+                f"/lobby/{to_url(lobby_id)}/join",
+                data={"player_name": "Racer"},
+            )
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn(f"/play/lobby/{to_url(lobby_id)}", resp.headers["Location"])
+        # The rollback expunged the flushed player and system message.
+        with self.app.app_context():
+            self.assertIsNone(
+                db.session.scalars(
+                    select(LobbyPlayer).where(
+                        LobbyPlayer.lobby_id == lobby_id,
+                        LobbyPlayer.session_id == self.viewer_session,
+                    ).limit(1)
+                ).first()
+            )
+            self.assertEqual(
+                db.session.scalar(
+                    select(func.count()).select_from(LobbyMessage)
+                    .where(LobbyMessage.lobby_id == lobby_id)
+                ),
+                0,
+            )
+
+        # The session recovered; an unmocked retry joins normally.
+        retry = self.viewer_client.post(
+            f"/lobby/{to_url(lobby_id)}/join",
+            data={"player_name": "Racer"},
+        )
+        self.assertEqual(retry.status_code, 302)
+        with self.app.app_context():
+            joined = db.session.scalars(
+                select(LobbyPlayer).where(
+                    LobbyPlayer.lobby_id == lobby_id,
+                    LobbyPlayer.session_id == self.viewer_session,
+                ).limit(1)
+            ).first()
+            self.assertIsNotNone(joined)
+            self.assertEqual(joined.player_name, "Racer")
+            self.assertEqual(
+                db.session.scalar(
+                    select(func.count()).select_from(LobbyMessage)
+                    .where(LobbyMessage.lobby_id == lobby_id)
+                ),
+                1,
             )
 
     def test_lobby_list_excludes_closed_and_done(self) -> None:
