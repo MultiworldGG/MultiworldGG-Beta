@@ -806,6 +806,12 @@ else:
                 self._json_to_kivy_parser = KivyJSONtoTextParser(self.ctx)
             return self._json_to_kivy_parser
 
+        @json_to_kivy_parser.setter
+        def json_to_kivy_parser(self, parser: KivyJSONtoTextParser) -> None:
+            # On MAIN this was a plain instance attribute; world clients may
+            # assign a custom parser subclass, so the surface stays writable.
+            self._json_to_kivy_parser = parser
+
         def attach_live_app(self, app: App) -> None:
             self._running_app = app
 
