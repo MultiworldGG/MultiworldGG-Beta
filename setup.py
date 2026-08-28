@@ -155,7 +155,7 @@ build_exe_options["include_files"] = [item for item in build_exe_options["includ
 build_exe_options["packages"] = [item for item in build_exe_options["packages"] if item is not None]
 
 # Launcher exe names derive from BaseUtils.FROZEN_TARGETS so they can't drift.
-# test_launcher_components.py greps this file's target_name literals against
+# test_launcher_stack.py greps this file's target_name literals against
 # FROZEN_TARGETS.values(); the Debug variant has no entry, hence computed here.
 _exe_suffix = ".exe" if is_windows else ""
 _launcher_exe_name = FROZEN_TARGETS["Launcher"] + _exe_suffix
