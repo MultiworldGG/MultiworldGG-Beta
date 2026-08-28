@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-cx_Freeze setup script for MultiWorldGG
+cx_Freeze setup script for MultiworldGG
 """
 
 import os
@@ -165,34 +165,34 @@ _launcher_debug_exe_name = FROZEN_TARGETS["Launcher"] + "Debug" + _exe_suffix
 executables = [
     Executable(
         script="MultiWorld.py",
-        target_name="MultiWorldGG.exe" if is_windows else "MultiWorldGG",
+        target_name="MultiworldGG.exe" if is_windows else "MultiworldGG",
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base="gui" if is_windows else None,
-        shortcut_name="MultiWorldGG",
+        shortcut_name="MultiworldGG",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="MultiServer.py", 
-        target_name="MultiWorldGGServer.exe" if is_windows else "MultiWorldGGServer",
+        target_name="MultiworldGGServer.exe" if is_windows else "MultiworldGGServer",
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGServer",
+        shortcut_name="MultiworldGGServer",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="Generate.py",
-        target_name="MultiWorldGGGenerate.exe" if is_windows else "MultiWorldGGGenerate", 
+        target_name="MultiworldGGGenerate.exe" if is_windows else "MultiworldGGGenerate", 
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGGenerate",
+        shortcut_name="MultiworldGGGenerate",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="Patch.py",
-        target_name="MultiWorldGGPatch.exe" if is_windows else "MultiWorldGGPatch",
+        target_name="MultiworldGGPatch.exe" if is_windows else "MultiworldGGPatch",
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGPatch",
+        shortcut_name="MultiworldGGPatch",
         shortcut_dir="DesktopFolder"
     ),
     # Standalone Launcher: stays open, spawning everything else as separate
@@ -212,10 +212,10 @@ if is_windows:
     executables.append(
         Executable(
             script="MultiWorld.py",
-            target_name="MultiWorldGGClientDebug.exe",
+            target_name="MultiworldGGClientDebug.exe",
             icon="data/icon.ico",
             base=None,  # Console version for debugging
-            shortcut_name="MultiWorldGGClient Debug",
+            shortcut_name="MultiworldGGClient Debug",
             shortcut_dir="DesktopFolder"
         )
     )

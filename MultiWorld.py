@@ -98,11 +98,11 @@ os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 
 def make_arg_parser() -> ArgumentParser:
-    """Build the MultiWorldGG argument parser.
+    """Build the MultiworldGG argument parser.
 
     The optional positional is what OS file associations and the
     archipelago://-style URL protocols hand us: every registered suffix and
-    protocol points at `MultiWorldGG.exe "%1"`."""
+    protocol points at `MultiworldGG.exe "%1"`."""
     parser = ArgumentParser()
     parser.add_argument("launch_file", type=str, default=None, nargs="?", metavar="PATCH_FILE|URL",
                         help="A patch file to route to its game's client (OS file-association double-click), "

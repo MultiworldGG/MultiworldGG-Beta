@@ -99,7 +99,7 @@ def _skip_all_installs() -> bool:
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
 _skip_update = bool(
-    (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG")
+    (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiworldGG")
     or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
     or _skip_all_installs()
 )

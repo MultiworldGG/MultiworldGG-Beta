@@ -48,15 +48,14 @@ jobs:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
             exe_pattern: '*.exe'
-          # exe_pattern is not consumed yet. MultiWorldGG (capital W) is the
-          # client exe; MultiworldGGLauncher* keeps the lowercase w (see
-          # BaseUtils.FROZEN_TARGETS).
+          # exe_pattern is not consumed yet. Every exe shares the MultiworldGG
+          # prefix (BaseUtils.FROZEN_TARGETS, matching upstream instance_name).
           - os: ubuntu-latest
             artifact_name: linux-exe
-            exe_pattern: 'MultiWorldGG'
+            exe_pattern: 'MultiworldGG'
           - os: macos-latest
             artifact_name: macos-exe
-            exe_pattern: 'MultiWorldGG'
+            exe_pattern: 'MultiworldGG'
     
     steps:
       - uses: actions/checkout@v6
@@ -221,10 +220,9 @@ jobs:
           exe_dir=$(echo exe.*/)
           exe_dir="${exe_dir%/}"
           release_name="MultiworldGG-${APP_VERSION}-linux-x86_64"
-          # Chmod both the capital-W exes and the lowercase-w MultiworldGGLauncher*
-          # (BaseUtils.FROZEN_TARGETS) plus the bundled uv; a masked wrong-case
-          # chmod once shipped non-executable binaries.
-          chmod -c 755 "${exe_dir}"/MultiWorldGG* "${exe_dir}"/MultiworldGGLauncher* "${exe_dir}"/uv*
+          # Chmod every exe (uniform MultiworldGG prefix) plus the bundled uv;
+          # a masked wrong-case chmod once shipped non-executable binaries.
+          chmod -c 755 "${exe_dir}"/MultiworldGG* "${exe_dir}"/uv*
           mv "${exe_dir}" "${release_name}"
           tar -czvf "${release_name}.tar.gz" "${release_name}"
           mkdir -p ../dist

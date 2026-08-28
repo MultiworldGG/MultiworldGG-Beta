@@ -748,7 +748,7 @@ def test_resolve_client_route_component_defaults_to_none(monkeypatch):
 # double-click or CLI positional) must launch the right game client with
 # it. Guards the pieces the flow is built from: the optional positional
 # file/URL on MultiWorld's parser (installer file associations point at
-# `MultiWorldGG.exe "%1"`, once an unrecognized argument / SystemExit 2),
+# `MultiworldGG.exe "%1"`, once an unrecognized argument / SystemExit 2),
 # Utils.read_patch_game_name (root archipelago.json, no world imports),
 # Utils._client_launch_argv (positional patch file first, then
 # --connect/--name), and LauncherComponents.identify/get_exe routing of
@@ -896,8 +896,8 @@ def test_get_exe_resolves_literal_frozen_names_when_frozen(monkeypatch):
     host = next(c for c in components if c.display_name == "Host")
     generate = next(c for c in components if c.display_name == "Generate")
 
-    assert get_exe(host) == [lc.local_path("MultiWorldGGServer.exe")]
-    assert get_exe(generate) == [lc.local_path("MultiWorldGGGenerate.exe")]
+    assert get_exe(host) == [lc.local_path("MultiworldGGServer.exe")]
+    assert get_exe(generate) == [lc.local_path("MultiworldGGGenerate.exe")]
 
 
 # --------------------------------------------------------------------------- #
@@ -964,6 +964,13 @@ _KNOWN_STALE_NAMES = {
     "MultiworldGGBizHawkClient",
     "MultiworldGGSNIClient",
     "ArchipelagoBizHawkClient",
+    # pre-2026-08 capital-W names, retired when every exe took the
+    # MultiworldGG prefix (upstream instance_name convention)
+    "MultiWorldGG",
+    "MultiWorldGGServer",
+    "MultiWorldGGGenerate",
+    "MultiWorldGGPatch",
+    "MultiWorldGGClientDebug",
 }
 
 def _known_built_exe_names() -> set[str]:

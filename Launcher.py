@@ -6,7 +6,7 @@ Built as MultiworldGGLauncher(.exe). Dispatch, in order:
    this entry point headless on Linux, so nothing that pulls in Kivy (or
    MultiWorld, worlds.*) may load for --version.
 2. --frontend=tui is rejected: the process split is GUI-only; the terminal
-   client lives in the client entry point (MultiWorldGG --frontend=tui).
+   client lives in the client entry point (MultiworldGG --frontend=tui).
 3. A positional matching a launcher component (display_name or script_name,
    e.g. "Text Client") runs that component headless, then waits for anything
    it spawned via multiprocessing before exiting.

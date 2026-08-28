@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for MultiWorldGG executables using cx_Freeze
+Build script for MultiworldGG executables using cx_Freeze
 """
 
 import os
@@ -460,7 +460,7 @@ def verify_build_output() -> bool:
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Build MultiWorldGG executables")
+    parser = argparse.ArgumentParser(description="Build MultiworldGG executables")
     parser.add_argument("--clean", action="store_true", help="Clean build directory before building")
     parser.add_argument("--skip-requirements", action="store_true", help="Skip requirements installation")
     parser.add_argument("--skip-wheels", action="store_true", help="Skip wheel installation")
@@ -470,7 +470,7 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.logger_level)
 
-    logger.info("MultiWorldGG Build Script")
+    logger.info("MultiworldGG Build Script")
     logger.info("=" * 50)
     # Change to src directory
     os.chdir(Path(__file__).parent)

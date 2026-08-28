@@ -107,12 +107,12 @@ archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
 # from instance_name: application.yaml's app_name overrides it at runtime and
 # silently breaks exe resolution in non-default channels.
 FROZEN_TARGETS = {
-    "MultiWorld": "MultiWorldGG",
-    "MultiServer": "MultiWorldGGServer",
-    "Generate": "MultiWorldGGGenerate",
-    "Patch": "MultiWorldGGPatch",
-    "MultiWorldDebug": "MultiWorldGGClientDebug",
-    "Launcher": "MultiworldGGLauncher",  # deliberate lowercase-w, matches old-live leftover naming
+    "MultiWorld": "MultiworldGG",
+    "MultiServer": "MultiworldGGServer",
+    "Generate": "MultiworldGGGenerate",
+    "Patch": "MultiworldGGPatch",
+    "MultiWorldDebug": "MultiworldGGClientDebug",
+    "Launcher": "MultiworldGGLauncher",
 }
 
 _default_version = __version__
@@ -629,7 +629,7 @@ def get_client_exe() -> list[str]:
     """Resolve the command line that launches the beta's single client entry point.
 
     Centralizes exe-name resolution (frozen name vs source script) so callers
-    never hardcode "MultiWorldGG(.exe)" themselves."""
+    never hardcode "MultiworldGG(.exe)" themselves."""
     if is_frozen():
         suffix = ".exe" if is_windows else ""
         return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]

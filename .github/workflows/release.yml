@@ -51,15 +51,14 @@ jobs:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
             exe_pattern: '*.exe'
-          # exe_pattern is not consumed yet. MultiWorldGG (capital W) is the
-          # client exe; MultiworldGGLauncher* keeps the lowercase w (see
-          # BaseUtils.FROZEN_TARGETS).
+          # exe_pattern is not consumed yet. Every exe shares the MultiworldGG
+          # prefix (BaseUtils.FROZEN_TARGETS, matching upstream instance_name).
           - os: ubuntu-latest
             artifact_name: linux-exe
-            exe_pattern: 'MultiWorldGG'
+            exe_pattern: 'MultiworldGG'
           - os: macos-latest
             artifact_name: macos-exe
-            exe_pattern: 'MultiWorldGG'
+            exe_pattern: 'MultiworldGG'
     
     steps:
       - uses: actions/checkout@v6
@@ -164,8 +163,8 @@ jobs:
         with:
           subject-path: |
             build/exe.*/MultiworldGGLauncher*
-            build/exe.*/MultiWorldGGGenerate*
-            build/exe.*/MultiWorldGGServer*
+            build/exe.*/MultiworldGGGenerate*
+            build/exe.*/MultiworldGGServer*
       
       - name: Upload executable artifact
         uses: actions/upload-artifact@v7
@@ -407,8 +406,8 @@ jobs:
         with:
           subject-path: |
             build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGLauncher
-            build/${{ env.MACOS_APP }}/Contents/MacOS/MultiWorldGGGenerate
-            build/${{ env.MACOS_APP }}/Contents/MacOS/MultiWorldGGServer
+            build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGGenerate
+            build/${{ env.MACOS_APP }}/Contents/MacOS/MultiworldGGServer
       
       - name: Build macOS DMG
         run: |
