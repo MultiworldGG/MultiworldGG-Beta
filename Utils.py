@@ -390,7 +390,8 @@ def read_patch_game_name(patch_path: str) -> Optional[str]:
 def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
     """
     Returns the inner callable for custom worlds, or None if the wrapper doesn't match the
-    standard `launch_component(<X>, ...)` shape so that the client canh be launched in the same UI.
+    standard `launch_component(<X>, ...)` / `launch_subprocess(<X>, ...)` shape, so that the
+    client can be launched in the same UI.
     """
     import ast
     import inspect
@@ -416,7 +417,7 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
                 else call.func.attr if isinstance(call.func, ast.Attribute)
                 else None
             )
-            if callee_name in ("launch_component", "launch") and call.args:
+            if callee_name in ("launch_component", "launch", "launch_subprocess") and call.args:
                 if isinstance(call.args[0], ast.Name):
                     launch_arg = call.args[0].id
                     break

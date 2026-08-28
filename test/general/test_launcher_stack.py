@@ -17,7 +17,8 @@ import LauncherComponents as lc
 import MultiWorld
 import Utils
 from CommonClient import parse_connect_url, safe_avatar_source
-from LauncherComponents import Component, SuffixIdentifier, Type, components, get_exe, identify
+from LauncherComponents import (Component, SuffixIdentifier, Type, components, get_exe, identify,
+                                launch as launch_component, launch_subprocess)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -312,6 +313,39 @@ def test_splash_skipped_off_windows(monkeypatch):
     monkeypatch.setattr(MultiWorld, "is_windows", False)
     monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
     assert MultiWorld.should_show_splash("gui") is False
+
+
+# --- client component unwrapping (in-process launch) ---
+
+def _inner_launch(*args):
+    """Stands in for a world's Client.launch."""
+
+
+def _launch_subprocess_wrapper(*args):
+    launch_subprocess(_inner_launch, name="TestClient", args=args)
+
+
+def _launch_component_wrapper(*args):
+    launch_component(_inner_launch, name="TestClient", args=args)
+
+
+def _opaque_wrapper(*args):
+    print(_inner_launch)
+
+
+def test_unwrap_launch_subprocess_wrapper():
+    """Wheel worlds that ship the upstream launch_subprocess(<launch>) wrapper
+    must unwrap to the inner callable so the client launches in-process instead
+    of spawning a second GUI process."""
+    assert Utils._resolve_launch_from_custom_world(_launch_subprocess_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_launch_component_wrapper():
+    assert Utils._resolve_launch_from_custom_world(_launch_component_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_unrecognized_wrapper_returns_none():
+    assert Utils._resolve_launch_from_custom_world(_opaque_wrapper, "worlds.x") is None
 
 
 # --- Launcher.py dispatcher ---
