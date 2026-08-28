@@ -24,7 +24,7 @@ jobs:
     # Pin to a tag once gen-pymod-release cuts a release that includes this workflow.
     uses: MultiworldGG/gen-pymod-release/.github/workflows/build-changed-worlds.yml@main
     with:
-      base-ref: ${{ github.event.before || inputs.base-ref }}
+      base-ref: ${{ inputs.base-ref }}
       source-ref: ${{ github.sha }}
       dry-run: ${{ inputs.dry-run || false }}
       # GitHub App Client ID (Iv23...). Not sensitive; store as an Actions *variable*.
