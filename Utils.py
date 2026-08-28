@@ -78,7 +78,7 @@ def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
     A ``game`` entry can be a plain string, a list of names, or a
     ``{name: weight}`` weighted mapping. The actual game is chosen later in
     Generate.roll_settings via get_choice(), so every candidate world must be
-    queued here — the pick isn't known yet. Mirror get_choice's weight
+    queued here - the pick isn't known yet. Mirror get_choice's weight
     handling: a weighted name is a candidate only when its weight is positive
     (non-positive weights can never be selected), while list/string forms have
     no weights and contribute every name. Order-preserving and deduplicated.
@@ -146,7 +146,6 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
             _worlds_to_install.pop(game)
         except KeyError:
-            # Game not found in index
             update_logger.warning(f"Game {game} not found in game index, looking for unlisted world.")
             _unknown_worlds.append(game)
             return
@@ -185,9 +184,8 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     if _worlds_to_install:
         modules_to_install = [module for module in _worlds_to_install.values() if module]
         custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
-        # install_worlds returns slugs that fell back to a custom apworld; pick up the
-        # ones that actually pip-installed by checking importlib.metadata directly so
-        # the loader sees them.
+        # install_worlds returns slugs that fell back to a custom apworld; check
+        # importlib.metadata directly for the ones that pip-installed so the loader sees them.
         for slug in modules_to_install:
             target = f"worlds.{slug}"
             if target in _worlds_to_load:
@@ -223,10 +221,8 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
 
             if manifest.get("game") in _unknown_worlds:
                 _worlds_to_load.append(apworld)
-                # Seed the in-memory GameIndex so subsequent get_module_for_game()
-                # lookups (notably in Generate.roll_settings) can resolve this game
-                # to its custom apworld module without waiting for
-                # get_available_worlds() to scan custom_worlds_dir again.
+                # Seed the in-memory GameIndex so get_module_for_game() lookups (notably
+                # Generate.roll_settings) resolve without re-scanning custom_worlds_dir.
                 if not GameIndex.get_game_name_for_module(file.stem):
                     index_entry = dict(manifest)
                     index_entry["game_name"] = manifest["game"]
@@ -239,7 +235,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
                 installed_version = tuplize_version(_installed_versions[file.stem])
                 if apworld_version > installed_version:
-                    # apworld wins — replace the installed-wheel entry with the apworld
+                    # apworld wins: replace the installed-wheel entry with the apworld
                     target = f"worlds.{file.stem}"
                     try:
                         _worlds_to_load.remove(target)
@@ -248,10 +244,8 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                     _worlds_to_load.append(apworld)
                 # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
 
-    # Compute the set of game names that _worlds_to_load can actually serve. Mirrors
-    # what the loader will see: a `worlds.<slug>` entry serves whatever game the
-    # installed wheel's summary advertises, and an APWorldContainer serves its
-    # manifest .game.
+    # Game names _worlds_to_load can actually serve, as the loader will see it: a wheel
+    # serves the game its summary advertises, an APWorldContainer its manifest .game.
     index_slug_to_name = {slug: name for name, slug in GameIndex.game_names.items()}
     served_games: set[str] = set()
     for entry in _worlds_to_load:
@@ -296,9 +290,8 @@ def get_available_worlds() -> typing.List[str]:
     from ModuleUpdate import find_world_modules
     
     available_worlds = find_world_modules()
-    # Register worlds from the custom_worlds directory so they show up in the
-    # index and as selectable. register_custom_worlds() skips non-world files
-    # (README.txt, etc.) and never lets one bad file abort the whole scan.
+    # Register custom_worlds entries so they are indexed and selectable; skips
+    # non-world files and never lets one bad file abort the scan.
     available_worlds.update(register_custom_worlds())
     return list(sorted(available_worlds))
 
@@ -333,7 +326,7 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     """Register a single custom world's manifest in the in-memory GameIndex and
     return its module name. Returns None for anything that isn't a recognized
     world archive (e.g. a README.txt), so callers can scan a directory without
-    tripping over stray files. No Python import happens — only the zip manifest
+    tripping over stray files. No Python import happens - only the zip manifest
     is read."""
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
@@ -353,11 +346,8 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             metadata["game_name"] = metadata.pop("game", module_name)
             metadata["cover_url"] = metadata.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (built index or a previous
-                # call this run). The custom manifest stays authoritative for its
-                # declared components: a dropped-in archive surfaces its tools
-                # even when it shadows an indexed slug, and a replaced file
-                # refreshes them on the next scan.
+                # Already indexed; the custom manifest stays authoritative for its declared
+                # components, so a shadowing or replaced file still refreshes them.
                 if "components" in metadata:
                     GameIndex.get_game(module_name)["components"] = metadata["components"]
                 return module_name
@@ -370,11 +360,8 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (built index or a previous
-                # call this run). The custom manifest stays authoritative for its
-                # declared components: a dropped-in apworld surfaces its tools
-                # even when it shadows an indexed slug, and a replaced file
-                # refreshes them on the next scan.
+                # Already indexed; the custom manifest stays authoritative for its declared
+                # components, so a shadowing or replaced file still refreshes them.
                 if "components" in manifest:
                     GameIndex.get_game(module_name)["components"] = manifest["components"]
                 return module_name
@@ -488,13 +475,11 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
     import threading
     import asyncio
 
-    # No game selected -> fall straight through to Text Client (CommonClient).
-    # _perform_module_launch("") skips the specialized-client gate and lands at
-    # the main_textclient fallback below.
+    # No game selected: _perform_module_launch("") skips the specialized-client
+    # gate and lands at the main_textclient fallback.
     if not module_name:
         return _perform_module_launch("", **kwargs)
 
-    # First, try to import the module to see if it exists
     if not module_name.startswith("worlds."):
         module_name = f"worlds.{module_name}"
 
@@ -505,10 +490,8 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         try:
             custom_fallbacks = ModuleUpdate.install_worlds([module_name])
             if custom_fallbacks:
-                # install_worlds() extracted these apworlds into the venv worlds
-                # dir, so importlib.import_module(worlds.<slug>) now works via the
-                # normal file loader. Just register them with the live GameIndex
-                # so launcher lookups (game_name -> module) resolve cleanly.
+                # install_worlds() extracted these apworlds into the venv worlds dir (normal
+                # import now works); register them so game_name -> module lookups resolve.
                 custom_worlds_dir = ModuleUpdate.custom_worlds_dir
                 for target in custom_fallbacks:
                     slug = target.removeprefix("worlds.")
@@ -523,7 +506,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 
         except Exception as e:
             update_logger.error(f"Failed to update module {module_name}: {str(e)}")
-            # Schedule error handling on main thread
             loop.call_soon_threadsafe(_handle_install_error, str(e))
 
     def _launch_module_after_install():
@@ -536,7 +518,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 
     def _handle_install_error(error):
         """Handle installation errors on the main thread"""
-        # Get error callback from kwargs if provided
         error_callback = kwargs.get('error_callback')
         if error_callback:
             error_callback()
@@ -544,10 +525,8 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 
     try:
         importlib.import_module(module_name)
-        # Module exists, launch directly
         _perform_module_launch(module_name, **kwargs)
     except ModuleNotFoundError:
-        # Module doesn't exist, install it in a separate thread
         update_logger.info(f"Module {module_name} not found, installing in background...")
         install_thread = threading.Thread(target=_install_module_threaded, daemon=True)
         install_thread.start()
@@ -650,10 +629,8 @@ def _defer_cli_launch(launch_function, label: str, server_address,
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
-        # Per-world launch() bodies are CLI-style and call asyncio.run(main()).
-        # Without nest_asyncio that raises "cannot be called from a running
-        # event loop" because the launcher's asyncio loop is already running
-        # on this thread.
+        # Per-world launch() bodies call asyncio.run(main()); without nest_asyncio that
+        # raises "cannot be called from a running event loop" under the launcher's loop.
         import nest_asyncio
         nest_asyncio.apply()
 
@@ -684,20 +661,12 @@ def _perform_module_launch(module_id: str, **kwargs):
                 _restart_client_with_args()
                 return None
 
-            # Resolve a client launch function from two sources:
-            #   1. importlib.metadata entry_points (group="mwgg.client") -- this
-            #      is what pip-installed world wheels register via
-            #      [project.entry-points."mwgg.client"] in their pyproject.toml.
-            #   2. worlds.LauncherComponents.components -- this is what worlds
-            #      register at import time via components.append(Component(...)).
-            #      Apworlds loaded via zipimport have no dist-info, so they only
-            #      ever show up in (2). Match by func.__module__ so we pick the
-            #      Component that lives in the just-imported module.
+            # Client launch fn comes from entry_points (group="mwgg.client", pip-installed wheels)
+            # or LauncherComponents.components (zipimported apworlds lack dist-info; match by func.__module__).
             launch_function = None
             if component_name:
-                # A named component (spawn_client(component=...) / --component)
-                # narrows the scan below to one display_name; unknown names
-                # fall through to default resolution rather than dying.
+                # A named component narrows the scan to one display_name; unknown
+                # names fall through to default resolution rather than dying.
                 launch_function = _resolve_named_client_component(module_id, component_name)
             if launch_function is None:
                 entry_points = importlib.metadata.entry_points(group="mwgg.client")
@@ -728,13 +697,8 @@ def _perform_module_launch(module_id: str, **kwargs):
                     pass
 
             if launch_function is not None:
-                # When the launcher's Universal Tracker checkbox is set
-                # alongside a game module, ask the next CommonContext to
-                # attach the tracker overlay during its __init__. Only set
-                # this on the game-module path -- the standalone tracker
-                # fallback (below) constructs TrackerGameContext, which
-                # owns its own tracker_core and would get a duplicate from
-                # the wrap during super().__init__.
+                # UT checkbox + game module: have the next CommonContext attach the tracker overlay
+                # in __init__. Game-module path only; TrackerGameContext below owns its own tracker_core.
                 if client_type == "universal_tracker":
                     CommonClient._set_pending_tracker_attach(True)
                 _defer_cli_launch(
@@ -796,10 +760,8 @@ def _perform_module_launch(module_id: str, **kwargs):
 
     except Exception as e:
         logging.error(f"Failed to launch module {module_id}: {e}")
-        # Fallback for the case where the world's launch() raised before any
-        # CommonContext was constructed. If a context was built, it consumed
-        # the pending dict and the context's own one-shot fired the callback
-        # from _takeover_existing_ui's except arm — we don't double-fire here.
+        # Fallback for launch() raising before any CommonContext existed; a built context
+        # consumed the pending dict and fired its own one-shot, so we don't double-fire.
         _, pending_error_callback = CommonClient._consume_pending_launch_callbacks()
         if pending_error_callback is not None:
             try:
@@ -813,19 +775,16 @@ def exit_restart_for_update():
     Spawn a new process with the same arguments, then exit.
     The new process will have its splashscreen apply the updates.
     """
-    # Spawn new process with same executable and arguments
     subprocess.Popen([sys.executable] + sys.argv,
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
 
     logger.info("Exiting current process...")
 
-    # Flush all logging handlers to ensure messages are displayed
     for handler in logging.root.handlers:
         handler.flush()
 
-    # Use sys.exit with code 10 to signal "bad environment" - needs restart
-    # This allows the calling process to handle the restart properly
+    # Exit code 10 signals "bad environment" so the caller restarts us.
     sys.exit(10)
 
 
@@ -1156,7 +1115,6 @@ def persistent_load() -> dict[str, dict[str, Any]]:
                 logging.debug("Removed old datapackage from persistent storage")
         except Exception as e:
             logger.warning(f"Could not read persistent storage (file may be corrupted): {e}")
-            # Attempt to backup the corrupted file
             try:
                 import shutil
                 backup_path = path + ".corrupted"

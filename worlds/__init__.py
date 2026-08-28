@@ -15,9 +15,8 @@ from pathlib import Path
 
 # Some imports are "unnecessary", but they may be imported by random world modules.
 
-# Extend __path__ to include python installed worlds for namespace package behavior.
-# Keep in lockstep with Utils._worlds_search_paths, which mirrors these dirs to
-# probe for worlds without importing this package.
+# Extend __path__ with the installed-worlds dir (namespace package behavior). Keep in
+# lockstep with Utils._worlds_search_paths, which probes these dirs without importing this package.
 local_folder = Path(__file__).parent
 user_folder = None
 
@@ -56,7 +55,6 @@ class WorldSource:
         try:
             start = time.perf_counter()
             if isinstance(self.game_module, str):
-                # Load the world class from the entry point
                 self.game = self.game_module
                 world_class = importlib.import_module(self.game_module)
                 
@@ -70,8 +68,7 @@ class WorldSource:
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 raise
             # A single world failing can still mean enough is working for the user, log and carry on.
-            # Catches BaseException so C-extension panics (e.g. pyo3_runtime.PanicException) don't
-            # bring the whole process down.
+            # BaseException: C-extension panics (e.g. pyo3_runtime.PanicException) must not kill the process.
             logging.warning(f"Could not load world {self}: {type(e).__name__}: {e}")
             logging.debug("Full traceback for %s:", self, exc_info=True)
             if isinstance(self.game_module, str):

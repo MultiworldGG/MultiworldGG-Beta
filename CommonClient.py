@@ -15,13 +15,8 @@ import websockets
 from websockets.protocol import State
 from websockets.asyncio.connection import Connection
 
-# World clients written against websockets 13.x (shipped MWGG) check liveness via
-# the legacy `socket.closed` / `socket.open` attributes, which the websockets 14+
-# asyncio Connection removed. Restore them as State-backed properties with the
-# legacy semantics (both are False while opening/closing) so those clients run
-# unmodified against the bundled websockets 16. Each offending call site gets one
-# deprecation warning in the client log (not one per access -- these checks sit
-# in per-package and watcher loops) so world authors can find and migrate it.
+# websockets 14+ removed Connection.closed/.open; restore them as State-backed properties
+# for world clients written against the shipped 13.x. One deprecation warning per call site.
 _legacy_socket_attr_sites: typing.Set[typing.Tuple[str, int, str]] = set()
 
 
@@ -363,9 +358,7 @@ class InitContext:
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
     all_players_chat: bool = True
     """If False only your own server chatter (items, locations, hints) will be shown in the console."""
-    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
-    # Kind of hate python typechecking sometimes.
-    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    # Frontend-neutral handles (Kivy MessageBox, Textual ModalScreen, or None); not importable here, hence Any.
     _messagebox: typing.Any = None
     """Current message box through Gui"""
     _messagebox_connection_loss: typing.Any = None
@@ -638,9 +631,7 @@ class CommonContext(InitContext):
     """Time of last activity, used to track elapsed time"""
     _shared_activity_time: float | None
     """Time of all players' last activity, used to track elapsed time"""
-    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
-    # Kind of hate python typechecking sometimes.
-    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    # Frontend-neutral handles (Kivy MessageBox, Textual ModalScreen, or None); not importable here, hence Any.
     _messagebox: typing.Any = None
     """Current message box through UI"""
     _messagebox_connection_loss: typing.Any = None
@@ -718,16 +709,12 @@ class CommonContext(InitContext):
         self._ready_callback = _make_one_shot(ready_cb)
         self._error_callback = _make_one_shot(error_cb)
 
-        # Overlay-feature registry. Phase-1 attach hooks (e.g. the Universal
-        # Tracker overlay) register a Phase-2 activator here; ExtrasBuilder
-        # iterates this list after the per-game UI is wired up.
+        # Overlay-feature registry: phase-1 attach hooks register a phase-2 activator
+        # here; ExtrasBuilder runs them after the per-game UI is wired up.
         self.client = Client()
 
-        # Universal Tracker overlay: opt-in attach when the launcher set
-        # client_type='universal_tracker' alongside a game module. Runs before
-        # server_task is scheduled by the world's launch(), so the on_package
-        # patch is in place before any Connected packet can arrive. Guarded so
-        # a tracker import failure cannot kill the game client.
+        # Universal Tracker opt-in (client_type='universal_tracker'). Runs before the world's
+        # launch() schedules server_task, so on_package is patched before any Connected packet.
         if _consume_pending_tracker_attach():
             try:
                 from worlds.tracker.wrap import attach_tracker_overlay
@@ -767,27 +754,22 @@ class CommonContext(InitContext):
         app = getattr(resolve_frontend_class(), "_active_instance", None)
         existing_ctx = app.ctx
 
-        # Mark transition state
         existing_ctx._is_transitioning = True
         self._is_transitioning = True
 
         try:
-            # Preserve exit_event from existing context
             self.exit_event = existing_ctx.exit_event
 
-            # Preserve UI references from existing context
             if hasattr(existing_ctx, 'ui'):
                 self.ui = existing_ctx.ui
             if hasattr(existing_ctx, 'ui_task'):
                 self.ui_task = existing_ctx.ui_task
 
-            # Create game client builder with existing context
             game_client = GameClient(self, {
                 "ui_task": self.ui_task,
                 "ui": self.ui
             })
 
-            # Update app reference to new context
             app.ctx = self
 
             # Notify the frontend that its `ctx` has been reassigned, so it can rebuild
@@ -795,11 +777,9 @@ class CommonContext(InitContext):
             if ctx_swap_hook is not None:
                 ctx_swap_hook()
 
-            # Update state
             self._state = ClientState.GAME
             self._current_client = game_client
 
-            # Build new client features
             await game_client.build()
 
             # The world's UI is now in front of the user. Signal the launcher.
@@ -1083,13 +1063,12 @@ class CommonContext(InitContext):
         # Set exit event first so keep_alive can exit naturally
         self.exit_event.set()
         
-        # Cancel keep_alive task if it's still running
         if self.keep_alive_task and not self.keep_alive_task.done():
             self.keep_alive_task.cancel()
             try:
                 await self.keep_alive_task
             except asyncio.CancelledError:
-                pass  # Expected when task is cancelled
+                pass
         
         if self.ui_task:
             await self.ui_task
@@ -1372,23 +1351,19 @@ class CommonContext(InitContext):
         else:
             logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
 
-        # Hide loading screen if it exists
         if self.ui:
             self.ui.hide_loading()
      
         error_msg = ""
-        # Provide helpful guidance for retrying connection
         if self.server_address:
             error_msg = f"To retry the connection, use: /connect {self.server_address}"
         else:
             error_msg = "To retry the connection, use: /connect <server_address:port>"
         
-        # Show error message box using MDDialog
         if self.ui:
             error_text = str(exc_info[1]) if exc_info[1] else msg
             self._messagebox_connection_loss = self.gui_error("Connection Error", error_text + "\n" + msg)
         else:
-            # Fallback to old method if no UI
             self.error(msg, exc_info[1])
 
     def make_gui(self) -> "type[FrontendProtocol]":
@@ -1408,10 +1383,8 @@ class CommonContext(InitContext):
         return resolve_frontend_class()
 
     def run_cli(self):
-        # Under the Textual TUI, the TUI owns stdin (raw mode) and already routes typed
-        # commands through ctx.command_processor via mwgg_tui.app.MultiTUIApp. Starting our
-        # own console_loop would duplicate that routing AND deadlock the asyncio loop,
-        # because rich.Console.input() is a synchronous blocking read on stdin.
+        # The Textual TUI owns stdin and already routes commands through ctx.command_processor;
+        # a second console_loop would duplicate that routing and deadlock the asyncio loop.
         if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
             return
 
@@ -1489,17 +1462,16 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
                 for msg in decode(data):
                     await process_server_cmd(ctx, msg)
         except asyncio.CancelledError:
-            # Expected when the task is cancelled during shutdown
             logger.info("Server loop cancelled during shutdown")
             raise
         except websockets.ConnectionClosed as e:
-            # Server went away mid-session (closed cleanly or dropped). Not a bug — no traceback.
+            # Server went away mid-session (closed cleanly or dropped). Not a bug - no traceback.
             logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
         except (ConnectionResetError, ConnectionAbortedError, asyncio.TimeoutError, OSError) as e:
-            # Transport-level disconnects. Not a bug — no traceback.
+            # Transport-level disconnects. Not a bug - no traceback.
             logger.info(f"Connection lost to multiworld server: {e.__class__.__name__}: {e}")
         except Exception as e:
-            # Genuinely unexpected — keep the traceback so we can debug.
+            # Genuinely unexpected - keep the traceback so we can debug.
             logger.warning(f"Error in server loop: {e}", exc_info=True)
         finally:
             logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
@@ -1804,10 +1776,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     try:
         ctx.on_package(cmd, args)
     except Exception:
-        # Per-world on_package overrides can raise (e.g. KeyError on a ctx attribute
-        # the framework hasn't populated yet). Outer server_loop catches it but logs at
-        # WARNING via a chain that a child logger with propagate=False could hide.
-        # Log here so the world-specific failure is always visible in the console.
+        # Per-world on_package overrides can raise; log here because the outer server_loop's
+        # WARNING goes through a chain a propagate=False child logger can hide.
         logger.exception(f"on_package failed for cmd={cmd!r}")
 
 
@@ -1871,9 +1841,8 @@ def handle_url_arg(args: "argparse.Namespace",
     return args
 
 
-#: Hosts whose avatar URLs the client is willing to store/render. Mirrors the
-#: desktop GUI's mwgg_gui.constants.TRUSTED_AVATAR_HOSTS so an avatar persisted
-#: from a launch URL is exactly what the client will accept on the render side.
+#: Hosts whose avatar URLs the client will store/render. Mirrors the desktop GUI's
+#: mwgg_gui.constants.TRUSTED_AVATAR_HOSTS.
 TRUSTED_AVATAR_HOSTS = ("multiworld.gg", "mw.prismativerse.com")
 
 
@@ -1969,7 +1938,6 @@ def launch_textclient(server_address: str = None):
         ctx = TextContext(server_address)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
-        # Try to takeover existing frontend UI (Kivy or TUI)
         if ctx._can_takeover_existing_ui():
             await ctx._takeover_existing_ui()
         else:
@@ -1987,7 +1955,6 @@ def launch_textclient(server_address: str = None):
 
     import colorama
 
-    # Check if we're already in an event loop (GUI mode)
     try:
         loop = asyncio.get_running_loop()
         logger.info("Running text client in existing event loop (GUI mode)")
@@ -2002,9 +1969,8 @@ def launch_textclient(server_address: str = None):
         return task
     except RuntimeError:
         logger.critical("This is not a standalone text client. Please run the MultiWorld GUI.")
-        # No CommonContext was constructed in this branch, so no _error_callback
-        # is reachable here; Utils._perform_module_launch will fire its pending
-        # callback fallback if this raises out.
+        # No CommonContext exists in this branch, so no _error_callback is reachable;
+        # Utils._perform_module_launch's pending-callback fallback fires if this raises out.
 
 def main_textclient(server_address: str):
     """Main entry point for integration with MultiWorld system"""
