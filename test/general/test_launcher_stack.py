@@ -443,8 +443,8 @@ def test_launcher_py_version_exits_zero_as_own_process():
 # Launcher component surface: FROZEN_TARGETS as the single source of truth
 # for built exe names, BaseUtils.spawn_client's argv/env/detach
 # construction, the builtin/other component-origin classification that keeps
-# builtin_components() trustworthy, and the worlds.LauncherComponents
-# re-export shim.
+# builtin_components() trustworthy, the install_apworld confirm gate, and the
+# worlds.LauncherComponents re-export shim.
 # --------------------------------------------------------------------------- #
 
 # --- FROZEN_TARGETS single source of truth ---
@@ -656,6 +656,109 @@ def test_yaml_type_is_not_manifest_declarable():
     assert "yaml" not in lc._MANIFEST_COMPONENT_TYPES
     assert lc._coerce_manifest_component(
         {"name": "Sneaky", "type": "yaml"}, "world.apworld") is None
+
+
+# --- install_apworld confirm gate / Utils.messagebox_confirm cascade ---
+
+def test_install_apworld_declines_without_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: False)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path))
+    boxes = []
+    monkeypatch.setattr(Utils, "messagebox", lambda *args, **kwargs: boxes.append((args, kwargs)))
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == []
+    assert boxes == []
+
+
+def test_install_apworld_proceeds_on_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: True)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_install_apworld_skips_native_confirm_when_kivy_running(monkeypatch):
+    # the GUI pre-confirms with its own dialog; a second native confirm would
+    # double-warn every GUI install
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: True)
+
+    def _fail_confirm(*args, **kwargs):
+        raise AssertionError("core confirm must not fire when the GUI pre-confirms")
+
+    monkeypatch.setattr(Utils, "messagebox_confirm", _fail_confirm)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_messagebox_confirm_auto_confirms_without_gui(monkeypatch):
+    monkeypatch.setattr(Utils, "gui_enabled", False)
+    assert Utils.messagebox_confirm("Title", "text") is True
+
+
+def test_messagebox_confirm_auto_confirms_under_kivy(monkeypatch, caplog):
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: True)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+def test_messagebox_confirm_textual_branch_beats_native_backends(monkeypatch, caplog):
+    # a running TUI must not fall through to a blocking native dialog
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: True)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+
+    class _Tripwire:
+        def __getattr__(self, name):
+            raise AssertionError("native dialog must not open under a running TUI")
+
+    monkeypatch.setattr(ctypes, "windll", _Tripwire(), raising=False)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+@pytest.mark.parametrize("box_result, expected", [(1, True), (2, False)])
+def test_messagebox_confirm_windows_okcancel(monkeypatch, box_result, expected):
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+    calls = {}
+
+    class _User32:
+        @staticmethod
+        def MessageBoxW(hwnd, text, title, style):
+            calls.update(text=text, title=title, style=style)
+            return box_result
+
+    class _WinDLL:
+        user32 = _User32()
+
+    monkeypatch.setattr(ctypes, "windll", _WinDLL(), raising=False)
+
+    assert Utils.messagebox_confirm("Install APWorld?", "body") is expected
+    assert calls["style"] == 0x31  # MB_OKCANCEL | MB_ICONWARNING
 
 
 # --- worlds.LauncherComponents re-export shim ---
@@ -894,108 +997,6 @@ def test_identify_routes_apworld_to_install_apworld():
     component = identify("some_world.apworld")
     assert component is not None
     assert component.display_name == "Install APWorld"
-
-
-def test_install_apworld_declines_without_confirm(monkeypatch):
-    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
-    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: False)
-    installed = []
-    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path))
-    boxes = []
-    monkeypatch.setattr(Utils, "messagebox", lambda *args, **kwargs: boxes.append((args, kwargs)))
-
-    lc.install_apworld("C:/downloads/some.apworld")
-
-    assert installed == []
-    assert boxes == []
-
-
-def test_install_apworld_proceeds_on_confirm(monkeypatch):
-    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
-    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: True)
-    installed = []
-    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
-
-    lc.install_apworld("C:/downloads/some.apworld")
-
-    assert installed == ["C:/downloads/some.apworld"]
-
-
-def test_install_apworld_skips_native_confirm_when_kivy_running(monkeypatch):
-    """The GUI pre-confirms with its own dialog; the core-side native confirm
-    firing too would double-warn every GUI install."""
-    monkeypatch.setattr(lc, "is_kivy_running", lambda: True)
-
-    def _fail_confirm(*args, **kwargs):
-        raise AssertionError("core confirm must not fire when the GUI pre-confirms")
-
-    monkeypatch.setattr(Utils, "messagebox_confirm", _fail_confirm)
-    installed = []
-    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
-
-    lc.install_apworld("C:/downloads/some.apworld")
-
-    assert installed == ["C:/downloads/some.apworld"]
-
-
-def test_messagebox_confirm_auto_confirms_without_gui(monkeypatch):
-    monkeypatch.setattr(Utils, "gui_enabled", False)
-    assert Utils.messagebox_confirm("Title", "text") is True
-
-
-def test_messagebox_confirm_auto_confirms_under_kivy(monkeypatch, caplog):
-    monkeypatch.setattr(Utils, "gui_enabled", True)
-    monkeypatch.setattr(Utils, "is_kivy_running", lambda: True)
-    with caplog.at_level(logging.WARNING):
-        assert Utils.messagebox_confirm("Title", "text") is True
-    assert any("pre-confirm" in record.message for record in caplog.records)
-
-
-def test_messagebox_confirm_textual_branch_beats_native_backends(monkeypatch, caplog):
-    """Under a running TUI the confirm must not fall through to a blocking
-    native dialog outside the terminal UI."""
-    import ctypes
-
-    monkeypatch.setattr(Utils, "gui_enabled", True)
-    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
-    monkeypatch.setattr(Utils, "is_textual_running", lambda: True)
-    monkeypatch.setattr(Utils, "is_linux", False)
-    monkeypatch.setattr(Utils, "is_windows", True)
-
-    class _Tripwire:
-        def __getattr__(self, name):
-            raise AssertionError("native dialog must not open under a running TUI")
-
-    monkeypatch.setattr(ctypes, "windll", _Tripwire(), raising=False)
-    with caplog.at_level(logging.WARNING):
-        assert Utils.messagebox_confirm("Title", "text") is True
-    assert any("pre-confirm" in record.message for record in caplog.records)
-
-
-@pytest.mark.parametrize("box_result, expected", [(1, True), (2, False)])
-def test_messagebox_confirm_windows_okcancel(monkeypatch, box_result, expected):
-    import ctypes
-
-    monkeypatch.setattr(Utils, "gui_enabled", True)
-    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
-    monkeypatch.setattr(Utils, "is_textual_running", lambda: False)
-    monkeypatch.setattr(Utils, "is_linux", False)
-    monkeypatch.setattr(Utils, "is_windows", True)
-    calls = {}
-
-    class _User32:
-        @staticmethod
-        def MessageBoxW(hwnd, text, title, style):
-            calls.update(text=text, title=title, style=style)
-            return box_result
-
-    class _WinDLL:
-        user32 = _User32()
-
-    monkeypatch.setattr(ctypes, "windll", _WinDLL(), raising=False)
-
-    assert Utils.messagebox_confirm("Install APWorld?", "body") is expected
-    assert calls["style"] == 0x31  # MB_OKCANCEL | MB_ICONWARNING
 
 
 def test_identify_world_registered_suffix():

@@ -128,8 +128,7 @@ class TestPlayersPath(unittest.TestCase):
         with TemporaryDirectory(prefix="AP_players_") as tempdir:
             target = os.path.join(tempdir, "Players")
             original = settings.generator.player_files_path
-            # Same monkeypatch shape as test/programs/test_generate.py:
-            # settings.Group's setattr needs the upcast to the APPathLib subclass.
+            # settings.Group's setattr needs the upcast to the APPathLib subclass
             settings.generator.player_files_path = settings.generator.PlayerFilesPath(target)
             settings._filename = None  # don't write to disk
             try:

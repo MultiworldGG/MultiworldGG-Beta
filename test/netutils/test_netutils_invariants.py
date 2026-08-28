@@ -214,7 +214,7 @@ class ItemClassTooltipLabelsTest(unittest.TestCase):
         self.assertLessEqual(set(ITEM_CLASS_TOOLTIP_LABELS), set(TEXT_COLORS))
 
     def test_labels_cover_exactly_the_item_class_colors(self) -> None:
-        # the allowlist is the six *_item_color entries — nothing shared with
+        # the allowlist is the six *_item_color entries -- nothing shared with
         # command echo, players, locations, or entrances
         item_colors = {name for name in TEXT_COLORS if name.endswith("_item_color")}
         self.assertEqual(set(ITEM_CLASS_TOOLTIP_LABELS), item_colors)

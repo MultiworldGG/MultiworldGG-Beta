@@ -528,12 +528,9 @@ class KivyRefJSONtoTextParser(KivyMarkupJSONtoTextParser):
         return super()._handle_text(node)
 
 
-# Labels for the six item-class colors, keyed by TEXT_COLORS name — the
-# MarkupTagsTheme.name() vocabulary with the trailing colon stripped. Consumed
-# by the console hover tooltip (GUI) to invert KivyMarkupJSONtoTextParser's
-# [color=hex] emission back into a human-readable item classification.
-# Deliberately excludes command_echo_color (unknown-flag items share it with
-# command/help text) and the player/location/entrance colors.
+# Console-hover tooltip labels, keyed by the six item-class TEXT_COLORS names.
+# Deliberately excludes command_echo_color (shared with command/help text) and
+# the player/location/entrance colors.
 ITEM_CLASS_TOOLTIP_LABELS: typing.Dict[str, str] = {
     "progression_goal_item_color": "Goal Item",
     "progression_item_color": "Required Item",
@@ -546,18 +543,11 @@ ITEM_CLASS_TOOLTIP_LABELS: typing.Dict[str, str] = {
 
 def find_enclosing_color_span(text: str, index: int, window: int = 4096
                               ) -> typing.Optional[typing.Tuple[int, int, str]]:
-    """Locate the ``[color=hex]…[/color]`` span of KivyMarkupJSONtoTextParser
-    output that encloses ``index``, scanning at most ``window`` characters to
-    either side.
-
-    Returns ``(start, end, hex)`` where start/end delimit the whole span
-    including both tag literals (end exclusive) and hex is the color value
-    with any leading ``#`` stripped; an index inside either tag literal counts
-    as inside the span. Returns None when the index sits between spans, out of
-    range, or the surrounding markup is malformed/unclosed within the window.
-    Exact only for the parser's escaped emissions; unescaped brackets (e.g.
-    player names) degrade to None or a containing span, never an exception.
-    """
+    """(start, end, hex) of the ``[color=hex]...[/color]`` span enclosing
+    ``index``, scanning at most ``window`` chars each way: tag literals count
+    as inside, end is exclusive, hex has no leading ``#``. None between spans,
+    out of range, or on malformed markup; unescaped brackets (player names)
+    degrade to None or a containing span, never an exception."""
     open_tag = "[color="
     close_tag = "[/color]"
     if index < 0 or index >= len(text):

@@ -808,8 +808,7 @@ else:
 
         @json_to_kivy_parser.setter
         def json_to_kivy_parser(self, parser: KivyJSONtoTextParser) -> None:
-            # On MAIN this was a plain instance attribute; world clients may
-            # assign a custom parser subclass, so the surface stays writable.
+            # world clients may assign a custom parser; keep the surface writable
             self._json_to_kivy_parser = parser
 
         def attach_live_app(self, app: App) -> None:

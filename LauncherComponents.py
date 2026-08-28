@@ -321,10 +321,8 @@ def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
 
 def install_apworld(path: str = "") -> None:
     import Utils
-    # GUI callers pre-confirm with their own dialog (is_kivy_running() is True
-    # there, so this gate must not double-warn); the native confirm covers the
-    # headless CLI and the double-clicked-.apworld routing that runs before the
-    # frontend boots.
+    # GUI callers pre-confirm with their own dialog; the native gate covers the
+    # headless CLI and .apworld routing that runs before the frontend boots.
     if not is_kivy_running() and not Utils.messagebox_confirm(
             "Install APWorld?",
             "APWorlds contain program code that runs on your computer when the world is loaded. "

@@ -969,10 +969,8 @@ def cache_path(*path: str) -> str:
 
 
 def players_path(*path: str) -> str:
-    """Returns path to a file in the player-files directory, as resolved by
-    settings (generator.player_files_path — the same dir Generate scans).
-    Deliberately uncached: get_settings() is called lazily on every use so the
-    first call doesn't happen at module import."""
+    """Path in the settings-resolved player-files dir (the dir Generate scans).
+    Deliberately uncached: get_settings() must never run at module import."""
     from settings import get_settings
     base = get_settings().generator.player_files_path
     os.makedirs(base, exist_ok=True)
@@ -1468,7 +1466,6 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
     if is_kivy_running():
         from mwgg_gui.components.dialog import MessageBox
-        # Positional third arg is the close callback, not is_error.
         MessageBox(title, text, is_error=error).open()
         return
 
@@ -1508,12 +1505,9 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
 
 def messagebox_confirm(title: str, text: str) -> bool:
-    """Blocking OK/Cancel confirm; returns True when the user confirms.
-
-    Mirrors messagebox's backend cascade, but a running frontend cannot block
-    the main thread on a dialog (Kivy and Textual dialogs are callback-based),
-    so those branches log and return True: GUI/TUI surfaces must pre-confirm
-    with their own dialog before calling into code gated on this."""
+    """Blocking OK/Cancel confirm; True when the user confirms. Kivy/Textual
+    dialogs are callback-based and can't block the main thread, so under a
+    running frontend this logs and returns True: the GUI/TUI must pre-confirm."""
     if not gui_enabled:
         logging.info(f"{title}: {text} (auto-confirmed: no GUI available)")
         return True
