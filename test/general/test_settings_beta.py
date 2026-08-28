@@ -1,12 +1,5 @@
-"""Settings must never import the `worlds` package or load a world.
+"""Beta settings tests (lazy world-settings resolution, Group.update coercion); add new settings tests here."""
 
-The former settings._update_cache() did `from worlds import AutoWorldRegister` on
-any unknown-key access, and Settings.dump() used it to force-import every world
-with a settings class. On user machines only the worlds being played may load;
-on the webhost an import before set_game_names finishes queueing truncates the
-catalog (worlds/__init__ is one-shot). Settings groups resolve passively against
-worlds already in sys.modules; sections of unloaded worlds round-trip as dicts.
-"""
 import io
 import json
 import os
@@ -15,11 +8,24 @@ import sys
 import textwrap
 import unittest
 from pathlib import Path
+from typing import Optional, Tuple
 
 import settings
-from settings import Group, Settings, _loaded_world_settings_names
+from settings import Group, ServerOptions, Settings, _loaded_world_settings_names
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+# --------------------------------------------------------------------------- #
+# Settings must never import the `worlds` package or load a world. The
+# former settings._update_cache() did `from worlds import
+# AutoWorldRegister` on any unknown-key access, and Settings.dump() used it
+# to force-import every world with a settings class. On user machines only
+# the worlds being played may load; on the webhost an import before
+# set_game_names finishes queueing truncates the catalog (worlds/__init__
+# is one-shot). Settings groups resolve passively against worlds already in
+# sys.modules; sections of unloaded worlds round-trip as dicts.
+# --------------------------------------------------------------------------- #
 
 CHILD = textwrap.dedent("""
     import io, json, sys
@@ -109,3 +115,73 @@ class TestLoadedWorldSettingsNames(unittest.TestCase):
         self.assertIn("totally_unloaded_world_options", text)
         self.assertIn("alpha: 1", text)
         self.assertIn("universal_tracker", text)
+
+
+# --------------------------------------------------------------------------- #
+# settings.Group.update value coercion and change tracking: the non-obvious
+# type-coercion branches (bool vs int, Optional/None, scalar upcast to the
+# declared type, list -> tuple/set) and the "key missing from the supplied
+# dict marks the Group as changed" semantics.
+# --------------------------------------------------------------------------- #
+
+class _Tup(Tuple[int, ...]):
+    """Bare tuple subclass so the annotation resolves to a real ``type``."""
+
+
+class TestGroupUpdateCoercion(unittest.TestCase):
+    def test_update_preserves_bool_for_bool_field(self) -> None:
+        class G(Group):
+            flag: bool = False
+
+        g = G()
+        g.update({"flag": True})
+        # not coerced to int, even though issubclass(int, bool) is True
+        self.assertIs(type(g.flag), bool)
+        self.assertIs(g.flag, True)
+
+    def test_update_assigns_none_for_optional(self) -> None:
+        class G(Group):
+            opt: Optional[int] = 7
+
+        g = G()
+        g.update({"opt": None})
+        self.assertIsNone(g.opt)
+
+    def test_update_upcasts_int_to_intenum(self) -> None:
+        class G(Group):
+            comp: ServerOptions.Compatibility = ServerOptions.Compatibility(2)
+
+        g = G()
+        g.update({"comp": 0})
+        self.assertIsInstance(g.comp, ServerOptions.Compatibility)
+        self.assertIs(g.comp, ServerOptions.Compatibility.OFF)
+
+    def test_update_converts_list_to_tuple_field(self) -> None:
+        class G(Group):
+            tup: _Tup = _Tup()
+
+        g = G()
+        g.update({"tup": [1, 2, 3]})
+        self.assertIsInstance(g.tup, _Tup)
+        self.assertEqual(g.tup, (1, 2, 3))
+
+
+class TestGroupUpdateChanged(unittest.TestCase):
+    def test_update_marks_changed_on_missing_key(self) -> None:
+        class G(Group):
+            a: int = 1
+            b: int = 2
+
+        g = G()
+        self.assertFalse(g.changed)
+        g.update({"a": 5})  # "b" absent from the supplied dict
+        self.assertTrue(g.changed)
+
+    def test_update_not_changed_when_all_keys_present(self) -> None:
+        class G(Group):
+            a: int = 1
+            b: int = 2
+
+        g = G()
+        g.update({"a": 5, "b": 6})
+        self.assertFalse(g.changed)

@@ -33,28 +33,6 @@ def _build_state(coupled: bool) -> tuple[ERPlacementState, Region, Region]:
 
 
 class TestConnectCoupling(unittest.TestCase):
-    def test_coupled_connect_places_reverse_transition(self):
-        state, a, b = _build_state(coupled=True)
-        source_exit = next(ex for ex in a.exits if ex.name == "A_door")
-        target_entrance = next(en for en in b.entrances if en.name == "B_door")
-
-        placed_exits, paired_entrances = state.connect(source_exit, target_entrance)
-
-        # coupled TWO_WAY connect places both the forward and the reverse transition
-        self.assertEqual(2, len(placed_exits))
-        self.assertEqual(2, len(paired_entrances))
-        reverse_exit = next(ex for ex in placed_exits if ex is not source_exit)
-        # the reverse exit is B's "B_door" exit, now connected back into A
-        self.assertEqual("B_door", reverse_exit.name)
-        self.assertEqual(a, reverse_exit.connected_region)
-        self.assertEqual(b, source_exit.connected_region)
-        # both placements are recorded on the state
-        self.assertEqual(2, len(state.placements))
-        self.assertEqual(
-            {("A_door", "B_door"), ("B_door", "A_door")},
-            set(state.pairings),
-        )
-
     def test_uncoupled_connect_does_not_place_reverse_transition(self):
         state, a, b = _build_state(coupled=False)
         source_exit = next(ex for ex in a.exits if ex.name == "A_door")

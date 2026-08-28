@@ -1,0 +1,169 @@
+"""Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins); add new client-compat tests here."""
+
+import os
+import subprocess
+import sys
+import unittest
+from types import SimpleNamespace
+
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.connection import Connection
+from websockets.protocol import State
+
+import CommonClient  # noqa: F401  importing it installs the compat properties
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+# --------------------------------------------------------------------------- #
+# World clients written against websockets 13.x (shipped MWGG) check
+# server liveness via the legacy `ctx.server.socket.closed` / `.open`
+# attributes (e.g. kh3's _is_ap_connected). The websockets 14+ asyncio
+# Connection removed both, so CommonClient restores them as State-backed
+# properties; these pin that compat surface and its legacy semantics (both
+# False while opening/closing).
+# --------------------------------------------------------------------------- #
+
+class TestWebsocketsLegacyCompat(unittest.TestCase):
+    def test_compat_properties_installed(self) -> None:
+        for name in ("closed", "open"):
+            with self.subTest(name=name):
+                self.assertIsInstance(getattr(Connection, name, None), property)
+
+    def test_client_connection_inherits_compat(self) -> None:
+        # The object world clients actually touch is ctx.server.socket, a
+        # ClientConnection returned by websockets.connect in server_loop.
+        for name in ("closed", "open"):
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(ClientConnection, name))
+
+    def test_closed_matches_legacy_semantics(self) -> None:
+        # legacy: closed is True only once fully CLOSED
+        for state, expected in ((State.CONNECTING, False), (State.OPEN, False),
+                                (State.CLOSING, False), (State.CLOSED, True)):
+            # subTest param must be a plain string: pytest-xdist ships subtest
+            # reports over execnet, which cannot serialize the State enum
+            with self.subTest(state=state.name):
+                stub = SimpleNamespace(state=state)
+                self.assertIs(Connection.closed.fget(stub), expected)
+
+    def test_open_matches_legacy_semantics(self) -> None:
+        # legacy: open is True only while fully OPEN
+        for state, expected in ((State.CONNECTING, False), (State.OPEN, True),
+                                (State.CLOSING, False), (State.CLOSED, False)):
+            with self.subTest(state=state.name):
+                stub = SimpleNamespace(state=state)
+                self.assertIs(Connection.open.fget(stub), expected)
+
+    def test_world_client_liveness_check_pattern(self) -> None:
+        # The exact expression kh3 uses: bool(server and socket and not socket.closed)
+        server = SimpleNamespace(socket=SimpleNamespace(state=State.OPEN))
+        server.socket.closed = Connection.closed.fget(server.socket)
+        self.assertTrue(bool(server and server.socket and not server.socket.closed))
+
+    def test_deprecation_warning_once_per_call_site(self) -> None:
+        # Accessing a legacy attribute surfaces a warning in the client log,
+        # but only once per call site -- these checks sit in per-package loops.
+        stub = SimpleNamespace(state=State.OPEN)
+        with self.assertLogs("Client", level="WARNING") as logs:
+            for _ in range(3):
+                Connection.closed.fget(stub)  # one call site, three accesses
+        records = [r for r in logs.output if "socket.closed" in r]
+        self.assertEqual(len(records), 1)
+        self.assertIn("Deprecated websockets API", records[0])
+        self.assertIn(__file__, records[0])  # points at the offending call site
+
+
+# --------------------------------------------------------------------------- #
+# kvui TUI branch: world clients that route all Kivy access through kvui
+# must be able to `from kvui import <kivy names>` under MWGG_FRONTEND=tui
+# WITHOUT importing Kivy (importing kivy.core.window would open a rogue
+# window over the Textual TUI). These run in a clean subprocess because
+# (a) the parent test process has no MWGG_FRONTEND set, so importing kvui
+# here would take the GUI branch and pull in kivymd, and (b) a fresh
+# interpreter is the only rigorous way to assert that importing kvui did
+# not drag Kivy into sys.modules.
+# --------------------------------------------------------------------------- #
+
+# Mirrors the unconditional first line of a kh3/kh2/albw-style run_gui() override.
+WORLD_CLIENT_IMPORT = (
+    "from kvui import (Clock, GameManager, HoverBehavior, MDBoxLayout, MDButton, "
+    "MDButtonText, MDGridLayout, MDIconButton, MDLabel, MDTextField, Window, dp)"
+)
+
+
+def _run_tui(script: str) -> subprocess.CompletedProcess:
+    env = {**os.environ, "MWGG_FRONTEND": "tui"}
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+    )
+
+
+class TestKvuiTuiStandins(unittest.TestCase):
+    def _assert_ok(self, script: str) -> None:
+        result = _run_tui(script + "\nprint('KVUI_TUI_OK')")
+        self.assertEqual(
+            result.returncode, 0,
+            msg=f"subprocess failed\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}",
+        )
+        self.assertIn("KVUI_TUI_OK", result.stdout)
+
+    def test_world_client_import_succeeds_without_kivy(self) -> None:
+        """The import that crashes today must succeed and pull in no Kivy."""
+        self._assert_ok(
+            WORLD_CLIENT_IMPORT + "\n"
+            "import sys; assert 'kivy' not in sys.modules, 'Kivy was imported'"
+        )
+
+    def test_dp_returns_its_argument(self) -> None:
+        self._assert_ok("from kvui import dp, sp\nassert dp(30) == 30 and sp(12) == 12")
+
+    def test_standins_support_inheritance_and_instantiation(self) -> None:
+        """Stand-ins are usable as base classes (incl. multiple inheritance) and
+        instantiable, with dp()/factory calls in the class body."""
+        self._assert_ok(
+            WORLD_CLIENT_IMPORT + "\n"
+            "from kvui import StringProperty\n"
+            "class Panel(MDBoxLayout): pass\n"
+            "class Hoverable(HoverBehavior, MDLabel):\n"
+            "    height = dp(30)\n"
+            "    color = StringProperty('')\n"
+            "assert Hoverable.height == 30\n"
+            "assert MDBoxLayout in Panel.__mro__\n"
+            "assert MDButton().anything is not None  # instance attr is inert, not error\n"
+        )
+
+    def test_game_manager_is_real_takeover_class(self) -> None:
+        """GameManager must stay a real class whose async_run drives the takeover;
+        its inert __getattr__ must not shadow that, and __init__ accepts extra args."""
+        self._assert_ok(
+            "import asyncio\n"
+            "from kvui import GameManager\n"
+            "class M(GameManager):\n"
+            "    def __init__(self, ctx): super().__init__(ctx, app=None)\n"
+            "class Ctx:\n"
+            "    took_over = False\n"
+            "    def _can_takeover_existing_ui(self): return True\n"
+            "    async def _takeover_existing_ui(self): self.took_over = True\n"
+            "ctx = Ctx()\n"
+            "m = M(ctx)\n"
+            "assert m.run() is None\n"
+            "asyncio.run(m.async_run())\n"
+            "assert ctx.took_over, 'async_run did not reach the takeover handshake'\n"
+        )
+
+    def test_catch_all_handles_unenumerated_names_but_not_dunders(self) -> None:
+        """Any non-dunder name resolves to a stable inert class; dunders still raise."""
+        self._assert_ok(
+            "import kvui\n"
+            "from kvui import SomeFutureCustomWidget as a\n"
+            "assert kvui.SomeFutureCustomWidget is a, 'stub identity not stable'\n"
+            "assert isinstance(a(), a)\n"
+            "raised = False\n"
+            "try:\n"
+            "    kvui.__not_a_real_dunder__\n"
+            "except AttributeError:\n"
+            "    raised = True\n"
+            "assert raised, 'catch-all manufactured a dunder'\n"
+        )
