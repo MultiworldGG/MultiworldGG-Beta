@@ -36,12 +36,9 @@ _LAUNCHER_ICON_CACHE_DIR = os.path.join(tempfile.gettempdir(), "mwgg_launcher_ic
 
 _BUILTIN_ATTRIBUTE = "_mwgg_builtin_component"
 
-# True while this module runs its own top-level registrations; flipped to False
-# at the end of the module. Components appended while True are the builtin
-# ("native") set, known before any world is imported. Everything registered
-# later (worlds at import time, runtime code) is non-builtin; which world or
-# install source a component came from is the installer/index's business, not
-# tracked here.
+# True while this module runs its own top-level registrations; flipped to False at
+# module end. Components appended while True are the builtin set, known before any
+# world is imported.
 _INITIALIZING_COMPONENTS = True
 
 
@@ -230,12 +227,8 @@ _launch_component = run_component  # deprecated alias
 def run_world_tool(module: str, tool_name: str, *args: str) -> None:
     """Install, import, and run a world-declared tool in this process.
 
-    World imports are safe here: only client processes must load worlds in a
-    prescribed order (their datapackage depends on it) -- the launcher's
-    datapackage is irrelevant, so an explicit, warned tool click may import
-    the world directly, the same way MAIN's launcher runs components.
-    Discovery (world_manifest_components) stays import-free; world code runs
-    only on this user action. MWGG_ROLE is held out of the environment for the
+    World imports are safe here: only client processes need the prescribed world
+    load order (datapackage). MWGG_ROLE is held out of the environment for the
     duration so a tool's child processes cannot inherit the launcher role.
 
     Raises on failure; GUI callers surface the error."""
@@ -276,13 +269,9 @@ def launch_textclient(*args):
 def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
     """Validate and copy an .apworld into custom_worlds/, registering its
     manifest so it's immediately selectable. Returns the installed path, or
-    None if the user cancelled the file picker.
-
-    Never imports the world's Python module (only the zip manifest is read,
-    via Utils.discover_custom_world_module). A module of the same name already
-    imported in this process doesn't matter: clients and component scans run
-    in freshly spawned processes, which pick up the new file; the launcher
-    only needs a list refresh (see install_apworld)."""
+    None if the user cancelled the file picker. Never imports the world's
+    module: only the zip manifest is read; clients run in fresh processes and
+    the launcher only needs a list refresh (see install_apworld)."""
     if not path:
         path = open_filename('Select APWorld file to install', (('APWorld', ('.apworld',)),))
         if not path:
@@ -317,9 +306,8 @@ def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
 
     target = custom_worlds_dir / f"{module_name}.apworld"
     if apworld_path.resolve() == target.resolve():
-        # Note that this doesn't check if the same world is already installed
-        # under a different file; it only catches re-installing the file that's
-        # already sitting in custom_worlds/.
+        # Only catches re-installing the file already in custom_worlds/, not the
+        # same world installed under a different file name.
         raise Exception(f"APWorld is already installed at {target}.")
 
     import shutil
@@ -451,9 +439,8 @@ def resolve_icon_path(icon_path: str) -> str:
 
 
 def _materialize_ap_icon(icon_path: str) -> str:
-    # WARNING: pkgutil.get_data IMPORTS the module. Never resolve an "ap:" icon
-    # for custom-world content in the launcher process, which must never run
-    # world code -- world-tool cards use the default icon instead.
+    # WARNING: pkgutil.get_data IMPORTS the module. Never resolve an "ap:" icon for
+    # custom-world content in the launcher process; world-tool cards use the default icon.
     module_resource_path = icon_path.removeprefix("ap:")
     module_name, separator, resource_name = module_resource_path.partition("/")
     if not separator or not module_name or not resource_name:
@@ -502,12 +489,9 @@ YAML_COMPONENT_NAME = "Create YAML"
 def yaml_component(module: str, world_name: str = "") -> WorldTool:
     """The YAML-creator entry for a selected game's component strip.
 
-    Synthesized per selection rather than scanned: it belongs to whichever
-    game is selected, so worlds that declare nothing still get one. "yaml" is
-    deliberately not a _MANIFEST_COMPONENT_TYPES member -- it is the frontend's
-    own entry, never something a world may declare. Core owns the shape and
-    label so every frontend renders the same entry; mapping the type to a YAML
-    editor is the frontend's half."""
+    Synthesized per selection (not scanned) so worlds that declare nothing still
+    get one. "yaml" is deliberately not a _MANIFEST_COMPONENT_TYPES member: it is
+    the frontend's own entry, never something a world may declare."""
     return WorldTool(module=module, world_name=world_name or module,
                      name=YAML_COMPONENT_NAME, type="yaml")
 
@@ -558,17 +542,12 @@ def world_manifest_components(include: tuple[str, ...] = _MANIFEST_COMPONENT_TYP
     """Import-free scan of the `components` declared in world manifests, all
     types by default (filter with `include`).
 
-    All data comes from the in-memory GameIndex: build-time index entries plus
-    custom_worlds manifests, which Utils.register_custom_worlds folds into the
-    index (idempotent, zip-manifest-only; rescanning here picks up newly
-    dropped or replaced apworlds, with the custom manifest authoritative for
-    its components even on an indexed slug). Index entries count only when
-    their dist is actually installed (per-slug importlib.metadata probe --
-    never ModuleUpdate.find_world_modules, which shells out to uv); custom
-    worlds are present by definition. Never imports world code: the launcher
-    must render without running any world's code -- the import happens only in
-    a spawned client process or on an explicit, warned tool click
-    (run_world_tool)."""
+    Data comes from the in-memory GameIndex plus custom_worlds manifests
+    (register_custom_worlds is idempotent, zip-manifest-only, and authoritative
+    even for an indexed slug). Index entries count only when their dist is
+    installed (importlib.metadata probe, never find_world_modules which shells
+    out to uv). Never imports world code: that happens only in a spawned client
+    or on an explicit tool click (run_world_tool)."""
     import importlib.metadata
 
     from Utils import register_custom_worlds
@@ -693,7 +672,6 @@ if not is_frozen():
                                 description="Build APWorlds from loose-file world folders."))
 
 
-# Builtin registration is complete: anything appended to `components` from here on
-# (world modules importing worlds.LauncherComponents at load time, custom-world
-# installs, etc.) is not a builtin, so builtin_components() stays trustworthy.
+# Builtin registration is complete: anything appended from here on (world imports,
+# custom installs) is not a builtin, so builtin_components() stays trustworthy.
 _INITIALIZING_COMPONENTS = False

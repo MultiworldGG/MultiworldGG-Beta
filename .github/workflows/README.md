@@ -26,22 +26,6 @@ the SHA256 in the URL fragment before unpacking.
 
 ## Workflows
 
-### `ci.yml` — CI (build + commit infra wheels)
-
-Triggers on push and PR against the development branch. Two jobs:
-
-- **`build-base-worlds`** — when `worlds/*.py` changes, builds the namespace wheel from those
-  files and commits to `worlds_wheels/`.
-- **`build-default-worlds`** — when any `worlds/_*` or `worlds/generic/` changes, builds those
-  infra wheels via `tools/build_wheels.py` and commits to `worlds_wheels/`.
-
-The previous `build-splashscreen` and `build-gui` jobs were removed when those packages moved
-into sibling repos (`lallaria/mwgg-splash`, `lallaria/mwgg-gui`). Wheel builds for them now
-belong in those repos' own CI, with the resulting wheels copied into `default_wheels/` by a
-separate sync mechanism (TBD).
-
-All jobs commit as `github-actions[bot]` and rebase before pushing.
-
 ### `release.yml` / `build-release-test.yml` — release / dry-run
 
 Triggered by tag push (`release.yml`) or manual dispatch (`build-release-test.yml`). Builds platform
@@ -69,15 +53,12 @@ installer's `--worlds <selection>` flow (see `inno_setup.iss`).
 
 ## Required secrets / variables
 
-None for `ci.yml` or `release.yml` — all build artifacts ship with the repo or get installed from
+None for `release.yml` — all build artifacts ship with the repo or get installed from
 the public Index repo orphan branches. (Webhost-only secrets, e.g. database creds, are documented
 in webhost deployment configs, not here.)
 
 ## Common failure modes
 
-- **`build-base-worlds` doesn't trigger** — only fires when `worlds/*.py` (top-level namespace
-  files) change. Per-game worlds in `worlds/<slug>/` no longer live in this repo, so changes there
-  are impossible.
 - **Frozen build fails to find a world at runtime** — expected if `module_location` for that slug
   is not yet a valid release-asset wheel URL with a `#sha256=<hex>` fragment. Each upstream world
   must publish via `gen-pymod-release` before the monorepo can fetch it.

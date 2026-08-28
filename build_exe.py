@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for MultiWorldGG executables using cx_Freeze
+Build script for MultiworldGG executables using cx_Freeze
 """
 
 import os
@@ -62,13 +62,9 @@ def install_requirements(build: bool = False) -> bool:
         logger.info(f"{req_file.name} not found, skipping requirements installation")
         return True
 
-# Sibling repos under the MultiworldGG GitHub org that publish wheel releases.
-# build_exe pip-installs the latest wheel asset from each into the build venv so
-# cx_Freeze can bundle them. Per-game worlds are NOT here — those are pulled at
-# first run by ModuleUpdate.install_worlds() from mwgg_igdb module_location URLs.
-# TODO: add the platform-helpers repo (pyfastbti, pyfastyaz0yay0) here once it
-# exists. The current frozen build doesn't need those — every world that did has
-# been pulled out of the monorepo.
+# Sibling repos whose latest wheel release gets pip-installed into the build venv
+# for cx_Freeze to bundle. Per-game worlds are NOT here; they install at first run.
+# TODO: add the platform-helpers repo (pyfastbti, pyfastyaz0yay0) once it exists.
 SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
     ("MultiworldGG", "mwgg-gui"),
     ("MultiworldGG", "mwgg-tui"),
@@ -76,14 +72,9 @@ SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
 ]
 
 
-# Optional per-repo release-tag pin, keyed by repo name from SIBLING_WHEEL_REPOS.
-# None (the default for every repo below) preserves today's behavior: always
-# fetch the latest release. Set a repo's value to a real tag string (e.g.
-# "v1.2.3") to pin the monorepo build to that sibling release instead of
-# whatever is newest at build time -- useful right before a coordinated
-# release so an in-flight sibling release can't get silently picked up. This
-# file does not choose tags on its own; populate it by hand (or from CI input)
-# when that coordination is needed.
+# Optional per-repo release-tag pin; None = latest release. Populate by hand (or
+# CI input) before a coordinated release so an in-flight sibling release can't
+# get silently picked up.
 SIBLING_WHEEL_TAG_PINS: dict[str, str | None] = {
     "mwgg-gui": None,
     "mwgg-tui": None,
@@ -91,10 +82,8 @@ SIBLING_WHEEL_TAG_PINS: dict[str, str | None] = {
 }
 
 
-# Token for fetching from private sibling repos during beta. Set
-# MWGG_BUILD_GITHUB_TOKEN (locally or via the workflow's `env:` block) to a PAT or
-# GitHub App installation token with `contents: read` on the SIBLING_WHEEL_REPOS.
-# When the repos go public this can be unset and anonymous requests will work.
+# Token for private sibling repos during beta: a PAT or App installation token
+# with `contents: read` on SIBLING_WHEEL_REPOS. Unset once the repos go public.
 _BUILD_GH_TOKEN_ENV = "MWGG_BUILD_GITHUB_TOKEN"
 
 
@@ -165,9 +154,8 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
             )
         else:
             logger.warning(f"GET {api_url} failed: {e}")
-        # Diagnostic: dump headers + body + platform so we can tell apart token-scope,
-        # missing-permission, rate-limit, and proxy-tamper. Safe — these are response
-        # metadata, not the token itself.
+        # Diagnostic dump to tell apart token-scope, missing-permission, rate-limit,
+        # and proxy-tamper; response metadata only, never the token.
         try:
             req_id = e.headers.get("X-GitHub-Request-Id") if e.headers else None
             rate_remaining = e.headers.get("X-RateLimit-Remaining") if e.headers else None
@@ -221,17 +209,9 @@ def _release_wheel_asset_for_tag(owner: str, repo: str, tag: str) -> dict | None
 
 
 def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
-    """Download a release asset by id; return the path to a file with the asset's
-    original filename (inside a fresh temp dir). Works for private repos.
-
-    The filename must match PEP 427 — pip parses dist/version/tags from it — so we
-    can't use mkstemp's randomized name. We create a temp dir and write the asset
-    into it with `asset["name"]`. Caller is responsible for cleaning up the dir.
-
-    Uses the `/releases/assets/{id}` endpoint with `Accept: application/octet-stream`,
-    which serves the binary directly (or 302-redirects to a signed URL that needs no
-    further auth). urllib follows the redirect; we strip Authorization on hop to a
-    foreign host so the signed URL isn't double-authed and rejected.
+    """Download a release asset by id into a fresh temp dir, keeping the asset's
+    original filename (pip parses dist/version/tags from it per PEP 427, so no
+    mkstemp names). Works for private repos; caller cleans up the dir.
     """
     asset_id = asset.get("id")
     name = asset.get("name") or ""
@@ -243,9 +223,8 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     headers = _gh_headers()
     headers["Accept"] = "application/octet-stream"
 
-    # Custom handler: when GitHub returns 302 to AWS S3, drop our Authorization header
-    # before following — the redirect target has signed credentials baked into the URL,
-    # and S3 will reject a stray Bearer token.
+    # Drop Authorization when following GitHub's 302 to S3: the signed URL carries
+    # its own credentials and S3 rejects a stray Bearer token.
     class _StripAuthRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             new_req = super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -270,12 +249,8 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
 
 
 def _log_installation_repositories() -> None:
-    """Diagnostic: dump the repos the current installation token can actually see.
-
-    For App-installation tokens, GitHub exposes `/installation/repositories` —
-    the authoritative list of what the token grants access to. If a repo we
-    later try to GET isn't in this list, that's the smoking-gun explanation
-    for a 403/404. No-op when no token is set.
+    """Diagnostic: dump the repos the current installation token can actually see
+    (/installation/repositories); explains a later 403/404. No-op without a token.
     """
     if not os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip():
         return
@@ -295,7 +270,7 @@ def _log_installation_repositories() -> None:
         return
     repos = data.get("repositories", []) or []
     full_names = [r.get("full_name", "?") for r in repos]
-    # logger.warning, not logger.info — basicConfig at module top sets level=WARNING
+    # logger.warning, not logger.info: basicConfig at module top sets level=WARNING
     # for the root logger, so info-level messages are filtered out in CI logs.
     logger.warning(
         f"  diag: platform={sys.platform} installation_token sees "
@@ -432,10 +407,8 @@ def verify_build_output() -> bool:
     exe_dir = exe_dirs[0]
     logger.debug(f"Checking build output in: {exe_dir}")
 
-    # Import here, not at module top, so this script's version/platform checks
-    # (which run before the venv necessarily has project deps importable) stay
-    # cheap; BaseUtils.FROZEN_TARGETS is the single source of truth for exe
-    # base names, matching setup.py's Executable(...) target_name values.
+    # Deferred import keeps the pre-venv version/platform checks cheap;
+    # FROZEN_TARGETS matches setup.py's Executable(...) target_name values.
     from BaseUtils import FROZEN_TARGETS
 
     def exe_name(base: str) -> str:
@@ -487,7 +460,7 @@ def verify_build_output() -> bool:
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Build MultiWorldGG executables")
+    parser = argparse.ArgumentParser(description="Build MultiworldGG executables")
     parser.add_argument("--clean", action="store_true", help="Clean build directory before building")
     parser.add_argument("--skip-requirements", action="store_true", help="Skip requirements installation")
     parser.add_argument("--skip-wheels", action="store_true", help="Skip wheel installation")
@@ -497,7 +470,7 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.logger_level)
 
-    logger.info("MultiWorldGG Build Script")
+    logger.info("MultiworldGG Build Script")
     logger.info("=" * 50)
     # Change to src directory
     os.chdir(Path(__file__).parent)
@@ -515,11 +488,8 @@ def main():
         if not install_requirements(build=False):
             sys.exit(1)
 
-    # Install sibling-repo wheels (mwgg_gui, mwgg_tui, mwgg_splash) from their
-    # latest GitHub releases. cx_Freeze bundles them once they're in the build
-    # venv. Worlds bundle directly from src/worlds/ source — no wheel fetch
-    # there. Per-game worlds are installed at first run by
-    # ModuleUpdate.install_worlds() from mwgg_igdb's module_location URLs.
+    # Sibling-repo wheels (mwgg_gui/tui/splash) from latest GitHub releases;
+    # worlds bundle from src/worlds/ source and per-game worlds install at first run.
     if not args.skip_wheels:
         if not install_wheels():
             sys.exit(1)

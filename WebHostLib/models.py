@@ -11,14 +11,8 @@ from uuid import UUID, uuid4
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import (
-    # Use the 2.0 ``Uuid`` (not the legacy ``UUID``): on SQLite the legacy type
-    # maps to a NUMERIC-affinity column, so an all-digit-hex UUID (e.g. the
-    # all-zero UUID(int=0) "null owner" sentinel) is coerced to an int/float on
-    # write and crashes on read ("'int' object has no attribute 'replace'"),
-    # taking down autolauncher.cleanup(). ``Uuid`` stores hex TEXT on SQLite and
-    # native UUID on Postgres, round-tripping every value. Existing 32-char-hex
-    # rows read back identically; only legacy SQLite DBs with already-coerced
-    # sentinel rows need their owner columns recreated (see PR notes).
+    # 2.0 ``Uuid`` (hex TEXT on SQLite), not legacy ``UUID``: its NUMERIC affinity
+    # coerces all-digit-hex UUIDs (the UUID(int=0) owner sentinel) and crashes reads.
     Boolean, DateTime, Integer, LargeBinary, String, Text, Uuid as SA_UUID,
     ForeignKey,
 )
@@ -34,10 +28,8 @@ from Utils import utcnow
 class Base(DeclarativeBase):
     """Base class that adds pony-compatible .get() classmethod and auto-add on __init__."""
 
-    # Entity classes use legacy `attr: T = mapped_column(...)` annotations rather
-    # than `attr: Mapped[T] = mapped_column(...)`. This opt-in tells SQLAlchemy's
-    # Annotated Declarative form to ignore those and rely on mapped_column for
-    # type inference. See https://sqlalche.me/e/20/zlpr.
+    # Entities use legacy `attr: T = mapped_column(...)` annotations; tell the
+    # Annotated Declarative form to ignore them (https://sqlalche.me/e/20/zlpr).
     __allow_unmapped__ = True
 
     @classmethod
@@ -49,7 +41,7 @@ class Base(DeclarativeBase):
         """
         from sqlalchemy import select as _select
         session = _get_session()
-        # Fast path: single PK column named 'id' or 'token' or 'checksum'
+        # Fast path: single-column PK lookup goes through the identity map
         pk_cols = [c.key for c in cls.__table__.primary_key.columns]
         if len(pk_cols) == 1 and pk_cols[0] in kwargs and len(kwargs) == 1:
             return session.get(cls, kwargs[pk_cols[0]])
@@ -76,7 +68,7 @@ class Base(DeclarativeBase):
                 session = _get_session()
                 session.add(self)
             except RuntimeError:
-                # Outside application context — caller must manage session manually
+                # Outside application context: caller must manage session manually
                 pass
 
         # Only patch if not already patched (avoid double-patching on reimport)
@@ -89,7 +81,7 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 # ---------------------------------------------------------------------------
-# Lobby state constants (unchanged from pony version)
+# Lobby state constants
 # ---------------------------------------------------------------------------
 
 STATE_QUEUED = 0
@@ -113,7 +105,7 @@ class Slot(Base):
     id: int = mapped_column(Integer, primary_key=True, autoincrement=True)
     player_id: int = mapped_column(Integer, nullable=False)
     player_name: str = mapped_column(String, nullable=False)
-    # lazy=True equivalent: deferred — not loaded unless accessed
+    # lazy=True equivalent: deferred, not loaded unless accessed
     data: bytes | None = deferred(mapped_column("data", LargeBinary, nullable=True))
     seed_id: UUID | None = mapped_column(SA_UUID(as_uuid=True), ForeignKey("seed.id"), nullable=True, index=True)
     game: str = mapped_column(String, nullable=False, index=True)
@@ -336,13 +328,9 @@ class LobbyMessage(Base):
 # ---------------------------------------------------------------------------
 # Co-ownership of rooms and lobbies
 # ---------------------------------------------------------------------------
-# The .owner UUID column on Room and Lobby remains the *primary owner* — the
-# only session that can mint invites, remove a co-owner, or disown the
-# record entirely. Co-owners can do everything else (play, manage, settings,
-# kick, server commands, etc.).
-#
-# Co-ownership is granted via OwnershipInvite tokens — single-use URL
-# fragments the primary owner shares out of band.
+# Room/Lobby .owner stays the *primary owner*: only it can mint invites, remove
+# co-owners, or disown. Co-owners get everything else via single-use
+# OwnershipInvite tokens shared out of band.
 
 class RoomCoOwner(Base):
     """Additional session UUIDs authorised to manage this room."""
@@ -368,8 +356,7 @@ class OwnershipInvite(Base):
     """Single-use token that lets the holder claim co-ownership (or accept a
     full transfer) of one room or lobby.
 
-    Polymorphic FK (target_kind + target_id) instead of two tables — keeps
-    the API surface symmetric for room/lobby. The accept endpoint validates
+    Polymorphic FK (target_kind + target_id); the accept endpoint validates
     that the target still exists before granting access.
     """
     __tablename__ = "ownership_invite"
@@ -388,11 +375,8 @@ class OwnershipInvite(Base):
 class PasskeyCredential(Base):
     """One WebAuthn / passkey credential, anchored to a session UUID.
 
-    No PII fields by design. The credential_id is what the authenticator
-    chose on registration and is opaque to us; the public_key is COSE-encoded
-    and only verifies signatures (it can't produce them). sign_count is the
-    monotonic counter the authenticator stamps each assertion with — used to
-    detect cloned authenticators.
+    No PII fields by design; sign_count is the authenticator's monotonic
+    counter, used to detect cloned authenticators.
     """
     __tablename__ = "passkey_credential"
 
@@ -438,11 +422,9 @@ class Avatar(Base):
 class SessionAvatar(Base):
     """The portable avatar a browser session (``session["_id"]``) currently uses.
 
-    One row per session, pointing at an Avatar uploaded via the website. The
-    same image feeds the nav avatar and (later phases) the slots this session
-    plays. Kept separate from Avatar/AvatarToken so the existing avatar tables
-    need no schema change — only this new table is added (``create_all`` makes
-    it on both fresh SQLite and existing Postgres without a column migration).
+    One row per session, pointing at an Avatar uploaded via the website. A new
+    table (not columns on Avatar/AvatarToken) so ``create_all`` adds it with no
+    column migration.
     """
     __tablename__ = "sessionavatar"
 
@@ -458,11 +440,9 @@ class SessionAvatar(Base):
 class SlotAvatar(Base):
     """An avatar pinned to a ``(room, team, slot)``, set via the website.
 
-    Overwritable and non-exclusive: anyone (rate-limited) can set it, and a set
-    just replaces the row — no slot is reserved. Cascade-deleted with the room
-    (``Room.slot_avatars``), so it lives until the room is pruned. The referenced
-    Avatar is intentionally NOT deleted with it: the row may point at a shared
-    SessionAvatar image. Avatars are reclaimed via their owning token / GC.
+    Overwritable by anyone (rate-limited); cascade-deleted with the room. The
+    referenced Avatar is NOT deleted with it (it may be a shared SessionAvatar
+    image); avatars are reclaimed via their owning token / GC.
     """
     __tablename__ = "slotavatar"
 
@@ -474,9 +454,8 @@ class SlotAvatar(Base):
     avatar_id: UUID = mapped_column(
         SA_UUID(as_uuid=True), ForeignKey("avatar.id"), nullable=False, index=True
     )
-    #: Absolute, client-renderable URL captured at set-time. The live room
-    #: process is host-less and can't rebuild it, so it's denormalized here to
-    #: seed profile_data at boot.
+    #: Absolute URL captured at set-time; the host-less room process can't
+    #: rebuild it, so it's denormalized here to seed profile_data at boot.
     avatar_url: str | None = mapped_column(String, nullable=True)
     set_by_session: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
     updated_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
@@ -487,15 +466,9 @@ class SlotAvatar(Base):
 # ---------------------------------------------------------------------------
 # Pony-compatible shim layer
 # ---------------------------------------------------------------------------
-# The routes use a pony-style API: Entity.get(...), Entity(...) to create,
-# select(x for x in E ...), commit(), flush(), etc.
-# Rather than rewriting every callsite, we provide thin shims here that
-# delegate to db.session (the flask-sqlalchemy scoped session).
-#
-# IMPORTANT: This shim is ONLY valid inside a Flask request context, which
-# is where flask-sqlalchemy's session is bound. Non-request code (CLI,
-# autolauncher, customserver) must use explicit session management — see
-# those files for their own `with Session(engine) as session:` patterns.
+# Thin pony-style shims (Entity.get, commit, flush) over db.session. ONLY valid
+# inside a Flask request context; non-request code (CLI, autolauncher,
+# customserver) uses its own `with Session(engine)` blocks.
 # ---------------------------------------------------------------------------
 
 def _get_session():
@@ -519,7 +492,7 @@ def rollback():
 
 
 # ---------------------------------------------------------------------------
-# QueryProxy — wraps a SQLAlchemy Select query with pony-like methods
+# QueryProxy - wraps a SQLAlchemy Select query with pony-like methods
 # ---------------------------------------------------------------------------
 
 class QueryProxy:
@@ -554,8 +527,6 @@ class QueryProxy:
         return self._session.scalars(self._stmt).all()
 
     def first(self):
-        from sqlalchemy import select as sa_select
-        # Add LIMIT 1 if not already there
         stmt = self._stmt.limit(1)
         return self._session.scalars(stmt).first()
 

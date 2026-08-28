@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 from flask import flash, redirect, render_template, request, session, url_for, abort
 from sqlalchemy import select, func, desc
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from Utils import __version__, utcnow, instance_name
@@ -22,7 +24,7 @@ from WebHostLib.generate import get_meta
 from WebHostLib.models import (
     Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
-    UUID, db, commit,
+    UUID, db, commit, rollback,
 )
 from WebHostLib.ownership import is_authorized
 
@@ -440,8 +442,13 @@ def lobby_join(lobby: UUID):
     lobby.last_activity = utcnow()
     try:
         commit()
-    except OptimisticCheckError:
-        # The failed commit has already rolled back the player and message.
+    except (OperationalError, StaleDataError):
+        # SQLite ignores the FOR UPDATE above, so cleanup can delete the lobby
+        # before the commit-time flush (StaleDataError); lock/deadlock failures
+        # surface as OperationalError. A failed commit does NOT roll back the
+        # session — rollback() restores it and expunges the pending player and
+        # message.
+        rollback()
         flash('The lobby changed while you were joining. Please try again.')
         return redirect(url_for('lobby_view', lobby=lobby_id))
 

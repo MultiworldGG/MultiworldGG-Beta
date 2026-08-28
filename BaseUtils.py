@@ -78,10 +78,8 @@ def tuplize_version(version: str) -> Version:
         # If packaging fails to parse, fall back to simple parsing
         pass
     
-    # Without this, frozen builds that don't bundle the `packaging` library
-    # would crash on int("0b7") here and fall through to Version(0, 0, 0) —
-    # which causes every Connect packet to send Version(0,0,0) and get refused
-    # with IncompatibleVersion.
+    # int() would crash on suffixed parts like "0b7" and yield Version(0, 0, 0),
+    # making every Connect packet get refused with IncompatibleVersion.
     import re
     def _leading_int(part: str) -> int:
         m = re.match(r"^(\d+)", part)
@@ -105,18 +103,16 @@ core_version_tuple = version_tuple
 instance_name = "MultiworldGG"
 archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
 
-# Single source of truth for frozen executable base names (no .exe suffix).
-# Do NOT derive these from instance_name/apname: application.yaml's
-# application_options.app_name (e.g. "MultiworldGG-Test") overrides
-# instance_name at runtime, so any `instance_name + script_name` concatenation
-# used to resolve a built exe silently breaks in non-default channels.
+# Frozen exe base names (no .exe suffix), single source of truth. Do NOT derive
+# from instance_name: application.yaml's app_name overrides it at runtime and
+# silently breaks exe resolution in non-default channels.
 FROZEN_TARGETS = {
-    "MultiWorld": "MultiWorldGG",
-    "MultiServer": "MultiWorldGGServer",
-    "Generate": "MultiWorldGGGenerate",
-    "Patch": "MultiWorldGGPatch",
-    "MultiWorldDebug": "MultiWorldGGClientDebug",
-    "Launcher": "MultiworldGGLauncher",  # deliberate lowercase-w, matches old-live leftover naming
+    "MultiWorld": "MultiworldGG",
+    "MultiServer": "MultiworldGGServer",
+    "Generate": "MultiworldGGGenerate",
+    "Patch": "MultiworldGGPatch",
+    "MultiWorldDebug": "MultiworldGGClientDebug",
+    "Launcher": "MultiworldGGLauncher",
 }
 
 _default_version = __version__
@@ -327,7 +323,7 @@ def mwgg_venv_python() -> str:
     """Path to the Python interpreter inside the mwgg_venv.
 
     Frozen builds need this to spawn helper subprocesses that have to actually
-    run Python code (e.g. mwgg-gui's yaml worker, pip introspection) —
+    run Python code (e.g. mwgg-gui's yaml worker, pip introspection);
     `sys.executable` in a frozen build points at the cx_Freeze launcher, which
     just runs MultiWorld.py and rejects unknown CLI args.
 
@@ -486,7 +482,7 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
     root_logger.addHandler(file_handler)
     # TODO: Make console better, use rich/blessed/something else
     # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles).
-    # Only wrap once per process — see _stdio_wrapped_for_logging above.
+    # Only wrap once per process; see _stdio_wrapped_for_logging above.
     global _stdio_wrapped_for_logging
     if (not _stdio_wrapped_for_logging
             and hasattr(sys.stdout, "buffer") and hasattr(sys.stderr, "buffer")
@@ -576,9 +572,8 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
             with open(archipelago_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
-            # Resolve via the import system so we find archipelago.json inside whichever
-            # wheel/folder the worlds.<name> package was actually loaded from (mwgg_venv,
-            # site-packages, or the monorepo source tree). Matches WebHostLib/misc.py.
+            # Resolve via the import system so archipelago.json comes from wherever
+            # worlds.<name> actually loaded from. Matches WebHostLib/misc.py.
             manifest_bytes = None
             try:
                 manifest_bytes = pkgutil.get_data("worlds." + world, "archipelago.json")
@@ -634,7 +629,7 @@ def get_client_exe() -> list[str]:
     """Resolve the command line that launches the beta's single client entry point.
 
     Centralizes exe-name resolution (frozen name vs source script) so callers
-    never hardcode "MultiWorldGG(.exe)" themselves."""
+    never hardcode "MultiworldGG(.exe)" themselves."""
     if is_frozen():
         suffix = ".exe" if is_windows else ""
         return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]
@@ -675,18 +670,12 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
                  client_type: str = "game", component: typing.Optional[str] = None,
                  launch_file: typing.Optional[str] = None,
                  extra_args: typing.Iterable[str] = ()) -> "subprocess.Popen[typing.Any]":
-    """Spawn a client process, detached from this one.
+    """Spawn a detached client process; children deliberately survive launcher
+    exit. MWGG_NO_SPLASH=1 goes in the child env (there is no CLI flag).
 
-    Every launch from the Launcher process is a separate OS process, and
-    children deliberately survive launcher exit: closing the launcher window
-    must not kill an in-progress game session. MWGG_NO_SPLASH=1 is set in the
-    child env rather than appended as a CLI flag -- MultiWorld.py's arg parser
-    doesn't know a --no-splash flag yet, only the env var is read (Phase 2).
-
-    `component` names a specific `Component.display_name` registered by
-    `game`'s world module (e.g. a second client such as a map tracker); the
-    child resolves it after its ordered world load and falls back to default
-    client resolution if the name doesn't match."""
+    `component` names a `Component.display_name` registered by `game`'s world
+    module (e.g. a map tracker); the child resolves it after its world load and
+    falls back to default client resolution if the name doesn't match."""
     argv = list(get_client_exe())
     if launch_file:
         argv.append(launch_file)

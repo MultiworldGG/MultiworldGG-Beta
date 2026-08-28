@@ -1,16 +1,6 @@
-// Karen's FINAL PR review for the fuzz/scan feature.
-//
-// The manifest checks run synchronously in the Index workflow, but the isolated
-// checks (fuzz/scan) finish asynchronously here in the bot. So Karen's
-// APPROVE / REQUEST_CHANGES is submitted by the bot AFTER the isolated checks
-// conclude — gating on BOTH the manifest verdict (passed in via the dispatch
-// payload's manifest_status) and the fuzz rollup. The Index workflow only
-// reviews synchronously on the no-fuzz path (schema-only / non-wheel worlds),
-// where there are no isolated checks to wait for.
-//
-// Authed as Karen (the same installation octokit the rest of the feature uses);
-// submitting a review needs the App's pull_requests:write permission — already
-// held, since the workflow's Karen token submits reviews today.
+// Karen's FINAL PR review: submitted by the bot after the isolated checks
+// conclude, gating on both the manifest verdict and the fuzz rollup. The Index
+// workflow only reviews synchronously on the no-fuzz path.
 
 import type { ProbotOctokit } from "probot";
 
@@ -22,14 +12,10 @@ export interface FuzzReviewDecision {
 }
 
 /**
- * Decide Karen's final review from the manifest verdict + the fuzz rollup.
- * Mirrors the workflow's old gate (approve only on a clean manifest "pass"), but
- * now also requires the isolated checks to be non-failing:
- *   - fuzz "fail" OR manifest "fail"      -> REQUEST_CHANGES (cite what's red)
+ * Karen's final review:
+ *   - fuzz "fail" OR manifest "fail"      -> REQUEST_CHANGES
  *   - manifest "pass" and fuzz pass/warn  -> APPROVE (warn = non-blocking)
- *   - otherwise (manifest warn/unknown,
- *     fuzz not failing)                   -> null: no review, matching the old
- *                                            "neither approve nor block" behavior
+ *   - otherwise                           -> null (no review)
  */
 export function decideFuzzReview(
   manifestStatus: string,
@@ -61,8 +47,7 @@ export function decideFuzzReview(
     };
   }
 
-  // Manifest is warn/unknown and the isolated checks aren't failing: leave the PR
-  // unreviewed, exactly as the synchronous workflow used to on a non-pass-non-fail.
+  // Manifest warn/unknown with non-failing isolated checks: leave the PR unreviewed.
   return null;
 }
 

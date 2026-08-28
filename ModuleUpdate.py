@@ -28,7 +28,7 @@ from importlib import invalidate_caches
 from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
 from APContainer import APWorldContainer
 
-# mwgg_igdb package source — orphan branch on the Index repo
+# mwgg_igdb package source: orphan branch on the Index repo
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
 DEFAULT_MWGG_IGDB_VARIANT = "sixteen"  # ultimate fallback when nothing is installed
 _VARIANTS = ("nr", "ao", "twelve", "sixteen")
@@ -39,9 +39,6 @@ MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
 MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
-
-def is_frozen() -> bool:
-    return getattr(sys, 'frozen', False)
 
 def is_windows() -> bool:
     return sys.platform in ("win32", "cygwin", "msys")
@@ -72,7 +69,7 @@ elif sys.version_info < (3, 13, 0):
 
 def _worlds_venv_is_readonly() -> bool:
     """True when the worlds venv lives on a read-only mount (e.g. a Docker `:ro`
-    bind mount). Such consumers must never attempt installs — the mwgg_upgrader
+    bind mount). Such consumers must never attempt installs; the mwgg_upgrader
     service is the sole writer of the venv. Only meaningful when use_worlds_venv()
     is set; always False on a normal dev/user install (writable venv)."""
     if not use_worlds_venv():
@@ -88,8 +85,7 @@ def _worlds_venv_is_readonly() -> bool:
 
 
 # Detected once at import: a read-only worlds venv disables every install path
-# below, exactly like SKIP_ALL_INSTALLS, so a consumer that reaches update()
-# without the env opt-out still can't crash writing the upgrader-owned venv.
+# below (like SKIP_ALL_INSTALLS), so consumers can't crash writing the upgrader-owned venv.
 _VENV_READONLY = _worlds_venv_is_readonly()
 if _VENV_READONLY:
     logger.info("Worlds venv is read-only; installs disabled (mwgg_upgrader owns writes).")
@@ -103,7 +99,7 @@ def _skip_all_installs() -> bool:
 # Skip update if running in splash screen process
 # Allow updates in main process and main client process
 _skip_update = bool(
-    (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiWorldGG")
+    (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiworldGG")
     or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
     or _skip_all_installs()
 )
@@ -130,21 +126,15 @@ class RequirementsSet(set[_T]):
         super().update(*s)
 
 
-# Initialize file sets
-
 # Core requirements.txt doubles as a constraint file for every requirements
-# install below, so additional files (WebHostLib, -a appends) can't upgrade
-# core deps past its pins.
+# install below, so additional files can't upgrade core deps past its pins.
 core_constraints: Path = Path(local_path("requirements.txt"))
 requirements_files: RequirementsSet[Path] = RequirementsSet({core_constraints})
 worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
-# custom_worlds always lives next to the executable / source checkout -- the
-# upstream location, and where users actually drop their apworlds. This is the
-# single source of truth for the launch scan (register_custom_worlds /
-# get_available_worlds), Utils.set_game_names, and the launch path. Do NOT
-# special-case frozen builds to write_path(): that splits the scan from the launch
-# path and custom worlds silently stop being selectable.
+# custom_worlds lives next to the executable / source checkout: single source of
+# truth for the launch scan. Do NOT special-case frozen builds to write_path(),
+# or custom worlds silently stop being selectable.
 def _resolve_custom_worlds_dir() -> Path:
     return Path(local_path("custom_worlds"))
 
@@ -173,7 +163,6 @@ def _scan_custom_worlds() -> None:
         worlds_files["apworlds"].add(str(world_file))
 
 
-# Add wheel files if update hasn't run
 _scan_custom_worlds()
 
 # Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
@@ -219,9 +208,8 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
     """Run `uv <args>` against the first reachable uv binary."""
     global _uv_resolved_path, _uv_unavailable
 
-    # Windows-only: detach into a new process group with no console window so a uv
-    # subprocess can't flash a window or steal the parent's Ctrl-C. 0 is the
-    # cross-platform no-op default elsewhere.
+    # Windows-only: new process group + no console window so uv can't flash a
+    # window or steal the parent's Ctrl-C; 0 is the no-op default elsewhere.
     creationflags = (
         subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
         if is_windows() else 0
@@ -245,7 +233,7 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
                 creationflags=creationflags,
             )
         except OSError as e:
-            # The candidate is unusable — try next.
+            # Candidate unusable; try next.
             logger.debug(f"uv not usable at {cand} ({e!r}); trying next candidate")
             continue
         if _uv_resolved_path is None:
@@ -271,11 +259,9 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
 def venv_is_healthy(venv_path: Path) -> bool:
     """True if the venv's interpreter actually runs.
 
-    No `.exists()` pre-probes: stat()-ing the venv's `home =` (a uv-managed
-    python) raises OSError on untraversable mount points (WinError 448) and
-    tells us nothing that running the interpreter doesn't. We just invoke it —
-    a missing exe, a dead base python, an untraversable path, or a timeout all
-    surface as a failure, which means "unhealthy" and the caller recreates.
+    No pre-probes: stat()-ing the venv's `home =` (a uv-managed python) raises
+    OSError on untraversable mounts (WinError 448); just run the interpreter and
+    treat any failure as unhealthy so the caller recreates.
     """
     venv_python = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
     try:
@@ -295,9 +281,8 @@ if use_worlds_venv():
     venv_path = install_path()
     venv_ready = True
     if not venv_is_healthy(venv_path):
-        # Any failure here (uv missing/timeout, unwritable dir, untraversable
-        # mount point) must degrade to "install on demand later", never crash
-        # the import — this runs at module load for every consumer.
+        # Any failure must degrade to "install on demand later", never crash
+        # the import: this runs at module load for every consumer.
         try:
             venv_path.mkdir(parents=True, exist_ok=True)
             if any(venv_path.iterdir()):
@@ -323,9 +308,7 @@ if use_worlds_venv():
     if venv_ready:
         python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
 
-        # Make packages installed into the worlds venv (mwgg_igdb, plus any
-        # top-level helpers shipped alongside worlds) importable from the
-        # running process.
+        # Make worlds-venv packages (mwgg_igdb etc.) importable from this process.
         site_packages = mwgg_venv_site_packages()
         if site_packages not in sys.path:
             sys.path.insert(0, site_packages)
@@ -467,8 +450,8 @@ def _resolve_variant() -> str:
 def _igdb_install_date() -> Optional[datetime.date]:
     """Local date `mwgg_igdb` was last written to disk, or None if not installed.
 
-    The module file's mtime is the package's own install datestamp — set fresh
-    every time uv (re)installs it — so no separate stamp file is needed.
+    The module file's mtime is the package's own install datestamp (set fresh
+    every time uv (re)installs it), so no separate stamp file is needed.
     """
     spec = importlib.util.find_spec("mwgg_igdb")
     if spec is None or not spec.origin or not os.path.exists(spec.origin):
@@ -478,7 +461,7 @@ def _igdb_install_date() -> Optional[datetime.date]:
 
 def _igdb_upgraded_recently() -> bool:
     """True when an upgrade pull would be a no-op: `mwgg_igdb` was installed
-    today. Variant switches do NOT rely on this throttle — they go through the
+    today. Variant switches do NOT rely on this throttle: they go through the
     callers that pass force=True (the `mwgg_igdb_<variant>` token path in
     install_worlds and the mwgg_upgrader), which bypass it entirely.
     """
@@ -487,7 +470,7 @@ def _igdb_upgraded_recently() -> bool:
 
 
 # Consumed by the upgrader tools (tools/mwgg_upgrade.py, tools/mcp_mwgg_upgrader.py),
-# so it is unused *within* this module — hence the targeted ignore.
+# so it is unused within this module, hence the targeted ignore.
 def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
     try:
         worlds_dir = _venv_worlds_dir()
@@ -499,7 +482,7 @@ def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     """Install or refresh the mwgg_igdb package from the Index repo orphan branch.
 
-    Called before any code path that imports `mwgg_igdb` — the package is the
+    Called before any code path that imports `mwgg_igdb`: the package is the
     runtime source-of-truth for which worlds exist and where to fetch them.
 
     Args:
@@ -509,7 +492,7 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
 
     Concurrency: two processes that race on a stale stamp can both run pip into the
     same venv. uv pip writes to a temp location before rename, so the worst outcome
-    is two pulls instead of one — not corruption.
+    is two pulls instead of one, not corruption.
 
     Returns True if the install succeeded (or was throttled).
     """
@@ -521,9 +504,8 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
         return True
     args = _uv_pip("install", MWGG_IGDB_GIT_URL, "--no-cache")
     if upgrade:
-        # --reinstall rewrites the tiny package even when the branch HEAD is
-        # unchanged, so the module's install date (its mtime) advances to today
-        # and the once-daily throttle above stays satisfied until tomorrow.
+        # --reinstall rewrites the package even when the branch HEAD is unchanged,
+        # advancing its mtime so the once-daily throttle stays satisfied until tomorrow.
         args.append("--reinstall")
     logger.info(f"Installing mwgg_igdb ({MWGG_IGDB_VARIANT}) from {MWGG_IGDB_BRANCH}")
     try:
@@ -560,7 +542,7 @@ def _module_location_tag(url: str) -> Optional[str]:
     ``https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<ver>-py3-none-any.whl``,
     optionally with a ``#sha256=<hex>`` fragment. Returns None for anything
     that isn't a recognizable wheel URL (legacy ``git+...@<ref>`` URLs from
-    the v2 publish flow degrade to None — the caller then skips the
+    the v2 publish flow degrade to None; the caller then skips the
     comparison rather than crashing).
     """
     if not url:
@@ -570,7 +552,7 @@ def _module_location_tag(url: str) -> Optional[str]:
     if not name.endswith(".whl"):
         return None
     parts = name[:-len(".whl")].split("-")
-    # PEP 427: dist, version, [build,] python, abi, platform — version is index 1.
+    # PEP 427: dist, version, [build,] python, abi, platform; version is index 1.
     if len(parts) < 5:
         return None
     return parts[1]
@@ -746,18 +728,16 @@ def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
                 return False
             for member in members:
                 zf.extract(member, str(venv_worlds))
-        # Refresh the target dir's mtime so the stale-extraction pruner uses
-        # the most recent extraction as the "last used" signal, even if zipfile
-        # restored historical timestamps from the archive members.
+        # Refresh the dir's mtime so the stale-extraction pruner sees this
+        # extraction as "last used" even if zipfile restored archive timestamps.
         target_dir = venv_worlds / slug
         try:
             os.utime(target_dir, None)
         except OSError:
             pass
         logger.info(f"Extracted apworld {apworld_file} to {target_dir}")
-        # If the worlds package is already imported, extend its __path__ so the
-        # newly-extracted module is discoverable without a restart. (At startup,
-        # worlds/__init__.py does this itself when it first runs.)
+        # Extend an already-imported worlds package's __path__ so the new module is
+        # discoverable without a restart (worlds/__init__.py handles the startup case).
         worlds_pkg = sys.modules.get("worlds")
         if worlds_pkg is not None and hasattr(worlds_pkg, "__path__"):
             venv_str = str(venv_worlds)
@@ -1076,10 +1056,8 @@ def update_requirements(needed_packages: List[str]) -> None:
             executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file),
                                       "--constraint", str(core_constraints))
         else:
-            # Resolve the whole file so transitive caps and sibling constraints are
-            # respected; --upgrade-package targets only the dists check_for_updates
-            # flagged. The previous per-spec-line `pip install --upgrade <req_line>`
-            # ignored sibling constraints and oscillated against check_requirements_satisfied.
+            # Resolve the whole file so sibling constraints are respected;
+            # --upgrade-package targets only the dists check_for_updates flagged.
             req_pkg_names = {
                 re.split(r'[<>=!~;@\s]', line, maxsplit=1)[0].strip()
                 for line in parse_requirements_file(req_file)
@@ -1107,7 +1085,7 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     """
     Ensure all requirements files are satisfied. Returns True on success.
 
-    With uv this is fast and idempotent — install runs unconditionally; if everything
+    With uv this is fast and idempotent: install runs unconditionally; if everything
     is already present, uv reports "Audited N packages" and exits in milliseconds.
     """
     if is_frozen():
@@ -1164,9 +1142,8 @@ def _install_lock():
                 lock_file.seek(0)
                 msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
         else:
-            # fcntl is Unix-only and this branch only runs off-Windows, but the gate
-            # type-checks with pythonPlatform=Windows (where typeshed hides flock/LOCK_*),
-            # so these are platform false positives, not real attribute errors.
+            # The gate type-checks with pythonPlatform=Windows, where typeshed hides
+            # flock/LOCK_*; platform false positives, not real attribute errors.
             import fcntl
             fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             try:

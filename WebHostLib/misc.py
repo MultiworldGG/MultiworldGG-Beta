@@ -115,9 +115,8 @@ def get_world_authors(world: type(World)) -> str:
     return getattr(world, 'author', '')
 
 
-# Age-rating tiers mirror VARIANT_FILTERS in MultiworldGG-Index scripts/build_variants.py.
-# The games list shows the sixteen tier by default, renders the nsfw (nr-only) tier
-# hidden behind the client-side NSFW toggle, and never renders AO or unindexed games.
+# Age-rating tiers mirror VARIANT_FILTERS in MultiworldGG-Index scripts/build_variants.py:
+# sixteen tier listed by default, nsfw tier behind the client-side toggle, AO/unindexed never.
 SIXTEEN_AGE_RATINGS = frozenset({"MW", "3", "7", "12", "16", "E", "T"})
 NSFW_AGE_RATINGS = frozenset({"18", "M", "NR"})
 LISTED_AGE_RATINGS = SIXTEEN_AGE_RATINGS | NSFW_AGE_RATINGS
@@ -146,7 +145,7 @@ def get_visible_worlds() -> dict[str, type(World)]:
 def relative_time(dt: datetime.datetime | None) -> str:
     """Render a (tz-naive UTC) datetime as a relative string like '2 min ago'.
 
-    Matches the convention in Utils.utcnow() — model timestamps are tz-naive UTC.
+    Matches the convention in Utils.utcnow(): model timestamps are tz-naive UTC.
     """
     if not dt:
         return ""
@@ -197,7 +196,7 @@ def page_not_found(err):
     return render_template('404.html'), 404
 
 
-# Play hub — landing page for /play, six action cards
+# Play hub - landing page for /play, six action cards
 @app.route('/play')
 @cache.cached()
 def play_hub():
@@ -257,9 +256,8 @@ def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]
 def tutorial(lang: str, game: str, file: str):
     """Render a tutorial markdown file for the given language.
 
-    Reads ``static/generated/docs/<game>/<file>_<lang>.md`` — the on-disk
-    layout still uses the suffix form (the rename is not being applied in
-    this monorepo). The URL exposes the language as a clean path segment.
+    Reads ``static/generated/docs/<game>/<file>_<lang>.md``: the on-disk layout
+    keeps the suffix form; the URL exposes the language as a path segment.
     """
     try:
         theme = get_world_theme(game)
@@ -299,24 +297,23 @@ def tutorial_legacy_no_lang(game: str, file: str):
 @app.route('/tutorial/<string:game>/<string:file>/<string:lang>')
 def tutorial_legacy_trailing_lang(game: str, file: str, lang: str):
     """301-redirect ``/tutorial/<game>/<file>/<lang>`` straight to the new
-    canonical URL — no double-hop through the suffix form.
+    canonical URL, with no double-hop through the suffix form.
     """
     return redirect(url_for("tutorial", lang=lang, game=game, file=file), code=301)
 
 
-# Learn hub — landing page for /learn/<lang>, three top-level guides
+# Learn hub - landing page for /learn/<lang>, three top-level guides
 @app.route('/learn/<string:lang>')
 @cache.cached()
 def learn_hub(lang: str):
-    # Match the convention used by _split_tutorial_file: 2-letter alpha codes.
-    # No content lookup happens at this layer, so any 2-letter code renders;
-    # the hub itself is language-neutral chrome around the per-language links.
+    # 2-letter alpha codes, matching _split_tutorial_file. No content lookup at
+    # this layer; the hub is language-neutral chrome around per-language links.
     if not (len(lang) == 2 and lang.isalpha()):
         abort(404)
     return render_template("learn_hub.html", lang=lang)
 
 
-# Setup tutorials index — full per-world list
+# Setup tutorials index - full per-world list
 @app.route('/learn/<string:lang>/tutorials')
 @cache.cached()
 def tutorial_landing(lang: str):
@@ -346,9 +343,8 @@ def tutorial_landing(lang: str):
                 # Get the file name without extension for the new format
                 file_key = secure_filename(tutorial.file_name).rsplit(".", 1)[0]
 
-                # Split into (base, lang) for the new URL form. With metadata
-                # like file_name="setup_en.md", file_key="setup_en" splits to
-                # ("setup", "en") so the template can build /learn/en/tutorial/<game>/setup.
+                # file_key "setup_en" splits to ("setup", "en") so the template
+                # can build /learn/en/tutorial/<game>/setup.
                 file_base, file_lang = _split_tutorial_file(file_key)
 
                 file_data = {

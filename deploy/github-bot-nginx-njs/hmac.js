@@ -1,4 +1,4 @@
-// GitHub-bot — nginx-edge HMAC validation for GitHub webhooks.
+// GitHub-bot: nginx-edge HMAC validation for GitHub webhooks.
 //
 // Loaded by deploy/example_github-bot_nginx.conf via:
 //   js_path "/etc/nginx/njs/";
@@ -14,8 +14,8 @@
 //     + the internal backend from THAT (not the path, since both arrive at "/").
 //     We read the body, compute HMAC-SHA256, and compare to X-Hub-Signature-256
 //     in constant time. On mismatch, returns 401 *before* any proxy_pass.
-//   - On Oliver's GET /probot or /status, lets the request through
-//     unauthenticated — Probot's info page and the bot's failure-log status page.
+//   - Oliver's GET /status pages pass through unauthenticated (the bot's
+//     failure-log status page).
 //   - All other methods → 405; missing/malformed signatures → 401.
 //
 // Probot/@octokit/webhooks inside the container ALSO validate HMAC (each against
@@ -73,7 +73,7 @@ function validate(r) {
     const cfg = configForApp(r);
 
     // Oliver's info/status pages are GET and unauthenticated:
-    //   /status, /status/, /status/.json — bot's identity + failure-log page.
+    //   /status, /status/, /status/.json: bot's identity + failure-log page.
     if (cfg.app === "oliver" && r.method === "GET" && (
         r.uri === "/status" ||
         r.uri.startsWith("/status/")

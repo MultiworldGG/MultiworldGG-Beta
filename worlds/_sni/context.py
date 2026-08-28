@@ -33,7 +33,6 @@ from websockets.asyncio.client import connect as websockets_connect, ClientConne
 from websockets.protocol import State
 from websockets.exceptions import WebSocketException, ConnectionClosed
 
-# Import SNI communication functions from __init__.py
 from . import (
     SNESState, snes_logger, launch_sni, _snes_connect, get_snes_devices, 
     verify_snes_app, snes_connect, snes_disconnect, task_alive, 
@@ -428,10 +427,8 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
     import colorama
 
-    # Check if we're already in an event loop (GUI mode) first
     try:
         loop = asyncio.get_running_loop()
-        # We're in an existing event loop, create a task
         snes_logger.info("Running in existing event loop (GUI mode)")
         
         # Create a simple namespace object to mimic argparse.Namespace

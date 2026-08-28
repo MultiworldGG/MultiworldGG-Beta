@@ -20,13 +20,9 @@ export function makeApp(
       }
     });
 
-    // `published` fires on the initial publish (a prerelease publishes with
-    // prerelease=true, which the handler skips); `released` fires when a release
-    // is published as a full release OR when a prerelease is flipped to one —
-    // the only path that catches that promotion, since it does not re-fire
-    // `published`. Both route through the same handler; its draft/prerelease
-    // guards drop prereleases and the open-or-update PR path is idempotent, so
-    // the overlapping fire on a direct full publish converges to one PR.
+    // `released` is the only event that catches a prerelease flipped to a full
+    // release (that promotion does not re-fire `published`). Both route through
+    // one handler; its guards + idempotent open-or-update converge to one PR.
     probot.on(["release.published", "release.released"], async (context) => {
       try {
         await handleReleasePublished(probot, karenProbot, oliverData, karenData, context);
@@ -38,10 +34,8 @@ export function makeApp(
 
     if (options.getRouter) {
       mountStatusRoutes(options.getRouter("/status"), probot, oliverData, karenData);
-      // Karen's repository_dispatch (karen-fuzz) webhook — its OWN secret, NOT
-      // Oliver's. Mounted at /karen so Karen-signed deliveries verify here while
-      // Oliver keeps the "/" webhook. Karen is Index-only, so the event stays
-      // scoped to the Index (Oliver is deliberately NOT subscribed to it).
+      // Karen's karen-fuzz webhook: her OWN secret, mounted at /karen while
+      // Oliver keeps "/". Oliver is deliberately not subscribed to it.
       mountKarenWebhook(options.getRouter("/karen"), karenProbot, oliverData, karenData, karenWebhookSecret);
     } else {
       probot.log.warn("No getRouter available; /status and /karen routes not mounted");

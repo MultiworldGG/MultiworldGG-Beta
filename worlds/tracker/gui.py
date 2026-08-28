@@ -103,9 +103,7 @@ def build_tracker_view(ctx):
     Glitched / Hinted / Go Mode) are stashed back on the context so updateTracker
     can refresh them.
     """
-    # Widget classes first (kivy Factory auto-registers Widget subclasses on
-    # definition), THEN the kv string so its <TrackerView>/<VisualTracker>/...
-    # rules resolve cleanly when the widgets are instantiated below.
+    # Widget classes must exist before the kv string loads so its rules resolve.
     _ensure_widgets()
     load_tracker_kv()
     install_hint_label_patch()
@@ -117,9 +115,8 @@ def build_tracker_view(ctx):
     from worlds.tracker.TrackerClient import get_ut_color
 
     tracker_view = _TrackerView_cls()
-    # MDRelativeLayout (CustomLayout) parents children by pos/size. Force the
-    # tracker to fill the available area explicitly so it doesn't end up at
-    # 100x100 in the bottom-left corner.
+    # CustomLayout parents by pos/size; fill explicitly or the tracker
+    # ends up 100x100 in the bottom-left corner.
     tracker = _TrackerLayout(orientation="vertical", size_hint=(1, 1),
                              pos_hint={"x": 0, "y": 0})
 
@@ -200,16 +197,11 @@ def _ensure_widgets():
     from kivymd.uix.tooltip import MDTooltip
     from kivy.uix.widget import Widget
     from kivy.properties import StringProperty, BooleanProperty, DictProperty, ColorProperty, ObjectProperty
-    # Import the kivy widget directly under a private name and re-export it as
-    # a dedicated tracker subclass. The Tracker.kv file has an `<ApAsyncImage>:`
-    # rule, and we don't want that rule to apply to every AsyncImage in the
-    # whole app — only to tracker widgets that subclass our local ApAsyncImage.
+    # Local subclass keeps Tracker.kv's `<ApAsyncImage>:` rule off every
+    # other AsyncImage in the app.
     from kivy.uix.image import AsyncImage as _KivyAsyncImage
     from kvui import ToolTip
-    # SelectableLabel / SelectableRecycleBoxLayout live in mwgg_gui.legacy
-    # (importing them here registers them with the kivy Factory so
-    # Tracker.kv's `viewclass: 'SelectableLabel'` and
-    # `SelectableRecycleBoxLayout:` rules resolve).
+    # Importing registers them with the kivy Factory so Tracker.kv's rules resolve.
     from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout  # noqa: F401
 
     class ApAsyncImage(_KivyAsyncImage):
@@ -251,13 +243,8 @@ def _ensure_widgets():
 
     class ApLocation(HoverBehavior, Widget, MDTooltip):
         locationDict = DictProperty()
-        # Upstream `kvui.HoverBehavior` (pre-kivymd migration) declared
-        # `border_point = ObjectProperty(None)` to cache the mouse position at
-        # the hovered widget's border; `to_window()` below reads it. The
-        # `kivymd.uix.behaviors.HoverBehavior` we inherit from now doesn't,
-        # so we re-declare it here as the same ObjectProperty (not a plain
-        # class attribute) so any external code that binds to it as a kivy
-        # property still works.
+        # kivymd's HoverBehavior dropped kvui's border_point; re-declare it as a
+        # kivy ObjectProperty (to_window reads it, external code may bind to it).
         border_point = ObjectProperty(None)
 
         def __init__(self, sections, parent, **kwargs):
@@ -465,10 +452,8 @@ def _ensure_widgets():
                 self.ids.location_canvas.add_widget(temp_loc)
                 for event_name in sections:
                     ldeferredDict[event_name].append(temp_loc)
-            # The canvas was just cleared, so any previously pooled icon widgets
-            # are gone too; update_location_icon_widgets() rebuilds the pool
-            # against this fresh empty list (it's called again right after
-            # load_coords() on every map switch, see TrackerClient.load_map()).
+            # Canvas was just cleared, so reset the icon pool; load_map() calls
+            # update_location_icon_widgets right after.
             self.location_icons = []
             return returnDict, deferredDict, ldeferredDict
 
@@ -516,9 +501,8 @@ def install_app_surface(ctx, app):
     from kivy.properties import StringProperty, NumericProperty, BooleanProperty
     import types
 
-    # Kivy properties referenced from Tracker.kv. EventDispatcher.apply_property
-    # only takes effect if the attribute isn't already a property on the class —
-    # which it shouldn't be on MultiMDApp.
+    # Kivy properties referenced from Tracker.kv; apply_property only takes
+    # effect if the attribute isn't already a property on the class.
     try:
         app.apply_property(
             source=StringProperty(""),
@@ -531,8 +515,7 @@ def install_app_surface(ctx, app):
             auto_tab=BooleanProperty(True),
         )
     except Exception:
-        # If the live app already has these (e.g. relaunch in the same
-        # process), keep going — the existing properties are reusable.
+        # Relaunch in the same process: existing properties are reusable.
         traceback.print_exc()
 
     app.open_map_dropdown = types.MethodType(_open_map_dropdown, app)
@@ -542,10 +525,8 @@ def install_app_surface(ctx, app):
     app.on_auto_tab_active = types.MethodType(_on_auto_tab_active, app)
     app._tracker_surface_installed = True
 
-    # Contribute the Tracker section to the launcher's global SettingsScreen.
-    # register_settings_section handles both cases: SettingsScreen-not-yet-built
-    # (sets up registry; picked up by setup_sections on first build) and
-    # SettingsScreen-already-live (splices in via add_dynamic_section).
+    # Contribute the Tracker section to the launcher's SettingsScreen;
+    # register_settings_section handles both not-yet-built and already-live cases.
     try:
         from mwgg_gui.settings import register_settings_section
         from worlds.tracker.settings_ui import TrackerSettings

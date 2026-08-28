@@ -28,7 +28,7 @@ function makeFakeChecks(init: Partial<FakeChecks> = {}): FakeChecks {
   };
 }
 
-// Karen has checks:write — create/update Check Runs and list them for a ref.
+// Karen has checks:write: create/update Check Runs and list them for a ref.
 function makeOctokit(state: FakeChecks): any {
   return {
     rest: {

@@ -1,4 +1,3 @@
-#TODO: FIX THIS TEST - it's dependent on having all worlds loaded and we now only load the worlds we need (so here it's none)
 import unittest
 
 from Fill import distribute_items_restrictive
@@ -9,6 +8,14 @@ from . import setup_solo_multiworld
 
 class TestIDs(unittest.TestCase):
     world_relevant = True
+
+    def setUp(self) -> None:
+        # Guard against a vacuous pass: every test below iterates testable_worlds,
+        # which beta's lazy loader leaves empty unless test/__init__ seeded the
+        # fixture worlds — an empty registry turns them all into silent no-ops.
+        self.assertTrue(AutoWorldRegister.testable_worlds,
+                        "AutoWorldRegister.testable_worlds is empty; test/__init__ did not "
+                        "seed the fixture worlds, so these tests would pass vacuously.")
 
     def test_range_items(self):
         """There are Javascript clients, which are limited to Number.MAX_SAFE_INTEGER due to 64bit float precision."""

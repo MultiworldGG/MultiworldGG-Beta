@@ -38,6 +38,8 @@ def triangular(lower: int, end: int, tri: float = 0.5) -> int:
     Expects `lower <= end` and `0.0 <= tri <= 1.0`. The result of other inputs is undefined.
     """
     # Use the continuous range [lower, end + 1) to produce an integer result in [lower, end].
+    # random.triangular is actually [a, b] and not [a, b), so there is a very small chance of getting exactly b even
+    # when a != b, so ensure the result is never more than `end`.
     return min(end, math.floor(random.triangular(0.0, 1.0, tri) * (end - lower + 1) + lower))
   
 
@@ -102,6 +104,7 @@ class AssembleOptions(abc.ABCMeta):
         ), f"Option class {name} needs default value"
         assert "random" not in aliases, "Choice option 'random' cannot be manually assigned."
 
+        # auto-alias Off and On being parsed as True and False
         if "off" in options:
             options["false"] = options["off"]
         if "on" in options:
@@ -984,6 +987,7 @@ class OptionCounter(OptionDict):
 class ItemDict(OptionCounter):
     verify_item_name = True
 
+    # Backwards compatibility: Cull 0s to make "in" checks behave the same as when this wasn't a OptionCounter
     cull_zeroes = True
 
 

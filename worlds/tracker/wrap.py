@@ -1,30 +1,10 @@
 """Universal Tracker overlay for game-specific clients.
 
 When the launcher's "Universal Tracker" checkbox is set alongside a game
-module, ``CommonClient.CommonContext.__init__`` calls ``attach_tracker_overlay``
-on the just-built context. That:
-
-1. Instantiates a ``TrackerCore`` and stashes it on ``ctx.tracker_core`` so
-   the GUI's ``TrackerLocationRecycleView.populate_from_ctx`` (in
-   ``mwgg-gui``) can render regions and missing locations.
-2. Patches ``ctx.on_package`` so the first ``Connected`` packet drives
-   ``tracker_core.initalize_tracker_core(connected_cls, slot_data)`` -- the
-   only event we *must* intercept synchronously, since everything else is
-   handled by the periodic refresh below.
-3. Registers overlay features on ``ctx.client.features`` so
-   ``ExtrasBuilder`` activates them after the per-game UI is wired up.
-   Today: ``register_tracker_page_tab`` (adds the Tracker tab to the
-   launcher's screen menu, wires tracker_core's display callbacks to it)
-   and ``start_overlay_ui_refresh`` (schedules a 10-second Kivy interval
-   which pushes current ``ctx.missing_locations`` / ``ctx.items_received``
-   into ``tracker_core``, drives the Tracker page header labels, and asks
-   the console to repaint). New overlay surfaces (e.g. the Map page)
-   register here following the same pattern.
-
-The standalone ``TrackerGameContext`` already owns its own ``tracker_core``
-and the on_package interception lives in ``TrackerClient.py`` directly, so
-``attach_tracker_overlay`` no-ops when called on a context that already has
-one.
+module, ``CommonContext.__init__`` calls ``attach_tracker_overlay``: it
+installs a ``TrackerCore`` on the context, patches ``on_package`` to catch
+the first ``Connected`` packet, and registers overlay features (Tracker tab,
+periodic refresh) on ``ctx.client.features`` for ``ExtrasBuilder``.
 """
 
 from __future__ import annotations
@@ -37,15 +17,10 @@ logger = logging.getLogger("Client")
 
 
 def attach_tracker_overlay(ctx) -> None:
-    """Phase 1: install ``tracker_core`` and patch ``on_package`` on ``ctx``.
-
-    Called from ``CommonContext.__init__`` before the world's ``launch()``
-    schedules ``server_task`` -- guarantees the patch is in place before any
-    server packet can arrive.
-    """
+    """Install ``tracker_core`` and patch ``on_package``; runs before
+    ``server_task`` is scheduled so no packet can beat the patch."""
     if getattr(ctx, "tracker_core", None) is not None:
-        # Standalone TrackerGameContext owns its own tracker_core and routes
-        # on_package through TrackerClient. Nothing to do.
+        # Standalone TrackerGameContext already owns its tracker_core.
         return
 
     from .TrackerCore import TrackerCore
@@ -84,11 +59,8 @@ def attach_tracker_overlay(ctx) -> None:
 
 
 def _handle_connected(ctx, args: dict) -> None:
-    """On the first ``Connected`` packet, populate ``tracker_core`` with the
-    slot params and trigger multiworld generation. Mirrors the equivalent
-    block in ``TrackerClient.TrackerGameContext.on_package`` (Connected
-    branch), minus the map / deferred-entrance / scout plumbing that lives
-    in the standalone tracker."""
+    """Populate ``tracker_core`` from the first ``Connected`` packet; mirrors the
+    standalone on_package Connected branch minus map/entrance/scout plumbing."""
     from worlds import AutoWorld
 
     slot_info = args.get("slot_info") or {}
@@ -115,11 +87,8 @@ def _handle_connected(ctx, args: dict) -> None:
 
     raw_slot_data = args.get("slot_data") or {}
 
-    # Worlds that can't reconstruct themselves from slot_data need a real
-    # generation against the user's YAML so launch_multiworld is populated
-    # before initalize_tracker_core's slot-lookup branch runs. Standalone
-    # TrackerClient.main does this at startup; the overlay defers it to
-    # Connected so the picker only fires for games actually being tracked.
+    # Worlds that can't rebuild from slot_data need a real generation against the
+    # user's YAML; deferred to Connected so the picker only fires for tracked games.
     if (not getattr(connected_cls, "disable_ut", False)
             and not getattr(connected_cls, "ut_can_gen_without_yaml", False)
             and ctx.tracker_core.launch_multiworld is None):
@@ -135,13 +104,8 @@ def _handle_connected(ctx, args: dict) -> None:
 
 
 def start_overlay_ui_refresh(ctx, app) -> None:
-    """Phase 2: schedule the periodic GUI refresh tick.
-
-    Invoked by ``ExtrasBuilder.build()`` after the per-game UI is wired up.
-    For non-Kivy frontends (TUI / headless), no-ops cleanly -- the overlay is
-    GUI-only in v1. When the tracker migrates off legacy kvui this detection
-    moves to a polymorphic refresh dispatcher.
-    """
+    """Schedule the periodic GUI refresh tick (invoked by ExtrasBuilder.build);
+    no-ops on non-Kivy frontends -- the overlay is GUI-only."""
     if app is None:
         logger.debug("Tracker overlay: no app, skipping UI refresh")
         return
@@ -172,9 +136,7 @@ def start_overlay_ui_refresh(ctx, app) -> None:
         except Exception:
             logger.exception("Tracker overlay: refresh tick failed")
 
-    # Expose a manual-refresh hook so the console refresh button (and any
-    # future caller) can drive the full tracker pipeline -- not just the
-    # UI repaint -- without importing wrap internals.
+    # Manual-refresh hook for the console refresh button.
     ctx.tracker_overlay_refresh = lambda: _refresh(ctx, app)
 
     Clock.schedule_once(_tick, 0)
@@ -182,10 +144,8 @@ def start_overlay_ui_refresh(ctx, app) -> None:
 
 
 def _enable_console_tracker_mode(app) -> None:
-    """Flip the console sliver appbar's tracker_mode so the Players/Logic
-    toggle (and its initial recycleview seed) become available. The launcher's
-    client_type-based detection in ConsoleSliverAppbar.__init__ isn't reliable
-    for the overlay path -- explicit signal here is the single source of truth."""
+    """Enable the console appbar's Players/Logic toggle; the appbar's own
+    client_type detection isn't reliable for the overlay path."""
     console_screen = getattr(app, "console_screen", None)
     appbar = getattr(console_screen, "important_appbar", None) if console_screen else None
     if appbar is None:
@@ -215,13 +175,8 @@ def _refresh(ctx, app) -> None:
 
 
 def _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret) -> None:
-    """Drive the five Tracker page header labels (Locations / In Logic /
-    Glitched / Hinted / Go Mode) from the latest tracker state.
-
-    Mirrors TrackerGameContext.updateTracker (TrackerClient.py:534-548). The
-    labels only exist after register_tracker_page_tab has attached them to
-    ctx; hasattr guards make this safe when the tab feature hasn't run
-    (e.g. headless / non-Kivy)."""
+    """Drive the Tracker page header labels (mirrors TrackerGameContext.updateTracker);
+    hasattr guards cover contexts where the tab feature hasn't run."""
     if updateTracker_ret is None or updateTracker_ret.state is None:
         return
 

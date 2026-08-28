@@ -19,8 +19,8 @@ export interface IndexBotData {
 }
 
 export interface IndexPROpts {
-  karenOctokit: ProbotOctokit;   // Contents:Write — Karen creates the branch, commits the manifest, and appends CODEOWNERS on the Index.
-  oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write — Oliver opens/updates the PR and applies labels (review handoff line — see memory: feedback_oliver_opens_karen_approves).
+  karenOctokit: ProbotOctokit;   // Contents:Write - branch, manifest commits, CODEOWNERS
+  oliverOctokit: ProbotOctokit;  // Pull requests:Write + Issues:Write - opens/updates the PR, applies labels
   karenData: IndexBotData;
   oliverData: IndexBotData;
   indexOwner: string;
@@ -29,25 +29,15 @@ export interface IndexPROpts {
   sourceRepo: string;
   slug: string;
   releaseTag: string;
-  // The fully-formed module_location URL Oliver will pin into the Index
-  // manifest. Today this is the release-asset wheel URL
-  // (`https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<v>-py3-none-any.whl`)
-  // produced by the gen-pymod-release. Computed by the caller
-  // (workflow_run handler) so this module doesn't need to know the action's
-  // output shape.
+  // Fully-formed release-asset wheel URL to pin as module_location; computed by
+  // the caller so this module doesn't know the action's output shape.
   moduleLocation: string;
-  // Wheel asset filename (e.g. `myclgm-1.0.0-py3-none-any.whl`) and size in
-  // bytes, both surfaced in the PR body so reviewers see what's being pinned
-  // without clicking through. Read from the GitHub release-asset object by
-  // the workflow_run handler.
+  // Wheel filename + size in bytes, surfaced in the PR body for reviewers.
   wheelAssetName: string;
   wheelAssetSize: number;
-  // Full parsed `worlds/<slug>/archipelago.json` from the per-world repo at the
-  // release SHA. The author's archipelago.json is the canonical source of
-  // truth for everything except module_location (Oliver overrides) and igdb_id
-  // (preserved from the existing Index manifest unless the author explicitly
-  // sets their own). Use {} when the file is missing/unreadable — Karen's
-  // schema check will surface the resulting bad PR.
+  // Parsed worlds/<slug>/archipelago.json at the release SHA; author-canonical
+  // except module_location and igdb_id (see mergeWorldManifest). {} when
+  // missing/unreadable - Karen's schema check surfaces the bad PR.
   sourceManifest: Record<string, unknown>;
 }
 
@@ -170,11 +160,8 @@ export async function openOrUpdateIndexPR(opts: IndexPROpts): Promise<IndexPRRes
     prNumber = createdPR.data.number;
     created = true;
 
-    // Enable auto-merge so the PR squash-merges automatically once the
-    // org-rulesets gates clear (3 approvals incl. Karen + required status checks).
-    // Best-effort: a disabled repo toggle, an empty branch, or any transient
-    // error here must not crash the workflow_run handler — the PR still exists
-    // and Karen's review + manual merge still work.
+    // Auto-squash-merge once the org-ruleset gates clear. Best-effort: an error
+    // here must not crash the handler; review + manual merge still work.
     try {
       await oliverOctokit.graphql(
         `mutation($prId: ID!) {
@@ -232,17 +219,15 @@ export interface BundleIndexPROpts {
   oliverData: IndexBotData;
   indexOwner: string;
   indexName: string;
-  // Bundle source is the Beta monorepo, owned by the org — not a per-world author.
+  // Bundle source is the Beta monorepo, owned by the org (not a per-world author).
   sourceOwner: string;
   sourceRepo: string;
   // `worlds-wheels-<date>` tag of the bundled release.
   releaseTag: string;
   // One entry per changed world's wheel; caller guarantees length >= 1.
   worlds: BundleWorld[];
-  // Read a world's archipelago.json out of its wheel. Injected in tests; defaults
-  // to the real download+unzip (wheel-manifest.ts). Returns null when the wheel
-  // can't be fetched/verified or carries no archipelago.json → that world is
-  // skipped (the ONLY skip reason — a world with a manifest is always included).
+  // Read a world's archipelago.json out of its wheel (injected in tests). Null
+  // means skip that world - the only skip reason.
   fetchManifest?: (moduleLocation: string, slug: string) => Promise<Record<string, unknown> | null>;
 }
 
@@ -256,15 +241,9 @@ export interface BundleIndexPRResult {
   skippedSlugs: string[];
 }
 
-// Open (or update) ONE combined Index PR for a bundled multi-world release.
-// Each world's manifest is SEEDED from the `archipelago.json` inside its release
-// wheel (same source of truth as the single-world path), merged with the new
-// wheel's module_location/disk_space_mb and the igdb_id preserved from any
-// existing Index manifest. This adds brand-new worlds (not yet on the Index), not
-// just updates existing ones. A world is skipped ONLY when its wheel carries no
-// archipelago.json (nothing to seed from). Same split as the single-world path:
-// Karen (Contents:Write) creates the branch and commits the manifests; Oliver
-// opens and labels the PR.
+// One combined Index PR for a bundled release: each world's manifest is seeded
+// from the archipelago.json inside its wheel (new worlds included), merged via
+// mergeWorldManifest. Karen commits; Oliver opens and labels.
 export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promise<BundleIndexPRResult> {
   const {
     karenOctokit,
@@ -285,12 +264,9 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
   const repoInfo = await karenOctokit.rest.repos.get({ owner: indexOwner, repo: indexName });
   const defaultBranch = repoInfo.data.default_branch;
 
-  // Plan each world from its wheel's archipelago.json (the author's source of
-  // truth), merged with the new module_location and the igdb_id preserved from
-  // the canonical default-branch manifest. Reading the existing manifest from
-  // main (NOT the PR branch) keeps every run self-healing — a prior bad commit on
-  // the branch is overwritten. A new world has no main manifest ({}), so it's
-  // created. A world is skipped ONLY when its wheel has no archipelago.json.
+  // Plan each world from its wheel's archipelago.json. Existing manifests are
+  // read from main (not the PR branch) so every run is self-healing: a prior
+  // bad branch commit is overwritten.
   const planned: Array<{
     slug: string;
     wheelAssetName: string;
@@ -326,7 +302,7 @@ export async function openOrUpdateBundleIndexPR(opts: BundleIndexPROpts): Promis
       try {
         currentJson = JSON.parse(raw) as Record<string, unknown>;
       } catch {
-        currentJson = {}; // malformed existing manifest — the wheel is canonical
+        currentJson = {}; // malformed existing manifest: the wheel is canonical
       }
     }
     const merged = mergeWorldManifest(sourceManifest, currentJson, w.moduleLocation, w.wheelAssetSize);
@@ -471,16 +447,9 @@ function isRefAlreadyExists(err: unknown): boolean {
 }
 
 /**
- * Ensure `branchName` exists on the Index, creating it at `baseSha` if not.
- *
- * Create-then-tolerate-422 rather than check-then-create: GitHub fires both
- * `release.published` and `release.released` for one full-release publish, so
- * two deliveries can reach this line at the same moment. A check-then-create
- * loses that race — both see the branch missing, and the loser's createRef
- * fails with "Reference already exists", sinking the whole Index PR (the
- * `github_api_error` entries on /status). An existing branch is exactly the
- * post-condition we want, and as before it is never reset onto `baseSha`, so a
- * re-push of an open PR branch keeps its history.
+ * Ensure `branchName` exists, creating it at `baseSha` if not.
+ * Create-then-tolerate-422, not check-then-create: dual release deliveries race
+ * here. The branch is never reset onto baseSha, so an open PR keeps its history.
  */
 async function ensureBranch(
   octokit: ProbotOctokit,
@@ -535,10 +504,8 @@ async function shaOnRef(
   return undefined;
 }
 
-// Read a JSON file on a branch, returning its parsed object + blob sha, or
-// `{ json: {}, sha: undefined }` when the file is absent. A file that exists
-// but holds malformed JSON keeps its sha (so the caller updates in place) with
-// an empty object — matching the original inline read's behavior.
+// Parsed JSON + blob sha on a branch; absent = { json: {}, sha: undefined }.
+// Malformed JSON keeps its sha (in-place update) with an empty object.
 async function readJsonOnBranch(
   octokit: ProbotOctokit,
   owner: string,
@@ -558,7 +525,7 @@ async function readJsonOnBranch(
       try {
         json = JSON.parse(decoded);
       } catch {
-        // malformed manifest — treat as empty but keep the sha for an in-place update
+        // malformed manifest: treat as empty but keep the sha for an in-place update
       }
       return { json, sha };
     }
@@ -568,19 +535,10 @@ async function readJsonOnBranch(
   return { json: {}, sha: undefined };
 }
 
-// Merge order:
-//   1. The per-world author's archipelago.json is canonical for every field
-//      they declare (game, authors, world_version, _comment, tracker, flags,
-//      anything they put there). If they remove a field from their next
-//      release, it disappears from the Index manifest too.
-//   2. Oliver overrides module_location with the release-asset wheel URL.
-//   3. Oliver overrides disk_space_mb with ceil(wheel_size_bytes / 1MiB).
-//      The author can't compute the wheel size before the build runs, so
-//      Oliver stamps it from the GitHub release-asset metadata. Downstream
-//      consumers (e.g. tools/regen_inno_components.py) convert MB->KB
-//      themselves; the manifest stays in MB for human-readability.
-//   4. igdb_id is preserved from the existing Index manifest if and only if
-//      the author did not include one themselves. If they did, theirs wins.
+// Merge order: the author's archipelago.json is canonical for every field it
+// declares (removed fields disappear from the Index too); Oliver overrides
+// module_location and disk_space_mb (ceil of wheel bytes / 1MiB); igdb_id is
+// preserved from the existing manifest only when the author didn't set one.
 export function mergeWorldManifest(
   sourceManifest: Record<string, unknown>,
   currentJson: Record<string, unknown>,

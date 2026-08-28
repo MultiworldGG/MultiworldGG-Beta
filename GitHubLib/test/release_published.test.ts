@@ -396,8 +396,8 @@ describe("handleReleasePublished", () => {
   it("logs skip when the release tag has no slug prefix", async () => {
     const tag = "v1.0.0";
     const state: RepoState = {
-      // A wheel IS attached, so this is a world release whose tag the author
-      // needs to fix — the case that still belongs on /status.
+      // A wheel IS attached: a world release whose tag the author needs to
+      // fix, so it still belongs on /status.
       releases: [
         {
           tag_name: tag,
@@ -498,19 +498,10 @@ describe("handleReleasePublished", () => {
 
   it("logs skip when getReleaseByTag returns 404", async () => {
     const tag = "myclgm-1.0.0";
-    // tagSha resolves fine (tag is in state.releases), but getReleaseByTag
-    // would look up by tag_name — remove assets to force us to think about
-    // what happens if the release disappears between event and handler.
-    // Simulate by providing a state where getRef succeeds but getReleaseByTag
-    // would 404: we add the release without a tag_name match for getReleaseByTag
-    // by giving it a different tag_name for the asset lookup.
+    // getRef resolves the tag, but getReleaseByTag 404s (release deleted
+    // between event and handler); overridden below.
     const state: RepoState = {
       releases: [
-        // Provide the tagSha resolution (getRef looks up by tag_name).
-        // But getReleaseByTag also looks up by tag_name, so we want it to 404.
-        // Trick: tagSha entry uses the real tag; the assets lookup fixture uses
-        // a *different* tag so find() misses — that would need two fixtures.
-        // Simpler: use a custom octokit override below.
         { tag_name: tag, tagSha: "release-sha-abc" },
       ],
     };
@@ -547,12 +538,12 @@ describe("handleReleasePublished", () => {
 
 // ---------------------------------------------------------------------------
 // World identification from a `<name>.apworld` release asset
-// (the Basic Manual fork flow — author attaches the .whl and .apworld by hand
+// (the Basic Manual fork flow: author attaches the .whl and .apworld by hand
 // under an arbitrary release tag, with no CI and no `<slug>-<version>` tag).
 // ---------------------------------------------------------------------------
 
-// Index-side probots wired so Karen commits and Oliver opens — mirrors the
-// single-world happy-path setup above, shared across the apworld-asset tests.
+// Index-side probots wired so Karen commits and Oliver opens; shared across
+// the apworld-asset tests.
 function makeOpeningProbots(karenWrites: string[], oliverWrites: string[]) {
   const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
   const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
@@ -670,7 +661,7 @@ describe("handleReleasePublished — .apworld-asset identification", () => {
 
   it("falls back to the tag prefix when the .apworld stem is not a valid slug", async () => {
     // GitHub turns spaces into dots, so a display-name apworld lands as
-    // `My.Game.apworld` — an invalid slug. The `<slug>-<version>` tag prefix
+    // `My.Game.apworld`: an invalid slug. The `<slug>-<version>` tag prefix
     // still identifies the world (keeps the CI path working when both exist).
     const tag = "myclgm-1.0.0";
     const state: RepoState = {
@@ -929,7 +920,7 @@ describe("handleReleasePublished — bundled multi-world release", () => {
       indexInstall: { id: 12345 },
     };
     const writes: string[] = [];
-    // Only dk64 is on the Index; ghost is new — both wheels carry archipelago.json
+    // Only dk64 is on the Index; ghost is new. Both wheels carry archipelago.json
     // (the mock default), so both are committed.
     const { probot, karenProbot } = makeBundleProbots(
       { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },

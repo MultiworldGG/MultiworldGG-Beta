@@ -1,6 +1,6 @@
-# MultiWorldGG Build System
+# MultiworldGG Build System
 
-This directory contains the build system for creating standalone executables of MultiWorldGG using cx_Freeze.
+This directory contains the build system for creating standalone executables of MultiworldGG using cx_Freeze.
 
 ## Files
 
@@ -118,13 +118,13 @@ python build_exe.py --skip-requirements --skip-wheels --skip-modules
 The build process creates the following executables (see `BaseUtils.FROZEN_TARGETS` for the
 single source of truth these names are derived from):
 
-- **MultiWorldGG.exe** - the client. Boots straight into a game when launched with `--game`
+- **MultiworldGG.exe** - the client. Boots straight into a game when launched with `--game`
   (or a routable patch/URL); with no game it opens the reconnect UI, not a game list.
-- **MultiWorldGGClientDebug.exe** - console version of the client, for debugging (Windows only)
-- **MultiWorldGGServer.exe** - command-line server
-- **MultiWorldGGGenerate.exe** - command-line generator
-- **MultiWorldGGPatch.exe** - command-line patcher
-- **MultiworldGGLauncher.exe** - the standalone Launcher (deliberately lowercase-w). Shows the
+- **MultiworldGGClientDebug.exe** - console version of the client, for debugging (Windows only)
+- **MultiworldGGServer.exe** - command-line server
+- **MultiworldGGGenerate.exe** - command-line generator
+- **MultiworldGGPatch.exe** - command-line patcher
+- **MultiworldGGLauncher.exe** - the standalone Launcher. Shows the
   game list and tools, stays open, and spawns everything else -- including the client -- as a
   separate process.
 - **MultiworldGGLauncherDebug.exe** - console version of the Launcher, for debugging and CI
@@ -214,7 +214,7 @@ Edit `setup.py` to modify executable configurations:
 executables = [
     Executable(
         script="MultiWorld.py",
-        target_name="MultiWorldGG.exe",
+        target_name="MultiworldGG.exe",
         icon="data/icon.ico",
         base="Win32GUI",  # GUI mode
         # base=None,      # Console mode
@@ -282,4 +282,4 @@ When modifying the build system:
 
 ## License
 
-This build system is part of MultiWorldGG and is licensed under the same terms as the main project.
+This build system is part of MultiworldGG and is licensed under the same terms as the main project.

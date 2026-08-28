@@ -1,10 +1,6 @@
-// Strict validator for the karen-fuzz repository_dispatch client_payload.
-//
-// The dispatch is GitHub-signed, but we validate defensively anyway: the slug
-// flows into a container `--name` and the fuzzer's `-g` flag, and the wheel_url
-// is fetched server-side. A malformed (or malicious-if-the-signer-is-tricked)
-// payload must be rejected with errors, never executed and never thrown out of
-// the handler — callers branch on { ok }.
+// Strict validator for the karen-fuzz client_payload. Defensive even though the
+// dispatch is signed: the slug reaches a container --name and the wheel_url is
+// fetched server-side. Never throws; callers branch on { ok }.
 
 import type {
   FuzzApworld,
@@ -146,7 +142,7 @@ function validateScanParams(raw: unknown): ScanParams {
 
 /**
  * Parse an unknown repository_dispatch client_payload into a FuzzClientPayload.
- * Never throws — returns a discriminated { ok } result so the handler can log
+ * Never throws: returns a discriminated { ok } result so the handler can log
  * the errors and skip rather than crash.
  */
 export function validateFuzzPayload(action: string, clientPayload: unknown): FuzzPayloadResult {
@@ -171,8 +167,8 @@ export function validateFuzzPayload(action: string, clientPayload: unknown): Fuz
     worlds: rawWorlds,
   } = clientPayload;
 
-  // Optional: tolerate an older dispatcher that doesn't send it. A non-string or
-  // missing value becomes "" — never a clean "pass" — so the bot won't auto-approve.
+  // Optional (older dispatchers): non-string/missing becomes "", never a clean
+  // "pass", so the bot won't auto-approve.
   const manifestStatus =
     typeof clientPayload.manifest_status === "string" ? clientPayload.manifest_status : "";
 

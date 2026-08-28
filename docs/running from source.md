@@ -34,7 +34,7 @@ After this, you should be able to run the programs.
     * The Launcher's "Create YAML" tool opens the yaml_creator screen to build a player options file for one
       game at a time. `Options.generate_yaml_templates` (bulk template generation for every installed world)
       remains available for WebHost, which still uses it to seed the Players/Templates folder.
- * `MultiWorld.py` (source) / `MultiWorldGG` (frozen) is the client, and boots directly into a game when
+ * `MultiWorld.py` (source) / `MultiworldGG` (frozen) is the client, and boots directly into a game when
    launched with `--game <module>` (or a patch/URL it can route), skipping the game-select screen -- only
    the Launcher shows the full game list.
  * With yaml(s) in the `Players` folder, `Generate.py` will generate the multiworld archive.

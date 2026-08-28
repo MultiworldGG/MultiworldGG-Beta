@@ -108,6 +108,8 @@ def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) 
 def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> str:
     from time import sleep
 
+    from sqlalchemy.exc import OperationalError
+
     poll_interval = .2
 
     print(f"Starting room {room_id}")
@@ -117,8 +119,9 @@ def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> 
             # /room/<id> now 301-redirects to /play/seed/<seed>/room/<id>; follow it
             # so we land on the 200 host_room page that renders the /connect address.
             response = app_client.get(f"/room/{room_id}", follow_redirects=True)
-        except Exception:
-            # hoster wrote to room during our transaction — retry
+        except OperationalError:
+            # the hoster process held the SQLite write lock while host_room
+            # committed its last_activity update - retry
             continue
 
         assert response.status_code == 200, f"Starting room for {room_id} failed: status {response.status_code}"

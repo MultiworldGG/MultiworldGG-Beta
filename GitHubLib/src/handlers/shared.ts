@@ -27,13 +27,9 @@ export interface ProcessReleaseAssetsParams {
   releaseSha: string;
 }
 
-// GitHub computes a release asset's `digest` ("sha256:<hex>") asynchronously
-// after upload, so a release.published webhook can fire before every wheel has
-// been hashed. A wheel without a digest is otherwise dropped (bundle path) or
-// bails the whole PR (single-world path) — which silently loses worlds from a
-// bundle. Re-fetch the release a few times until every .whl asset carries a
-// sha256 digest before parsing. Past the budget we proceed with whatever is
-// present — the per-asset digest guards below still refuse any unhashed wheel.
+// GitHub hashes release assets asynchronously, so the webhook can beat the
+// digests; re-poll until every .whl has one. Past the budget the per-asset
+// guards below still refuse unhashed wheels.
 const DIGEST_WAIT_ATTEMPTS_DEFAULT = 6;
 const DIGEST_WAIT_MS_DEFAULT = 5000;
 
@@ -69,24 +65,12 @@ async function getReleaseWaitingForDigests(octokit: Octokit, owner: string, repo
   return release;
 }
 
-// One release publish reaches this module TWICE: GitHub fires `release.published`
-// and `release.released` for the same full release, and both route through
-// handleReleasePublished (the `workflow_run.completed` legacy path can add a
-// third). The deliveries land within ~1s of each other, so they run
-// concurrently — which is how two branch-creates raced on the Index and the
-// loser 422'd ("Reference already exists"), and why every skip on /status was
-// logged twice. Coalesce on release identity: the first delivery does the work,
-// any overlapping duplicate returns immediately.
-//
-// The key is held for a short grace period AFTER a run settles successfully,
-// because the fast paths (a skip after one API call) can finish before the
-// sibling delivery even arrives. The window is deliberately only a few seconds:
-// the published/released pair lands ~1s apart, while the OTHER delivery for the
-// same tag — `workflow_run.completed`, once the per-world repo has finished
-// building and uploading the wheel — is minutes behind and MUST still be
-// processed (it is what rescues a release that published before its assets
-// existed). A run that REJECTED is evicted at once, so an operator redelivering
-// to retry a genuine failure is never swallowed.
+// GitHub delivers release.published + release.released (~1s apart) for one
+// publish; coalesce on release identity so the duplicates don't race. The key
+// is held for a short grace window after success (fast paths can finish before
+// the sibling arrives) but only seconds: the minutes-later workflow_run
+// delivery for the same tag must still process. A rejected run is evicted at
+// once so a redelivery retry is never swallowed.
 const RELEASE_COALESCE_GRACE_MS_DEFAULT = 5000;
 
 const inFlightReleases = new Map<string, Promise<void>>();
@@ -127,11 +111,7 @@ export async function processReleaseAssets(params: ProcessReleaseAssetsParams): 
   return run;
 }
 
-/**
- * Test-only: forget every coalesced release so each case starts clean. Without
- * it the module-level map (and its post-success grace window) would leak state
- * between cases that reuse the same repo + tag.
- */
+/** Test-only: clear the coalescing map so cases reusing the same repo+tag start clean. */
 export function resetReleaseCoalescingForTests(): void {
   inFlightReleases.clear();
 }
@@ -153,12 +133,9 @@ async function processReleaseAssetsUncoalesced({
 
   const isBundle = releaseTag.startsWith(BUNDLE_TAG_PREFIX);
 
-  // Single-world releases identify their world by the `<slug>-<world_version>`
-  // tag prefix OR by an attached `<name>.apworld` asset (the Basic Manual fork
-  // flow, where the release tag is arbitrary). The tag prefix is provisional
-  // here — used for error context before the release is fetched; an `.apworld`
-  // asset, once we have the asset list, overrides it (see the non-bundle branch
-  // below). Bundles (`worlds-wheels-<date>`) derive a slug per wheel instead.
+  // Single-world slug: `<slug>-<world_version>` tag prefix, provisional until
+  // the asset list is known (an `.apworld` asset overrides it below). Bundles
+  // derive a slug per wheel instead.
   let slug: string | undefined;
   if (!isBundle) {
     slug = slugFromTagPrefix(releaseTag);
@@ -200,14 +177,9 @@ async function processReleaseAssetsUncoalesced({
         return;
       }
     } else {
-      // The `.apworld` asset, when present, is authoritative over the tag
-      // prefix: the Basic Manual fork flow attaches `<name>.apworld` by hand
-      // under an arbitrary release tag, so the prefix can't be trusted there.
-      // CI builds name the asset `<slug>.apworld` from the same tag prefix, so
-      // the two agree on the automated paths; when only one source is present,
-      // it stands. We do NOT fail on a tag/asset mismatch — an arbitrary tag is
-      // the whole point of the Basic Manual flow, so a "disagreement" is
-      // expected and the asset simply wins.
+      // An `.apworld` asset is authoritative over the tag prefix: the Basic
+      // Manual flow attaches it by hand under an arbitrary tag, so a tag/asset
+      // "mismatch" is expected and the asset wins.
       const apworld = slugFromApworldAsset(assets);
       if (apworld === "ambiguous") {
         oliverLog.emit({
@@ -227,14 +199,9 @@ async function processReleaseAssetsUncoalesced({
         slug = apworld;
       }
       if (!slug) {
-        // A release carrying neither a wheel nor an apworld was never a
-        // candidate for an Index PR — it is somebody's app/client/tooling
-        // release, not a world release. Oliver is installed on repos that cut
-        // both kinds (MultiworldGG/MultiworldGG's own 0.7.x releases are the
-        // bulk of them), and logging each one as a skip buried the actionable
-        // entries in /status's last-50 table. Debug-log and drop instead. A
-        // world release that DID ship a wheel still reports no_slug_resolved,
-        // because that one is the author's to fix.
+        // No wheel and no apworld: not a world release (e.g. the core app's own
+        // releases); debug-log and drop so /status isn't buried. A release that
+        // DID ship a wheel still reports no_slug_resolved for the author to fix.
         if (wheelAssets.length === 0 && !assets.some((a) => a.name.endsWith(".apworld"))) {
           oliverProbot.log.debug(
             { source_repo: sourceRepo, release_tag: releaseTag },
@@ -282,16 +249,11 @@ async function processReleaseAssetsUncoalesced({
         return;
       }
       const wheelAsset = wheelAssets[0];
-      // GitHub release-asset API exposes a `digest` field ("sha256:<hex>"). The
-      // openapi-types schema bundled with this Probot/octokit pin predates the
-      // field, so cast at the access site rather than bumping the dep.
+      // The bundled openapi-types predate the asset `digest` field; cast at the access site.
       const digest = (wheelAsset as { digest?: string | null }).digest;
       if (!digest || !digest.startsWith("sha256:")) {
-        // Without a SHA256 the URL points at mutable bytes — a release-write
-        // compromise on the per-world repo could swap the wheel after Karen has
-        // already approved the manifest. Bail rather than open an Index PR with
-        // an unverifiable module_location. The runtime relies on pip's PEP 503
-        // #sha256= fragment verification.
+        // Without a sha256 the URL points at mutable bytes; refuse to pin an
+        // unverifiable module_location (the runtime relies on pip's #sha256=).
         oliverLog.emit({
           kind: "skip",
           source_repo: sourceRepo,
@@ -528,16 +490,12 @@ export async function fetchSourceManifest(
   }
 }
 
-// A world's Index slug / folder name: a lowercase module identifier (the same
-// shape the fuzz client payload validates). Author-controlled inputs that become
-// a file path / git branch — i.e. the `.apworld` asset name — are checked
-// against this before use, so a crafted asset name can't escape `worlds/<slug>`.
+// A world's Index slug: lowercase module identifier. Author-controlled names
+// that become paths/branches are checked against this before use.
 const APWORLD_SLUG_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
-// Slug from the `<slug>-<world_version>` release-tag prefix: everything before
-// the first '-'. Returns undefined when the tag has no usable prefix (no '-', or
-// a leading/trailing '-'). Drives the CI / Standard-Automated / Custom-Automated
-// paths, whose release tags always follow this format.
+// Slug = everything before the first '-' of a `<slug>-<world_version>` tag;
+// undefined when the tag has no usable prefix.
 export function slugFromTagPrefix(releaseTag: string): string | undefined {
   const dashIdx = releaseTag.indexOf("-");
   if (dashIdx > 0 && dashIdx < releaseTag.length - 1) {
@@ -546,13 +504,9 @@ export function slugFromTagPrefix(releaseTag: string): string | undefined {
   return undefined;
 }
 
-// The apworld folder name carried by an attached `<name>.apworld` asset — the
-// Basic Manual fork flow's identifier (those authors build and attach the wheel
-// + apworld by hand under an arbitrary release tag). Returns:
-//   - the slug string when exactly one `.apworld` asset has a valid slug stem,
-//   - "ambiguous" when more than one `.apworld` asset is attached,
-//   - null when there is none, or its stem isn't a valid slug (caller falls back
-//     to the tag prefix).
+// Slug from an attached `<name>.apworld` asset (the Basic Manual fork flow).
+// Returns the slug for exactly one valid stem, "ambiguous" for several assets,
+// null for none/invalid (caller falls back to the tag prefix).
 export function slugFromApworldAsset(
   assets: ReadonlyArray<{ name: string }>,
 ): string | "ambiguous" | null {
@@ -563,11 +517,8 @@ export function slugFromApworldAsset(
   return APWORLD_SLUG_RE.test(stem) ? stem : null;
 }
 
-// Each beta world's wheel is `worlds_<module>-<version>-py3-none-any.whl` (dist
-// name `worlds.<module>` normalized by PEP 503). The Index slug is <module>:
-// strip the `worlds_` prefix, then take everything before the first `-` (module
-// names are lowercase identifiers with no hyphen). Returns null for any wheel
-// that doesn't fit that shape.
+// Bundle wheels are `worlds_<module>-<version>-py3-none-any.whl`; the Index
+// slug is <module>. Null for any wheel that doesn't fit.
 export function slugFromBundleWheelName(name: string): string | null {
   if (!name.startsWith("worlds_") || !name.endsWith(".whl")) return null;
   const afterPrefix = name.slice("worlds_".length);
@@ -576,11 +527,8 @@ export function slugFromBundleWheelName(name: string): string | null {
   return afterPrefix.slice(0, dash);
 }
 
-// Turn a bundle's wheel assets into per-world entries, logging a per-world skip
-// (and dropping just that world) for an unrecognized wheel name, a duplicate
-// slug, or a missing SHA256 digest. The manifest is NOT fetched here — the PR
-// opener (openOrUpdateBundleIndexPR) reads each world's archipelago.json out of
-// its wheel to seed/merge the Index manifest.
+// Bundle wheels -> per-world entries; an unrecognized name, duplicate slug, or
+// missing digest drops just that world. Manifests are read later, from the wheel.
 function buildBundleWorlds(params: {
   releaseTag: string;
   releaseSha: string;

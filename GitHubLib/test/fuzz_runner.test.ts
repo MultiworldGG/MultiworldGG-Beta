@@ -338,7 +338,7 @@ describe("runFuzzContainer — result.json mapping", () => {
   it("keeps the per-job dir for inspection when debug is enabled", async () => {
     mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
     await runFuzzContainer(job(), options({ debug: true }));
-    // not reclaimed — artifacts (result.json, combined.log, fuzz_output/) survive.
+    // not reclaimed: artifacts (result.json, combined.log, fuzz_output/) survive.
     expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
   });
 

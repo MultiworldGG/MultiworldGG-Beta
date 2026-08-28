@@ -7,7 +7,7 @@ services:
   mwgg_upgrader:
     image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
     entrypoint: python tools/mwgg_upgrade.py
-    # Run-once populate/refresh job — not a long-running service.
+    # Run-once populate/refresh job, not a long-running service.
     restart: "no"
     volumes:
       - app_volume:/app
@@ -17,11 +17,11 @@ services:
   multiworld:
     # Default: pull the published image from GHCR. Operator can override the
     # image ref via $MULTIWORLD_IMAGE (set in a .env file or shell env).
-    # For local dev, run `docker compose build` to rebuild from source — that
+    # For local dev, run `docker compose build` to rebuild from source; that
     # produces a local image tagged with the same name and `up` will use it.
     image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
     # This service does REAL user generation (RAM-heavy). Uncomment to cap it as a
-    # runaway guard, but too low OOM-kills large multiworld generations — size it to
+    # runaway guard, but too low OOM-kills large multiworld generations; size it to
     # the biggest game you host. Left off by default so hosting isn't broken.
     # mem_limit: 1536m
     build:
@@ -42,7 +42,7 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_selflaunch.yaml:/app/selflaunch.yaml
 
-      # Worlds venv — read-only; mwgg_upgrader is the sole writer.
+      # Worlds venv: read-only; mwgg_upgrader is the sole writer.
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
 
     # Don't host until the worlds venv is fully populated.
@@ -54,7 +54,7 @@ services:
     network_mode: host
 
   web:
-    # Same image as multiworld service — both pull from GHCR by default, both
+    # Same image as multiworld service: both pull from GHCR by default, both
     # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
     # `build:` block so `docker compose build` only rebuilds once.
     image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
@@ -75,7 +75,7 @@ services:
       - ./example_config.yaml:/app/config.yaml
       - ./example_gunicorn.conf.py:/app/gunicorn.conf.py
 
-      # Worlds venv — read-only; mwgg_upgrader is the sole writer.
+      # Worlds venv: read-only; mwgg_upgrader is the sole writer.
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
 
     # Operator must copy example_web.env to web.env (chmod 0600, gitignored)
@@ -101,15 +101,15 @@ services:
     # Registry publishes only a floating `latest` (linux/amd64); no version tags.
     image: ghcr.io/notai-tech/nudenet:latest
     restart: unless-stopped
-    # Holds an ONNX model resident — the single biggest always-on RAM consumer.
+    # Holds an ONNX model resident: the single biggest always-on RAM consumer.
     # Cap it so it can't crowd out the webhost/fuzz on a small host (raise if the
     # model OOMs at load). If you don't need avatar moderation, drop this service
-    # and AVATAR_NSFW_ENDPOINT on `web` entirely — that frees the most RAM here.
+    # and AVATAR_NSFW_ENDPOINT on `web` entirely; that frees the most RAM here.
     mem_limit: 1g
     cpus: 1.0
     # The image CMD is `ulimit -n 1000000 && <loop worker> & <rest server>`.
     # In sh, `&&` binds tighter than `&`, so a failed `ulimit` short-circuits
-    # and the inference loop never starts — the REST server stays up with no
+    # and the inference loop never starts: the REST server stays up with no
     # worker behind it, /infer hangs, and the web caller times out at 10s
     # ("Content moderation unavailable"). Grant a high nofile limit (the daemon
     # can raise the hard limit) so the in-container `ulimit -n 1000000` succeeds
@@ -124,7 +124,7 @@ services:
       # keeps the web worker returning memory to the OS.
       - MALLOC_ARENA_MAX=2
     # fastDeploy binds :8080 only after the loop worker finishes warmup / its
-    # batch-size search — the REST app blocks on import until then (see
+    # batch-size search; the REST app blocks on import until then (see
     # __main__.py `rest()` -> `from ._app import app`), so a successful TCP
     # connect is an honest "ready to moderate" signal. The image base is
     # python:3.10-slim (python3 present; no curl/wget). start_period is generous
@@ -185,7 +185,7 @@ services:
       # Fuzz scratch dir. The bot creates <FUZZ_WORK_DIR>/<id>/out, reads the
       # container's result.json from it, and bind-mounts it into each fuzz
       # container as /out. That inner `docker run -v` is resolved by the HOST
-      # daemon (via the socket-proxy), so it must be a real HOST path — mounting
+      # daemon (via the socket-proxy), so it must be a real HOST path; mounting
       # /var/lib/mwgg-fuzz at the IDENTICAL path here makes the bot's view and
       # the daemon's view agree.
       - /var/lib/mwgg-fuzz:/var/lib/mwgg-fuzz
@@ -207,7 +207,7 @@ services:
       # and the hard --memory cap means a too-heavy world OOM-fails ITS OWN
       # container (a world failure) instead of taking the whole box down. 2g
       # because the heaviest worlds (oot, dk64) need the headroom even for plain
-      # fill — near-cap they stall/THRASH (no swap) before they OOM, which looks
+      # fill; near-cap they stall/THRASH (no swap) before they OOM, which looks
       # like a hang; the container logs cgroup memory.peak/memory.events on exit,
       # so check those lines before blaming the world.
       - FUZZ_CPUS=1
@@ -216,7 +216,7 @@ services:
       # The fuzzer skips the output/patch stage by default (FUZZ_SKIP_OUTPUT=1 in
       # the image): fill/logic is the signal, and patching loads + decompresses a
       # base ROM per successful generation (minutes each on a small host). Set 0
-      # to exercise patching too — only with ROMs mounted and patience.
+      # to exercise patching too, only with ROMs mounted and patience.
       # - FUZZ_SKIP_OUTPUT=0
       # Operator CEILINGS on the fuzzer's parallelism (-j) and run count (-r),
       # applied as min(payload, cap). The Index dispatch asks for threads=10 /
@@ -229,14 +229,14 @@ services:
       - FUZZ_WALL_SECONDS=1200
       # NOTE: the fuzz container runs with `--network none`. Core, its venv, and
       # fuzz.py are baked into FUZZ_IMAGE at build time, and the bot downloads +
-      # verifies the wheel and bind-mounts it in — so there is NO FUZZ_NET /
+      # verifies the wheel and bind-mounts it in, so there is NO FUZZ_NET /
       # FUZZ_WHEEL_HOSTS / MWGG_CORE_* / FUZZER_* (and no egress bridge/firewall)
       # to configure. Rebuild the image to pick up a newer core/fuzzer pin.
       # Optional ROM support (read-only). ROM-dependent worlds (e.g. metroidfusion)
       # only generate if the base ROMs are present. Set these to HOST paths and
       # the bot adds them to the inner `docker run` as READ-ONLY mounts (/roms +
       # the host.yaml). They are resolved by the host daemon, NOT read by the bot,
-      # so — unlike FUZZ_WORK_DIR — they need NOT be bind-mounted into this
+      # so (unlike FUZZ_WORK_DIR) they need NOT be bind-mounted into this
       # container. host.yaml's <world>_options.rom_file entries may be absolute
       # (/roms/<file>) or relative (roms/<file>, which the run script links to the
       # mount) so the SAME host.yaml also drives real generation; the ROMs must be
@@ -252,7 +252,7 @@ services:
       #   /var/lib/mwgg-fuzz/<id>/out/{result.json,report.json,combined.log,fuzz_output/}
       # result.json only ever holds the last ~4KB of the log and no worker
       # tracebacks, so this is how you see WHY a generation actually failed.
-      # Dirs accumulate while on — turn it back off and clean /var/lib/mwgg-fuzz
+      # Dirs accumulate while on; turn it back off and clean /var/lib/mwgg-fuzz
       # when done.
       # - FUZZ_DEBUG=1
     # Karen reaches the daemon proxy by service name over the compose network.
@@ -269,11 +269,11 @@ services:
       timeout: 5s
       retries: 3
 
-  # Build/pull home for the fuzz image — NOT a runtime service. github-bots spawns
+  # Build/pull home for the fuzz image; NOT a runtime service. github-bots spawns
   # it ad-hoc via `docker run`, so without this entry `docker compose build`/`pull`
   # would skip it. With the build block, `docker compose build fuzz-image` builds it
   # locally (the default while you iterate on run_fuzz.sh / the Dockerfile), and
-  # `docker compose pull` still fetches the published image — either way the bot's
+  # `docker compose pull` still fetches the published image; either way the bot's
   # `docker run` finds it already local. Core + fuzz.py are fetched at BUILD time
   # via the args below (override a ref via env to pin a different core/fuzzer).
   # `entrypoint: ["true"]` makes it exit 0 at once if `up` starts it; never
@@ -294,7 +294,7 @@ services:
   #
   # SECURITY: handing the internet-facing bot the raw docker.sock is effectively
   # host root (it could create a container that bind-mounts / ). This proxy
-  # (tecnativa/docker-socket-proxy — HAProxy over the daemon API) exposes ONLY
+  # (tecnativa/docker-socket-proxy, HAProxy over the daemon API) exposes ONLY
   # the API sections enabled below and mounts the socket READ-ONLY into ITSELF;
   # the bot never sees the socket and reaches the proxy over the compose network
   # via DOCKER_HOST=tcp://docker-socket-proxy:2375. No host port is published.

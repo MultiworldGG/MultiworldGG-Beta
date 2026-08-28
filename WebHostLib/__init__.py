@@ -14,11 +14,8 @@ from werkzeug.routing import BaseConverter
 
 from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
 from mwgg_igdb import GameIndex
-# Must be done before worlds is imported.
-# Workers re-execute this module on spawn; if they also seed the full IGDB
-# list, each worker eagerly loads every installed world (hundreds of MB) and
-# the host OOMs once a few gens run in parallel. Workers narrow the list
-# per-job in autolauncher._mp_gen_game.
+# Must run before worlds is imported. Only the main process seeds the full IGDB
+# list (workers would OOM); workers narrow it per-job in autolauncher._mp_gen_game.
 if multiprocessing.current_process().name == "MainProcess":
     set_game_names(list(GameIndex.game_names.keys()), strict=False)
     from worlds.AutoWorld import AutoWorldRegister
@@ -50,10 +47,8 @@ app.config["PORT"] = 80
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["LOBBY_APWORLD_PATH"] = os.path.abspath(LOBBY_APWORLD_FOLDER)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
-# SECRET_KEY signs session cookies. Resolution order:
-#   1. $MWGG_SECRET_KEY    (preferred for Docker / env-driven deploys)
-#   2. SECRET_KEY in config.yaml (legacy / file-based deploys)
-#   3. host-name fallback (DEV ONLY — get_app() refuses to boot with this in prod)
+# SECRET_KEY signs session cookies: $MWGG_SECRET_KEY, else config.yaml
+# SECRET_KEY, else the hostname fallback (dev only; get_app() refuses it in prod).
 app.config["SECRET_KEY"] = (
     os.environ.get("MWGG_SECRET_KEY", "").encode("utf-8")
     or bytes(socket.gethostname(), encoding="utf-8")
@@ -96,7 +91,7 @@ app.config["PONY"] = {
     'filename': os.path.abspath('ap.db3'),
     'create_db': True
 }
-# flask-sqlalchemy configuration — populated by get_app() from the PONY dict
+# flask-sqlalchemy configuration; populated by get_app() from the PONY dict
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.abspath('ap.db3')}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_ROLL"] = 20
@@ -110,34 +105,27 @@ app.config["MONITORING_ADMIN_TOKEN"] = None  # Admin token for monitoring API en
 # shareable URLs like the /r/<short> room link.
 app.config["SHARE_BASE_HOST"] = ""
 
-# Profile-picture uploader (see WebHostLib/api/avatar.py). The public URL
-# origin is taken from SHARE_BASE_HOST above, so one config knob covers
-# both surfaces.
+# Profile-picture uploader (see WebHostLib/api/avatar.py); public URL origin
+# comes from SHARE_BASE_HOST above.
 app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
 app.config["AVATAR_OUTPUT_DIM"] = 100
-# NudeNet moderation sidecar (deploy/docker-compose.yml `nudenet` service).
-# When set, uploads are screened for exposed nudity and rejected on a hit;
+# NudeNet moderation sidecar (deploy/docker-compose.yml `nudenet` service);
 # empty disables screening (local dev without the sidecar).
 app.config["AVATAR_NSFW_ENDPOINT"] = os.environ.get("AVATAR_NSFW_ENDPOINT", "")
-# Hosts whose avatar URLs we render on the web. Mirrors the desktop client's
-# safe_avatar_source allowlist (mwgg_gui.constants.TRUSTED_AVATAR_HOSTS): a
-# client-set profile_data avatar is shown on a public page only when it is HTTPS
-# on one of these hosts. SHARE_BASE_HOST is trusted implicitly at render time.
+# Hosts whose avatar URLs we render (HTTPS only); mirrors the desktop client's
+# safe_avatar_source allowlist. SHARE_BASE_HOST is trusted implicitly.
 app.config["AVATAR_TRUSTED_HOSTS"] = ("multiworld.gg", "mw.prismativerse.com")
 
-# WebAuthn / passkey recovery (see WebHostLib/passkeys.py).
-# Production MUST override RP_ID / ORIGIN in host.yaml. The browser rejects
-# any RP_ID that doesn't match the live origin's registrable domain, and
-# rejects WebAuthn over plain HTTP except on localhost.
+# WebAuthn / passkey recovery (see WebHostLib/passkeys.py). Production MUST
+# override RP_ID / ORIGIN: browsers reject mismatched RP_IDs and non-localhost HTTP.
 app.config["WEBAUTHN_RP_ID"] = "localhost"
 app.config["WEBAUTHN_ORIGIN"] = "http://localhost:5050"
 app.config["WEBAUTHN_RP_NAME"] = "MultiworldGG"
-# Used to derive a stable, opaque per-session user-handle for the OS passkey
-# picker. Falls back to SECRET_KEY for local dev; production should set this
-# to a dedicated ≥32-byte random string and rotate independently.
-app.config["WEBAUTHN_USER_HANDLE_SECRET"] = None  # populated below
+# Derives the stable opaque per-session user-handle for the OS passkey picker;
+# production should set a dedicated random secret (falls back to SECRET_KEY).
+app.config["WEBAUTHN_USER_HANDLE_SECRET"] = None  # resolved in register()
 
 cache = Cache()
 Compress(app)
@@ -199,11 +187,8 @@ def register() -> None:
     from .short_room_route import short_room
     app.add_url_rule("/r/<short>", "short_room", short_room)
 
-    # Passkey blueprint — needs the credential store + per-session HMAC secret.
-    # WEBAUTHN_USER_HANDLE_SECRET resolution order (mirrors SECRET_KEY):
-    #   1. $MWGG_WEBAUTHN_HANDLE_SECRET (preferred for Docker)
-    #   2. WEBAUTHN_USER_HANDLE_SECRET in config.yaml
-    #   3. SECRET_KEY (so the passkey clustering rotates with the signing key)
+    # Passkey blueprint: $MWGG_WEBAUTHN_HANDLE_SECRET, else config.yaml value,
+    # else SECRET_KEY (passkey clustering then rotates with the signing key).
     from .passkeys import passkeys_bp
     from .models import db as _db
     from .passkey_store import SQLAlchemyCredentialStore

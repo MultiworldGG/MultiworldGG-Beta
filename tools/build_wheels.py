@@ -136,9 +136,8 @@ def main():
                     skipped_builds.append(world)
                     continue
 
-        # Create MANIFEST.in for this world.
-        # The exclude pattern is *.py[co] (not *.py[cod]) — [cod] would also
-        # match `.pyd`, i.e. Windows native extensions, which we want to ship.
+        # MANIFEST.in exclude is *.py[co], not *.py[cod]: [cod] would also match
+        # .pyd, the Windows native extensions we want to ship.
         manifest_content = f"""global-exclude *
 graft src/worlds/{world}
 global-exclude *~ *.py[co]
@@ -147,10 +146,9 @@ include pyproject.toml
         manifest_path = script_dir / "MANIFEST.in"
         manifest_path.write_text(manifest_content)
 
+        pyproject_in_root = script_dir / "pyproject.toml"
         try:
-            # Move pyproject.toml to script directory
-            shutil.move(str(pyproject_path), str(script_dir / "pyproject.toml"))
-            pyproject_in_root = script_dir / "pyproject.toml"
+            shutil.move(str(pyproject_path), str(pyproject_in_root))
 
             if args.verbose:
                 print_colored("  Moved pyproject.toml to project root directory", "gray")
@@ -205,12 +203,12 @@ include pyproject.toml
         except Exception as e:
             print_colored(f"  [FAILED] Error processing {world}: {e}", "red")
             failed_builds.append(f"{world} (error: {e})")
-            if pyproject_in_root.exists() and pyproject_path.exists():
+            if pyproject_in_root.exists() and not pyproject_path.exists():
                 shutil.move(str(pyproject_in_root), str(pyproject_path))
                 if args.verbose:
                     print_colored(f"  Restored pyproject.toml to {world}/", "gray")
-                else:
-                    print_colored(f"  Warning: pyproject.toml not found in {world}/ directory after build", "yellow")
+            elif not pyproject_path.exists():
+                print_colored(f"  Warning: pyproject.toml not found in {world}/ directory after build", "yellow")
 
     # Remove MANIFEST.in if it exists
     manifest_path = script_dir / "MANIFEST.in"

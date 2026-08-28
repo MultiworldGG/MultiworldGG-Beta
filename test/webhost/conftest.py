@@ -2,10 +2,11 @@
 
 Mirrors the setup performed by ``test.webhost.TestBase`` (unittest style) so
 fixture-based pytest tests have access to a configured Flask app, a test
-client, and lightweight Room/Lobby factories.
+client, and lightweight Room/Lobby/Seed factories.
 
 Factories return ``SimpleNamespace`` snapshots rather than live ORM objects,
-so attribute access keeps working after the database session closes.
+so attribute access keeps working after the database session closes
+(``make_lobby`` returns the raw Lobby id instead).
 """
 import pytest
 from contextlib import nullcontext
@@ -86,6 +87,22 @@ def room_factory(app):
 
 
 @pytest.fixture
+def seed_factory(app):
+    """Create a Seed row owned by a given session UUID."""
+    from WebHostLib.models import Seed, db, commit
+
+    def _make(**overrides):
+        with app.app_context():
+            owner = overrides.pop("owner", uuid4())
+            seed = Seed(multidata=b"", owner=owner, **overrides)
+            db.session.flush()
+            snapshot = SimpleNamespace(id=seed.id, owner=seed.owner)
+            commit()
+            return snapshot
+    return _make
+
+
+@pytest.fixture
 def lobby_factory(app):
     from WebHostLib.models import db, commit, Lobby, Room, Seed, LOBBY_OPEN, LOBBY_DONE
 
@@ -125,3 +142,49 @@ def lobby_factory(app):
             commit()
             return snapshot
     return _make
+
+
+@pytest.fixture
+def make_lobby(app):
+    """Create a Lobby owned by the given session, bypassing lobby_factory
+    (which hard-codes state from with_finished_room). Returns the lobby id."""
+    from WebHostLib.models import Lobby, commit
+
+    def _make(owner, **overrides):
+        with app.app_context():
+            kw = dict(title="Test Lobby", owner=owner, password_hash="",
+                      timeout_minutes=60, max_yamls_per_player=3, race=False,
+                      meta="{}", state=0, max_players=0,
+                      allow_custom_apworlds=True)
+            kw.update(overrides)
+            lobby = Lobby(**kw)
+            commit()
+            return lobby.id
+    return _make
+
+
+@pytest.fixture
+def _wipe_rooms_after_test(app):
+    """Wipe Room/Seed/Command/Lobby/LobbyMessage rows around a test.
+
+    The session-scoped ``app`` fixture shares one in-memory DB across the
+    whole suite: hardcoded short_ids would trip the UNIQUE constraint across
+    tests, and count-based tests (e.g. the backfill script's stats) need a
+    known-empty starting state regardless of module ordering. Wipes before the
+    test for the clean start and after it so no residue leaks onward. Opt in
+    per module or class with
+    ``pytest.mark.usefixtures("_wipe_rooms_after_test")``.
+    """
+    def _wipe():
+        from WebHostLib.models import db, Room, Seed, Command, Lobby, LobbyMessage
+        with app.app_context():
+            db.session.query(LobbyMessage).delete()
+            db.session.query(Lobby).delete()
+            db.session.query(Command).delete()
+            db.session.query(Room).delete()
+            db.session.query(Seed).delete()
+            db.session.commit()
+
+    _wipe()
+    yield
+    _wipe()

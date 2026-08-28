@@ -1,18 +1,8 @@
-// repository_dispatch handler for the Karen fuzz/scan feature.
-//
-// A karen-fuzz repository_dispatch (Karen-signed, delivered to /karen by the
-// dedicated webhook in karen-webhook.ts) asks the bot to fuzz+scan one or more
-// apworlds for a PR head and report the verdict as a Check Run + sticky comment
-// region on the Index PR.
-//
-// This handler validates the (defensively-untrusted) client_payload, authes as
-// Karen against the Index, creates/reuses the head-pinned Check Run, then
-// ENQUEUES the long fuzz on the in-process FuzzQueue and RETURNS immediately so
-// the webhook HTTP response is not held open past GitHub's ~10s timeout. The
-// queued task drives the worlds through runFuzzContainer, aggregates the
-// conclusion, completes the Check Run, and upserts the comment region — all
-// asynchronously. Nothing in here is allowed to throw: a bad payload, a wrong
-// repo, or a container crash is logged via EventLog and swallowed.
+// karen-fuzz repository_dispatch handler: validate the payload, auth as Karen,
+// create/reuse the head-pinned Check Run, then ENQUEUE the fuzz and return so
+// the webhook response isn't held past GitHub's ~10s timeout. The queued batch
+// finalizes the Check Run + comment. Nothing here throws: everything is logged
+// via EventLog and swallowed.
 
 import type { Probot, ProbotOctokit } from "probot";
 
@@ -88,17 +78,14 @@ function runnerOptionsFromEnv(
   signal: AbortSignal,
 ): RunFuzzOptions {
   return {
-    // Defaults mirror deploy/docker-compose.yml's github-bots env so a missing
-    // var falls back to the same value prod sets explicitly. The container is
-    // `--network none`: core/fuzzer/deps are baked into FUZZ_IMAGE at build time,
-    // so there's no FUZZ_NET / MWGG_CORE_* / FUZZER_* to pass.
+    // Defaults mirror deploy/docker-compose.yml's github-bots env. Offline
+    // container: no FUZZ_NET / MWGG_CORE_* / FUZZER_* to pass.
     image: envStr("FUZZ_IMAGE", "ghcr.io/multiworldgg/multiworldgg-fuzz:latest"),
     workDir: envStr("FUZZ_WORK_DIR", "/var/lib/mwgg-fuzz"),
     cpus: envStr("FUZZ_CPUS", "2"),
     memory: envStr("FUZZ_MEMORY", "4g"),
     pids: envNum("FUZZ_PIDS", 512),
-    // Operator ceilings on the fuzzer -j / -r so a small host bounds resource use
-    // no matter what the Index dispatch asked for. Unset → use the payload value.
+    // Operator ceilings on fuzzer -j / -r; unset = use the payload value.
     maxThreads: envOptNum("FUZZ_MAX_THREADS"),
     maxRuns: envOptNum("FUZZ_MAX_RUNS"),
     wallSeconds: envNum("FUZZ_WALL_SECONDS", 1200),
@@ -233,9 +220,7 @@ export async function handleRepositoryDispatch(args: HandleRepositoryDispatchArg
       runFuzzBatch({ octokit, owner, repo, fuzz, checkRunId, eventLog, runnerLog, signal }),
     )
     .catch((err: unknown) => {
-      // A superseded batch (newer push) or any unexpected queue error lands here.
-      // It is already accounted for inside runFuzzBatch on the run path; this only
-      // catches pre-start supersede/close so the rejection is never unhandled.
+      // Pre-start supersede/close lands here; keep the rejection handled.
       const message = err instanceof Error ? err.message : String(err);
       karenProbot.log.warn(
         { pr_number: fuzz.pr_number, head_sha: fuzz.head_sha },
@@ -263,10 +248,9 @@ function conclusionTitle(status: "pass" | "warn" | "fail", count: number): strin
 }
 
 /**
- * The enqueued unit of work: mark the Check Run in_progress, fuzz every world
- * (each container call isolated so one crash never aborts the batch), aggregate,
- * complete the Check Run, and upsert the comment region. Resolves regardless of
- * per-world outcome; only re-raises nothing — all errors are logged here.
+ * The enqueued unit of work: in_progress -> fuzz every world (one crash never
+ * aborts the batch) -> aggregate -> complete the Check Run + comment region.
+ * Never re-raises; all errors are logged here.
  */
 async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
   const { octokit, owner, repo, fuzz, checkRunId, eventLog, runnerLog, signal } = a;
@@ -283,15 +267,14 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       reason: "fuzz_check_run_error",
       message: `Could not move fuzz Check Run to in_progress: ${message}`,
     });
-    // Keep going — we still want to attempt the fuzz and the final completion.
+    // Keep going: still attempt the fuzz and the final completion.
   }
 
   const options = runnerOptionsFromEnv(runnerLog, signal);
   const results: FuzzWorldResult[] = [];
 
-  // One-time pre-flight: a missing FUZZ_IMAGE would 125 every world with a
-  // cryptic "no result.json". Inspect-or-pull once; if it's truly unavailable,
-  // every world fails fast below with one actionable reason instead of N 125s.
+  // One-time image pre-flight: if unavailable, every world fails fast below
+  // with one actionable reason instead of N cryptic exit-125s.
   const preflight = await ensureImageAvailable(options.image, runnerLog);
   if (!preflight.ok) {
     eventLog.emit({
@@ -331,9 +314,8 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
         });
       }
     } catch (err: unknown) {
-      // runFuzzContainer only rejects on truly-unexpected internal errors; record
-      // a synthetic fail so the world still appears in the table and the batch
-      // continues.
+      // runFuzzContainer only rejects on internal errors; record a synthetic
+      // fail so the world still appears and the batch continues.
       const message = err instanceof Error ? err.message : String(err);
       eventLog.emit({
         kind: "error",
@@ -380,13 +362,9 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
     });
   }
 
-  // Karen's FINAL verdict lands AFTER the isolated checks — the whole reason they
-  // run in the bot. Approve only when the manifest checks (verdict from the
-  // dispatch payload) AND these isolated checks are green; request changes when
-  // either is red. (The workflow only reviews synchronously on the no-fuzz path.)
-  // Guard on the PR head exactly like the comment splice: a batch that finished
-  // after a newer push must NOT land a stale APPROVE on now-superseded code — the
-  // newer batch owns the review (the queue keys on head_sha, so it ran separately).
+  // Karen's final review lands AFTER the isolated checks: approve only when the
+  // manifest verdict AND the fuzz rollup are green. Head-guarded like the
+  // comment splice so a stale batch never APPROVEs superseded code.
   try {
     const decision = decideFuzzReview(fuzz.manifest_status, status);
     if (decision) {

@@ -3,18 +3,7 @@ Passkey (WebAuthn) recovery for MultiworldGG sessions.
 
 The existing ``session["_id"]`` UUID stays the source of truth. A passkey is
 an *additional* way to recover it after a browser wipes its cookie jar; it
-does not replace the cookie-based session.
-
-What the server stores per passkey:
-  - credential_id: opaque bytes the authenticator chose
-  - public_key:    COSE-encoded; useless without the matching private key,
-                   which lives in a TPM / Secure Enclave on the user's device
-  - sign_count:    monotonic counter the authenticator increments; lets us
-                   detect cloned authenticators
-  - session_id:    the existing ``_id`` this credential restores
-
-What the server never asks for: email, real name, anything correlatable to
-a real person.
+does not replace the cookie-based session. No PII is stored or requested.
 
 Wiring it up::
 
@@ -69,7 +58,7 @@ def _maybe_rate_limit(limit: str):
 
 
 # ---------------------------------------------------------------------------
-# Storage interface — implement against whatever ORM the host app uses
+# Storage interface - implement against whatever ORM the host app uses
 # ---------------------------------------------------------------------------
 
 @dataclass
@@ -196,15 +185,14 @@ def register_finish():
 
 
 # ---------------------------------------------------------------------------
-# Authentication (no session needed — this is the recovery path)
+# Authentication (no session needed: this is the recovery path)
 # ---------------------------------------------------------------------------
 
 @passkeys_bp.route("/auth/start", methods=["POST"])
 @_maybe_rate_limit("10/minute")
 def auth_start():
-    # Empty allow_credentials triggers the discoverable-credential flow:
-    # the OS shows the user their available passkeys for this site without
-    # the server having to (or being able to) hint at which ones exist.
+    # Empty allow_credentials triggers the discoverable-credential flow: the OS
+    # shows the user's passkeys without the server hinting at which ones exist.
     options = generate_authentication_options(
         rp_id=_rp_id(),
         user_verification=UserVerificationRequirement.PREFERRED,
@@ -275,11 +263,9 @@ def list_credentials():
 def remove_credential():
     """Delete one of the caller's passkeys.
 
-    Authorisation rule: a passkey can only be removed by someone who already
-    holds the session it belongs to. This means a user who has lost their
-    session cookie can't use the remove endpoint to clean up old passkeys —
-    they have to recover the session first. That's the right tradeoff: we
-    don't want a recovery endpoint that *destroys* recovery.
+    Only the holder of the owning session may remove a passkey; a user who
+    lost the cookie must recover the session first. A recovery endpoint must
+    not be able to destroy recovery.
     """
     raw_id = session.get("_id")
     if not raw_id:

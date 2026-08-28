@@ -1,18 +1,14 @@
 """
-Legacy URL redirects for MultiWorldGG.
+Legacy URL redirects for MultiworldGG.
 
-Every URL the site exposed before the route migration continues to work via a
-301 redirect to the new canonical location. The destinations are computed
-through ``url_for(...)`` so this module never needs editing if route paths
-change again later.
+Every URL the site exposed before the route migration 301s to its new
+canonical location. Destinations go through ``url_for(...)`` so this module
+survives future path changes.
 
 Register on the app once::
 
     from WebHostLib.route_redirects import legacy_routes
     app.register_blueprint(legacy_routes)
-
-After Phase 1 of the migration ships, all entries here should hit 301s in
-production and the test suite should keep them all green.
 """
 
 from flask import Blueprint, abort, redirect, url_for
@@ -53,8 +49,8 @@ for old_path, target_endpoint in _RENAMES.items():
 
 
 # ---------------------------------------------------------------------------
-# /learn/* — both the hub root and the tutorial-index root now require a
-# <lang> segment. Old language-less URLs redirect to the English equivalents.
+# /learn/*: the hub root and the tutorial-index root now require a <lang>
+# segment. Old language-less URLs redirect to the English equivalents.
 # ---------------------------------------------------------------------------
 
 @legacy_routes.route("/learn")
@@ -91,7 +87,7 @@ def legacy_room(room):
     """
     The canonical room URL is now ``/play/seed/<seed_id>/room/<room_id>``.
     The seed ID isn't in the old URL, so we look it up. If the room doesn't
-    exist anymore, 404 — the redirect chain shouldn't fabricate a destination.
+    exist anymore, 404: the redirect chain shouldn't fabricate a destination.
     """
     # Import locally to avoid a circular import at module load time. Tests
     # patch this with a fixture, so production callers get the real model.
@@ -117,10 +113,8 @@ def legacy_glossary(lang):
     return redirect(url_for("glossary", lang=lang), code=301)
 
 
-# Tutorial path redirects live on the ``tutorial_legacy_*`` view functions in
-# WebHostLib/misc.py (not in this blueprint) because they share the
-# ``/tutorial/...`` URL prefix with the canonical tutorial endpoint and the
-# split-suffix logic is easier to keep colocated with it.
+# Tutorial path redirects live on the ``tutorial_legacy_*`` views in misc.py:
+# they share the ``/tutorial/...`` prefix with the canonical tutorial endpoint.
 
 
 @legacy_routes.route("/games/info/<game>")

@@ -1,4 +1,4 @@
-"""Karen's 7-check quality assurance review for `worlds/<apworld>.json` PRs.
+"""Karen's 8-check quality assurance review for `worlds/<apworld>.json` PRs.
 
 Karen is our quality assurance bot, here to tell you what we maybe want to flag to fix.
 If everything is perfect, you'll get her QA stamp of approval.
@@ -130,7 +130,7 @@ NETWORK_MODULES = frozenset({
     "telnetlib",
 })
 
-# Top-level call attribute paths that indicate network use. Conservative —
+# Top-level call attribute paths that indicate network use. Conservative:
 # erring on the side of false positives, which Karen surfaces as warnings.
 NETWORK_CALL_PATTERNS = (
     re.compile(r"^urllib(\.[A-Za-z_]+)*\.(urlopen|urlretrieve|Request)$"),
@@ -309,10 +309,8 @@ def _git_check(url: str) -> tuple[bool, str]:
         return False, f"git ls-remote returned code {result.returncode}: {stderr}"
     stdout = result.stdout.strip()
     if not stdout:
-        # Could be a SHA pinned ref (ls-remote doesn't list raw SHAs). Accept
-        # if the ref looks like a 40-char hex SHA — confirming the SHA is
-        # reachable would require a fetch, which is what the size_sanity
-        # check does later anyway.
+        # ls-remote doesn't list raw SHAs; accept a 40-hex ref and let the
+        # size_sanity fetch confirm reachability later.
         if re.fullmatch(r"[0-9a-f]{40}", ref):
             return True, f"ref appears to be a SHA; deferring"
         return False, f"ref '{ref}' not found at {clone_url}"
@@ -336,7 +334,7 @@ def check_url_reachability(manifest_path: Path, lenient: bool = False) -> CheckR
         url = manifest.get(field_name)
         if not url:
             continue
-        # `git+https://` / `git+ssh://` aren't HTTP — probe via git ls-remote.
+        # `git+https://` / `git+ssh://` aren't HTTP; probe via git ls-remote.
         if url.startswith("git+"):
             ok, msg = _git_check(url)
         else:
@@ -741,7 +739,7 @@ def check_pip_audit(world_dir: Path) -> CheckResult:
     return CheckResult(
         "pip_audit",
         "fail",
-        "There are a few scary packages in there, let's check them out.`",
+        "There are a few scary packages in there, let's check them out.",
         details=all_vulns,
     )
 
@@ -792,8 +790,8 @@ def review_one(
     if not deep_selected:
         return review
 
-    # The bot's container may have already downloaded and extracted the wheel.
-    # In that case, point the deep checks straight at it — no re-download.
+    # The bot's container may have already downloaded and extracted the wheel;
+    # point the deep checks straight at it, no re-download.
     if world_dir_override is not None:
         world_dir = world_dir_override
         fetched = world_dir.is_dir()
@@ -1025,7 +1023,7 @@ def _cli(argv: Optional[list[str]] = None) -> int:
     selected_checks = frozenset(args.check) if args.check else frozenset(ALL_CHECKS)
 
     if not args.changed:
-        # No changed manifests — pass trivially. Still emit empty outputs so
+        # No changed manifests: pass trivially. Still emit empty outputs so
         # downstream workflow steps don't have to special-case.
         run = ReviewRun(worlds=[])
         if args.output_comment:

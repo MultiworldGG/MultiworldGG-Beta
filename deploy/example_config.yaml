@@ -19,7 +19,7 @@ HOST_ADDRESS: localhost
 # SECRET_KEY signs session cookies. The webhost refuses to start if this is
 # left at the hostname-derived default. Two ways to set it:
 #
-#   1. ENV (preferred for Docker — see deploy/docker-compose.yml `env_file`):
+#   1. ENV (preferred for Docker; see deploy/docker-compose.yml `env_file`):
 #         MWGG_SECRET_KEY=<random hex from `openssl rand -hex 32`>
 #         MWGG_WEBAUTHN_HANDLE_SECRET=<another random hex>
 #
@@ -29,7 +29,7 @@ HOST_ADDRESS: localhost
 #
 # WEBAUTHN_USER_HANDLE_SECRET is only consulted when the passkey blueprint is
 # in use. It falls back to SECRET_KEY if unset, which is fine for most
-# deployments — set it separately only if you want to rotate the OS-side
+# deployments; set it separately only if you want to rotate the OS-side
 # passkey clustering without rotating cookie signing.
 #
 # ---------------------------------------------------------------------------

@@ -76,7 +76,7 @@ def _make_room(db, seed, owner, last_activity):
 def test_cleanup_auto_delete(app, cleanup_on_test_db):
     """With ROOM_AUTO_DELETE set, old owned content is deleted, recent kept.
 
-    Rooms age out on ``last_activity``, Seeds on ``creation_time`` — but a
+    Rooms age out on ``last_activity``, Seeds on ``creation_time`` - but a
     Seed only goes once no Room references it. The interesting case is s1: its
     only Room aged out in the same pass, so the (old) Seed must follow it.
     """

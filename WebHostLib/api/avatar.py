@@ -28,7 +28,7 @@ PNG_EXTENSION = ".png"
 HEX_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 
 # Exposed-nudity labels emitted by the NudeNet sidecar (deploy/docker-compose.yml
-# `nudenet`). MALE_BREAST_EXPOSED is intentionally absent — ordinary topless
+# `nudenet`). MALE_BREAST_EXPOSED is intentionally absent: ordinary topless
 # photos aren't what we're filtering.
 _NSFW_BLOCKED_CLASSES = frozenset({
     "FEMALE_GENITALIA_EXPOSED",
@@ -50,7 +50,7 @@ def _bearer_token() -> str:
 
 
 def _bearer_or_ip_key() -> str:
-    """Limiter key — prefer the Bearer token, fall back to IP."""
+    """Limiter key: prefer the Bearer token, fall back to IP."""
     token = _bearer_token()
     if token:
         return f"token:{token}"
@@ -72,12 +72,9 @@ def _resolve_token() -> AvatarToken:
 
 
 def _avatar_base_url() -> str:
-    """Return the canonical public origin for avatar URLs (no trailing slash).
-
-    Mirrors `WebHostLib.sharing._absolute_url`: honour the configured
-    `SHARE_BASE_HOST` so the URL points at the public hostname rather than
-    Flask's internal bind (`127.0.0.1:8080` behind a reverse proxy).
-    """
+    """Canonical public origin for avatar URLs (no trailing slash): honour
+    `SHARE_BASE_HOST` so URLs point at the public hostname, not Flask's
+    internal bind behind the reverse proxy."""
     base_host = app.config.get("SHARE_BASE_HOST") or request.host
     return f"{base_host}"
 
@@ -88,12 +85,8 @@ def avatar_public_url(avatar_id: UUID) -> str:
 
 
 class AvatarUploadError(Exception):
-    """A validation/moderation failure with the HTTP status to surface it as.
-
-    Lets the shared processing core stay framework-agnostic: the JSON API maps
-    it to ``(jsonify, status)`` and the cookie-authed web form maps it to a
-    ``flash`` + redirect.
-    """
+    """A validation/moderation failure with the HTTP status to surface it as;
+    keeps the shared processing core framework-agnostic."""
 
     def __init__(self, message: str, status: int):
         super().__init__(message)
@@ -174,12 +167,9 @@ def store_avatar(raw: bytes, token: AvatarToken) -> Avatar:
     except (UnidentifiedImageError, OSError, ValueError):
         raise AvatarUploadError("Could not decode image", 400)
 
-    # Decode once with Pillow, then derive both the moderation sample and the
-    # stored avatar from it. We never forward the raw upload to the sidecar:
-    # NudeNet decodes with OpenCV, whose format support differs from Pillow's,
-    # and an image Pillow accepts but OpenCV can't decode (returns None) crashes
-    # the sidecar's inference loop. Re-encoding to a baseline JPEG guarantees an
-    # OpenCV-decodable sample.
+    # Never forward the raw upload to the sidecar: an image Pillow accepts but
+    # OpenCV can't decode crashes NudeNet's inference loop, so send a re-encoded
+    # baseline-JPEG moderation sample instead.
     try:
         with Image.open(io.BytesIO(raw)) as img:
             img.load()
