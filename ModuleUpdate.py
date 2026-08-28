@@ -40,9 +40,6 @@ MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
 MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 
-def is_frozen() -> bool:
-    return getattr(sys, 'frozen', False)
-
 def is_windows() -> bool:
     return sys.platform in ("win32", "cygwin", "msys")
 
