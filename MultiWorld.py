@@ -437,7 +437,22 @@ def main(argv: "list[str] | None" = None) -> None:
                     logger.error(f"Splash screen error: {message.get('error')}")
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
-        
+    elif not os.environ.get("MWGG_NO_SPLASH"):
+        # The splash only fronts the update on Windows GUI cold starts; the
+        # update itself is required on every platform, frozen or dev. Spawned
+        # clients inherit MWGG_NO_SPLASH=1 and must not re-run it.
+        logger.info("Checking for updates...")
+        try:
+            import ModuleUpdate
+            result = ModuleUpdate.update_worlds()
+            if result:
+                from Utils import exit_restart_for_update
+                exit_restart_for_update()
+            elif result is not None:
+                logger.info("Updates applied successfully")
+        except Exception as e:
+            logger.warning(f"World update failed; continuing with installed versions: {e}")
+
     # Register custom_worlds/ apworlds into the in-memory index so they're
     # selectable; only the zip manifest is read, nothing is imported.
     try:

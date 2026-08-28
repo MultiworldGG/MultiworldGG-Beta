@@ -1014,6 +1014,36 @@ class TestWorldModuleOnDisk(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------- #
+# update_worlds: the platform- and freeze-neutral world-wheel update run on
+# every launcher cold start (fronted by the splash on Windows GUI).
+# --------------------------------------------------------------------------- #
+
+def test_update_worlds_skips_when_installs_disabled():
+    with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=True), \
+            mock.patch.object(ModuleUpdate, "check_for_updates") as check:
+        assert ModuleUpdate.update_worlds() is None
+    check.assert_not_called()
+
+
+def test_update_worlds_returns_none_when_current():
+    with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
+            mock.patch.object(ModuleUpdate, "check_for_updates", return_value=[]) as check, \
+            mock.patch.object(ModuleUpdate, "install_worlds") as install:
+        assert ModuleUpdate.update_worlds() is None
+    check.assert_called_once_with(worlds_only=True)
+    install.assert_not_called()
+
+
+def test_update_worlds_installs_outdated_worlds():
+    result = ModuleUpdate.WorldInstallResult()
+    with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
+            mock.patch.object(ModuleUpdate, "check_for_updates", return_value=["worlds.albw"]), \
+            mock.patch.object(ModuleUpdate, "install_worlds", return_value=result) as install:
+        assert ModuleUpdate.update_worlds() is result
+    install.assert_called_once_with(["worlds.albw"])
+
+
+# --------------------------------------------------------------------------- #
 # Updater gating: update checks only run from installed frozen builds.
 # --------------------------------------------------------------------------- #
 

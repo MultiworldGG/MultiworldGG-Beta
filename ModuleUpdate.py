@@ -911,6 +911,23 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     invalidate_caches()
     return apworlds
 
+
+def update_worlds() -> Optional[WorldInstallResult]:
+    """Pull the latest mwgg_igdb, then reinstall every world wheel whose
+    installed version no longer matches its index tag.
+
+    Platform- and freeze-neutral; the launcher runs this on every cold start,
+    with the Windows splash fronting the same call. Returns None when nothing
+    was outdated, else install_worlds' result for the outdated set.
+    """
+    if _skip_all_installs():
+        return None
+    updates = check_for_updates(worlds_only=True)
+    if not updates:
+        return None
+    return install_worlds(updates)
+
+
 def update_world_from_package() -> None:
     """Install/update wheel files from custom_worlds directory."""
     # Use threading version if frozen, otherwise use subprocess
@@ -1180,19 +1197,14 @@ def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
         install_worlds(worlds, update=force)
         return
 
-    if is_frozen():
-        if (exe_dir / "custom_wheels").exists():
-            logger.debug("Custom Worlds found, checking...")
-            update_world_from_package()
-        updates = check_for_updates(worlds_only=True)
-        if updates:
-            restart_needed = install_worlds(updates)
-            if restart_needed:
-                # Library updates were staged, need to restart
-                from Utils import exit_restart_for_update
-                exit_restart_for_update()
-        else:
-            logger.debug("No updates found.")
+    if is_frozen() and (exe_dir / "custom_wheels").exists():
+        logger.debug("Custom Worlds found, checking...")
+        update_world_from_package()
+    restart_needed = update_worlds()
+    if restart_needed:
+        # Apworld fallbacks were staged into the venv, need to restart
+        from Utils import exit_restart_for_update
+        exit_restart_for_update()
     global update_ran
 
     if update_ran:
