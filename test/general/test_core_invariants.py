@@ -384,7 +384,7 @@ class TestGetClassification(unittest.TestCase):
     def test_get_classification_progression_skip_balancing(self) -> None:
         flags = ItemClassification.progression | ItemClassification.skip_balancing
         self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Requried for Goal"
+            UIHint.get_classification(flags), "Progression - Required for Goal"
         )
 
     def test_get_classification_deprioritized_beats_skip_balancing(self) -> None:
