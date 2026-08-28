@@ -14,11 +14,7 @@ from collections import Counter
 from itertools import chain
 from typing import Any
 
-# Lightweight "dump option metadata as JSON" mode, used by mwgg-gui's YAML
-# creator. Detected as early as possible — before ModuleUpdate configures the
-# root logger to stdout — because the GUI captures a single JSON object from
-# stdout, so every other byte of output must be diverted to stderr. The real
-# stdout is preserved in _JSON_OUT for the final emit.
+# Used by the GUI to load options without loading the world into launcher memory
 _YAML_OPTIONS_MODE = "--yaml-options" in sys.argv or "--yaml_options" in sys.argv
 _JSON_OUT = sys.stdout
 if _YAML_OPTIONS_MODE:
@@ -37,8 +33,7 @@ if Utils.use_worlds_venv():
     if os.path.exists(venv_worlds_path) and venv_worlds_path not in sys.path:
         sys.path.append(venv_worlds_path)
 
-# Hard-require mwgg_igdb: subsequent imports (and BaseUtils.get_archipelago_constants)
-# crash with ImportError if the index isn't installed. Mirrors WebHost.py's pattern.
+# Fail fast if the index package is missing; later imports crash confusingly without it.
 ModuleUpdate.update()
 
 import Options
@@ -207,9 +202,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     player_files: dict[int, str] = {}
     player_errors: list[str] = []
     allow_quantity: bool = args.allow_quantity or False
-    # Create the player-files dir on demand (PlayerFilesPath is an optional
-    # folder) and skip documentation/non-config files so a stray README.txt
-    # can't break the whole scan.
+    # PlayerFilesPath may not exist yet; skip non-config files so a stray README can't break the scan.
     os.makedirs(args.player_files_path, exist_ok=True)
     _non_player_suffixes = (".ini", ".txt", ".md")
     for file in os.scandir(args.player_files_path):
@@ -289,13 +282,8 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     set_game_names(games_to_load)
     if (__name__ == "__main__" and not os.environ.get("MWGG_GENERATE_RELOADED")
             and _installed_worlds_count() > worlds_installed_before):
-        # set_game_names pip-installed a world that wasn't present yet. It no longer
-        # imports `worlds` while queueing, so the load loop below normally picks the new
-        # world up in-process — but if anything else imported `worlds` first, the loop
-        # already ran against the old queue and roll_settings can't find it. It's
-        # installed now — hand off to a fresh process that loads it cleanly, silently
-        # retrying instead of erroring out. (Worlds already on disk never reach here, so
-        # dev runs and post-install retries proceed in-process unchanged.)
+        # The world was installed mid-run; if this process already ran the world
+        # load loop, hand off to a fresh process that loads it cleanly.
         import atexit
         atexit.unregister(input)  # this proxy process must not prompt "Press enter to close."
         sys.exit(_reexec_for_clean_world_load())
@@ -855,7 +843,7 @@ def _y_describe_option(option_name, option_class):
     if issubclass(option_class, Options.OptionDict):
         desc["type"] = "option_dict"
         return desc
-    # Unmodeled subclass — let the GUI fall back to a free-text/raw-YAML field.
+    # Unmodeled subclass: let the GUI fall back to a free-text/raw-YAML field.
     desc["type"] = "free_text"
     return desc
 
@@ -881,10 +869,7 @@ def _y_emit(payload) -> int:
     return 0
 
 
-# Exit code that asks the caller to re-run us in a fresh process. Reuses the
-# project-wide "bad environment / needs reload" convention (Utils.exit_restart_
-# for_update, handled by the launcher) — here it means "world installed, but it
-# can't be loaded in this already-`import worlds`-ed process; re-run me".
+# "Re-run me in a fresh process" (same convention as Utils.exit_restart_for_update).
 EXIT_NEEDS_RELOAD = 10
 
 
@@ -900,18 +885,8 @@ def _y_world_installed(module: str) -> bool:
 
 
 def _y_custom_world_entry(module: str):
-    """A `Utils._worlds_to_load` entry for an already-present *custom* world (one
-    with no pip metadata), or None if `module` isn't present on disk.
-
-    The launcher only offers worlds get_available_worlds() found on disk, so a
-    selectable custom world already exists — we never install it. Two on-disk
-    shapes, in load-precedence order:
-      - an apworld previously extracted into the venv worlds dir -> import via
-        the string "worlds.<module>" (worlds/__init__ extends __path__ to that
-        dir, so the normal file loader finds it).
-      - a custom_worlds/<module>.apworld not yet extracted -> an APWorldContainer,
-        loaded in-process via zipimport.
-    Checked WITHOUT importing `worlds` (path lookups + a zip manifest read only).
+    """A `Utils._worlds_to_load` entry for an already-present custom world (no
+    pip metadata), or None if `module` isn't on disk. Never imports `worlds`.
     """
     if (ModuleUpdate._venv_worlds_dir() / module).is_dir():
         return f"worlds.{module}"
@@ -927,23 +902,9 @@ def _y_custom_world_entry(module: str):
 def dump_yaml_options(game_name: str, visibility: str, module: str | None = None) -> int:
     """Install/load `game_name` and write its option metadata to stdout as JSON.
 
-    Runs inside the frozen Generate executable, so worlds load in the real
-    bundle environment (C-extension base deps like bsdiff4 import fine).
     Returns a process exit code; the JSON `ok` field carries success/failure.
-
-    Two-call install (index/pip worlds): a world can't be installed and loaded
-    in the same process, because importing `worlds` to load it also caches the
-    package with its load loop already run against the old queue. So when an
-    index world isn't yet installed we install it directly
-    (ModuleUpdate.install_worlds, which never imports `worlds`) and exit
-    EXIT_NEEDS_RELOAD; the caller re-runs us and the fresh process loads it
-    cleanly. Already-installed worlds load in one call.
-
-    Custom worlds (apworld extractions, custom_worlds/*.apworld) have no pip
-    metadata and can't be "installed", but the launcher only offers worlds found
-    on disk, so they already exist. We queue their load entry onto
-    `Utils._worlds_to_load` directly and load them in this same process — no
-    install, no reload.
+    A world can't be installed and loaded in the same process, so a fresh
+    index-world install exits EXIT_NEEDS_RELOAD for the caller to re-run us.
     """
     import traceback
     try:
@@ -956,19 +917,13 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
             })
 
         if _y_world_installed(module):
-            # Pip-installed (index) world: set_game_names takes the
-            # importlib.metadata path, and `from worlds import` is the first import
-            # of the package, so the load loop picks it up.
+            # Pip-installed world: the load loop picks it up on first `from worlds import`.
             set_game_names([game_name], strict=False)
         else:
             entry = _y_custom_world_entry(module)
             if entry is None:
-                # Genuinely-missing index world: install directly via ModuleUpdate,
-                # which reads importlib.metadata and never imports `worlds`. The
-                # install has to land before the load loop runs, and this process may
-                # already have imported `worlds` elsewhere, so we don't try to load
-                # here: install and ask the caller to re-run; the fresh process sees it
-                # installed and loads it cleanly.
+                # Missing index world: install it, then ask the caller to re-run
+                # so a fresh process loads it.
                 apworlds = ModuleUpdate.install_worlds([module])
                 if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
                     return _y_emit({
@@ -977,8 +932,7 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
                     })
                 logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
                 return EXIT_NEEDS_RELOAD
-            # Already-present custom world: queue its load entry BEFORE the first
-            # `from worlds import` so worlds/__init__'s load loop picks it up.
+            # Queue the custom world's load entry before the first `from worlds import`.
             Utils._worlds_to_load.append(entry)
 
         from worlds import AutoWorldRegister, failed_world_loads
@@ -1028,9 +982,7 @@ if __name__ == '__main__':
     import atexit
     import sys
 
-    # YAML-options mode: emit JSON and exit before the generation pipeline (and
-    # before the interactive "Press enter" atexit hook, which would hang a
-    # subprocess).
+    # Emit JSON and exit before the generation pipeline and the "Press enter" atexit hook.
     if _YAML_OPTIONS_MODE:
         _y_args = mystery_argparse()
         sys.exit(dump_yaml_options(_y_args.yaml_options_game, _y_args.visibility, _y_args.module))
