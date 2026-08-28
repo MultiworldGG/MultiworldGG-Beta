@@ -1468,7 +1468,8 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
     if is_kivy_running():
         from mwgg_gui.components.dialog import MessageBox
-        MessageBox(title, text, error).open()
+        # Positional third arg is the close callback, not is_error.
+        MessageBox(title, text, is_error=error).open()
         return
 
     textual_app = _get_running_textual_app()
@@ -1504,6 +1505,60 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         root.withdraw()
         showerror(title, text) if error else showinfo(title, text)
         root.update()
+
+
+def messagebox_confirm(title: str, text: str) -> bool:
+    """Blocking OK/Cancel confirm; returns True when the user confirms.
+
+    Mirrors messagebox's backend cascade, but a running frontend cannot block
+    the main thread on a dialog (Kivy and Textual dialogs are callback-based),
+    so those branches log and return True: GUI/TUI surfaces must pre-confirm
+    with their own dialog before calling into code gated on this."""
+    if not gui_enabled:
+        logging.info(f"{title}: {text} (auto-confirmed: no GUI available)")
+        return True
+
+    if is_kivy_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running Kivy app; "
+                        f"the GUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_textual_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running TUI; "
+                        f"the TUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_linux and "tkinter" not in sys.modules:
+        # prefer native dialog
+        from shutil import which
+        env = env_cleared_lib_path()
+        kdialog = which("kdialog")
+        if kdialog:
+            return subprocess.run([kdialog, f"--title={title}", "--warningyesno", text],
+                                  env=env).returncode == 0
+        zenity = which("zenity")
+        if zenity:
+            return subprocess.run([zenity, f"--title={title}", f"--text={text}", "--question"],
+                                  env=env).returncode == 0
+
+    elif is_windows:
+        import ctypes
+        # MB_OKCANCEL | MB_ICONWARNING; IDOK == 1
+        return ctypes.windll.user32.MessageBoxW(0, text, title, 0x31) == 1
+
+    # fall back to tk
+    try:
+        import tkinter
+        from tkinter.messagebox import askokcancel
+    except Exception:
+        logging.error('Could not load tkinter, which is likely not installed. This attempt was '
+                      f'made because messagebox_confirm was used for "{title}"; declining.')
+        return False
+    root = tkinter.Tk()
+    root.withdraw()
+    result = askokcancel(title, text)
+    root.update()
+    return bool(result)
 
 
 gui_enabled = not sys.stdout or "--nogui" not in sys.argv
