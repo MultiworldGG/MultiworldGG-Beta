@@ -1,5 +1,5 @@
 """
-Legacy URL redirects for MultiWorldGG.
+Legacy URL redirects for MultiworldGG.
 
 Every URL the site exposed before the route migration 301s to its new
 canonical location. Destinations go through ``url_for(...)`` so this module

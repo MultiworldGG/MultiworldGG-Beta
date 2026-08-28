@@ -26,7 +26,7 @@ additional software you need, which client to use, and how to connect.
 - Follow it once end to end. Most guides take only a few minutes and save you a
   lot of confusion later.
 - It may mention needing the MultiworldGG Client, which is the next step.  You
-  may want to download the MultiWorldGG Client anyway - it has access to hints
+  may want to download the MultiworldGG Client anyway - it has access to hints
   and a console window so you can follow along, even if your game has its own
   method of connecting.
 
