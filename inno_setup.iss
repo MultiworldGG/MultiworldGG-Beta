@@ -278,7 +278,7 @@ Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm 
 ; avoids the AppExecLink WinError 448 from WinGet\Links\uv.exe.
 ; Runs on the client exe deliberately, not the launcher: --update-modules is a
 ; one-shot headless install step and must not spawn any GUI.
-Filename: "{app}\MultiWorldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
+Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
 
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
@@ -616,13 +616,13 @@ Root: HKCR; Subkey: "{#MyAppName}aptmcpatch\shell\open\command";  ValueData: """
 
 Root: HKCR; Subkey: ".multiworldgg";                              ValueData: "{#MyAppName}multidata";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata";                     ValueData: "MultiworldGG Server Data";      Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiWorldGGServer.exe,0";                         ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}multidata\shell\open\command";  ValueData: """{app}\MultiWorldGGServer.exe"" ""%1""";                ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiworldGGServer.exe,0";                         ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}multidata\shell\open\command";  ValueData: """{app}\MultiworldGGServer.exe"" ""%1""";                ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".archipelago";                              ValueData: "{#MyAppName}multidata";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}multidata";                     ValueData: "MultiworldGG Server Data";      Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiWorldGGServer.exe,0";                         ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}multidata\shell\open\command";  ValueData: """{app}\MultiWorldGGServer.exe"" ""%1""";                ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}multidata\DefaultIcon";         ValueData: "{app}\MultiworldGGServer.exe,0";                         ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}multidata\shell\open\command";  ValueData: """{app}\MultiworldGGServer.exe"" ""%1""";                ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".apworld";                                 ValueData: "{#MyAppName}worlddata";  Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}worlddata";                    ValueData: "MultiworldGG World Data"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
