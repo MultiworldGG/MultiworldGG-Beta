@@ -191,7 +191,7 @@ class UIHint:
             if flags & ItemClassification.deprioritized:  # deprioritized, but still progression (skulls etc)
                 return "Progression - Logically Relevant"
             elif flags & ItemClassification.skip_balancing:  # skip_balancing bit set on a priority item: macguffin
-                return "Progression - Requried for Goal"
+                return "Progression - Required for Goal"
             else:
                 return "Progression"
         elif flags & ItemClassification.useful:  # useful
