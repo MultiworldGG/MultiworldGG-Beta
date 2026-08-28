@@ -51,11 +51,9 @@ jobs:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
             exe_pattern: '*.exe'
-          # exe_pattern isn't consumed elsewhere in this file yet (kept for future
-          # per-platform artifact-name derivation); casing corrected to match the
-          # real client exe (MultiWorldGG, capital W) -- MultiworldGGLauncher* is
-          # the one exe that legitimately keeps the lowercase-w spelling, see
-          # BaseUtils.FROZEN_TARGETS.
+          # exe_pattern is not consumed yet. MultiWorldGG (capital W) is the
+          # client exe; MultiworldGGLauncher* keeps the lowercase w (see
+          # BaseUtils.FROZEN_TARGETS).
           - os: ubuntu-latest
             artifact_name: linux-exe
             exe_pattern: 'MultiWorldGG'
@@ -215,7 +213,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
@@ -363,7 +361,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
           pip install --no-cache-dir PyGObject charset-normalizer
           # Clean pip cache before build

@@ -3,7 +3,7 @@ import * as zlib from "zlib";
 import * as crypto from "crypto";
 import { readZipEntry, fetchWheelManifest } from "../src/wheel-manifest";
 
-// Build a minimal single-entry ZIP (a .whl is one). CRC is left 0 — readZipEntry
+// Build a minimal single-entry ZIP (a .whl is one). CRC is left 0: readZipEntry
 // doesn't check it (the whole-wheel sha256 is the real guard).
 function buildZip(name: string, content: Buffer, deflate: boolean): Buffer {
   const nameBuf = Buffer.from(name, "utf-8");

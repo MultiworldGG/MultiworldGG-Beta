@@ -275,7 +275,7 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
     ]);
 
     expect(md).toContain("### World generation (fuzzer) results");
-    // per-world headings mirror Karen's "### `slug` — ✅ pass"
+    // per-world headings mirror Karen's slug + glyph + status shape
     expect(md).toContain("#### `hk` — ✅ pass");
     expect(md).toContain("#### `z3` — ❌ fail");
     // Karen's columns

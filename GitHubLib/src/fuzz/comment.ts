@@ -1,17 +1,7 @@
-// Sticky-comment splicing for Karen's fuzz results.
-//
-// Karen's Index PR review posts a single sticky comment marked with
-// `<!-- karen-pr-review -->`. The fuzz runner (a separate repository_dispatch
-// job) wants to publish its own world-generation table into that same comment
-// WITHOUT clobbering the rest of Karen's review. It does so by owning a fenced
-// region delimited by `<!-- karen-fuzz:start -->` / `<!-- karen-fuzz:end -->`:
-// only the bytes between those markers are ever rewritten.
-//
-// Race-safety: the runner can finish long after the PR head has moved on (a new
-// push supersedes this run). We re-fetch the comment body immediately before
-// patching it to splice against the freshest text, and we no-op entirely when
-// pulls.get reports a head SHA other than the one this run was dispatched for —
-// a stale run must never stomp the comment a newer run is writing.
+// Sticky-comment splicing for Karen's fuzz results: the fuzz job owns only the
+// fenced region between the karen-fuzz markers inside the marker comment.
+// Race-safety: re-fetch the body right before patching, and no-op when the PR
+// head has moved past the SHA this run was dispatched for.
 
 import type { ProbotOctokit } from "probot";
 import type { FuzzWorldResult } from "./types";
@@ -45,20 +35,15 @@ export interface UpsertFuzzCommentParams {
   /** Caller-built markdown to place between the fuzz region markers. */
   region: string;
   /**
-   * Optional `## {title}` heading written ABOVE the fenced region when the bot
-   * has to CREATE the sticky comment (the isolated-checks comment is Karen's own,
-   * separate from her manifest review). It lives outside the fence, so region
-   * updates never clobber it. Omitted → no heading (legacy splice-into-Karen mode).
+   * Optional `## {title}` heading written above the fence when the comment is
+   * created; outside the fence, so region updates never clobber it.
    */
   title?: string;
 }
 
 /**
- * Render the fenced fuzz region as per-world sections that mirror Karen's review
- * tables: a `#### \`slug\` — {glyph} {status}` heading then a
- * `| Check | Status | Notes |` table with glyph+word status cells. Each world
- * lists its generation verdict (with stats) plus the per-check scan statuses.
- * Pure: no I/O, deterministic, safe to unit-test directly.
+ * Render the fenced region: per-world heading + Check/Status/Notes table
+ * mirroring Karen's review, then per-check scan rows. Pure and deterministic.
  */
 export function renderFuzzRegion(results: FuzzWorldResult[]): string {
   const lines: string[] = ["### World generation (fuzzer) results", ""];
@@ -68,11 +53,8 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
     return lines.join("\n");
   }
 
-  // Track the running size: a big multi-world PR (up to 25 worlds, some with
-  // thousands of ruff diagnostics) could render a region past GitHub's ~65 KB
-  // comment/check-run limit, which fails the API call outright. The per-world
-  // tables are always emitted; only the collapsible Findings blocks are dropped
-  // once the budget is hit, so the verdict survives even when detail can't.
+  // GitHub caps comments/check-runs near 65 KB. Tables always render; only the
+  // collapsible Findings blocks are dropped past the budget, so the verdict survives.
   let total = charLen(lines);
   let findingsTruncated = false;
 
@@ -91,10 +73,8 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
     for (const l of head) lines.push(l);
     total += charLen(head);
 
-    // The actual findings behind the summary counts ("8 issues" -> the 8 hits),
-    // collapsed like Karen's manifest review. The fuzzer's own per-error summary
-    // leads, then each scan check. Per-section capped, and the whole block is
-    // skipped if it would push the region past the budget.
+    // Collapsible Findings: fuzzer per-error summary first, then each scan
+    // check; per-section capped, whole block skipped past the budget.
     const findings = scanDetailSections(r.scan);
     const fuzzerSection = fuzzerDetailSection(r);
     if (fuzzerSection) findings.unshift(fuzzerSection);
@@ -129,13 +109,9 @@ function charLen(arr: string[]): number {
 }
 
 /**
- * The `fuzzer` row's Notes. A completed run (total > 0) whose `detail` is the
- * container's `classified: …` log line shows the stats breakdown ALONE — that
- * detail just restates the same numbers (the old doubled cell). A detail that
- * says something the stats don't (e.g. the wall-kill partial-salvage note) is
- * kept alongside them. A setup/verify failure has no usable stats (total 0), so
- * fall back to `detail` (exit code, wall kill, …); an em dash when there's
- * nothing. (Caller escapes it.)
+ * The `fuzzer` row's Notes: stats alone when detail just restates them (the
+ * `classified:` line); detail + stats when it adds something (wall-kill note);
+ * detail alone when there are no stats. Caller escapes it.
  */
 function fuzzerNotes(r: FuzzWorldResult): string {
   const detail = r.detail.trim();
@@ -162,13 +138,9 @@ const SCAN_LABELS: Record<string, string> = {
 };
 
 /**
- * One [label, status, note] row per scan check, mirroring Karen's per-check rows.
- * The container records each check in result.json.scan as `{status, note}`, where
- * `note` is karen_review's human message (e.g. "a very reasonable 5.2MB / cap
- * 250MB") — the raw scan.json/ruff.json findings themselves aren't available
- * bot-side (they live in the /out dir, reclaimed after the run). A legacy
- * bare-string value is read as the status with an empty note; any other shape is
- * JSON-encoded so it can't break a row. An absent scan yields no rows.
+ * One [label, status, note] row per scan check; `note` is karen_review's human
+ * message. A legacy bare-string value reads as the status with an empty note;
+ * other shapes are JSON-encoded so they can't break a row.
  */
 function scanRows(scan: Record<string, unknown> | undefined): Array<[string, string, string]> {
   if (!scan) return [];
@@ -191,11 +163,8 @@ const MAX_DETAIL_LINES = 15;
 const REGION_CHAR_BUDGET = 60000;
 
 /**
- * The actual finding lines per scan check (result.json.scan[*].details — the
- * bandit hits, ROM paths, ruff diagnostics behind each summary count), for the
- * collapsible block. Only checks that recorded findings appear; each is capped at
- * MAX_DETAIL_LINES with a "…and N more" tail so a world with thousands of
- * diagnostics (e.g. ruff on a large upstream world) can't blow the comment limit.
+ * Finding lines per scan check (scan[*].details) for the collapsible block;
+ * each capped at MAX_DETAIL_LINES with an "…and N more" tail.
  */
 function scanDetailSections(
   scan: Record<string, unknown> | undefined,
@@ -302,8 +271,8 @@ export async function upsertFuzzComment(
     return;
   }
 
-  // Re-fetch the comment immediately before patching so we splice against the
-  // freshest body — another job may have edited it since listComments.
+  // Re-fetch immediately before patching: another job may have edited the body
+  // since listComments.
   const fresh = await octokit.rest.issues.getComment({
     owner,
     repo,

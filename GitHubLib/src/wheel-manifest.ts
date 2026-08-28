@@ -1,14 +1,7 @@
-// Read a world's `archipelago.json` straight out of its release wheel.
-//
-// A bundled release ships only `.whl` assets (no per-world archipelago.json on
-// the Beta source tree), so to SEED a new world's Index manifest we pull the
-// manifest from inside the wheel. A `.whl` is a plain ZIP; Node's stdlib has
-// `zlib` (raw DEFLATE) but no ZIP-archive reader, so we parse the ZIP central
-// directory by hand and inflate the one entry — no third-party dependency.
-//
-// Scope: world wheels are small, single-digit-MB, never ZIP64 (>4 GB / >65535
-// entries), so the classic 22-byte EOCD + 46-byte central-directory layout is
-// all we need to handle.
+// Read a world's archipelago.json straight out of its release wheel (a plain
+// ZIP). Node's stdlib has zlib but no ZIP reader, so the central directory is
+// parsed by hand; world wheels are small and never ZIP64, so the classic
+// EOCD + central-directory layout suffices.
 
 import * as https from "https";
 import * as zlib from "zlib";
@@ -65,9 +58,8 @@ function downloadToBuffer(url: string, redirectsLeft = 5): Promise<Buffer> {
 
 /**
  * Return the raw bytes of the ZIP entry named `name`, or null if absent. Walks
- * the End-Of-Central-Directory → central directory → local header, inflating
- * stored (0) and deflate (8) entries. CRC is not checked — the caller verifies
- * the whole wheel's sha256, a stronger guarantee.
+ * EOCD -> central directory -> local header, inflating stored (0) and deflate
+ * (8) entries. CRC is not checked: the whole-wheel sha256 is a stronger guarantee.
  */
 export function readZipEntry(buf: Buffer, name: string): Buffer | null {
   const target = Buffer.from(name, "utf-8");
@@ -126,7 +118,7 @@ export interface FetchWheelManifestDeps {
  * Download a world's wheel and parse `worlds/<slug>/archipelago.json` out of it.
  * Returns the parsed manifest, or null when the wheel can't be fetched, its bytes
  * don't match the `#sha256=` digest pinned in `moduleLocation`, the entry is
- * missing, or it isn't a JSON object. Never throws — a null is the caller's
+ * missing, or it isn't a JSON object. Never throws: a null is the caller's
  * "skip this world" signal.
  */
 export async function fetchWheelManifest(
@@ -145,8 +137,8 @@ export async function fetchWheelManifest(
     return null;
   }
 
-  // Verify against the digest the module_location pins — seed only from the exact
-  // bytes the manifest will point shippers at.
+  // Verify against the pinned digest: seed only from the exact bytes the
+  // manifest points shippers at.
   if (expectedSha) {
     const actual = crypto.createHash("sha256").update(buf).digest("hex");
     if (actual !== expectedSha) return null;

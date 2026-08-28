@@ -22,10 +22,8 @@ export interface FuzzClientPayload {
   check_run_name: string; // e.g. "Karen / fuzz"
   comment_marker: string; // e.g. "<!-- karen-isolated-qa -->"
   /**
-   * The Index workflow's synchronous manifest-review verdict ("pass"|"warn"|
-   * "fail"), passed through so the bot can submit Karen's FINAL review only after
-   * the isolated checks finish — approving only when both are green. Empty string
-   * when an older dispatcher didn't send it (treated as "not a clean pass").
+   * The Index workflow's synchronous manifest verdict ("pass"|"warn"|"fail"),
+   * gating Karen's final review; "" from older dispatchers = not a clean pass.
    */
   manifest_status: string;
   fuzz: FuzzParams;

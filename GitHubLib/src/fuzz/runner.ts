@@ -1,20 +1,9 @@
-// Container runner for the Karen fuzz/scan feature.
-//
-// Given one normalized FuzzJob, build a HARDENED `docker run` argv and execute
-// it with execFile (array args, NO shell — the slug/urls/shas already passed the
-// payload validator, but we still never interpolate them into a command string).
-// The container fetches+verifies the wheel, fuzzes the world, scans it, and writes
-// /out/result.json; we read that back, map it to FuzzWorldResult, and clean up.
-//
-// Contract with the image: every job-specific input is passed as an environment
-// variable; the only host mount is <workDir>/<unique>/out → /out (rw). The bot
-// talks to a docker-socket-proxy, so DOCKER_HOST is honored from the environment
-// and we never pass -H.
-//
-// This function NEVER throws for an expected container failure (non-zero exit,
-// missing/garbage result.json, sha256 mismatch, timeout, abort) — those resolve
-// to a status:"fail" FuzzWorldResult. It only rejects on truly unexpected internal
-// errors (e.g. the out dir cannot be created).
+// Run one FuzzJob in a hardened `docker run` (execFile array argv, no shell)
+// and map /out/result.json to a FuzzWorldResult. Job inputs are env vars; the
+// only host mounts are the per-job out/in dirs. DOCKER_HOST is honored (socket
+// proxy), -H is never passed. Expected container failures (non-zero exit, bad
+// result.json, sha mismatch, timeout, abort) resolve to status:"fail"; only
+// truly internal errors reject.
 
 import { execFile } from "child_process";
 import * as fs from "fs/promises";
@@ -32,44 +21,22 @@ export interface RunFuzzOptions {
   cpus?: string;
   memory?: string;
   pids?: number;
-  /**
-   * Operator-set CEILINGS on the fuzzer's parallelism (-j threads) and run count
-   * (-r), applied as min(payload, cap). The Index dispatch picks the nominal
-   * values; these let the HOST operator bound resource use from their own env
-   * (FUZZ_MAX_THREADS / FUZZ_MAX_RUNS) regardless of what the Index sends — e.g. a
-   * small host pinning threads to 1 so a 10-way generation fan-out can't thrash it.
-   * Unset / <= 0 → no cap.
-   */
+  /** Operator ceilings on fuzzer -j / -r, applied as min(payload, cap); unset / <= 0 = no cap. */
   maxThreads?: number;
   maxRuns?: number;
   wallSeconds?: number;
   /**
-   * Optional HOST path to a base-ROM directory, bind-mounted READ-ONLY at /roms
-   * so ROM-dependent worlds can actually generate. Resolved by the host daemon,
-   * so it must be a real host path; the bot never reads it. Unset → no mount and
-   * ROM worlds report a no-op (the legacy CI behavior).
+   * Optional HOST path to a base-ROM dir, mounted read-only at /roms. Resolved
+   * by the host daemon (the bot never reads it); unset = ROM worlds no-op.
    */
   romDir?: string;
-  /**
-   * Optional HOST path to a host.yaml, bind-mounted READ-ONLY; the in-container
-   * run script installs it where get_settings() looks. Its <world>_options
-   * .rom_file entries should point at /roms/<file>.
-   */
+  /** Optional HOST path to a host.yaml, mounted read-only; its rom_file entries should point at /roms/<file>. */
   hostYaml?: string;
-  /**
-   * Download + sha256-verify the wheel to `dest` before the container runs. The
-   * container is `--network none`, so the TRUSTED bot fetches the bytes and
-   * bind-mounts them in at /in. Injectable for tests; defaults to an https fetch.
-   */
+  /** Fetch + sha256-verify the wheel to `dest` for the offline container. Injectable for tests. */
   fetchWheel?: (url: string, sha256: string, dest: string) => Promise<void>;
   log: (m: string) => void;
   signal?: AbortSignal;
-  /**
-   * Opt-in debug. When set, the container persists its full combined.log + the
-   * fuzzer's per-generation worker dumps (fuzz_output/) into /out, and we KEEP
-   * the per-job dir instead of deleting it — so a failing run leaves diagnostics
-   * under <workDir>/<id>/ for inspection. Off by default; artifacts accumulate.
-   */
+  /** Opt-in: persist full logs + worker dumps to /out and keep the per-job dir. Artifacts accumulate. */
   debug?: boolean;
 }
 
@@ -88,11 +55,8 @@ function sanitizeToken(raw: string): string {
 }
 
 /**
- * Deterministic per-job suffix. Derived purely from job fields + process.pid —
- * NO wall-clock and NO randomness (the surrounding harness forbids both, and a
- * deterministic name lets `docker rm -f` target the exact container on timeout).
- * Two concurrent jobs differ by slug/pr; the same job retried in a fresh process
- * differs by pid.
+ * Deterministic per-job suffix (job fields + pid; no clock, no randomness) so
+ * `docker rm -f` can target the exact container on timeout.
  */
 function jobSuffix(job: FuzzJob): string {
   const headPrefix = job.headSha.slice(0, 12);
@@ -105,14 +69,9 @@ function containerName(suffix: string): string {
 }
 
 /**
- * The wheel's own filename, taken straight from the URL. `uv pip install` parses
- * the wheel FILENAME, so the staged file must keep its real PEP 427 name — a
- * fixed "world.whl" is what made every install fail ("Must have a version"). No
- * reconstruction: validateFuzzPayload already guaranteed the URL is https, ends
- * in ".whl", and is host-allow-listed, and a real release asset is named
- * correctly by `build`. `.pathname` drops any "?query" and `path.basename` drops
- * every directory component, so the result is a bare ".whl" filename that can't
- * traverse out of the bind dir.
+ * The wheel's real PEP 427 filename from the (already-validated) URL: uv parses
+ * the filename, so a made-up name breaks the install. basename() keeps it a
+ * bare, traversal-safe name.
  */
 export function wheelFileName(job: FuzzJob): string {
   return path.posix.basename(new URL(job.wheelUrl).pathname);
@@ -130,17 +89,13 @@ export function buildDockerArgs(
   const memory = opts.memory ?? DEFAULT_MEMORY;
   const pids = opts.pids ?? DEFAULT_PIDS;
 
-  // Apply the operator ceilings (min of payload value and the cap). An unset / <=0
-  // cap passes the payload value through unchanged. This is the only place the host
-  // can bound a too-aggressive Index dispatch (e.g. threads 10 -> 1 on a small box).
+  // Operator ceilings: min(payload, cap); unset / <= 0 passes the payload through.
   const runs = opts.maxRuns && opts.maxRuns > 0 ? Math.min(job.runs, opts.maxRuns) : job.runs;
   const threads =
     opts.maxThreads && opts.maxThreads > 0 ? Math.min(job.threads, opts.maxThreads) : job.threads;
 
-  // No FUZZ_WHEEL_URL / MWGG_CORE_* / FUZZER_*: the container is offline. The
-  // wheel arrives as a bind mount (/in); core, its venv, and fuzz.py are baked
-  // into the image at build time. FUZZ_WHEEL_SHA256 stays for an in-container
-  // re-verify of the mounted bytes (defense in depth; the bot already verified).
+  // Offline container: the wheel arrives via /in; FUZZ_WHEEL_SHA256 is
+  // re-verified in-container (defense in depth).
   const env: Record<string, string> = {
     FUZZ_SLUG: job.slug,
     FUZZ_WHEEL_SHA256: job.sha256,
@@ -165,17 +120,12 @@ export function buildDockerArgs(
     "--user",
     "65532:65532",
     "--read-only",
-    // mode=1777 is REQUIRED: with explicit tmpfs options Docker does NOT inject
-    // its default mode, so the kernel mounts the tmpfs root 0755 owned by root —
-    // and the container runs as --user 65532, which then can't create /work/.cache
-    // etc. 1777 (sticky, world-writable, like /tmp) lets the unprivileged user write.
+    // mode=1777 required: explicit tmpfs options suppress Docker's default mode,
+    // leaving a root-owned 0755 root that --user 65532 can't write to.
     "--tmpfs",
     "/tmp:rw,noexec,nosuid,size=512m,mode=1777",
-    // exec is REQUIRED: the trusted venv lives on /work and Python C extensions
-    // there are dlopen'd (mmap PROT_EXEC). Docker's --tmpfs default is noexec, and
-    // omitting it from explicit options doesn't reliably disable it (same default-
-    // injection class as the mode=1777 fix), so set exec explicitly — else native
-    // deps (bsdiff4, Pillow, …) fail to load with "failed to map segment".
+    // exec required: the venv's C extensions are dlopen'd from /work and the
+    // tmpfs default is noexec ("failed to map segment" otherwise).
     "--tmpfs",
     "/work:rw,exec,nosuid,size=4g,mode=1777",
     "-v",
@@ -196,16 +146,13 @@ export function buildDockerArgs(
     memory,
     "--ulimit",
     "nofile=4096:4096",
-    // Untrusted world code gets ZERO network. Everything it needs is baked into
-    // the image or bind-mounted by the trusted bot, so there's nothing to reach.
+    // Untrusted world code gets zero network; everything it needs is baked in or bind-mounted.
     "--network",
     "none",
   ];
 
-  // Optional READ-ONLY mounts for ROM-dependent worlds. Both resolve on the host
-  // daemon (the `:ro` keeps untrusted world code from modifying them). The host
-  // .yaml lands on /opt/fuzz/host.yaml; the run script copies it to where
-  // get_settings() looks and its rom_file paths reference /roms/<file>.
+  // Optional read-only mounts for ROM-dependent worlds; the run script installs
+  // the host.yaml where get_settings() looks.
   if (opts.romDir) {
     args.push("-v", `${opts.romDir}:/roms:ro`);
   }
@@ -258,11 +205,7 @@ function summarizeTail(logTail: unknown): string {
   return lastLine ?? "";
 }
 
-/**
- * First non-empty line of docker's own stderr — the actionable bit when
- * `docker run` itself fails (exit 125): e.g. "docker: Error response from
- * daemon: invalid mount config" / "Unable to find image". Truncated for the log.
- */
+/** First non-empty line of docker's own stderr: the actionable bit on an exit-125 `docker run` failure. */
 function firstStderrLine(stderr: string | undefined): string {
   if (!stderr) return "";
   const line = stderr.split("\n").map((l) => l.trim()).find((l) => l.length > 0) ?? "";
@@ -270,11 +213,8 @@ function firstStderrLine(stderr: string | undefined): string {
 }
 
 /**
- * Batch pre-flight: confirm FUZZ_IMAGE is usable before spawning N containers.
- * `docker image inspect` first; if it's not local, try ONE `docker pull` — so a
- * public image is fetched once (instead of N racing auto-pulls) and a missing or
- * private one fails ONCE with docker's real reason instead of N cryptic exit-125s
- * with no result.json. Resolves `{ ok }`; never throws.
+ * Batch pre-flight: inspect FUZZ_IMAGE, pulling once if absent, so a bad image
+ * fails once with docker's real reason instead of N cryptic exit-125s. Never throws.
  */
 export function ensureImageAvailable(
   image: string,
@@ -308,10 +248,8 @@ export function ensureImageAvailable(
 }
 
 /**
- * Default wheel fetch: stream the URL to `dest` (following redirects — GitHub
- * release assets 302 to objects.githubusercontent.com), then sha256-verify the
- * written file. Rejects on HTTP error, redirect loop, or digest mismatch, so the
- * bot never bind-mounts unverified bytes into the sandbox.
+ * Stream the URL to `dest` (following release-asset redirects), then
+ * sha256-verify: unverified bytes are never bind-mounted into the sandbox.
  */
 function defaultFetchWheel(url: string, expectedSha: string, dest: string): Promise<void> {
   const expected = expectedSha.toLowerCase();
@@ -392,9 +330,8 @@ async function readContainerResult(
     parsed = json as Record<string, unknown>;
   } catch (err) {
     const why = err instanceof Error ? err.message : String(err);
-    // No result.json + a non-zero docker exit usually means `docker run` itself
-    // failed (missing network/image, bad mount) — surface docker's own stderr so
-    // the operator sees the real reason instead of a bare exit code.
+    // No result.json + non-zero docker exit: `docker run` itself likely failed;
+    // surface docker's stderr, not just the exit code.
     const hint = dockerExitCode !== 0 ? firstStderrLine(dockerStderr) : "";
     return {
       status: "fail",
@@ -415,8 +352,8 @@ async function readContainerResult(
   const fuzzerDetails = coerceStringArray(parsed.fuzzer_details);
   const tail = summarizeTail(parsed.log_tail);
 
-  // A non-zero in-container exit means the wheel sha256 check (or another guard)
-  // failed before the verdict was meaningful — force fail regardless of `status`.
+  // Non-zero in-container exit: a guard (e.g. wheel sha256) failed before the
+  // verdict was meaningful; force fail.
   if (exitCode !== 0) {
     const reason = tail.length > 0 ? tail : "wheel verification or setup failed";
     return {
@@ -542,24 +479,17 @@ export async function runFuzzContainer(
   const hostOutDir = path.join(jobDir, "out");
   const hostInDir = path.join(jobDir, "in");
 
-  // Dir creation failing is a genuine internal error — let it reject.
+  // Dir creation failing is a genuine internal error: let it reject.
   await fs.mkdir(hostOutDir, { recursive: true });
   await fs.mkdir(hostInDir, { recursive: true });
-  // The bot runs as root, so it just made these per-job dirs 0755/root-owned. But
-  // the container runs `--user 65532:65532` and gets <out> bind-mounted rw; a 0755
-  // dir is read-only to "other", so the unprivileged user can't create
-  // /out/result.json — and EVERY outcome then degrades to the caller's "no readable
-  // result.json", masking the container's real exit code. Make the rw out dir
-  // world-writable so uid 65532 can write its result. (Same root cause as the
-  // tmpfs mode=1777 mounts, but here the perms come from the host dir, not a tmpfs
-  // flag; chmod, not mkdir's mode, because the latter is masked by umask. /in is
-  // mounted :ro — the container only reads the wheel — so its 0755 is fine.)
+  // The root-made 0755 out dir is unwritable by --user 65532, which degrades
+  // every outcome to "no readable result.json". chmod (mkdir's mode is masked
+  // by umask) makes it world-writable; /in is :ro, so 0755 is fine there.
   await fs.chmod(hostOutDir, 0o777);
 
   try {
-    // The container is offline, so the (trusted) bot fetches + verifies the wheel
-    // and bind-mounts it at /in. A fetch/verify failure is this world's failure,
-    // not a crash.
+    // The trusted bot fetches + verifies the wheel for the offline container; a
+    // fetch/verify failure is this world's failure, not a crash.
     const fetchWheel = opts.fetchWheel ?? defaultFetchWheel;
     try {
       await fetchWheel(job.wheelUrl, job.sha256, path.join(hostInDir, wheelFileName(job)));
@@ -582,8 +512,7 @@ export async function runFuzzContainer(
     try {
       outcome = await runDocker(args, name, wallSeconds, opts);
     } catch (err) {
-      // Spawn-level failure (e.g. docker binary missing): surface as a fail result
-      // rather than throwing — a single unrunnable world must not crash the batch.
+      // Spawn-level failure (e.g. docker missing): fail this world rather than crash the batch.
       const why = err instanceof Error ? err.message : String(err);
       opts.log(`fuzz ${job.slug}: docker run could not start: ${why}`);
       return {
@@ -622,9 +551,8 @@ export async function runFuzzContainer(
     };
   } finally {
     if (opts.debug) {
-      // FUZZ_DEBUG: keep the per-job dir so the operator can read the diagnostics
-      // the container persisted — <id>/out/{result.json,report.json,combined.log,
-      // fuzz_output/}. These accumulate; turn FUZZ_DEBUG off and clean workDir when done.
+      // FUZZ_DEBUG: keep the per-job dir (result.json, combined.log, fuzz_output/)
+      // for inspection. These accumulate; clean workDir when done.
       opts.log(`fuzz ${job.slug}: FUZZ_DEBUG on — kept artifacts at ${hostOutDir}`);
     } else {
       // Reclaim the per-job host dir regardless of outcome; never mask a real error.

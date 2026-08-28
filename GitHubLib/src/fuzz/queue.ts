@@ -1,30 +1,9 @@
-// In-process concurrency queue for fuzz dispatch.
-//
-// The bot may receive several fuzz requests in a short window (e.g. a PR author
-// pushes three times in a row, or a batch of repository_dispatch events lands).
-// We must not run an unbounded number of containers at once, and we should not
-// waste a slot fuzzing a head_sha that a newer push has already obsoleted.
-//
-// Semantics
-// ---------
-//   * Concurrency: at most FUZZ_MAX_CONCURRENCY tasks run their callback
-//     simultaneously (env-read at construction, clamped to >= 1, default 1).
-//   * Keyed supersede: callers pass a `key` (e.g. "owner/repo#<pr>"). At most one
-//     task per key is ever *waiting*. If a new task arrives for a key whose prior
-//     task has NOT started yet, the prior task is *superseded*: it never runs and
-//     its promise rejects with `SupersededError`. The newest enqueued task for a
-//     key is the one that will eventually run — a later PR push wins.
-//   * Running tasks are never superseded; they run to completion. A task that has
-//     already begun keeps its slot, and a subsequent same-key arrival simply
-//     queues behind it (and may itself be superseded by an even newer arrival).
-//   * Each callback receives an AbortSignal. For waiting tasks it is the hook by
-//     which supersede is observed *before* start (the signal aborts and the task
-//     never runs); a running task's signal is only aborted if the queue is
-//     `close()`d. Callbacks may ignore the signal.
-//
-// Determinism: ordering is by a monotonic insertion counter, never a wall clock
-// or random source — the surrounding Karen harness forbids Date.now()/random in
-// dispatch code so runs stay reproducible.
+// In-process concurrency queue for fuzz dispatch. At most FUZZ_MAX_CONCURRENCY
+// callbacks run at once (default 1). Keyed supersede: at most one WAITING task
+// per key; a newer same-key arrival rejects the prior waiter with
+// SupersededError (a later PR push wins). Running tasks are never superseded;
+// their AbortSignal only fires on close(). Ordering is a monotonic insertion
+// counter (no wall clock, no randomness).
 
 export class SupersededError extends Error {
   constructor(public readonly key: string) {

@@ -48,11 +48,9 @@ jobs:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
             exe_pattern: '*.exe'
-          # exe_pattern isn't consumed elsewhere in this file yet (kept for future
-          # per-platform artifact-name derivation); casing corrected to match the
-          # real client exe (MultiWorldGG, capital W) -- MultiworldGGLauncher* is
-          # the one exe that legitimately keeps the lowercase-w spelling, see
-          # BaseUtils.FROZEN_TARGETS.
+          # exe_pattern is not consumed yet. MultiWorldGG (capital W) is the
+          # client exe; MultiworldGGLauncher* keeps the lowercase w (see
+          # BaseUtils.FROZEN_TARGETS).
           - os: ubuntu-latest
             artifact_name: linux-exe
             exe_pattern: 'MultiWorldGG'
@@ -223,13 +221,9 @@ jobs:
           exe_dir=$(echo exe.*/)
           exe_dir="${exe_dir%/}"
           release_name="MultiworldGG-${APP_VERSION}-linux-x86_64"
-          # setup.py produces MultiWorldGG / MultiWorldGGServer / MultiWorldGGGenerate
-          # / MultiWorldGGPatch (capital W) plus MultiworldGGLauncher (deliberate
-          # lowercase w, see BaseUtils.FROZEN_TARGETS); the uv runtime is bundled
-          # as `uv`. The previous chmod ran in the wrong directory + used the
-          # wrong case and was masked by `2>/dev/null || true`, so the tarball
-          # shipped non-executable binaries on every release; it also only
-          # matched the capital-W names, which silently skipped the launcher exe.
+          # Chmod both the capital-W exes and the lowercase-w MultiworldGGLauncher*
+          # (BaseUtils.FROZEN_TARGETS) plus the bundled uv; a masked wrong-case
+          # chmod once shipped non-executable binaries.
           chmod -c 755 "${exe_dir}"/MultiWorldGG* "${exe_dir}"/MultiworldGGLauncher* "${exe_dir}"/uv*
           mv "${exe_dir}" "${release_name}"
           tar -czvf "${release_name}.tar.gz" "${release_name}"
@@ -255,7 +249,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
@@ -388,7 +382,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
