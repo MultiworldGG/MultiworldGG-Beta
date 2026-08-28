@@ -11,7 +11,10 @@ import unittest
 
 import pytest
 
-pytest.importorskip("kivy")
+# The bundled kivy/ dir at repo root is an __init__-less namespace-package
+# decoy: plain `importorskip("kivy")` passes without kivy installed. Guard on
+# the submodule the parser actually imports.
+pytest.importorskip("kivy.utils")
 
 from NetUtils import (
     KivyMarkupJSONtoTextParser,
