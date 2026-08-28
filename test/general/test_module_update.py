@@ -1,14 +1,8 @@
-"""Tests for the pure / filesystem-only helpers in ModuleUpdate.py.
+"""Pure / filesystem-only ModuleUpdate.py helpers -- no real network or pip/uv runs.
 
-These cover the requirement-string parsers, the mwgg_igdb variant
-resolution/detection, the install-date (mtime) helpers, the custom_worlds
-directory scan that populates worlds_files, and uv command construction --
-all without any real network or pip/uv invocation.
-
-ModuleUpdate keeps several module-level globals (update_ran, the resolved
-variant trio, the uv-resolution cache, custom_worlds_dir). Every test that
-flips one restores it, so collection order can't leak state between tests or
-into the rest of the suite. test/__init__.py forces update_ran=True.
+ModuleUpdate keeps module-level globals (update_ran, the resolved variant trio,
+the uv-resolution cache); every test that flips one restores it so collection
+order can't leak state. test/__init__.py forces update_ran=True.
 """
 import datetime
 import os
@@ -196,11 +190,8 @@ def test_resolve_variant_falls_back_to_default_when_undetectable(monkeypatch, re
 # custom_worlds scan -> worlds_files["wheels"] / ["apworlds"]
 # --------------------------------------------------------------------------- #
 def test_custom_worlds_scan_populates_worlds_files(tmp_path, monkeypatch):
-    """`ModuleUpdate._scan_custom_worlds()` collects every .whl and .apworld in
-    custom_worlds_dir into the two RequirementsSets (guarded by `not update_ran`).
-    Calls the real product function with update_ran flipped off, then restores
-    update_ran and the sets so the rest of the suite is unaffected.
-    """
+    """_scan_custom_worlds() collects every .whl and .apworld in custom_worlds_dir
+    into the two RequirementsSets, guarded by `not update_ran`."""
     wheel = tmp_path / "worlds.example-1.0-py3-none-any.whl"
     apworld = tmp_path / "example.apworld"
     decoy = tmp_path / "README.txt"
@@ -258,10 +249,7 @@ def reset_uv_resolution_cache():
 
 
 def test_uv_run_constructs_candidate_plus_args_command(monkeypatch, reset_uv_resolution_cache):
-    """_uv_run runs `<candidate> <args>` and returns the subprocess result; the
-    first usable candidate is cached. No real uv is spawned -- subprocess.run is
-    replaced with a recorder.
-    """
+    """_uv_run runs `<candidate> <args>` and caches the first usable candidate."""
     recorded = {}
 
     def fake_run(cmd, check=False, **kwargs):
@@ -287,10 +275,8 @@ def test_uv_run_constructs_candidate_plus_args_command(monkeypatch, reset_uv_res
 
 
 def test_uv_run_falls_through_oserror_then_returns_127(monkeypatch, reset_uv_resolution_cache):
-    """When every candidate raises OSError (binary missing), _uv_run tries each
-    in turn, marks uv unavailable, and returns a 127 CompletedProcess instead of
-    raising.
-    """
+    """Every candidate raising OSError marks uv unavailable and returns a 127
+    CompletedProcess instead of raising."""
     tried = []
 
     def fake_run(cmd, check=False, **kwargs):

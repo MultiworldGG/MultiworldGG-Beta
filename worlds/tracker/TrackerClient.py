@@ -64,11 +64,8 @@ def get_ut_color(color: str)->str:
         default: ClassVar[str] = StringProperty("")
         ut_status: ClassVar[str] = StringProperty("")
     if not hasattr(get_ut_color,"utTextColor"):
-        # Tracker.kv carries the <UTTextColor>: rule that fills in the actual
-        # hex codes. If we instantiate UTTextColor before the kv string is
-        # loaded, every StringProperty stays empty and every color tag in the
-        # tracker output renders as `[color=]...[/color]`. Load the kv first so
-        # the rule is registered with the kivy Builder before we construct it.
+        # Load Tracker.kv (its <UTTextColor>: rule supplies the hex codes) before
+        # instantiating, or every color tag renders as `[color=]...[/color]`.
         from worlds.tracker.gui import load_tracker_kv
         load_tracker_kv()
         get_ut_color.utTextColor = UTTextColor()
@@ -437,23 +434,20 @@ class TrackerGameContext(CommonContext):
         self.tracker_core.set_log_to_tab(self.log_to_tab)
         self.tracker_core.set_clear_page(self.clear_page)
         self.tracker_core.set_get_ut_color(get_ut_color)
-        # Tab handles tracked on the context (no kivy property injection).
-        # build_gui populates _tracker_tab_handle; set_map_visible drives
-        # _map_tab_handle.
+        # build_gui populates _tracker_tab_handle; set_map_visible drives _map_tab_handle.
         self._tracker_tab_handle = None
         self._map_tab_handle = None
         self._map_content = None
         self._show_map = False
 
     def set_map_visible(self, visible: bool) -> None:
-        """Toggle the Map Page tab on the live UI. Replaces the old
-        manager.apply_property(show_map=...) + fbind pattern."""
+        """Toggle the Map Page tab on the live UI."""
         if visible == self._show_map:
             return
         from kivymd.app import MDApp
         ui = MDApp.get_running_app()
         if ui is None:
-            return  # no live UI yet — caller will retry once we're attached
+            return  # no live UI yet; caller will retry once attached
         if visible:
             if self._map_tab_handle is not None:
                 self._show_map = True
@@ -464,8 +458,7 @@ class TrackerGameContext(CommonContext):
             except Exception:
                 traceback.print_exc()
                 return
-            # Single-word lowercase to match the launcher's screen menu
-            # convention (see "tracker" tab in build_gui).
+            # Single-word lowercase to match the launcher's screen menu convention.
             self._map_tab_handle = ui.add_client_tab("map", self._map_content)
             self._show_map = True
         else:
@@ -476,9 +469,7 @@ class TrackerGameContext(CommonContext):
             self._show_map = False
 
     def print_json(self, packets: list) -> None:
-        # Routes through CommonContext's normal message pipeline instead of
-        # ctx.ui.print_json, so explain/get_logical_path output works even
-        # without a live UI (headless/CLI mode).
+        # Route through on_print_json so output works without a live UI.
         self.on_print_json({"data": packets})
 
     def updateTracker(self) -> CurrentTrackerState:
@@ -939,11 +930,8 @@ class TrackerGameContext(CommonContext):
         self.glitches_callback = func
 
     def build_gui(self, app=None):
-        """Register tracker tabs on the live launcher app.
-
-        The builder passes the live app on launcher takeover. Standalone mode
-        can still resolve it from Kivy after the frontend exists.
-        """
+        """Register tracker tabs on the live launcher app (app=None resolves
+        the running MDApp for standalone mode)."""
         if app is None:
             from kivymd.app import MDApp
             app = MDApp.get_running_app()
@@ -958,16 +946,12 @@ class TrackerGameContext(CommonContext):
             traceback.print_exc()
             return
 
-        # One-word lowercase screen name to match the launcher convention
-        # (settings / console / hint / launcher); `change_screen(item.lower())`
-        # would otherwise create a phantom duplicate screen on first menu click.
+        # Lowercase one-word screen name: change_screen(item.lower()) would
+        # otherwise create a phantom duplicate screen on first menu click.
         self._tracker_tab_handle = app.add_client_tab("tracker", tracker)
 
-        # Build the map widget eagerly (but don't show its tab yet). load_pack
-        # ends by calling load_map(), which needs `map_page_coords_func` wired
-        # to the real VisualTracker.load_coords — and load_pack runs before
-        # set_map_visible(True), so the lazy build there is too late.
-        # set_map_visible(True) only adds the tab; the widget already exists.
+        # Build the map widget eagerly: load_pack -> load_map needs
+        # map_page_coords_func wired before set_map_visible(True) runs.
         try:
             self._map_content = build_map_view(self)
         except Exception:
@@ -1201,13 +1185,8 @@ class TrackerGameContext(CommonContext):
 
 
 def load_json(pack, path):
-    """Read a JSON resource from inside an installed apworld package.
-
-    `path` is a forward-slash separated path relative to the package root;
-    `pack` is the dotted module name. Uses importlib.resources so both
-    folder-installed and zipimport-installed (``.apworld``) packages work
-    without the deprecated :mod:`pkgutil` API.
-    """
+    """Read a JSON resource from inside an installed apworld package;
+    importlib.resources so zipimport (.apworld) installs work too."""
     import importlib.resources
     import json
     ref = importlib.resources.files(pack)
@@ -1499,13 +1478,8 @@ async def wait_for_items(ctx: TrackerGameContext)-> None:
         #if it didn't, then game_watcher will handle it
 
 async def main(args):
-    """Universal Tracker entrypoint, modeled on CommonClient.launch_textclient.
-
-    Adopts the launcher's already-running frontend via _takeover_existing_ui,
-    then calls ctx.build_gui(ctx.ui) to register the Tracker Page (and the
-    Map Page, lazily, via set_map_visible). Does NOT subclass MultiMDApp;
-    does NOT inject kivy properties from a UI subclass.
-    """
+    """Universal Tracker entrypoint: adopts the launcher's running frontend via
+    _takeover_existing_ui, then build_gui registers the tracker tabs."""
     ctx = TrackerGameContext(args.connect, args.password, print_count=args.count, print_list=args.list)
     ctx.auth = args.name
     ctx.tracker_core.connect_mode = bool(args.connect)
@@ -1524,8 +1498,7 @@ async def main(args):
     try:
         await ctx.exit_event.wait()
     finally:
-        # Tidy up the launcher's tab strip when the tracker exits — leaving
-        # stale tabs behind would clutter the launcher if it keeps running.
+        # Remove our tabs so the still-running launcher isn't left with stale ones.
         try:
             from kivymd.app import MDApp
             ui = MDApp.get_running_app()

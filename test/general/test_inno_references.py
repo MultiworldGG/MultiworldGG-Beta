@@ -1,19 +1,8 @@
-"""Lint inno_setup.iss for {app}\\<name>.exe references that don't correspond to
-an executable setup.py actually builds.
+"""Lint inno_setup.iss for {app}\\<name>.exe references setup.py doesn't build.
 
-This is the check that would have caught all of the stale inno_setup.iss
-entries fixed alongside the standalone-Launcher re-introduction (progids and
-URL protocols still pointing at exes like MultiworldGGBizHawkClient.exe /
-MultiworldGGSNIClient.exe / ArchipelagoBizHawkClient.exe that setup.py never
-built, plus mixed MultiWorldGG.exe / MultiworldGG.exe casing).
-
-The allowed set is derived, not a hand-maintained wishlist: it's every literal
-target_name setup.py builds (see test_launcher_components.py's
-_setup_py_target_names, duplicated here to keep this file independently
-readable) plus every value in BaseUtils.FROZEN_TARGETS, plus the one
-explicit, documented Debug-suffix derivation setup.py computes at build time
-instead of hardcoding (see setup.py's _launcher_debug_exe_name / build_exe.py's
-verify_build_output) because FROZEN_TARGETS has no entry of its own for it.
+The allowed set is derived, not hand-maintained: every literal target_name in
+setup.py, every BaseUtils.FROZEN_TARGETS value, plus the LauncherDebug name
+setup.py derives at build time (it has no FROZEN_TARGETS entry of its own).
 """
 import re
 
@@ -23,10 +12,8 @@ import Utils
 _INNO_PATH = Utils.local_path("inno_setup.iss")
 _SETUP_PY_PATH = Utils.local_path("setup.py")
 
-# Names that were stale in inno_setup.iss before the launcher-owns-patch-routing
-# pass: setup.py never built any of these. Kept as an explicit regression guard
-# in addition to the derived-allow-list check below, since a name could
-# coincidentally start being built for an unrelated reason and mask the bug.
+# Historically stale exe names, kept as an explicit regression guard on top of the
+# derived allow-list (a name could start being built for unrelated reasons).
 _KNOWN_STALE_NAMES = {
     "MultiworldGGBizHawkClient",
     "MultiworldGGSNIClient",
@@ -49,10 +36,8 @@ def _setup_py_target_names() -> set[str]:
 def _known_built_exe_names() -> set[str]:
     """Every exe base name (no .exe) that setup.py is known to build."""
     names = _setup_py_target_names() | set(BaseUtils.FROZEN_TARGETS.values())
-    # LauncherDebug has no FROZEN_TARGETS entry of its own; setup.py derives it
-    # from FROZEN_TARGETS["Launcher"] + "Debug" instead of a literal (see
-    # setup.py's _launcher_debug_exe_name) precisely so it can't drift, which
-    # also means _setup_py_target_names() can't see it as a quoted literal.
+    # LauncherDebug is derived in setup.py (_launcher_debug_exe_name), never a
+    # quoted literal, so _setup_py_target_names() can't see it.
     names.add(BaseUtils.FROZEN_TARGETS["Launcher"] + "Debug")
     names.discard("")
     return names

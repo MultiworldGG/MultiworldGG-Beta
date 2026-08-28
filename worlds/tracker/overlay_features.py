@@ -1,14 +1,8 @@
-"""Overlay features for game-specific clients with the Universal Tracker
-attached.
+"""Overlay features for game-specific clients with the Universal Tracker attached.
 
 Each feature is a ``feature(ctx, app)`` callable registered into
-``ctx.client.features`` by ``attach_tracker_overlay`` (see wrap.py) and
-invoked by ``ClientBuilder.ExtrasBuilder.build`` after the per-game UI is
-wired up. Features are the Builder Pattern hook for adding overlay surfaces
-without each new surface needing its own bespoke plumbing.
-
-Today: the Tracker page tab. The Map page tab follows the same pattern and
-will land here once the pack-loading port is ready.
+``ctx.client.features`` by ``attach_tracker_overlay`` (wrap.py) and invoked by
+``ClientBuilder.ExtrasBuilder.build`` after the per-game UI is wired up.
 """
 
 from __future__ import annotations
@@ -50,12 +44,8 @@ _CATEGORY_SORT_ORDER = {
 def _select_branch_seeds(menu, min_count: int = _MIN_BRANCHES) -> list:
     """Pick the seed regions used as top-level branches.
 
-    MultiworldGG's world-building contract requires Menu to have exactly
-    one exit (the world's root region), so starting from Menu's direct
-    exits always gives a single branch — useless as a tracker grouping.
-    This descends one level at a time, replacing each branch with its
-    own exit targets, until we have at least ``min_count`` distinct
-    branches or no further descent is possible.
+    Menu has exactly one exit by contract, so descend one level at a time
+    until at least ``min_count`` distinct branches exist or descent stalls.
     """
     def fresh_exits(region, exclude: set) -> list:
         result = []
@@ -133,10 +123,7 @@ def group_reachable_by_top_level_branch(
     glitched = set(getattr(tracker_core, "glitched_locations", []) or [])
     hints_map = getattr(tracker_core, "hints", {}) or {}
     hinted = set(hints_map.keys()) if isinstance(hints_map, dict) else set(hints_map)
-    # Mirror TrackerCore.updateTracker (TrackerCore.py:478, 535): the
-    # ``hide_excluded_locations`` tracker setting drops EXCLUDED locations
-    # from the page entirely. Honour the same toggle so this view stays
-    # in sync with the rest of the tracker.
+    # Honour the hide_excluded tracker setting like TrackerCore.updateTracker does.
     hide_excluded = bool(getattr(tracker_core, "hide_excluded", False))
 
     if not include_glitched:
@@ -216,16 +203,10 @@ def register_tracker_page_tab(ctx, app) -> None:
 
     from worlds.tracker.gui import build_tracker_view, install_app_surface
 
-    # build_tracker_view reads ctx.gen_error unconditionally; the standalone
-    # TrackerGameContext defaults it to None at class scope. ALBWContext (and
-    # any game-specific ctx) has no such default, so seed it here.
+    # build_tracker_view reads ctx.gen_error; game-specific contexts have no class default.
     if not hasattr(ctx, "gen_error"):
         ctx.gen_error = None
 
-    # install_app_surface injects the kivy properties referenced from
-    # Tracker.kv (app.source, app.loc_size, ...) onto the live launcher app
-    # and contributes the Tracker section to the launcher's SettingsScreen.
-    # Idempotent.
     install_app_surface(ctx, app)
 
     try:
@@ -237,8 +218,7 @@ def register_tracker_page_tab(ctx, app) -> None:
     tracker_core = getattr(ctx, "tracker_core", None)
     tracker_page = getattr(ctx, "tracker_page", None)
     if tracker_core is not None and tracker_page is not None:
-        # Mirror the standalone TGC's log_to_tab / set_page / clear_page bodies
-        # (TrackerClient.py:876-886) so tracker_core's lines reach the page.
+        # Mirror the standalone context's set_page/log_to_tab/clear_page bodies.
         def _set_page(line: str) -> None:
             tracker_page.data = [{"text": line}]
 
