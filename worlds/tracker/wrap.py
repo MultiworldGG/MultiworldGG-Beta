@@ -43,6 +43,12 @@ def attach_tracker_overlay(ctx) -> None:
                 _handle_connected(ctx, args)
             except Exception:
                 logger.exception("Tracker overlay failed to handle Connected packet")
+        if cmd in ("ReceivedItems", "RoomUpdate"):
+            # New items/checks change what is in logic; poke the debounced
+            # refresh instead of waiting for the 60s tick.
+            poke = getattr(ctx, "tracker_overlay_poke", None)
+            if poke is not None:
+                poke()
 
     ctx.on_package = wrapped_on_package
 
@@ -138,6 +144,9 @@ def start_overlay_ui_refresh(ctx, app) -> None:
 
     # Manual-refresh hook for the console refresh button.
     ctx.tracker_overlay_refresh = lambda: _refresh(ctx, app)
+    # Debounced event hook: wrapped_on_package fires this on ReceivedItems/
+    # RoomUpdate so logic updates land without waiting for the interval tick.
+    ctx.tracker_overlay_poke = Clock.create_trigger(_tick, 0.5)
 
     Clock.schedule_once(_tick, 0)
     Clock.schedule_interval(_tick, 60)
