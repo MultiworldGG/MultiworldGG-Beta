@@ -50,15 +50,10 @@ jobs:
         include:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
-            exe_pattern: '*.exe'
-          # exe_pattern is not consumed yet. Every exe shares the MultiworldGG
-          # prefix (BaseUtils.FROZEN_TARGETS, matching upstream instance_name).
           - os: ubuntu-latest
             artifact_name: linux-exe
-            exe_pattern: 'MultiworldGG'
           - os: macos-latest
             artifact_name: macos-exe
-            exe_pattern: 'MultiworldGG'
     
     steps:
       - uses: actions/checkout@v6
