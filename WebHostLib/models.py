@@ -527,7 +527,6 @@ class QueryProxy:
         return self._session.scalars(self._stmt).all()
 
     def first(self):
-        from sqlalchemy import select as sa_select
         stmt = self._stmt.limit(1)
         return self._session.scalars(stmt).first()
 
