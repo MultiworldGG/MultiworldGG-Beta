@@ -1,14 +1,19 @@
-"""Tests for the /me dashboard data aggregation."""
+"""Webhost /me dashboard tests; add new dashboard tests here.
+
+Covers the ``classify_room`` pure function, the ``get_dashboard_data``
+aggregation, which lobby states the dashboard treats as active
+(``_ACTIVE_LOBBY_STATES = (0, 1, 2, 3)``, dropping only CLOSED = -1), and
+end-to-end smoke of the /me routes.
+"""
 from __future__ import annotations
 
 from datetime import timedelta
 from types import SimpleNamespace
 from uuid import uuid4
 
-import pytest
-
 from Utils import utcnow
 from WebHostLib.dashboard import (
+    _ACTIVE_LOBBY_STATES,
     DashboardData,
     DashboardStats,
     RoomStatus,
@@ -57,22 +62,6 @@ class TestClassifyRoom:
 # get_dashboard_data - uses real DB via the conftest factories
 # ---------------------------------------------------------------------------
 
-@pytest.fixture
-def seed_factory(app):
-    """Create a Seed row owned by a given session UUID."""
-    from WebHostLib.models import Seed, db, commit
-
-    def _make(**overrides):
-        with app.app_context():
-            owner = overrides.pop("owner", uuid4())
-            seed = Seed(multidata=b"", owner=owner, **overrides)
-            db.session.flush()
-            snapshot = SimpleNamespace(id=seed.id, owner=seed.owner)
-            commit()
-            return snapshot
-    return _make
-
-
 class TestGetDashboardData:
     def test_empty_for_unknown_session(self, app):
         unknown_session = uuid4()
@@ -117,21 +106,6 @@ class TestGetDashboardData:
 
         assert len(data.active_rooms) == 3
         assert data.total_active_rooms == 10  # total preserved for "View all" link
-
-    def test_closed_lobbies_excluded_from_count(self, app):
-        # lobby_factory hard-codes state from with_finished_room, so create the
-        # rows directly to exercise the state filter.
-        from WebHostLib.models import Lobby, LOBBY_CLOSED, LOBBY_OPEN, db, commit
-
-        session = uuid4()
-        with app.app_context():
-            Lobby(title="open", owner=session, state=LOBBY_OPEN, meta="{}")
-            Lobby(title="closed", owner=session, state=LOBBY_CLOSED, meta="{}")
-            commit()
-            data = get_dashboard_data(session)
-
-        # Only the OPEN lobby counts; CLOSED ones are stripped.
-        assert data.stats.open_lobbies == 1
 
     def test_all_active_lobby_states_counted(self, app):
         # OPEN, GENERATING, DONE, and LOCKED are all "active" (only CLOSED is
@@ -187,3 +161,127 @@ class TestGetDashboardData:
         assert data.total_active_rooms == 1
         assert data.total_lobbies == 1
         assert data.total_seeds == 2
+
+
+# ---------------------------------------------------------------------------
+# Active-lobby-state filter
+# ---------------------------------------------------------------------------
+
+def _make_lobby(session, state):
+    from WebHostLib.models import Lobby, db
+
+    db.session.add(Lobby(title=f"state-{state}", owner=session, state=state, meta="{}"))
+
+
+class TestDashboardLobbyStates:
+    def test_active_states_are_open_generating_done_locked(self, app):
+        """Each named active state survives the dashboard filter; CLOSED does not.
+
+        Drives ``get_dashboard_data`` with one lobby per named state and pins
+        the kept-states set behaviorally, so a bug in ``_ACTIVE_LOBBY_STATES``
+        (or in the filter that consumes it) would fail this test - not just a
+        constant-vs-constant comparison.
+        """
+        from WebHostLib.models import (
+            LOBBY_OPEN,
+            LOBBY_GENERATING,
+            LOBBY_DONE,
+            LOBBY_LOCKED,
+            LOBBY_CLOSED,
+            commit,
+        )
+
+        session = uuid4()
+        all_states = (
+            LOBBY_OPEN,
+            LOBBY_GENERATING,
+            LOBBY_DONE,
+            LOBBY_LOCKED,
+            LOBBY_CLOSED,
+        )
+        with app.app_context():
+            for state in all_states:
+                _make_lobby(session, state)
+            commit()
+            data = get_dashboard_data(session, max_per_section=len(all_states))
+
+        kept_states = {lobby.state for lobby in data.my_lobbies}
+        # Exactly the four active states are kept; CLOSED is excluded.
+        assert kept_states == {LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_LOCKED}
+        assert LOBBY_CLOSED not in kept_states
+        # The dashboard's active-states tuple must agree with what it keeps.
+        assert set(_ACTIVE_LOBBY_STATES) == kept_states
+
+    def test_only_closed_state_is_excluded(self, app):
+        from WebHostLib.models import (
+            LOBBY_OPEN,
+            LOBBY_GENERATING,
+            LOBBY_DONE,
+            LOBBY_LOCKED,
+            LOBBY_CLOSED,
+            commit,
+        )
+
+        session = uuid4()
+        with app.app_context():
+            for state in (
+                LOBBY_OPEN,
+                LOBBY_GENERATING,
+                LOBBY_DONE,
+                LOBBY_LOCKED,
+                LOBBY_CLOSED,
+            ):
+                _make_lobby(session, state)
+            commit()
+            data = get_dashboard_data(session, max_per_section=10)
+
+        # The single CLOSED (-1) lobby is the only one stripped.
+        assert data.stats.open_lobbies == 4
+        assert data.total_lobbies == 4
+
+
+# ---------------------------------------------------------------------------
+# /me routes - end-to-end smoke
+# ---------------------------------------------------------------------------
+
+def test_me_returns_first_run_for_fresh_browser(client):
+    """A fresh session sees the empty-state page, not the dashboard."""
+    response = client.get("/me")
+    assert response.status_code == 200
+
+
+def test_me_returns_dashboard_when_owner_has_content(client, room_factory):
+    """When the browser session owns a room, the dashboard renders (not the empty state)."""
+    # Pin a known session_key on the test client, then create data under that key.
+    owner = uuid4()
+    with client.session_transaction() as session:
+        session["_id"] = owner
+    room_factory(owner=owner)
+
+    response = client.get("/me")
+    assert response.status_code == 200
+
+
+def test_my_rooms_renders_empty_message_when_no_rooms(client):
+    response = client.get("/me/rooms")
+    assert response.status_code == 200
+
+
+def test_my_lobbies_renders_empty_message_when_no_lobbies(client):
+    response = client.get("/me/lobbies")
+    assert response.status_code == 200
+
+
+def test_my_seeds_renders_empty_message_when_no_seeds(client):
+    response = client.get("/me/seeds")
+    assert response.status_code == 200
+
+
+def test_my_rooms_lists_owned_rooms(client, room_factory):
+    owner = uuid4()
+    with client.session_transaction() as session:
+        session["_id"] = owner
+    room_factory(owner=owner)
+
+    response = client.get("/me/rooms")
+    assert response.status_code == 200

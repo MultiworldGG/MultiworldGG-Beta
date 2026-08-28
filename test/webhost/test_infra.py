@@ -1,16 +1,8 @@
-"""Behavioral invariants for WebHostLib.autolauncher.cleanup().
+"""Webhost infrastructure tests; add new infra tests here.
 
-``cleanup()`` deletes unowned user content: it removes ``Room``/``Seed`` rows
-owned by the all-zero "null owner" sentinel (``UUID(int=0)``) and orphaned
-``Slot`` rows (``seed_id IS NULL``), while leaving real-owner content and
-seed-attached slots alone.
-
-These tests drive the real ``cleanup()`` against the in-memory test database by
-monkeypatching the module-level ``_engine`` it reads through ``_get_engine()``
-(the same indirection the task notes allows), then assert the observable
-database state afterwards. A plausible mutation to the WHERE clauses (e.g.
-turning ``Room.owner == null_owner`` into a falsiness check, or flipping the
-``Slot.seed_id == None`` predicate) makes these fail.
+Covers the pony-style auto-add behaviour of ``WebHostLib.models.Base``, the
+behavioral invariants of ``WebHostLib.autolauncher.cleanup()``, and the
+``WebHost._pony_config_to_sqlalchemy_uri`` legacy-config mapping.
 """
 from __future__ import annotations
 
@@ -19,6 +11,59 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import select
 
+from WebHost import _pony_config_to_sqlalchemy_uri
+
+
+# ---------------------------------------------------------------------------
+# models.Base auto-add: constructing any Base subclass inside a Flask app
+# context registers the new instance with db.session as a pending insert via
+# the patched __init__ -- no explicit db.session.add() call is required.
+# ---------------------------------------------------------------------------
+
+def test_constructing_entity_auto_adds_to_session(app):
+    from WebHostLib.models import db, Seed
+
+    with app.app_context():
+        before = set(db.session.new)
+        seed = Seed(multidata=b"", owner=uuid4())
+        # No explicit db.session.add(seed) call happens anywhere above.
+        new_objects = set(db.session.new)
+
+    assert seed not in before
+    assert seed in new_objects
+
+
+def test_auto_added_entity_persists_on_commit_without_explicit_add(app):
+    from WebHostLib.models import db, commit, Seed
+
+    owner = uuid4()
+    with app.app_context():
+        seed = Seed(multidata=b"x", owner=owner)
+        # Only commit() -- still never an explicit session.add().
+        commit()
+        seed_id = seed.id
+
+    with app.app_context():
+        fetched = Seed.get(id=seed_id)
+        assert fetched is not None
+        assert fetched.owner == owner
+
+
+# ---------------------------------------------------------------------------
+# autolauncher.cleanup() invariants.
+#
+# ``cleanup()`` deletes unowned user content: it removes ``Room``/``Seed``
+# rows owned by the all-zero "null owner" sentinel (``UUID(int=0)``) and
+# orphaned ``Slot`` rows (``seed_id IS NULL``), while leaving real-owner
+# content and seed-attached slots alone.
+#
+# These tests drive the real ``cleanup()`` against the in-memory test database
+# by monkeypatching the module-level ``_engine`` it reads through
+# ``_get_engine()`` (the same indirection the task notes allows), then assert
+# the observable database state afterwards. A plausible mutation to the WHERE
+# clauses (e.g. turning ``Room.owner == null_owner`` into a falsiness check,
+# or flipping the ``Slot.seed_id == None`` predicate) makes these fail.
+# ---------------------------------------------------------------------------
 
 @pytest.fixture
 def cleanup_on_test_db(app):
@@ -26,7 +71,7 @@ def cleanup_on_test_db(app):
 
     Yields the ``cleanup`` callable; restores the previous ``_engine`` and
     deletes any Room/Seed/Slot rows the test created, so nothing leaks into the
-    session-scoped test DB (e.g. test_backfill counts rooms-without-short-id).
+    session-scoped test DB (e.g. the backfill tests count rooms-without-short-id).
     """
     import WebHostLib.autolauncher as autolauncher
     from WebHostLib.models import db, commit, Room, Seed, Slot
@@ -167,3 +212,46 @@ def test_cleanup_keeps_seed_referenced_by_real_room(app, cleanup_on_test_db):
         assert referencing is not None, "Room reference to Seed disappeared"
         assert db.session.get(Seed, seed_id) is not None, "referenced Seed was wrongly deleted"
         assert db.session.get(Room, room_id) is not None
+
+
+# ---------------------------------------------------------------------------
+# WebHost._pony_config_to_sqlalchemy_uri: the legacy-PONY-config ->
+# SQLAlchemy-URI mapping contract - sqlite filename handling (including the
+# :memory: special case), postgres/postgresql psycopg2 URIs, and the
+# ValueError raised for unsupported providers.
+# ---------------------------------------------------------------------------
+
+def test_pony_config_to_sqlalchemy_uri_sqlite_memory_postgres_and_unsupported():
+    # sqlite with explicit :memory: filename is special-cased to an in-memory URI
+    assert _pony_config_to_sqlalchemy_uri(
+        {"provider": "sqlite", "filename": ":memory:"}
+    ) == "sqlite:///:memory:"
+
+    # sqlite with a regular filename maps to sqlite:///<filename>
+    assert _pony_config_to_sqlalchemy_uri(
+        {"provider": "sqlite", "filename": "ap.db3"}
+    ) == "sqlite:///ap.db3"
+
+    # provider defaults to sqlite and filename defaults to ap.db3
+    assert _pony_config_to_sqlalchemy_uri({}) == "sqlite:///ap.db3"
+
+    # both postgres and postgresql build the same psycopg2 URI
+    pg_config = {
+        "provider": "postgres",
+        "host": "db.example",
+        "port": 6543,
+        "user": "u",
+        "password": "p",
+        "database": "mwgg",
+    }
+    expected = "postgresql+psycopg2://u:p@db.example:6543/mwgg"
+    assert _pony_config_to_sqlalchemy_uri(pg_config) == expected
+    assert _pony_config_to_sqlalchemy_uri({**pg_config, "provider": "postgresql"}) == expected
+
+    # postgres falls back to localhost:5432 and empty credentials/database
+    assert _pony_config_to_sqlalchemy_uri({"provider": "postgres"}) == \
+        "postgresql+psycopg2://:@localhost:5432/"
+
+    # an unsupported provider raises ValueError
+    with pytest.raises(ValueError, match="Unsupported PONY provider"):
+        _pony_config_to_sqlalchemy_uri({"provider": "mysql"})

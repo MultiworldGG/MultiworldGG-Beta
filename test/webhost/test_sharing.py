@@ -1,41 +1,29 @@
-"""Tests for room/lobby co-ownership: is_authorized helper, invite flow,
-co-owner CRUD, dashboard inclusion, primary-owner-only operations."""
+"""Webhost sharing/co-ownership tests; add new sharing tests here.
+
+Covers the is_authorized/is_primary_owner helpers, the invite flow (mint,
+accept, single-use, expiry, transfer mode), co-owner removal, dashboard
+inclusion of co-owned rooms, and behavioral invariants of
+WebHostLib/sharing.py that prose comments used to describe: the co-owner
+DELETE endpoint is idempotent (200, not 404, for a missing row), and
+accepting a transfer as an existing co-owner drops the now-redundant
+co-owner row, leaving the accepter as primary owner only.
+"""
 from __future__ import annotations
 
 from datetime import timedelta
 from uuid import UUID, uuid4
 
-import pytest
-
 from Utils import utcnow
-
-
-# ---------------------------------------------------------------------------
-# Helper fixtures
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def make_lobby(app):
-    """Create a Lobby owned by the given session, bypassing lobby_factory
-    (which hard-codes state from with_finished_room)."""
-    from WebHostLib.models import Lobby, commit
-
-    def _make(owner, **overrides):
-        with app.app_context():
-            kw = dict(title="Test Lobby", owner=owner, password_hash="",
-                      timeout_minutes=60, max_yamls_per_player=3, race=False,
-                      meta="{}", state=0, max_players=0,
-                      allow_custom_apworlds=True)
-            kw.update(overrides)
-            lobby = Lobby(**kw)
-            commit()
-            return lobby.id
-    return _make
 
 
 def _login(client, session_id: UUID):
     with client.session_transaction() as sess:
         sess["_id"] = session_id
+
+
+def _suuid(uid: UUID) -> str:
+    from WebHostLib import to_url
+    return to_url(uid)
 
 
 # ---------------------------------------------------------------------------
@@ -228,6 +216,38 @@ def test_transfer_swaps_primary_and_demotes_old_owner(client, app, room_factory)
         assert db.session.get(RoomCoOwner, (snapshot.id, old_primary)) is not None
 
 
+def test_transfer_accept_by_existing_co_owner_drops_co_owner_row(client, app, room_factory):
+    """Accepting a transfer as an existing co-owner drops the now-redundant
+    co-owner row, leaving the accepter as primary owner only."""
+    from WebHostLib.models import Room, RoomCoOwner, commit, db
+    from WebHostLib.ownership import is_primary_owner
+
+    old_primary = uuid4()
+    co_then_primary = uuid4()
+    snapshot = room_factory(owner=old_primary)
+
+    # The accepting user already holds a co-owner row before the transfer.
+    with app.app_context():
+        RoomCoOwner(room_id=snapshot.id, session_id=co_then_primary, granted_by=old_primary)
+        commit()
+        assert db.session.get(RoomCoOwner, (snapshot.id, co_then_primary)) is not None
+
+    _login(client, old_primary)
+    res = client.post(f"/api/room/{_suuid(snapshot.id)}/invite", json={"mode": "transfer"})
+    token_path = res.get_json()["url"].split("/me/accept/")[-1]
+
+    _login(client, co_then_primary)
+    client.get(f"/me/accept/{token_path}", follow_redirects=False)
+
+    with app.app_context():
+        room = Room.get(id=snapshot.id)
+        # New owner is primary...
+        assert room.owner == co_then_primary
+        assert is_primary_owner(room, co_then_primary) is True
+        # ...and their old, now-redundant co-owner row is gone.
+        assert db.session.get(RoomCoOwner, (snapshot.id, co_then_primary)) is None
+
+
 # ---------------------------------------------------------------------------
 # Co-owner remove - primary only
 # ---------------------------------------------------------------------------
@@ -268,6 +288,27 @@ def test_co_owner_cannot_remove_other_co_owner(client, app, room_factory):
         assert db.session.get(RoomCoOwner, (snapshot.id, co_b)) is not None
 
 
+def test_remove_nonexistent_co_owner_returns_ok_not_404(client, app, room_factory):
+    """The co-owner DELETE endpoint is idempotent: a missing row still
+    returns 200 {"ok": True}."""
+    from WebHostLib.models import RoomCoOwner, db
+
+    owner = uuid4()
+    never_a_co_owner = uuid4()
+    snapshot = room_factory(owner=owner)
+
+    # Sanity: the target really has no co-owner row.
+    with app.app_context():
+        assert db.session.get(RoomCoOwner, (snapshot.id, never_a_co_owner)) is None
+
+    _login(client, owner)
+    res = client.delete(
+        f"/api/room/{_suuid(snapshot.id)}/co_owner/{_suuid(never_a_co_owner)}")
+
+    assert res.status_code == 200
+    assert res.get_json() == {"ok": True}
+
+
 # ---------------------------------------------------------------------------
 # Dashboard inclusion
 # ---------------------------------------------------------------------------
@@ -286,12 +327,3 @@ def test_dashboard_includes_co_owned_rooms(client, app, room_factory):
 
     assert data.is_empty is False
     assert data.stats.active_rooms == 1
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-def _suuid(uid: UUID) -> str:
-    from WebHostLib import to_url
-    return to_url(uid)

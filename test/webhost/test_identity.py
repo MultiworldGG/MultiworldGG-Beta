@@ -1,16 +1,21 @@
-"""Tests for the passkeys Flask blueprint.
+"""Webhost identity tests; add new identity tests here.
 
-Mocks the ``webauthn`` library's verify functions so the tests stay focused
-on routing, storage interaction, and challenge bookkeeping. End-to-end
-testing against a real authenticator belongs in a Selenium / Playwright
-suite using the virtual-authenticator API.
+Covers the passkeys Flask blueprint (registration, authentication/recovery,
+inspection/revocation - with the ``webauthn`` library's verify functions
+mocked so the tests stay focused on routing, storage interaction, and
+challenge bookkeeping; end-to-end testing against a real authenticator
+belongs in a Selenium / Playwright suite using the virtual-authenticator
+API), the passkey-flavoured /me modals and the /session/recover page, and
+the SECRET_KEY production-default guardrail in ``WebHost.get_app()``.
 
-Uses real UUID strings for session ids since the host blueprint re-hydrates
-them via uuid.UUID().
+The blueprint tests run on a standalone Flask app to isolate the blueprint
+from the rest of the project's wiring, and use real UUID strings for session
+ids since the host blueprint re-hydrates them via uuid.UUID().
 """
 from __future__ import annotations
 
 import json
+import socket
 from base64 import urlsafe_b64encode
 from types import SimpleNamespace
 from typing import Dict, List, Optional
@@ -25,8 +30,7 @@ from WebHostLib.passkeys import StoredCredential, passkeys_bp
 
 
 # ---------------------------------------------------------------------------
-# Fixtures: standalone Flask app to isolate the blueprint from the rest
-# of the project's wiring.
+# Passkey blueprint fixtures
 # ---------------------------------------------------------------------------
 
 class InMemoryStore:
@@ -90,7 +94,7 @@ SESSION_B = UUID("22222222-2222-2222-2222-222222222222")
 
 
 # ---------------------------------------------------------------------------
-# Pure functions
+# Passkeys: pure functions
 # ---------------------------------------------------------------------------
 
 def test_user_handle_is_stable_per_session(passkey_app: Flask):
@@ -120,7 +124,7 @@ def test_b64url_decode_handles_unpadded_input():
 
 
 # ---------------------------------------------------------------------------
-# Registration flow
+# Passkeys: registration flow
 # ---------------------------------------------------------------------------
 
 def test_register_start_requires_session(passkey_client):
@@ -206,7 +210,7 @@ def test_register_start_excludes_existing_credentials(passkey_client, store: InM
 
 
 # ---------------------------------------------------------------------------
-# Authentication / recovery flow
+# Passkeys: authentication / recovery flow
 # ---------------------------------------------------------------------------
 
 def test_auth_start_works_without_session(passkey_client):
@@ -267,7 +271,7 @@ def test_auth_finish_requires_pending_challenge(passkey_client, store: InMemoryS
 
 
 # ---------------------------------------------------------------------------
-# Privacy properties
+# Passkeys: privacy properties
 # ---------------------------------------------------------------------------
 
 def test_stored_credential_has_no_pii_fields():
@@ -277,7 +281,7 @@ def test_stored_credential_has_no_pii_fields():
 
 
 # ---------------------------------------------------------------------------
-# Inspection / revocation
+# Passkeys: inspection / revocation
 # ---------------------------------------------------------------------------
 
 def test_list_requires_session(passkey_client):
@@ -336,3 +340,83 @@ def test_remove_returns_same_status_for_missing_and_others(passkey_client, store
                             data=json.dumps({"id": others_id}), content_type="application/json")
 
     assert a.status_code == b.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Passkey-flavoured /me modals and /session/recover (against the real app)
+# ---------------------------------------------------------------------------
+
+def test_me_includes_passkey_move_device_modal(client, room_factory):
+    # Populate the session so /me renders the dashboard (not the empty state).
+    owner = uuid4()
+    with client.session_transaction() as session:
+        session["_id"] = owner
+    room_factory(owner=owner)
+
+    response = client.get("/me")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    # The move-device modal must be present with passkey-specific markup.
+    assert 'id="move-device-modal"' in body
+    assert "/session/passkey/register/start" in body
+
+
+def test_me_first_run_includes_passkey_restore_modal(client):
+    response = client.get("/me")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'id="restore-session-modal"' in body
+    assert "/session/passkey/auth/start" in body
+
+
+def test_session_recover_page_renders(client):
+    response = client.get("/session/recover")
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert "/session/passkey/auth/start" in body
+
+
+# ---------------------------------------------------------------------------
+# SECRET_KEY production-default guardrail in WebHost.get_app()
+# ---------------------------------------------------------------------------
+
+def test_get_app_refuses_hostname_secret_in_production(monkeypatch):
+    """The webhost must refuse to boot if SECRET_KEY is still the hostname-derived
+    default and TESTING is False: that key signs session cookies and is
+    trivially forgeable by anyone who can guess the host name."""
+    from WebHostLib import app as raw_app
+    import WebHost
+
+    # Force the hostname-derived default and clear any test-mode override.
+    raw_app.config["SECRET_KEY"] = bytes(socket.gethostname(), encoding="utf-8")
+    raw_app.config["TESTING"] = False
+
+    # Don't let an actual config.yaml on disk override it during the test.
+    monkeypatch.setattr(WebHost.os.path, "exists", lambda p: False)
+
+    with pytest.raises(RuntimeError, match="SECRET_KEY is still the hostname-derived default"):
+        WebHost.get_app()
+
+
+def test_get_app_allows_hostname_secret_when_testing(monkeypatch):
+    """The same default is fine under TESTING=True (the project's pytest fixture sets it)."""
+    from WebHostLib import app as raw_app
+    import WebHost
+
+    raw_app.config["SECRET_KEY"] = bytes(socket.gethostname(), encoding="utf-8")
+    raw_app.config["TESTING"] = True
+    raw_app.config["PONY"] = {"provider": "sqlite", "filename": ":memory:", "create_db": True}
+
+    monkeypatch.setattr(WebHost.os.path, "exists", lambda p: False)
+
+    # Should not raise: TESTING=True bypasses the guardrail. We don't care
+    # about the return value; if it returns, the guardrail didn't trip.
+    try:
+        WebHost.get_app()
+    except (AssertionError, ValueError) as e:
+        # get_app() raises on duplicate blueprint registration when called more than once
+        # in the same process (AssertionError on older Flask, ValueError on Flask 3.x);
+        # that's fine for this test (we only care that RuntimeError isn't raised by the guardrail).
+        message = e.args[0] if e.args else str(e)
+        if "register_blueprint" not in message and "already registered" not in message:
+            raise
