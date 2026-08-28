@@ -107,7 +107,6 @@ if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
         return stub
 
 else:
-    from openpyxl.xml.constants import PACKAGE_CHARTSHEETS_RELS
     from mwgg_gui.components.dialog import MessageBox
     from mwgg_gui.overrides.screen import CustomScreen
     from mwgg_gui.console.console import ConsoleSliverAppbar as HintLog
