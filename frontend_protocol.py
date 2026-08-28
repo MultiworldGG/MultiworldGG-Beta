@@ -241,7 +241,7 @@ async def verify_slot(
             except websockets.InvalidURI as exc:
                 return SlotVerifyResult(ok=False, transport_error=f"Invalid server address: {exc}")
             except ConnectionRefusedError:
-                last_error = "Connection refused — is the server running on that address and port?"
+                last_error = "Connection refused - is the server running on that address and port?"
                 continue
             except ssl.SSLError as exc:
                 last_error = f"TLS error: {exc}"

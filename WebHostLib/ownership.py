@@ -1,6 +1,6 @@
 """Co-ownership helpers for rooms and lobbies.
 
-The .owner UUID on Room/Lobby is the *primary owner* — invites, co-owner
+The .owner UUID on Room/Lobby is the *primary owner* - invites, co-owner
 removal, and disowning all require it. Anyone listed in the
 ``room_co_owner`` / ``lobby_co_owner`` table is a co-owner and may perform
 all other authorised actions (play, manage settings, kick, server commands).
@@ -100,7 +100,7 @@ def list_authorized_rooms(session_id: UUID) -> List[Room]:
 def list_authorized_lobbies(session_id: UUID, *, include_closed: bool = False) -> List[Lobby]:
     """All lobbies where session_id is primary OR co-owner.
 
-    By default excludes closed lobbies — matches the legacy /me filter.
+    By default excludes closed lobbies - matches the legacy /me filter.
     """
     primary = db.session.scalars(
         select(Lobby).where(Lobby.owner == session_id).order_by(Lobby.last_activity.desc())

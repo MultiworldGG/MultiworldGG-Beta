@@ -36,7 +36,7 @@ afterEach(() => {
   delete process.env.FUZZ_MAX_CONCURRENCY;
 });
 
-describe("FuzzQueue — concurrency", () => {
+describe("FuzzQueue - concurrency", () => {
   it("serializes tasks when max=1 (one runs at a time)", async () => {
     const q = new FuzzQueue(1);
     const order: string[] = [];
@@ -104,7 +104,7 @@ describe("FuzzQueue — concurrency", () => {
   });
 });
 
-describe("FuzzQueue — keyed supersede", () => {
+describe("FuzzQueue - keyed supersede", () => {
   it("supersedes a not-yet-started task with the same key", async () => {
     const q = new FuzzQueue(1);
     const started: string[] = [];
@@ -183,7 +183,7 @@ describe("FuzzQueue — keyed supersede", () => {
   });
 });
 
-describe("FuzzQueue — env-driven concurrency", () => {
+describe("FuzzQueue - env-driven concurrency", () => {
   it("defaults to 1 when FUZZ_MAX_CONCURRENCY is unset", async () => {
     const q = new FuzzQueue();
     const order: string[] = [];
@@ -251,7 +251,7 @@ describe("getFuzzQueue", () => {
   });
 });
 
-describe("FuzzQueue — task failures", () => {
+describe("FuzzQueue - task failures", () => {
   it("propagates a task rejection and frees the slot", async () => {
     const q = new FuzzQueue(1);
     const boom = q.run("x", async () => {

@@ -3,7 +3,7 @@
 The desktop client uploads avatars through ``api/avatar.py`` with a minted
 Bearer token. This module is the browser-cookie counterpart: a browser session
 (``session["_id"]``) uploads on the website and the image becomes that
-session's portable avatar — shown in the nav today, and (later phases)
+session's portable avatar - shown in the nav today, and (later phases)
 projected onto the slots that session plays.
 
 Storage, validation and NSFW screening are reused from ``api/avatar.py``; only
@@ -72,7 +72,7 @@ def session_avatar_url(session_id) -> "str | None":
     """Same-origin URL of a session's current avatar, or None if it has none.
 
     Returns a root-relative path served by ``avatar_serve`` (or the nginx alias
-    in production) — suitable for an ``<img src>`` on our own pages, as opposed
+    in production) - suitable for an ``<img src>`` on our own pages, as opposed
     to the absolute cross-host wire URL clients embed in ``profile_data``.
     """
     record = SessionAvatar.get(session_id=session_id)
@@ -181,7 +181,7 @@ def _safe_avatar_url(value) -> "str | None":
     """Return a client-set profile_data avatar only if HTTPS on a trusted host.
 
     Mirrors the desktop client's ``safe_avatar_source`` (mwgg_gui) so the web
-    shows exactly the avatars a client would — the uploader only ever hands out
+    shows exactly the avatars a client would - the uploader only ever hands out
     trusted-host URLs, and manually-edited/hostile values collapse to nothing.
     """
     if not isinstance(value, str) or not value:
@@ -255,7 +255,7 @@ def resolve_slot_avatar(tracker_data, team: int, slot: int) -> "str | None":
 def set_slot_avatar(tracker):
     """Set a slot's avatar from the web. Open to anyone, rate-limited + screened.
 
-    Image source is the uploaded file, or — when no file is sent — the caller's
+    Image source is the uploaded file, or - when no file is sent - the caller's
     own session avatar. Overwrites any existing slot avatar; never locks it.
     """
     from WebHostLib.tracker import TrackerData
@@ -311,7 +311,7 @@ def apply_slot_avatars_to_stored_data(session, room_id, stored_data: dict) -> No
     Called by the live room process at boot (customserver) so connected desktop
     clients render web-set avatars. Takes an explicit SQLAlchemy session because
     the room process isn't in a Flask request context, and mutates ``stored_data``
-    in place. Only explicit ``SlotAvatar`` rows are seeded — lobby-derived session
+    in place. Only explicit ``SlotAvatar`` rows are seeded - lobby-derived session
     avatars stay web-only (the client carries its own via persistent storage).
     """
     rows = session.scalars(select(SlotAvatar).where(SlotAvatar.room_id == room_id)).all()

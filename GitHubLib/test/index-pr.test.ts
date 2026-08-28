@@ -180,7 +180,7 @@ afterEach(() => {
   delete process.env.OLIVER_CODEOWNER_PREFIX;
 });
 
-describe("openOrUpdateIndexPR — labels (Phase C)", () => {
+describe("openOrUpdateIndexPR - labels (Phase C)", () => {
   // Fixtures here include igdb_id so these tests stay focused on the
   // New/Update label rule. The Needs-IGDB-id label rule is covered separately.
   const optsWithIgdb = {
@@ -250,7 +250,7 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
+describe("openOrUpdateIndexPR - Needs IGDB id label", () => {
   it("applies 'Needs IGDB id' when source manifest lacks igdb_id and main has none either", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -345,7 +345,7 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — PR body game name", () => {
+describe("openOrUpdateIndexPR - PR body game name", () => {
   it("names the game from the manifest's `game` field in the PR body", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -371,7 +371,7 @@ describe("openOrUpdateIndexPR — PR body game name", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
+describe("openOrUpdateIndexPR - CODEOWNERS append (Phase E)", () => {
   it("creates CODEOWNERS with header when file does not exist", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -483,7 +483,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinned)", () => {
+describe("openOrUpdateIndexPR - manifest merge (author-canonical, Oliver-pinned)", () => {
   function readManifest(state: FakeIndex): Record<string, unknown> {
     const write = state.writes.find(
       (w) => w.kind === "file" && w.payload.path === "worlds/myclgm.json",
@@ -628,7 +628,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
   });
 });
 
-describe("openOrUpdateIndexPR — PR body wheel info", () => {
+describe("openOrUpdateIndexPR - PR body wheel info", () => {
   it("includes the wheel filename and a human-readable size", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -664,7 +664,7 @@ describe("openOrUpdateIndexPR — PR body wheel info", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
+describe("openOrUpdateIndexPR - auto-merge enable on create", () => {
   it("calls enablePullRequestAutoMerge with the new PR's node_id and SQUASH method", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);

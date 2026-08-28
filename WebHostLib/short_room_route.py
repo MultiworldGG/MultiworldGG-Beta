@@ -1,5 +1,5 @@
 """
-The /r/<short> route — Discord-shareable short-URL alias for rooms.
+The /r/<short> route - Discord-shareable short-URL alias for rooms.
 
 Registered as a top-level route (not a blueprint) so its endpoint stays
 ``short_room`` for url_for() and test assertions. Wire up in the app

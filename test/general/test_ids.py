@@ -12,7 +12,7 @@ class TestIDs(unittest.TestCase):
     def setUp(self) -> None:
         # Guard against a vacuous pass: every test below iterates testable_worlds,
         # which beta's lazy loader leaves empty unless test/__init__ seeded the
-        # fixture worlds — an empty registry turns them all into silent no-ops.
+        # fixture worlds - an empty registry turns them all into silent no-ops.
         self.assertTrue(AutoWorldRegister.testable_worlds,
                         "AutoWorldRegister.testable_worlds is empty; test/__init__ did not "
                         "seed the fixture worlds, so these tests would pass vacuously.")

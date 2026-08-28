@@ -6,7 +6,7 @@ project's ``flask-sqlalchemy`` session. The store reads and writes the
 :class:`WebHostLib.models.PasskeyCredential`.
 
 The store needs a *callable* that returns the active session, not a session
-directly — flask-sqlalchemy's session is scoped per-request and must be
+directly - flask-sqlalchemy's session is scoped per-request and must be
 resolved each time we touch the DB.
 """
 from __future__ import annotations

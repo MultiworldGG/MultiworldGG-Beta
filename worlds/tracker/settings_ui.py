@@ -59,7 +59,7 @@ def _save_settings():
     """Mark TrackerWorld.settings dirty and write through to host.yaml.
 
     The settings system persists on dirty + flush. Setting ``_changed = True``
-    is the existing idiom — see ``current_world.settings._changed = True`` in
+    is the existing idiom - see ``current_world.settings._changed = True`` in
     TrackerClient.load_pack.
     """
     try:
@@ -159,7 +159,7 @@ class TrackerSettings(SettingsScrollBox):
         load_pack call re-runs the file picker dialog.
 
         Important: ``ctx.tracker_world`` is set to None whenever ``load_pack``
-        fails (invalid/missing pack, user cancelled the picker, etc.) — which
+        fails (invalid/missing pack, user cancelled the picker, etc.) - which
         is exactly the moment Reset is useful. So we read the pack key from
         the connected World class's ``tracker_world`` dict directly, not from
         the runtime ``ctx.tracker_world`` attribute.

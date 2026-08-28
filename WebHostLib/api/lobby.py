@@ -27,7 +27,7 @@ from WebHostLib.short_id import assign_short_id
 from WebHostLib.ownership import is_authorized
 from WebHostLib import app, limiter
 
-APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB — leaves headroom under 64 MB global limit
+APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB - leaves headroom under 64 MB global limit
 LOBBY_LOCAL_GENERATION_YAML_LIMIT = 25
 
 def _safe_zip_name(name: str) -> str:
@@ -386,7 +386,7 @@ def _check_version_constraint(requires_json: str | None, server_version: Version
                         f"server has v{server_version.as_simple_string()}")
             if exact_ver < server_version:
                 return (f"designed for v{constraint['exact']}, server has "
-                        f"v{server_version.as_simple_string()} — consider regenerating your YAML "
+                        f"v{server_version.as_simple_string()} - consider regenerating your YAML "
                         f"from the player options page.")
         if "min" in constraint:
             min_ver = tuplize_version(str(constraint["min"]))
@@ -396,7 +396,7 @@ def _check_version_constraint(requires_json: str | None, server_version: Version
             max_ver = tuplize_version(str(constraint["max"]))
             if max_ver < server_version:
                 return (f"requires ≤v{constraint['max']}, server has "
-                        f"v{server_version.as_simple_string()} — consider regenerating your YAML "
+                        f"v{server_version.as_simple_string()} - consider regenerating your YAML "
                         f"from the player options page.")
     except Exception:
         pass
@@ -967,7 +967,7 @@ def lobby_status(lobby: UUID):
         if y_is_custom:
             has_custom = True
         elif y_id in apworld_by_yaml_id:
-            # Standard YAML with an upgrade apworld uploaded — also requires local generation
+            # Standard YAML with an upgrade apworld uploaded - also requires local generation
             has_custom = True
         yaml_info = {"id": y_id, "filename": y_filename, "is_custom": y_is_custom}
         if y_pname:
@@ -1189,7 +1189,7 @@ def lobby_upload_yaml(lobby: UUID):
     if len(files) > remaining:
         return jsonify({"error": f"You can only upload {remaining} more YAML(s)"}), 400
 
-    # Reject zip files — zips are only accepted at the pregenerated-game upload step.
+    # Reject zip files - zips are only accepted at the pregenerated-game upload step.
     for f in files:
         if f.filename.endswith(".zip"):
             return jsonify({"error": f"'{f.filename}' is a .zip file. "
@@ -1225,7 +1225,7 @@ def lobby_upload_yaml(lobby: UUID):
         requires_versions[filename] = requires_version
 
         if game and game not in AutoWorldRegister.world_types:
-            # Completely unknown game — always requires custom APWorld
+            # Completely unknown game - always requires custom APWorld
             if not lobby.allow_custom_apworlds:
                 return jsonify({
                     "error": f"Game '{game}' is not supported on this server. "
@@ -1236,7 +1236,7 @@ def lobby_upload_yaml(lobby: UUID):
             custom_info[filename] = (player_name, game)
 
         elif game and requires_version:
-            # Known game but YAML declares a version requirement — check it
+            # Known game but YAML declares a version requirement - check it
             server_wv = AutoWorldRegister.world_types[game].world_version
             direction = _version_mismatch_direction(requires_version, server_wv)
 
@@ -1255,7 +1255,7 @@ def lobby_upload_yaml(lobby: UUID):
                 upgrade_info[filename] = (player_name, game)
 
             elif direction == "older":
-                # YAML was built for an older world than the server has — accept it either way,
+                # YAML was built for an older world than the server has - accept it either way,
                 # the version_warning in status will surface the mismatch to the user.
                 standard_options[filename] = content
 
@@ -1795,7 +1795,7 @@ def lobby_update_settings(lobby: UUID):
             ).all()
             max_currently_held = max((c for _, c in counts), default=0)
             if new_max_yamls < max_currently_held:
-                return jsonify({"error": f"Cannot lower max YAMLs below {max_currently_held} — a player already has that many."}), 400
+                return jsonify({"error": f"Cannot lower max YAMLs below {max_currently_held} - a player already has that many."}), 400
             lobby.max_yamls_per_player = new_max_yamls
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid max_yamls_per_player"}), 400
@@ -1808,7 +1808,7 @@ def lobby_update_settings(lobby: UUID):
                     select(func.count()).select_from(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
                 ) or 0
                 if new_max < current_count:
-                    return jsonify({"error": f"Cannot set max players to {new_max} — lobby already has {current_count} players."}), 400
+                    return jsonify({"error": f"Cannot set max players to {new_max} - lobby already has {current_count} players."}), 400
             lobby.max_players = new_max
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid max_players"}), 400

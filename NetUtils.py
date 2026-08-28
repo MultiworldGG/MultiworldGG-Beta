@@ -447,7 +447,7 @@ class KivyRefJSONtoTextParser(KivyMarkupJSONtoTextParser):
     the typed handlers (_handle_item_name, _handle_location_name,
     _handle_entrance_name, _handle_hint_status, _handle_plaintext) escape before
     delegating to _handle_color, while player_id/player_name and raw "color"
-    nodes arrive unescaped — _handle_color escapes exactly those, and
+    nodes arrive unescaped - _handle_color escapes exactly those, and
     _handle_text only escapes nodes explicitly typed "text" (the one path that
     dispatches there directly), so nothing is ever escaped twice.
     """

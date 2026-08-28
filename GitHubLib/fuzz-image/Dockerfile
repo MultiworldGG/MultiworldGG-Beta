@@ -12,13 +12,13 @@
 # Because the root FS is read-only at runtime and /tmp is noexec, EVERYTHING the
 # run needs must already be in the image, and every runtime write must land on
 # /work or /out (both tmpfs/bind, both writable, neither noexec). The harness
-# (fuzz_bootstrap.py + karen_review.py) is PINNED into the image — never fetched
-# from a mutable branch at runtime — so a moving upstream can't change what runs.
+# (fuzz_bootstrap.py + karen_review.py) is PINNED into the image - never fetched
+# from a mutable branch at runtime - so a moving upstream can't change what runs.
 
 FROM python:3.13-slim
 
 # --- OS packages: the run script shells out to git/curl/jq; ca-certificates so
-# TLS to github works. No build toolchain — wheels are prebuilt, and worlds are
+# TLS to github works. No build toolchain - wheels are prebuilt, and worlds are
 # installed as wheels, not compiled.
 RUN set -eux; \
     apt-get update; \
@@ -87,7 +87,7 @@ RUN set -eux; \
     : > /opt/fuzz/host.yaml; chmod 0444 /opt/fuzz/host.yaml
 
 # --- Bake the trusted harness inputs at BUILD time so the runtime needs NO
-# network. Pinned via build args — rebuild to update (per the design, core need
+# network. Pinned via build args - rebuild to update (per the design, core need
 # not be fresh every run). The BUILD has network; the runtime is --network none.
 ARG MWGG_CORE_REPO=MultiworldGG/MultiworldGG-Beta
 ARG MWGG_CORE_REF=main
@@ -104,7 +104,7 @@ RUN set -eux; \
         && uv venv --relocatable .venv \
         && . .venv/bin/activate \
         && uv pip install -r requirements.txt ); \
-    # Pinned fuzzer entrypoint, baked — never fetched at runtime.
+    # Pinned fuzzer entrypoint, baked - never fetched at runtime.
     curl -sSfL --proto '=https' --max-time 60 \
         "https://raw.githubusercontent.com/${FUZZER_REPO}/${FUZZER_REF}/fuzz.py" \
         -o /opt/fuzz/fuzz.py; \

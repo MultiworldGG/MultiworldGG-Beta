@@ -182,7 +182,7 @@ def test_compose_connect_address_round_trips_through_urlparse():
 def test_compose_connect_address_warns_on_colon_in_slot_name(caplog):
     """A ':' in the slot name mis-splits downstream (InitContext partitions
     userinfo at the first colon, so 'P:1' parses as user P, password 1@...).
-    Behavior is preserved — the composer warns, it does not reject."""
+    Behavior is preserved - the composer warns, it does not reject."""
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         composed = MultiWorld._compose_connect_address("localhost:38281", "P:1", None)
     assert composed == "P:1@localhost:38281"

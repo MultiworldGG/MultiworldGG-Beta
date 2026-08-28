@@ -2,7 +2,7 @@
 
 Escape placement is the load-bearing contract: the parent flow escapes inside
 the typed handlers and _handle_plaintext, while player_id/player_name and raw
-"color" nodes reach _handle_color unescaped — the ref parser must escape exactly
+"color" nodes reach _handle_color unescaped - the ref parser must escape exactly
 those once and never re-escape anything, and the plain KivyMarkupJSONtoTextParser
 console pipeline must stay byte-identical (including its '#'-prefixed
 hex_colormap values and unescaped player names).

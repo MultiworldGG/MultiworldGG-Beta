@@ -246,7 +246,7 @@ Release on your world's repo, the workflow builds a pip-installable wheel from y
 `worlds/<slug>/` source and attaches it as a release asset. The **Oliver-Multiworld-Squirrel**
 GitHub App watches for that workflow to finish and opens a PR on **`MultiworldGG-Index`** to
 register your release. Karen's automated review checks run on that PR (schema validation,
-dependency audit, security smells) — these run *for* you to protect end-users, not as preflight
+dependency audit, security smells) - these run *for* you to protect end-users, not as preflight
 homework you have to satisfy.
 
 For the step-by-step author guide, see the

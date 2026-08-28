@@ -1,7 +1,7 @@
 """Data aggregation for the /me dashboard.
 
 All queries are scoped to the current browser session. There are no
-user accounts in MultiworldGG — the session key in cookies is the
+user accounts in MultiworldGG - the session key in cookies is the
 identity. Rooms, seeds, and lobbies "owned by this browser" are those
 where the owner UUID matches session["_id"].
 """
@@ -35,7 +35,7 @@ def classify_room(room: Room) -> RoomStatus:
     """Return a RoomStatus for the given room.
 
     A room is "Running" if its last activity is within its own configured
-    timeout window — same threshold the autolauncher uses to decide whether
+    timeout window - same threshold the autolauncher uses to decide whether
     a server is currently up. Otherwise "Paused".
     """
     last_activity = getattr(room, "last_activity", None)
@@ -76,7 +76,7 @@ class DashboardData:
 
 
 def _seed_has_spoiler(seed: Seed) -> bool:
-    """Read the deferred spoiler column. Each call is one query — use sparingly."""
+    """Read the deferred spoiler column. Each call is one query - use sparingly."""
     return seed.spoiler is not None
 
 
@@ -84,7 +84,7 @@ def get_dashboard_data(session_key: UUID, *, max_per_section: int = 3) -> Dashbo
     """Aggregate all data for the /me dashboard for one browser session.
 
     Args:
-        session_key: The current browser's session identifier (UUID — matches
+        session_key: The current browser's session identifier (UUID - matches
             the type of Room/Seed/Lobby.owner columns).
         max_per_section: How many items to show in each section (Active rooms,
             My lobbies, Recent seeds). The full counts are kept in

@@ -31,7 +31,7 @@ export function decideFuzzReview(
     return {
       event: "REQUEST_CHANGES",
       body:
-        `Karen can't sign off yet — ${reasons.join(" and ")} did not pass. ` +
+        `Karen can't sign off yet - ${reasons.join(" and ")} did not pass. ` +
         `See Karen's review and the Isolated QA Checks comment for the breakdown.`,
     };
   }

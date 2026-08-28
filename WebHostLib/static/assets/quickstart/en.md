@@ -13,13 +13,13 @@ multiworld.  Many of them can be played without downloading the software!
 1. Browse the [supported games list](/games) and pick something you own and want
    to play.
 2. Open that game's page to read what it supports and to generate a **YAML**
-   config file. The YAML is your personal settings — your options, your goals,
+   config file. The YAML is your personal settings - your options, your goals,
    your difficulty.
 3. Save the YAML somewhere you'll find it again. You'll need it in the next step.
 
 ## 2. Read the game's setup guide
 
-Every game has its own setup steps — which legally obtained copy of the game or
+Every game has its own setup steps - which legally obtained copy of the game or
 additional software you need, which client to use, and how to connect.
 
 - Open the [Setup guides](/learn/en/tutorials) and find your game.
@@ -47,10 +47,10 @@ additional software you need, which client to use, and how to connect.
 Once you have the software installed and a YAML ready, you have three ways to get
 into a game from this site:
 
-- **[Browse lobbies](/play/lobbies)** — join a group that's already forming.
-- **[Create a lobby](/play/create)** — start your own and invite friends; it generates a
+- **[Browse lobbies](/play/lobbies)** - join a group that's already forming.
+- **[Create a lobby](/play/create)** - start your own and invite friends; it generates a
   game once everyone has uploaded their YAML.
-- **[Generate a game](/play/new)** — skip the lobby and generate directly if you
+- **[Generate a game](/play/new)** - skip the lobby and generate directly if you
   already have everyone's YAML files.
 
 When a game is generated many players will get patch files, some will get nothing, and 
@@ -61,9 +61,9 @@ client and chat.
 
 ## Where to go next
 
-- The [Learn hub](/learn/en) — setup guides, the FAQ, and a glossary of multiworld
+- The [Learn hub](/learn/en) - setup guides, the FAQ, and a glossary of multiworld
   terms.
-- [Join the Discord](https://discord.multiworld.gg) — ask questions, find players,
+- [Join the Discord](https://discord.multiworld.gg) - ask questions, find players,
   and report bugs.
 
 Welcome aboard, and have fun!

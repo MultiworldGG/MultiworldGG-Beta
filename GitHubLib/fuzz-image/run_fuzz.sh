@@ -8,7 +8,7 @@
 # container runs with NO network.
 #
 # Inputs:
-#   /in/<name>.whl     the wheel to fuzz (its REAL PEP 427 filename — NOT a fixed
+#   /in/<name>.whl     the wheel to fuzz (its REAL PEP 427 filename - NOT a fixed
 #                      name; uv parses the filename and rejects e.g. world.whl),
 #                      bind-mounted READ-ONLY by the bot. Exactly one .whl at /in.
 #   FUZZ_SLUG          world slug, e.g. "hk"            (required)
@@ -22,7 +22,7 @@
 #   FUZZ_SKIP_OUTPUT   pass --skip-output to the fuzzer  (default 1). Skips the
 #                      output/patch stage (and assert_generate), so ROM worlds
 #                      fuzz their fill/logic without loading or patching a base
-#                      ROM each successful generation — the slowest, most
+#                      ROM each successful generation - the slowest, most
 #                      memory-hungry part. Set 0 to exercise patching too
 #                      (requires /roms; expect multi-minute generations).
 #
@@ -84,7 +84,7 @@ mkdir -p "${OUT}"
 # that /work is mounted. Without these, the first tool that writes a cache dies.
 mkdir -p "${WORK}/.cache/uv" "${WORK}/.cache/pip" "${WORK}/.cache/ruff" "${WORK}/.config" "${WORK}/.local/share" "${WORK}/tmp"
 # Native deps (Pillow, bsdiff4, …) dlopen their .so with PROT_EXEC; /tmp is mounted
-# noexec, so point Python's tempdir at the exec-capable /work — libraries that
+# noexec, so point Python's tempdir at the exec-capable /work - libraries that
 # extract a .so to a tempdir then map it would otherwise fail with "failed to map
 # segment from shared object". Also redirect ruff's cache off the read-only root.
 export TMPDIR="${WORK}/tmp"
@@ -107,7 +107,7 @@ scan_status() {
     ' "${OUT}/scan.json" 2>/dev/null || printf 'missing'
 }
 
-# The human `message` karen_review recorded for a single check — the Notes cell
+# The human `message` karen_review recorded for a single check - the Notes cell
 # the bot renders next to the status. Args: <check_name>. Empty when absent.
 scan_message() {
     local name="$1"
@@ -132,7 +132,7 @@ ruff_note() {
 }
 
 # The actual finding lines karen_review recorded for a check (bandit hits, ROM
-# paths, top-level network calls) — the REPORT, not just the count. Echoes a
+# paths, top-level network calls) - the REPORT, not just the count. Echoes a
 # compact JSON array of strings; "[]" when absent. The bot renders these in a
 # collapsible block, so a summary like "8 issues" becomes the 8 specific hits.
 scan_details() {
@@ -144,7 +144,7 @@ scan_details() {
 }
 
 # ruff's "finding" is a single actionable pointer, not the raw diagnostics (which
-# run into the thousands on large worlds) — only emitted when there's something to fix.
+# run into the thousands on large worlds) - only emitted when there's something to fix.
 ruff_details() {
     [ -s "${OUT}/ruff.json" ] || { printf '[]'; return; }
     local n
@@ -227,7 +227,7 @@ write_result() {
 # When FUZZ_DEBUG is truthy, copy the full combined log and the fuzzer's
 # per-generation worker dumps (tracebacks + failing YAMLs, written to
 # ${CORE}/fuzz_output) into /out. result.json only carries the last ~4KB of the
-# log, and worker tracebacks never reach it at all — so this is the only way to
+# log, and worker tracebacks never reach it at all - so this is the only way to
 # see WHY a generation (e.g. a ROM world) actually failed. No-op unless enabled;
 # best-effort so it never changes the run's verdict/exit code.
 persist_debug_artifacts() {
@@ -265,7 +265,7 @@ on_exit() {
         write_result
     fi
     # Single exit point, so every path (success, die, crash) persists the logs
-    # when debug is on — including the no-report crashes that produce die 8.
+    # when debug is on - including the no-report crashes that produce die 8.
     persist_debug_artifacts
     exit "${EXIT_CODE}"
 }
@@ -308,7 +308,7 @@ run() {
     [ -n "${SLUG}" ]        || die 2 "FUZZ_SLUG is required"
     # The bot bind-mounts exactly ONE wheel at /in under its REAL PEP 427 filename
     # (uv pip install parses the filename; a fixed name like world.whl is rejected
-    # with "Must have a version"). Resolve it by glob — nullglob so a no-match
+    # with "Must have a version"). Resolve it by glob - nullglob so a no-match
     # leaves the array empty, and we guard the count before indexing under set -u.
     shopt -s nullglob
     local in_wheels=( /in/*.whl )
@@ -383,7 +383,7 @@ PY
     # --- (c) Wheel-targeted SCAN via the PINNED karen_review.py against the already
     # -extracted dir (--world-dir). karen_review requires the --changed manifest to
     # EXIST on disk, but with --world-dir + only deep checks selected its CONTENTS
-    # are never read (schema/manifest checks aren't in the set) — so a placeholder
+    # are never read (schema/manifest checks aren't in the set) - so a placeholder
     # is sufficient and correct.
     local manifest_dir="${WORK}/worlds"
     local manifest="${manifest_dir}/${SLUG}.json"
@@ -419,7 +419,7 @@ PY
     log "ruff exit=${ruff_rc}"
 
     # --- (d) Stage the BAKED core (incl. its relocatable .venv) into /work so it is
-    # writable. No clone, no network — core is pinned into the image at build time.
+    # writable. No clone, no network - core is pinned into the image at build time.
     log "staging baked core ${BAKED_CORE} -> ${CORE}"
     rm -rf "${CORE}"
     cp -a "${BAKED_CORE}" "${CORE}"
@@ -429,7 +429,7 @@ PY
     # generation; MWGG resolves them under user_path == local_path == cwd == ${CORE}
     # (Utils.local_path = dir of Utils.py; user_path = local_path when writable, and
     # ${CORE} is). The bot bind-mounts the ROMs read-only at /roms, so a relative
-    # "roms/foo.z64" would resolve to ${CORE}/roms/foo.z64 and miss the mount —
+    # "roms/foo.z64" would resolve to ${CORE}/roms/foo.z64 and miss the mount -
     # link ${CORE}/roms -> /roms to bridge that WITHOUT editing the shared yaml.
     if [ -d /roms ]; then
         # rm first: if the baked core ever shipped a real roms/ dir, `ln -s` would
@@ -470,7 +470,7 @@ PY
     [ "${setup_rc}" -eq 0 ] || die 6 "offline wheel install into baked venv failed"
 
     # --- (e) Fetch the upstream fuzzer and sed-inject the PINNED bootstrap BEFORE
-    # the `from worlds import` line (same anchor as fuzz_worlds.sh — never a line
+    # the `from worlds import` line (same anchor as fuzz_worlds.sh - never a line
     # number, fuzz.py is a moving target). Then run it under a hard wall.
     cd "${CORE}"
     log "using baked fuzz.py (${BAKED_FUZZER})"
@@ -487,7 +487,7 @@ PY
     # bootstrap falls back to APFUZZ_GAMES, so export it for the single slug.
     export APFUZZ_GAMES="${SLUG}"
 
-    # --skip-output (default): stop after fill/logic — Main.py returns before the
+    # --skip-output (default): stop after fill/logic - Main.py returns before the
     # output/patch stage AND before assert_generate. ROM worlds (oot, dk64, …)
     # otherwise load + decompress + patch a base ROM per successful generation,
     # the slowest and most memory-hungry phase by far.
@@ -496,7 +496,7 @@ PY
 
     # Run the fuzzer. Wall it with `timeout` (KILL after a grace TERM) so a hung
     # generation can't pin the container until the bot's outer wall fires. The
-    # fuzzer's own non-zero exit is NOT fatal here — we classify from report.json.
+    # fuzzer's own non-zero exit is NOT fatal here - we classify from report.json.
     log "running fuzz.py (wall ${WALL_SECONDS}s${fuzz_extra:+, ${fuzz_extra[*]}})"
     set +e
     . .venv/bin/activate
@@ -514,7 +514,7 @@ PY
         # No report = fuzz.py crashed or was wall-killed. report.json is only
         # written after ALL runs finish, so a wall kill throws away every
         # generation that DID complete. Salvage them: the fuzzer logs
-        # "N / M done. F failures, T timeouts, I ignored." after each generation —
+        # "N / M done. F failures, T timeouts, I ignored." after each generation -
         # parse the last one and report partial stats instead of a blanket fail.
         # Wall kills only (124/137): a parent CRASH (e.g. exit 2) stays a hard
         # fail even with partials, because the crash itself is the finding.
@@ -528,7 +528,7 @@ PY
                 p_bad=$((p_fail + p_to))
                 # Same >50%-bad threshold as the full classifier; an incomplete
                 # run can never be better than "warn". No per-error report, so no
-                # rom/real split — with /roms mounted, failures are presumed real.
+                # rom/real split - with /roms mounted, failures are presumed real.
                 if [ $((p_bad * 2)) -gt "${p_done}" ]; then STATUS="fail"; else STATUS="warn"; fi
                 STATS_JSON="$(jq -n \
                     --argjson success "${p_succ}" --argjson failure "${p_fail}" \
@@ -537,7 +537,7 @@ PY
                     '{success:$success, failure:$failure, timeout:$timeout, ignored:$ignored, rom:0, real:$real, total:$total}')"
                 EXIT_CODE=0
                 log_memory_stats
-                log "wall-killed after ${p_done}/${p_runs} generations — partial stats salvaged (host too slow for this world within ${WALL_SECONDS}s)"
+                log "wall-killed after ${p_done}/${p_runs} generations - partial stats salvaged (host too slow for this world within ${WALL_SECONDS}s)"
                 write_result
                 return 0
             fi

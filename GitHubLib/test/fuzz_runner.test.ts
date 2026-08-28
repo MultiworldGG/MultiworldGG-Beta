@@ -127,7 +127,7 @@ afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
-describe("buildDockerArgs — hardening flags", () => {
+describe("buildDockerArgs - hardening flags", () => {
   it("emits every required hardening flag", () => {
     const args = buildDockerArgs(job(), options(), "mwgg-fuzz-42-hk-x", "/work/out", "/work/in");
 
@@ -270,7 +270,7 @@ describe("buildDockerArgs — hardening flags", () => {
   });
 });
 
-describe("wheelFileName — use the wheel's own name", () => {
+describe("wheelFileName - use the wheel's own name", () => {
   it("returns the real wheel filename from the URL", () => {
     expect(wheelFileName(job())).toBe("hk-1.0.0-py3-none-any.whl");
   });
@@ -286,7 +286,7 @@ describe("wheelFileName — use the wheel's own name", () => {
     ).toBe("crosscode-2.1.0-py3-none-any.whl");
   });
 
-  it("returns a bare filename — directory components can't traverse the bind dir", () => {
+  it("returns a bare filename - directory components can't traverse the bind dir", () => {
     const name = wheelFileName(
       job({ wheelUrl: "https://github.com/o/r/releases/download/v1.2/rop-3.2.1-py3-none-any.whl" }),
     );
@@ -295,7 +295,7 @@ describe("wheelFileName — use the wheel's own name", () => {
   });
 });
 
-describe("runFuzzContainer — result.json mapping", () => {
+describe("runFuzzContainer - result.json mapping", () => {
   it("stages the wheel under its real (uv-parseable) name, not world.whl", async () => {
     let dest = "";
     mockRun(() => ({ slug: "hk", status: "pass", exit_code: 0 }));
@@ -445,7 +445,7 @@ describe("runFuzzContainer — result.json mapping", () => {
   });
 });
 
-describe("runFuzzContainer — wall-clock timeout", () => {
+describe("runFuzzContainer - wall-clock timeout", () => {
   it("force-removes the container and returns a timed-out fail", async () => {
     // Real timer, tiny wall budget: `docker run` never calls back, so only the
     // Node wall-clock timer can resolve the run. `docker rm -f` succeeds.
@@ -481,7 +481,7 @@ describe("runFuzzContainer — wall-clock timeout", () => {
   });
 });
 
-describe("runFuzzContainer — abort signal", () => {
+describe("runFuzzContainer - abort signal", () => {
   it("force-removes the container and returns a fail when aborted mid-run", async () => {
     const controller = new AbortController();
     let rmIssued = false;
@@ -510,7 +510,7 @@ describe("runFuzzContainer — abort signal", () => {
   });
 });
 
-describe("ensureImageAvailable — batch image pre-flight", () => {
+describe("ensureImageAvailable - batch image pre-flight", () => {
   // execFile callback is the 3rd arg for `image inspect` (no opts) and the 4th
   // for `pull` (opts present); pick whichever is a function.
   function wire(handler: (args: string[]) => { err: Error | null; stderr?: string }): void {
@@ -551,7 +551,7 @@ describe("ensureImageAvailable — batch image pre-flight", () => {
   });
 });
 
-describe("runFuzzContainer — docker not spawnable", () => {
+describe("runFuzzContainer - docker not spawnable", () => {
   it("returns a fail result instead of throwing when execFile errors without a code", async () => {
     execFileMock.mockImplementation(
       (_file: string, _args: string[], a3?: unknown, a4?: unknown) => {

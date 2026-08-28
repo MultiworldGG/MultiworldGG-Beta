@@ -1,7 +1,7 @@
 """Test-only stub for `mwgg_igdb`.
 
 The real package is a ~50k-line generated module installed from the Index
-repo's orphan branch. Tests don't need its game-name->slug data — worlds that
+repo's orphan branch. Tests don't need its game-name->slug data - worlds that
 are physically present in the repo are loaded by `worlds/__init__.py` and
 register themselves on `AutoWorldRegister` at import time. This stub provides
 the same `GameIndex` singleton with the same API surface, backed by empty

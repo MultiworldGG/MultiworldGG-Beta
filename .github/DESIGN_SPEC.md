@@ -7,8 +7,8 @@ MultiworldGG's build pipeline produces three things:
 1. **Infra wheels** committed back to the repo (`default_wheels/`, `worlds_wheels/`) on each push.
 2. **Per-platform distributables** (Windows installer, Linux AppImage, macOS .app) on each tagged
    release.
-3. **Two docker images** — the webhost (`ghcr.io/<owner>/<repo>`) and the GitHub-bot service
-   (`ghcr.io/<owner>/mwgg-github-bot`) — `:dev` on every `docker.yml` build and `:latest` + semver
+3. **Two docker images** - the webhost (`ghcr.io/<owner>/<repo>`) and the GitHub-bot service
+   (`ghcr.io/<owner>/mwgg-github-bot`) - `:dev` on every `docker.yml` build and `:latest` + semver
    on version tags. See "Docker images" below.
 
 Per-game worlds **are not built here**. Each game's upstream repo publishes itself via
@@ -67,22 +67,22 @@ fetches these URLs into `mwgg_venv` at first run.
 
 ## What's in this repo
 
-- **Infra worlds** (`worlds/_bizhawk`, `_debug`, `_manual`, `_sni`, `_tracker`, `generic`) — bundled
+- **Infra worlds** (`worlds/_bizhawk`, `_debug`, `_manual`, `_sni`, `_tracker`, `generic`) - bundled
   in the frozen build.
-- **Namespace files** (`worlds/__init__.py`, `AutoWorld.py`, `Files.py`, `LauncherComponents.py`) —
+- **Namespace files** (`worlds/__init__.py`, `AutoWorld.py`, `Files.py`, `LauncherComponents.py`) -
   the shared API every per-game world consumes; bundled in frozen.
-- **Build infrastructure** — `build_exe.py`, `setup.py`, `world_build_setuptools/`, `inno_setup.iss`,
+- **Build infrastructure** - `build_exe.py`, `setup.py`, `world_build_setuptools/`, `inno_setup.iss`,
   `tools/build_wheels.py`.
-- **Server / generator / patcher** — Python services in the frozen bundle.
-- **Webhost** — separate Flask app in `WebHostLib/`, packaged into the `ghcr.io/<owner>/<repo>` docker image.
-- **GitHub bot service** (`GitHubLib/`) — Probot/TypeScript service that runs the Oliver and Karen
+- **Server / generator / patcher** - Python services in the frozen bundle.
+- **Webhost** - separate Flask app in `WebHostLib/`, packaged into the `ghcr.io/<owner>/<repo>` docker image.
+- **GitHub bot service** (`GitHubLib/`) - Probot/TypeScript service that runs the Oliver and Karen
   GitHub Apps in one container. Image built by `docker.yml`'s `build-bot` job, deployed via
   `deploy/docker-compose.yml`'s `mwgg-github-bot` service.
 
 ## What's not in this repo
 
 - Per-game world source code (lives in each upstream repo).
-- Game index data (`game_index/`, `tools/game_indexing/` — moved to `MultiworldGG/MultiworldGG-Index`'s
+- Game index data (`game_index/`, `tools/game_indexing/` - moved to `MultiworldGG/MultiworldGG-Index`'s
   `scripts/`).
 
 ## Docker images
@@ -104,8 +104,8 @@ The image refs in `docker-compose.yml` are env-overridable (`MULTIWORLD_IMAGE`,
 
 ## Branch model
 
-- **Development branch** — current focus of CI.
-- **`main`** — release target; tags here trigger `release.yml`. `docker.yml` publishes `:dev` on
+- **Development branch** - current focus of CI.
+- **`main`** - release target; tags here trigger `release.yml`. `docker.yml` publishes `:dev` on
   every build and `:latest` + semver on version tags.
 - Long-running feature branches OK; CI runs on PR to dev branch.
 
@@ -152,20 +152,20 @@ The frozen exe ships with an empty `worlds/` directory under `lib/` apart from i
    - `worlds.<slug>` entries → resolves each slug's `module_location` from `GameIndex.get_all_games()`
      and pip-installs into `mwgg_venv/Lib/site-packages/worlds/<slug>/`.
 4. Subsequent launches load the slug list explicitly via `Utils.set_game_names()` before any
-   `import worlds` — which forces the narrow loader to populate only the requested slugs (and not
+   `import worlds` - which forces the narrow loader to populate only the requested slugs (and not
    every world the index knows about).
 
 ## Failure modes and recovery
 
 | Symptom | Cause | Recovery |
 |---------|-------|----------|
-| `pip install` fails on a `module_location` URL with a hash mismatch | Asset bytes at the URL no longer match the `#sha256=` fragment in the manifest — either tampering, or the asset was overwritten without re-running the publish action | Investigate the upstream release; if intentional, re-run `gen-pymod-release` on a fresh release so a new manifest PR is opened. |
+| `pip install` fails on a `module_location` URL with a hash mismatch | Asset bytes at the URL no longer match the `#sha256=` fragment in the manifest - either tampering, or the asset was overwritten without re-running the publish action | Investigate the upstream release; if intentional, re-run `gen-pymod-release` on a fresh release so a new manifest PR is opened. |
 | `pip install` fails on a `module_location` URL with 404 | Upstream hasn't published a real release asset yet (`module_location` still points at a placeholder or the asset was deleted) | Wait for upstream's `gen-pymod-release` run, or check that the release asset still exists. |
 | Variant install fails | `MultiworldGG/MultiworldGG-Index` orphan branch unreachable (private repo + no auth) | Make repo public or add PAT-based auth in `MWGG_IGDB_GIT_URL`. |
 | Frozen build's `lib/worlds/` missing namespace files | `worlds/*.py` not packaged by cx_Freeze | Verify `setup.py` has `"packages": ["worlds", ...]`. |
 | `AutoWorldRegister.world_types` empty | `set_game_names()` not called before first `import worlds` | Audit the entry-point script; add `set_game_names()` before any `from worlds import` cascade. |
 | `workflow_run.completed` arrives but no PR on Index | Release tag does not match `<slug>-<world_version>`, or the completed release workflow did not call `MultiworldGG/gen-pymod-release/.github/workflows/build.yml` | Check `/status` on the bot host; fix the tag or caller workflow per `GitHubLib/README.md`. |
-| Bot rejects webhook with 401 at edge | `X-Hub-Signature-256` mismatch — webhook secret on GitHub App side ≠ `/etc/github-bot/webhook_secret` | Re-sync the secret; both njs and Probot read the same value. |
+| Bot rejects webhook with 401 at edge | `X-Hub-Signature-256` mismatch - webhook secret on GitHub App side ≠ `/etc/github-bot/webhook_secret` | Re-sync the secret; both njs and Probot read the same value. |
 | PR opens but Karen never lands the manifest | Karen App not installed on the Index, or `KAREN_PRIVATE_KEY` mounted wrong | Verify Index install + secrets bind-mount in `deploy/docker-compose.yml`. |
 
 ## Why per-game worlds left the monorepo

@@ -5,21 +5,21 @@ and scans its wheel. It is the single-world engine behind the Karen bot's
 `repository_dispatch: karen-fuzz` flow (`src/fuzz/runner.ts` builds the
 `docker run` and reads `/out/result.json` back).
 
-Everything the run needs is baked into the image — the harness
+Everything the run needs is baked into the image - the harness
 (`fuzz_bootstrap.py`, `karen_review.py`) plus core (with its `.venv`) and the
-fuzzer's `fuzz.py` are all **pinned** at build time, never fetched at runtime — so
+fuzzer's `fuzz.py` are all **pinned** at build time, never fetched at runtime - so
 the only moving part is the world wheel, which the trusted bot bind-mounts
 read-only at `/in`. The container itself runs `--network none`.
 
 ## What it does (per invocation)
 
 Driven by `FUZZ_*` env vars plus the wheel bind-mounted at `/in` (under its real
-PEP 427 filename — the bot mounts exactly one `.whl` there), under `/work`
+PEP 427 filename - the bot mounts exactly one `.whl` there), under `/work`
 (writable tmpfs), writing results to `/out`:
 
 1. **Stage** the bind-mounted wheel (the single `/in/*.whl`) to `/work`
-   (preserving its filename — `uv pip install` parses it) and
-   **re-verify** its SHA-256 equals `FUZZ_WHEEL_SHA256` — the bot already verified
+   (preserving its filename - `uv pip install` parses it) and
+   **re-verify** its SHA-256 equals `FUZZ_WHEEL_SHA256` - the bot already verified
    before mounting, so this is defense in depth. Mismatch ⇒ fail fast
    (`result.json.scan.sha256:"mismatch"`, `exit_code:3`).
 2. **Extract** the wheel (a zip) to `/work/extracted` with a path-traversal guard.
@@ -32,11 +32,11 @@ PEP 427 filename — the bot mounts exactly one `.whl` there), under `/work`
    `uv audit` on the wheel's declared deps).
 4. **Stage** the baked core (`/opt/fuzz/core`, including its relocatable `.venv`)
    into `/work/core` with `cp -a`, then install the candidate wheel into that venv
-   with `uv pip install --offline --no-deps`. No clone, no `uv venv`, no network —
+   with `uv pip install --offline --no-deps`. No clone, no `uv venv`, no network -
    core and its `requirements.txt` were installed into the venv at build time.
 5. **Copy** the baked `fuzz.py` (`/opt/fuzz/fuzz.py`) into the core and
    `sed`-inject the pinned `fuzz_bootstrap.py` immediately before its
-   `from worlds import` line (anchored on that line — never a line number), then
+   `from worlds import` line (anchored on that line - never a line number), then
    run `timeout <wall> python fuzz.py -r RUNS -t TIMEOUT -g SLUG -j THREADS -n YAMLS`.
 6. **Classify** `fuzz_output/report.json` into `pass` / `warn` / `fail` using the
    *same* rules as the legacy `scripts/fuzz_worlds.sh` (`CLASSIFY_JQ`): a non-ROM
@@ -44,7 +44,7 @@ PEP 427 filename — the bot mounts exactly one `.whl` there), under `/work`
    everything else (all-`ignored`, ROM/output failures from a missing base ROM on
    CI) ⇒ `warn`.
 7. **Write** `/out/result.json` (schema below). A trap guarantees a parseable
-   `result.json` is written on *every* exit path — sha mismatch, offline
+   `result.json` is written on *every* exit path - sha mismatch, offline
    wheel-install failure, wall-clock kill, or an unexpected crash.
 
 ## Inputs
@@ -53,20 +53,20 @@ The world wheel is **not** an env var: the trusted bot bind-mounts it read-only 
 `/in` under its real `.whl` filename (the container is `--network none` and
 fetches nothing; `uv` parses that filename, so it can't be a fixed `world.whl`).
 Core, its
-venv, and `fuzz.py` are baked into the image at build time — see [Build](#build) —
+venv, and `fuzz.py` are baked into the image at build time - see [Build](#build) -
 not passed at runtime. The remaining job parameters arrive as env vars:
 
 | Var | Required | Default | Meaning |
 | --- | :---: | --- | --- |
-| `FUZZ_SLUG` | ✅ | — | World slug, e.g. `hk`. Must be `[a-z0-9_-]+`. |
-| `FUZZ_WHEEL_SHA256` | ✅ | — | 64-hex expected digest, **re-verified in-container** against the bytes of the wheel mounted at `/in`. |
+| `FUZZ_SLUG` | ✅ | - | World slug, e.g. `hk`. Must be `[a-z0-9_-]+`. |
+| `FUZZ_WHEEL_SHA256` | ✅ | - | 64-hex expected digest, **re-verified in-container** against the bytes of the wheel mounted at `/in`. |
 | `FUZZ_RUNS` | | `50` | Fuzzer `-r`. |
 | `FUZZ_TIMEOUT` | | `30` | Fuzzer `-t` (per-generation seconds). |
 | `FUZZ_YAMLS` | | `1-3` | Fuzzer `-n` range. |
 | `FUZZ_THREADS` | | `10` | Fuzzer `-j`. |
 | `FUZZ_WALL_SECONDS` | | `1080` | Hard wall for `fuzz.py`. Keep below the bot's outer wall (1200s) so the container exits and writes `result.json` itself. |
 | `FUZZ_SIZE_CAP_MB` | | `250` | `size_sanity` cap. |
-| `FUZZ_SKIP_OUTPUT` | | `1` | Pass `--skip-output` to the fuzzer: stop after fill/logic, skipping `assert_generate` and the output/patch stage. ROM worlds (oot, dk64, …) otherwise load + decompress + patch a base ROM per successful generation — the slowest, most memory-hungry phase. Set `0` to exercise patching (needs `/roms`). |
+| `FUZZ_SKIP_OUTPUT` | | `1` | Pass `--skip-output` to the fuzzer: stop after fill/logic, skipping `assert_generate` and the output/patch stage. ROM worlds (oot, dk64, …) otherwise load + decompress + patch a base ROM per successful generation - the slowest, most memory-hungry phase. Set `0` to exercise patching (needs `/roms`). |
 | `FUZZ_DEBUG` | | (off) | Truthy (`1`/`true`/`yes`/`on`) ⇒ also copy the full `combined.log` and the fuzzer's `fuzz_output/` worker dumps into `/out`. |
 
 Core and fuzzer refs are **build** inputs, not runtime env vars: `MWGG_CORE_REPO`,
@@ -78,16 +78,16 @@ The bot also sets `KIVY_NO_ARGS=1`, `SKIP_ALL_INSTALLS=1`, `MALLOC_ARENA_MAX=2`
 
 ## Outputs (`/out`)
 
-- **`result.json`** — the contract the bot reads (schema below). Always written.
-- **`scan.json`** — full `karen_review` summary (`{overall, worlds:[…]}`).
-- **`ruff.json`** — raw `ruff` findings array (advisory).
-- **`report.json`** — the fuzzer's raw report, copied out for debugging (when one
+- **`result.json`** - the contract the bot reads (schema below). Always written.
+- **`scan.json`** - full `karen_review` summary (`{overall, worlds:[…]}`).
+- **`ruff.json`** - raw `ruff` findings array (advisory).
+- **`report.json`** - the fuzzer's raw report, copied out for debugging (when one
   was produced).
-- **`combined.log`** — the FULL run log (only with `FUZZ_DEBUG`; `result.json`
+- **`combined.log`** - the FULL run log (only with `FUZZ_DEBUG`; `result.json`
   carries just its last ~4KB). Written on every exit path, including crashes.
-- **`fuzz_output/`** — the fuzzer's per-generation worker dumps: tracebacks and
+- **`fuzz_output/`** - the fuzzer's per-generation worker dumps: tracebacks and
   the failing YAMLs (only with `FUZZ_DEBUG`). This is where a generation's *real*
-  failure reason lives — it never reaches `result.json`.
+  failure reason lives - it never reaches `result.json`.
 
 ### `result.json` schema
 
@@ -124,7 +124,7 @@ bare-string status (empty note, no details) for forward/backward compatibility.
 
 On a **SHA mismatch** the object is shaped `{slug, status:"fail",
 scan:{sha256:{status:"mismatch", note:"expected …, got …"}}, exit_code:3,
-log_tail}` (stats may be zeroed) — the distinguishing field is `scan.sha256`.
+log_tail}` (stats may be zeroed) - the distinguishing field is `scan.sha256`.
 
 Contract notes that match `src/fuzz/runner.ts`:
 
@@ -140,13 +140,13 @@ Contract notes that match `src/fuzz/runner.ts`:
   generation that completed. The run script parses the fuzzer's last
   `N / M done. F failures, T timeouts, I ignored.` progress line and exits `0`
   with partial `stats` (`total` = generations completed, no `rom`/`real` split)
-  and `status` `warn` — or `fail` when >50% of the completed generations were
+  and `status` `warn` - or `fail` when >50% of the completed generations were
   bad. The detail note says `wall-killed after N/M generations`. Only a wall
   kill with ZERO completed generations (a true hang) keeps the hard `124`/`137`
-  fail; a parent crash (e.g. exit 2) is always a hard fail — the crash is the
+  fail; a parent crash (e.g. exit 2) is always a hard fail - the crash is the
   finding.
 - The script logs cgroup `memory.peak` and `memory.events` (oom_kill count) on
-  every exit — a generation stalling near the `--memory` cap looks like a hang
+  every exit - a generation stalling near the `--memory` cap looks like a hang
   from outside; those lines make it provable from `combined.log`/`log_tail`.
 - `stats` values are all finite numbers; the bot drops any non-numeric field.
 - `scan`/`log_tail` are advisory; the bot surfaces them in the PR comment.
@@ -168,9 +168,9 @@ docker build -t multiworldgg-fuzz .
 ```
 
 Core (with its `.venv`) and the fuzzer's `fuzz.py` are cloned/fetched at **build**
-time and baked in via build args — the build has network, the runtime does not.
+time and baked in via build args - the build has network, the runtime does not.
 They default to the values below (the `ARG`s in the Dockerfile); override to pin a
-different ref. Per the design, core need not be fresh every run — rebuild to
+different ref. Per the design, core need not be fresh every run - rebuild to
 update it.
 
 ```sh
@@ -184,7 +184,7 @@ docker build -t multiworldgg-fuzz \
 
 ## Local smoke test
 
-Run exactly as the bot does — `--network none`, read-only root, `/tmp` + `/work`
+Run exactly as the bot does - `--network none`, read-only root, `/tmp` + `/work`
 tmpfs, the wheel bind-mounted read-only at `/in` and `/out` bind-mounted rw,
 dropped caps, non-root user:
 
@@ -193,7 +193,7 @@ work="$(mktemp -d)"
 mkdir -p "$work/in" "$work/out"
 
 # Drop the wheel under its REAL filename (the run script globs /in/*.whl and uv
-# parses that name — a fixed world.whl is rejected). Exactly one .whl at /in.
+# parses that name - a fixed world.whl is rejected). Exactly one .whl at /in.
 cp /path/to/hk-<ver>.whl "$work/in/"
 sha="$(sha256sum "$work"/in/*.whl | awk '{print $1}')"
 
@@ -243,7 +243,7 @@ the install, so the filename doesn't matter for this path).
 - Runs as uid/gid **65532** with `--cap-drop ALL`, `--security-opt
   no-new-privileges`, a read-only root FS, `--network none`, and a `pids-limit`.
 - Untrusted world code only ever executes inside the run's own `/work` venv,
-  behind the fuzzer; it never runs during the scan (the scan is static —
+  behind the fuzzer; it never runs during the scan (the scan is static -
   `karen_review` AST-inspects, it does not import the world).
 - The harness **and** the pinned core (with its venv) + fuzzer `fuzz.py` are baked
   into the image at build time, so the container needs **zero** network at runtime
