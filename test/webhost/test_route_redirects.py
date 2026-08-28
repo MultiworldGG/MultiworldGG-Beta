@@ -223,7 +223,7 @@ def test_new_route_does_not_404(client, path):
 # Lobby-to-room shortcut
 # ---------------------------------------------------------------------------
 
-@pytest.mark.skip(reason="Phase 1 ships paths only — /play/lobby/<id>/room is a new route")
+@pytest.mark.skip(reason="/play/lobby/<id>/room shortcut route is not implemented yet")
 def test_lobby_to_room_redirects_when_room_exists(client, lobby_factory):
     """
     /play/lobby/<id>/room is a convenience: it 302s to the canonical
@@ -239,7 +239,7 @@ def test_lobby_to_room_redirects_when_room_exists(client, lobby_factory):
     )
 
 
-@pytest.mark.skip(reason="Phase 1 ships paths only — /play/lobby/<id>/room is a new route")
+@pytest.mark.skip(reason="/play/lobby/<id>/room shortcut route is not implemented yet")
 def test_lobby_to_room_404s_when_no_room_yet(client, lobby_factory):
     """
     A lobby that hasn't generated yet (state 0/1) has no room. The shortcut
@@ -250,28 +250,3 @@ def test_lobby_to_room_404s_when_no_room_yet(client, lobby_factory):
         f"/play/lobby/{lobby.id}/room", follow_redirects=False
     )
     assert response.status_code == 404
-
-
-# ---------------------------------------------------------------------------
-# Short-share alias (Phase 2)
-# ---------------------------------------------------------------------------
-
-class TestShortRoomAlias:
-    """
-    /r/<short_id> is the Discord-shareable form. It 301s to the canonical
-    room URL. Skipped until Phase 2 ships the short_id column.
-    """
-
-    @pytest.mark.skip(reason="Phase 2 — requires short_id column on rooms")
-    def test_short_room_alias_redirects_to_canonical(self, client, room_factory):
-        room = room_factory(short_id="rSiScs")
-        response = client.get("/r/rSiScs", follow_redirects=False)
-        assert response.status_code == 301
-        assert response.headers["Location"].endswith(
-            f"/play/seed/{room.seed_id}/room/{room.id}"
-        )
-
-    @pytest.mark.skip(reason="Phase 2 — requires short_id column on rooms")
-    def test_short_room_404s_when_id_unknown(self, client):
-        response = client.get("/r/nopath", follow_redirects=False)
-        assert response.status_code == 404
