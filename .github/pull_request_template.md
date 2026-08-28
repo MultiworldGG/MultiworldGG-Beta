@@ -1,12 +1,7 @@
-Please format your title with what portion of the project this pull request is
-targeting and what it's changing.
+## Scope
+<!-- 1 sentence explaining the scope of this change -->
 
-ex. "MyGame4: implement new game" or "Docs: add new guide for customizing MyGame3"
+## Description
+<!-- Please enter 1-5 sentences explaining what is changing and why; do not include testing unless it is not covered by unit tests -->
 
-## What is this fixing or adding?
-
-
-## How was this tested?
-
-
-## If this makes graphical changes, please attach screenshots.
+<!-- Include the issue # if applicable. -->
