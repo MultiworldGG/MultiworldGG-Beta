@@ -12,7 +12,7 @@ from ..param import classvar_matrix
 
 class MultiworldTestBase(TestCase):
     multiworld: MultiWorld
-    '''TODO: FIX THIS TEST - it's dependent on having all worlds loaded and we now only load the worlds we need (so here it's none)'''
+
     # similar to the implementation in WorldTestBase.test_fill
     # but for multiple players and doesn't allow minimal accessibility
     def fulfills_accessibility(self) -> bool:
@@ -63,6 +63,16 @@ class TestAllGamesMultiworld(MultiworldTestBase):
             call_all(self.multiworld, "post_fill")
             call_all(self.multiworld, "finalize_multiworld")
             self.assertTrue(self.fulfills_accessibility(), "Collected all locations, but can't beat the game")
+
+
+class TestMatrixSeeded(TestCase):
+    def test_testable_worlds_not_empty(self) -> None:
+        """Guard against a vacuous pass: classvar_matrix unrolls TestTwoPlayerMulti at
+        import time, so an empty testable_worlds registry would generate zero test
+        classes and this module would pass without testing anything."""
+        self.assertTrue(AutoWorldRegister.testable_worlds,
+                        "AutoWorldRegister.testable_worlds is empty; test/__init__ did not "
+                        "seed the fixture worlds, so no TestTwoPlayerMulti classes were generated.")
 
 
 @classvar_matrix(game=AutoWorldRegister.testable_worlds.keys())
