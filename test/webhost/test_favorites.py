@@ -7,9 +7,8 @@ from . import TestBase
 
 class TestFavoritesFeature(TestBase):
     def _visible_worlds_stub(self):
-        # The test env only loads infra worlds (generic, tracker, _debug), all of which
-        # have hidden=True, so get_visible_worlds() returns {}. Reuse the generic world
-        # as a stand-in visible world so the /games template's per-world loop renders.
+        # The test env only loads infra worlds (all hidden=True), so
+        # get_visible_worlds() returns {}; inject the generic world as a visible stand-in.
         from worlds.AutoWorld import AutoWorldRegister
         return {"Archipelago": AutoWorldRegister.world_types["Archipelago"]}
 
@@ -20,14 +19,9 @@ class TestFavoritesFeature(TestBase):
             return self.client.get('/games')
 
     def test_supported_games_page_loads_with_favorites_section(self):
-        """The /games route renders the favorites section and a per-world entry.
-
-        Exercises the real Flask route + supportedGames.html template: the static
-        favorites-section block AND the per-world loop driven by get_visible_worlds().
-        The stub injects the "Archipelago" world (web.display_name "MultiworldGG-Test"),
-        so the rendered <details> must carry data-game="Archipelago" and the
-        display-name fallback resolves to the WebWorld display_name, not the game key.
-        """
+        """The /games route renders the favorites section and a per-world entry
+        (real route + supportedGames.html, per-world loop driven by the injected
+        "Archipelago" world)."""
         response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
         body = response.data.decode("utf-8")
@@ -37,10 +31,8 @@ class TestFavoritesFeature(TestBase):
         self.assertIn('id="favorites-list"', body)
         self.assertIn("<h2>Favorite Games</h2>", body)
 
-        # The per-world loop rendered the injected world. data-display-name must be the
-        # WebWorld display_name ("MultiworldGG-Test"), proving the
-        # `display_name | default(game_name)` filter ran (a mutation that emitted the raw
-        # game key instead would change this to "Archipelago").
+        # data-display-name must be the WebWorld display_name ("MultiworldGG-Test"),
+        # not the raw game key: pins the `display_name | default(game_name)` filter.
         details = re.findall(
             r'<details\s+data-game="([^"]+)"\s+data-display-name="([^"]+)"', body
         )
@@ -53,12 +45,8 @@ class TestFavoritesFeature(TestBase):
         )
 
     def test_star_icons_have_correct_attributes(self):
-        """Each rendered star icon carries data-game (the game key) and the add tooltip.
-
-        Pins the template's star-icon markup: a mutation dropping the data-game
-        attribute (which the JS keys favorites off of) or changing the default title
-        would fail here.
-        """
+        """Each star icon carries data-game (which the JS keys favorites off of)
+        and the default add-to-favorites tooltip."""
         response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
         body = response.data.decode("utf-8")
@@ -71,13 +59,9 @@ class TestFavoritesFeature(TestBase):
         self.assertEqual(star_games, ["Archipelago"])
 
     def test_favorites_section_is_hidden_by_default(self):
-        """The favorites section ships collapsed (inline display:none on that div).
-
-        The section is shown client-side only once a favorite exists, so the server
-        must render it hidden. Asserting the style on the favorites-section element
-        itself (not just "display: none" appearing anywhere) pins that contract; a
-        mutation removing the inline style would fail.
-        """
+        """The favorites section ships collapsed (inline display:none asserted on
+        the favorites-section div itself): it's shown client-side only once a
+        favorite exists."""
         response = self._get_games_with_visible_world()
         self.assertEqual(response.status_code, 200)
         body = response.data.decode("utf-8")

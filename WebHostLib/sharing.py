@@ -1,16 +1,8 @@
 """Room/lobby co-ownership: invite tokens, accept flow, co-owner CRUD.
 
-Three surfaces here:
-
-* The API endpoints — POST an invite, list co-owners, DELETE a co-owner —
-  attached to the existing /api blueprint.
-* The user-facing /me/accept/<token> endpoint that consumes an invite and
-  redirects to /me with a flash.
-* A small /me/sharing/<kind>/<id> management page where the primary owner
-  mints invites and revokes co-owners.
-
-See WebHostLib/ownership.py for the helpers (is_authorized, is_primary_owner,
-list_co_owners) and WebHostLib/models.py for the storage.
+Covers the /api invite + co-owner endpoints, the /me/accept/<token> consumer,
+and the /me/sharing/<kind>/<id> management page. Helpers live in ownership.py,
+storage in models.py.
 """
 from __future__ import annotations
 
@@ -43,10 +35,8 @@ from .models import (
 )
 from .ownership import is_primary_owner, list_co_owners
 
-# How long a new invite is valid for (seven days).
 _INVITE_TTL = timedelta(days=7)
 
-# Modes the invite-create endpoint accepts.
 _VALID_MODES = ("co_owner", "transfer")
 
 
@@ -90,7 +80,7 @@ def _add_co_owner(kind: str, target_id: UUID, session_id: UUID, granted_by: UUID
 
 
 # ---------------------------------------------------------------------------
-# Invite create — primary owner only
+# Invite create - primary owner only
 # ---------------------------------------------------------------------------
 
 def _create_invite(kind: str, target_id: UUID, mode: str):
@@ -132,7 +122,7 @@ def api_lobby_invite(lobby: UUID):
 
 
 # ---------------------------------------------------------------------------
-# Accept — anyone holding the URL
+# Accept - anyone holding the URL
 # ---------------------------------------------------------------------------
 
 @app.route("/me/accept/<suuid:token>")
@@ -160,7 +150,6 @@ def accept_invite(token: UUID):
 
     if invite.mode == "transfer":
         old_primary = target.owner
-        # Hand the keys over.
         target.owner = me
         if old_primary != me:
             _add_co_owner(invite.target_kind, invite.target_id, old_primary, granted_by=me)
@@ -184,7 +173,7 @@ def accept_invite(token: UUID):
 
 
 # ---------------------------------------------------------------------------
-# Co-owner list + remove — primary owner only
+# Co-owner list + remove - primary owner only
 # ---------------------------------------------------------------------------
 
 def _co_owner_listing(kind: str, target_id: UUID):
@@ -234,7 +223,7 @@ def api_lobby_remove_co_owner(lobby: UUID, co_owner: UUID):
 
 
 # ---------------------------------------------------------------------------
-# Sharing management page — primary-owner UI
+# Sharing management page - primary-owner UI
 # ---------------------------------------------------------------------------
 
 @app.route("/me/sharing/<string:kind>/<suuid:target_id>")
@@ -247,7 +236,6 @@ def share_access(kind: str, target_id: UUID):
     if not is_primary_owner(target, session["_id"]):
         abort(403)
 
-    # Find a sensible display name for the breadcrumb / heading.
     display_name = (
         getattr(target, "title", None)
         or f"Room {to_url(target.id)[:6]}"

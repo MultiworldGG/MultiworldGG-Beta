@@ -118,7 +118,7 @@ def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> 
             # so we land on the 200 host_room page that renders the /connect address.
             response = app_client.get(f"/room/{room_id}", follow_redirects=True)
         except Exception:
-            # hoster wrote to room during our transaction — retry
+            # hoster wrote to room during our transaction - retry
             continue
 
         assert response.status_code == 200, f"Starting room for {room_id} failed: status {response.status_code}"

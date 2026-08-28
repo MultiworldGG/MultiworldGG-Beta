@@ -1,4 +1,4 @@
-"""End-to-end smoke tests for the Phase 6 /me dashboard routes."""
+"""End-to-end smoke tests for the /me dashboard routes."""
 from __future__ import annotations
 
 from uuid import uuid4
@@ -7,7 +7,7 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# /me — overview
+# /me - overview
 # ---------------------------------------------------------------------------
 
 def test_me_returns_first_run_for_fresh_browser(client):
@@ -29,7 +29,7 @@ def test_me_returns_dashboard_when_owner_has_content(client, room_factory):
 
 
 # ---------------------------------------------------------------------------
-# /me/rooms, /me/lobbies, /me/seeds — full-table sub-pages
+# /me/rooms, /me/lobbies, /me/seeds - full-table sub-pages
 # ---------------------------------------------------------------------------
 
 def test_my_rooms_renders_empty_message_when_no_rooms(client):

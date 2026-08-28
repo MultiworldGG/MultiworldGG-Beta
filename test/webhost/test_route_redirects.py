@@ -165,7 +165,7 @@ class TestLegacyTutorial:
 
     def test_trailing_lang_redirects_directly_to_canonical(self, client):
         """``/tutorial/<game>/<file>/<lang>`` 301s straight to the new
-        canonical URL — no double-hop through the suffix form.
+        canonical URL, with no double-hop through the suffix form.
         """
         response = client.get(
             "/tutorial/Archipelago/setup/en", follow_redirects=False,
@@ -187,11 +187,9 @@ class TestLegacyTutorial:
 
 
 # ---------------------------------------------------------------------------
-# New routes — sanity checks that they exist
+# New routes - sanity checks that they exist
 # ---------------------------------------------------------------------------
 
-# /me/seeds, /me/rooms, /me/lobbies are new pages explicitly out of Phase 1
-# scope (prompt: "Don't create the new /me dashboard page").
 NEW_ROUTES_THAT_SHOULD_EXIST = [
     "/",
     "/about",

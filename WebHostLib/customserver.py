@@ -103,18 +103,12 @@ async def _serve_dual_stack(
     extensions,
     logger: logging.Logger,
 ) -> DualStackServer:
-    """Create a DualStackServer where both sockets (AF_INET and AF_INET6) share the same port.
+    """Bind AF_INET and AF_INET6 sockets on the same port and serve both.
 
-    Strategy:
-    1. Bind an AF_INET socket to 0.0.0.0:<desired_port> (0 = ephemeral).
-    2. Read the assigned port back from getsockname().
-    3. Bind an AF_INET6 socket to ::<same_port> with IPV6_V6ONLY=1
-       (IPV6_V6ONLY is critical; without it the v6 socket grabs the full dual-stack
-       binding and the v4 socket cannot share the port on Linux).
-    4. If the v6 bind races and fails, retry up to MAX_RETRIES times with a fresh
-       ephemeral port, then fall back to v4-only rather than crashing the room.
-    5. Hand each socket to websockets.serve via the sock= kwarg so websockets/asyncio
-       skips their own binding logic.
+    The v6 socket needs IPV6_V6ONLY=1 or it grabs the full dual-stack binding
+    and the v4 socket can't share the port on Linux. A racing v6 bind retries
+    on a fresh ephemeral port, then falls back to v4-only rather than crashing
+    the room.
     """
     MAX_RETRIES = 3
 
@@ -145,7 +139,7 @@ async def _serve_dual_stack(
                 )
                 desired_port = 0  # ask OS for a fresh ephemeral port next round
                 continue
-            # All retries exhausted — fall back to v4-only rather than crashing the room.
+            # All retries exhausted: fall back to v4-only rather than crashing the room.
             logger.warning(
                 "IPv6 dual-stack bind failed after %d attempts (%s). "
                 "Falling back to IPv4-only for this room.",
@@ -157,7 +151,7 @@ async def _serve_dual_stack(
             server_v4 = await websockets.serve(handler, sock=sock_v4_fallback, **serve_kwargs)
             return DualStackServer(server_v4, None)
 
-        # Both sockets bound to the same port — hand them to websockets.
+        # Both sockets bound to the same port; hand them to websockets.
         server_v4 = await websockets.serve(handler, sock=sock_v4, **serve_kwargs)
         try:
             server_v6 = await websockets.serve(handler, sock=sock_v6, **serve_kwargs)
@@ -238,10 +232,8 @@ class WebHostContext(Context):
         engine = WebHostContext._db_engine
         with Session(engine) as session:
             room = session.get(Room, room_id)
-            # last_port is -1 (sentinel set when a prior host crashed) or 0/None when the
-            # room was never hosted. -1 is truthy, so guard on a real in-range port;
-            # otherwise pick a fresh random one (binding to -1 raises OverflowError and
-            # would permanently wedge the room on every restart).
+            # last_port is -1 (crash sentinel) or 0/None (never hosted); -1 is
+            # truthy and binding to it raises OverflowError, wedging the room.
             if room.last_port and room.last_port > 0:
                 self.port = room.last_port
             else:
@@ -539,9 +531,8 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
     del ponyconfig
     gc.collect()  # free intermediate objects used during setup
 
-    # This runs as a fresh spawned process (see autolauncher.run_server_process launch),
-    # so create and install its own loop rather than asyncio.get_event_loop() (deprecated
-    # when there is no current loop on 3.12+).
+    # Fresh spawned process: create and install our own loop (get_event_loop is
+    # deprecated without a current loop on 3.12+).
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     socket_creator = RandomPortSocketCreator(game_ports)
@@ -565,10 +556,9 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                         extensions=[server_per_message_deflate_factory],
                         logger=ctx.logger,
                     )
-                except OSError:  # likely port in use — retry on a port from the configured range
-                    # RandomPortSocketCreator verifies availability by binding; take the
-                    # port it found and rebind dual-stack (v4+v6). The close-to-rebind
-                    # window is a tolerable race — _serve_dual_stack retries internally.
+                except OSError:  # likely port in use: retry on a port from the configured range
+                    # Rebind dual-stack on the port RandomPortSocketCreator probed; the
+                    # close-to-rebind race is tolerable (_serve_dual_stack retries).
                     probe = socket_creator.create(ctx.host)
                     retry_port = probe.getsockname()[1]
                     probe.close()

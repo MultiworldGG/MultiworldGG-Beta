@@ -34,7 +34,7 @@ def stop() -> None:
 _in_flight_generations: dict[UUID, datetime] = {}
 _in_flight_lock = __import__('threading').Lock()
 
-# Engine shared within this process (set by init_generator or _get_engine)
+# Engine shared within this process (set by init_generator / autohost / autogen)
 _engine = None
 
 
@@ -166,9 +166,8 @@ def _mp_gen_game(
     from setproctitle import setproctitle
     setproctitle(f"Generator ({sid})")
 
-    # Workers skip the eager full-IGDB load in WebHostLib/__init__.py. 
-
-    # Order matters: populate list of games before importing the app and generate
+    # Workers skip the eager full-IGDB load in WebHostLib/__init__.py; the game
+    # list must be set before importing the app and generate.
     from Utils import set_game_names
     needed_games = list((meta or {}).get("games", []))
     set_game_names(needed_games, strict=False)
@@ -191,8 +190,7 @@ def _mp_gen_game(
 def launch_generator(pool: multiprocessing.pool.Pool, generation: Generation, timeout: int|None) -> None:
     try:
         meta = json.loads(generation.meta)
-        # Pass the options as raw bytes; The game list
-        # for set_game_names lives in meta["games"]
+        # Options stay raw bytes; the game list for set_game_names lives in meta["games"]
         options_bytes = generation.options
         player_count = len(meta["games"])
         logging.info(f"Generating {generation.id} for {player_count} players")
@@ -241,9 +239,8 @@ def init_generator(config: dict[str, Any]) -> None:
     db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
     _engine = create_engine(db_uri)
 
-    # The worker is started via 'spawn', so get_app() never ran here and
-    # Flask-SQLAlchemy's db is not registered with the worker's app. Wire it
-    # up so gen_game/upload_to_db can use db.engine under an app_context.
+    # Spawned worker: get_app() never ran, so register Flask-SQLAlchemy's db
+    # with the worker's app for gen_game/upload_to_db's db.engine use.
     from . import app as flask_app
     from .models import db
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
@@ -424,12 +421,8 @@ def autogen(config: dict):
                 db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
                 _engine = create_engine(db_uri)
 
-                # maxtasksperchild=1: workers run one gen then exit, so the
-                # OS reclaims any worlds they imported. Combined with the
-                # per-job world narrowing in _mp_gen_game, this keeps each
-                # worker's footprint to ~one gen's worth of worlds instead
-                # of accumulating toward the full IGDB across maxtasksperchild
-                # gens (which is what OOM-killed the host).
+                # maxtasksperchild=1: each worker runs one gen then exits so the
+                # OS reclaims imported worlds (accumulation OOM-killed the host).
                 with multiprocessing.Pool(config["GENERATORS"], initializer=init_generator,
                                           initargs=(config,), maxtasksperchild=1) as generator_pool:
                     job_time = config["JOB_TIME"]
@@ -452,7 +445,6 @@ def autogen(config: dict):
                                 else:
                                     launch_generator(generator_pool, generation, timeout=job_time)
 
-                            # Delete error-state generations
                             error_gens = session.scalars(
                                 select(Generation).where(Generation.state == STATE_ERROR)
                             ).all()
@@ -540,13 +532,9 @@ class MultiworldInstance():
         return time_for_restart and is_idle
 
     def drain_shutting_down(self) -> None:
-        """Clear rooms that have finished shutting down from ``room_ids``.
-
-        Runs every autohost tick for *every* hoster, not only ones receiving a
-        new room. An idle hoster otherwise never clears ``room_ids``, so
-        ``should_restart`` never sees it as idle and the periodic APWorld-reload
-        restart that reclaims this process's memory never fires.
-        """
+        """Clear finished-shutdown rooms from ``room_ids``, every tick for every
+        hoster: otherwise an idle hoster is never seen as idle and the periodic
+        memory-reclaiming APWorld-reload restart never fires."""
         while not self.rooms_shutting_down.empty():
             # discard, not remove: a duplicate or stale shutdown signal must not
             # raise KeyError and tear down the autohost loop thread.

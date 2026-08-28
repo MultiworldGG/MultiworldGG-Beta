@@ -1,4 +1,4 @@
-"""Website (session-cookie) avatar management — PR1 of the persistent-avatar
+"""Website (session-cookie) avatar management, PR1 of the persistent-avatar
 feature.
 
 Covers the /me/avatar upload/replace/remove flow, the nav context processor,

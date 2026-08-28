@@ -5,8 +5,8 @@ on routing, storage interaction, and challenge bookkeeping. End-to-end
 testing against a real authenticator belongs in a Selenium / Playwright
 suite using the virtual-authenticator API.
 
-Adapted from passkey_recovery/test_passkeys.py — uses real UUID strings for
-session ids since the host blueprint re-hydrates them via uuid.UUID().
+Uses real UUID strings for session ids since the host blueprint re-hydrates
+them via uuid.UUID().
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from WebHostLib.passkeys import StoredCredential, passkeys_bp
 
 
 # ---------------------------------------------------------------------------
-# Fixtures — standalone Flask app to isolate the blueprint from the rest
+# Fixtures: standalone Flask app to isolate the blueprint from the rest
 # of the project's wiring.
 # ---------------------------------------------------------------------------
 

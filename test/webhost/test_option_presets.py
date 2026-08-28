@@ -37,9 +37,8 @@ class TestOptionPresets(unittest.TestCase):
                         except KeyError as ex:
                             self.fail(f"Option '{option_name}' in preset '{preset_name}' for game '{game_name}' is "
                                       f"not a defined option. Error: {ex}")
-        # Guard against a vacuous pass: the registry always carries the bundled APQuest/MWQuest
-        # worlds, which ship presets, so the validation loop above must have actually run. Without
-        # this, an empty registry (or every world losing its presets) would pass with zero checks.
+        # Guard against a vacuous pass: the bundled APQuest/MWQuest worlds always
+        # ship presets, so the validation loop above must have actually run.
         self.assertGreater(checked, 0, "No option presets were validated; the world registry "
                                        "appears to be empty or no world exposes options_presets.")
 

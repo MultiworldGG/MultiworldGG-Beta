@@ -1,4 +1,4 @@
-"""Per-slot avatars on room trackers — PR2 of the persistent-avatar feature.
+"""Per-slot avatars on room trackers (PR2 of the persistent-avatar feature).
 
 Covers the resolution precedence (explicit SlotAvatar > our-store profile_data >
 lobby-player session avatar), the room-prune cascade, and the set endpoint's
@@ -105,7 +105,7 @@ def test_resolve_renders_trusted_profile_data_avatar(app, room_factory):
 def test_resolve_ignores_untrusted_profile_avatar(app, room_factory):
     from WebHostLib.avatars import compute_slot_avatars
     room = room_factory()
-    # Off-allowlist host, and a non-HTTPS trusted host — both rejected, matching
+    # Off-allowlist host, and a non-HTTPS trusted host: both rejected, matching
     # the desktop client's safe_avatar_source gate.
     for bad in ("https://evil.example/pixel.png",
                 "http://multiworld.gg/avatar/" + "ab" * 16 + ".png"):

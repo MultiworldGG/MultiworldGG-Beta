@@ -99,8 +99,7 @@ def start_generation(options: dict[str, dict | str], meta: dict[str, Any]):
     elif len(gen_options) >= app.config["JOB_THRESHOLD"]:
         try:
             # Stash the per-player game list in meta so the worker can call
-            # set_game_names BEFORE restricted_loads imports any world option
-            # modules. 
+            # set_game_names BEFORE restricted_loads imports world option modules.
             gen_games = [vars(p).get("game") for p in gen_options.values()]
             meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
@@ -187,9 +186,8 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
         ERmain(args, seed, baked_server_options=meta["server_options"],
                baked_generator_options=meta["generator_options"])
 
-        # task() runs in a DaemonThreadPoolExecutor sub-thread; Flask app contexts are
-        # contextvar/thread-local and don't propagate from the calling thread, so push
-        # one here for upload_to_db's Session(db.engine).
+        # Flask app contexts are thread-local and task() runs in an executor
+        # sub-thread; push one here for upload_to_db's Session(db.engine).
         with app.app_context():
             return upload_to_db(target.name, sid, owner, race)
 

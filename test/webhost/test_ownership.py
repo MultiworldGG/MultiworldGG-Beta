@@ -81,7 +81,7 @@ def test_co_owner_is_authorized_but_not_primary(app, room_factory):
 
 
 # ---------------------------------------------------------------------------
-# Invite create — primary only
+# Invite create - primary only
 # ---------------------------------------------------------------------------
 
 def test_invite_create_requires_primary_owner(client, app, room_factory):
@@ -114,7 +114,7 @@ def test_invite_create_rejects_unknown_mode(client, app, room_factory):
 
 
 # ---------------------------------------------------------------------------
-# Invite accept — happy path + single-use
+# Invite accept - happy path + single-use
 # ---------------------------------------------------------------------------
 
 def test_co_owner_accept_grants_access(client, app, room_factory):
@@ -229,7 +229,7 @@ def test_transfer_swaps_primary_and_demotes_old_owner(client, app, room_factory)
 
 
 # ---------------------------------------------------------------------------
-# Co-owner remove — primary only
+# Co-owner remove - primary only
 # ---------------------------------------------------------------------------
 
 def test_primary_can_remove_co_owner(client, app, room_factory):

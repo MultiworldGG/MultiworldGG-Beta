@@ -6,7 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 
 @pytest.fixture
 def env():
-    # url_for must be a Jinja global so the imported macro can see it —
+    # url_for must be a Jinja global so the imported macro can see it;
     # macros don't inherit the caller's render-context kwargs.
     env = Environment(
         loader=FileSystemLoader("WebHostLib/templates"),

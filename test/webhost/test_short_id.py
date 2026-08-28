@@ -1,31 +1,7 @@
 """
-Unit tests for ``WebHostLib.short_id``.
-
-Tests the generator, normalization, well-formedness check, and the
-assignment function with collision retry.
-
-Expects two fixtures from your conftest.py:
-
-    @pytest.fixture
-    def db_session():
-        # Your SQLAlchemy session fixture, scoped to a single test.
-        # Should yield a session, then roll back.
-        ...
-
-    @pytest.fixture
-    def room_factory(db_session):
-        # A factory that creates a Room row. Accepts kwargs for any
-        # column override.
-        def _make(**kwargs):
-            from WebHostLib.models import Room, Seed
-            seed = kwargs.pop("seed", None) or Seed()
-            db_session.add(seed)
-            db_session.flush()
-            room = Room(seed_id=seed.id, **kwargs)
-            db_session.add(room)
-            db_session.flush()
-            return room
-        return _make
+Unit tests for ``WebHostLib.short_id``: generator, normalization,
+well-formedness check, and assignment with collision retry. Uses the
+``db_session`` and ``room_factory`` fixtures from conftest.py.
 """
 
 from unittest.mock import patch
@@ -35,12 +11,8 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _wipe_rooms_after_test(app):
-    """Tests in this module pre-seed rooms with hardcoded short_ids
-    (e.g. "AAAAAA", "EXIST1"). Because the session-scoped ``app``
-    fixture shares one in-memory DB across all tests, leftover rows
-    would trip the UNIQUE constraint on the next test's hardcoded
-    value. Wipe room/seed/command/lobby rows after each test.
-    """
+    """Hardcoded short_ids plus the session-scoped shared in-memory DB would
+    trip the UNIQUE constraint across tests; wipe rows after each test."""
     yield
     from WebHostLib.models import db, Room, Seed, Command, Lobby, LobbyMessage
     with app.app_context():

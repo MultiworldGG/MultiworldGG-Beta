@@ -1,19 +1,6 @@
 """
-Integration tests for the ``/r/<short>`` short-room route.
-
-Expects fixtures from your conftest.py:
-
-    @pytest.fixture
-    def client():
-        from WebHostLib import app
-        app.config["TESTING"] = True
-        with app.test_client() as c:
-            yield c
-
-    @pytest.fixture
-    def room_factory(db_session):
-        # See test_short_id.py for the expected shape.
-        ...
+Integration tests for the ``/r/<short>`` short-room route. Uses the
+``client`` and ``room_factory`` fixtures from conftest.py.
 """
 
 import pytest
@@ -23,11 +10,8 @@ from WebHostLib import to_url
 
 @pytest.fixture(autouse=True)
 def _wipe_rooms_after_test(app):
-    """Each test creates a Room with a hardcoded short_id (e.g. "K7M3QX").
-    The session-scoped ``app`` fixture shares one in-memory DB across
-    tests, so leftover rows would trip the UNIQUE constraint on the
-    next test's hardcoded value. Wipe after each test.
-    """
+    """Hardcoded short_ids plus the session-scoped shared in-memory DB would
+    trip the UNIQUE constraint across tests; wipe rows after each test."""
     yield
     from WebHostLib.models import db, Room, Seed, Command, Lobby, LobbyMessage
     with app.app_context():
@@ -157,7 +141,7 @@ class TestNotFound:
 def test_short_room_endpoint_registered(client):
     """The /r/ route must be registered in url_map. Catches the case
     where the blueprint or route decorator was missed during the merge."""
-    from WebHostLib import app  # adjust import to match your app factory
+    from WebHostLib import app
 
     rules = [rule for rule in app.url_map.iter_rules()
              if rule.endpoint == "short_room"]

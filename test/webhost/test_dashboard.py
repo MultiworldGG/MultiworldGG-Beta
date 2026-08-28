@@ -18,7 +18,7 @@ from WebHostLib.dashboard import (
 
 
 # ---------------------------------------------------------------------------
-# classify_room — pure function, no DB needed
+# classify_room - pure function, no DB needed
 # ---------------------------------------------------------------------------
 
 class TestClassifyRoom:
@@ -54,7 +54,7 @@ class TestClassifyRoom:
 
 
 # ---------------------------------------------------------------------------
-# get_dashboard_data — uses real DB via the conftest factories
+# get_dashboard_data - uses real DB via the conftest factories
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
@@ -130,7 +130,7 @@ class TestGetDashboardData:
             commit()
             data = get_dashboard_data(session)
 
-        # Only the OPEN lobby counts — CLOSED ones are stripped.
+        # Only the OPEN lobby counts; CLOSED ones are stripped.
         assert data.stats.open_lobbies == 1
 
     def test_all_active_lobby_states_counted(self, app):
