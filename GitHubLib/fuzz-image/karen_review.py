@@ -1,4 +1,4 @@
-"""Karen's 7-check quality assurance review for `worlds/<apworld>.json` PRs.
+"""Karen's 8-check quality assurance review for `worlds/<apworld>.json` PRs.
 
 Karen is our quality assurance bot, here to tell you what we maybe want to flag to fix.
 If everything is perfect, you'll get her QA stamp of approval.
@@ -739,7 +739,7 @@ def check_pip_audit(world_dir: Path) -> CheckResult:
     return CheckResult(
         "pip_audit",
         "fail",
-        "There are a few scary packages in there, let's check them out.`",
+        "There are a few scary packages in there, let's check them out.",
         details=all_vulns,
     )
 
