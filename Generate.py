@@ -14,10 +14,11 @@ from collections import Counter
 from itertools import chain
 from typing import Any
 
-# Used by the GUI to load options without loading the world into launcher memory
+# JSON modes used by the GUI to load worlds without importing them into launcher memory
 _YAML_OPTIONS_MODE = "--yaml-options" in sys.argv or "--yaml_options" in sys.argv
+_EXPORT_DATAPACKAGE_MODE = "--export-datapackage" in sys.argv or "--export_datapackage" in sys.argv
 _JSON_OUT = sys.stdout
-if _YAML_OPTIONS_MODE:
+if _YAML_OPTIONS_MODE or _EXPORT_DATAPACKAGE_MODE:
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
     sys.stdout = sys.stderr
 
@@ -102,6 +103,10 @@ def mystery_argparse(argv: list[str] | None = None) -> argparse.Namespace:
                              "Used by the YAML creator GUI; no seed is generated.")
     parser.add_argument("--visibility", choices=("simple", "complex"), default="simple",
                         help="Option visibility level for --yaml-options.")
+    parser.add_argument("--export-datapackage", nargs="+", metavar="MODULE",
+                        help="Install/load the given world modules, write their combined data package to "
+                             "datapackage_export.json in the user directory, report as JSON on stdout, then exit. "
+                             "Used by the launcher; no seed is generated.")
     args = parser.parse_args(argv)
 
     if args.yaml_options and not args.yaml_options_game:
@@ -918,12 +923,55 @@ def _y_custom_world_entry(module: str):
     return None
 
 
+class _WorldUnavailable(RuntimeError):
+    """`_y_stage_world` could neither find nor install the world."""
+
+
+def _y_stage_world(module: str, game_name: str | None) -> bool:
+    """Queue `worlds.<module>` for the one-shot load, or install it if it is
+    neither pip-installed nor on disk as a custom world.
+
+    Returns True after a fresh install: a world can't be installed and loaded
+    in the same process, so the caller must exit EXIT_NEEDS_RELOAD. Raises
+    _WorldUnavailable when the install fails.
+    """
+    if _y_world_installed(module):
+        # Pip-installed world: the load loop picks it up on first `from worlds import`.
+        if game_name is None:
+            Utils._worlds_to_load.append(f"worlds.{module}")
+        else:
+            set_game_names([game_name], strict=False)
+        return False
+    entry = _y_custom_world_entry(module)
+    if entry is not None:
+        # Queue the custom world's load entry before the first `from worlds import`.
+        Utils._worlds_to_load.append(entry)
+        return False
+    apworlds = ModuleUpdate.install_worlds([module])
+    if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
+        raise _WorldUnavailable(
+            f"Could not install '{game_name or module}' (offline, or wheel/apworld missing). See log.")
+    return True
+
+
+def _y_emit_needs_reload(installed: str) -> int:
+    """Ask the caller to re-run us so a fresh process loads `installed`."""
+    logging.info("Installed %s; requesting reload to load it cleanly.", installed)
+    # additive: old GUIs check the exit code before parsing stdout
+    _y_emit({
+        "ok": False,
+        "needs_reload": True,
+        "reason": "world-installed",
+        "error": f"Installed {installed}; a fresh process is required to load it.",
+    })
+    return EXIT_NEEDS_RELOAD
+
+
 def dump_yaml_options(game_name: str, visibility: str, module: str | None = None) -> int:
     """Install/load `game_name` and write its option metadata to stdout as JSON.
 
     Returns a process exit code; the JSON `ok` field carries success/failure.
-    A world can't be installed and loaded in the same process, so a fresh
-    index-world install exits EXIT_NEEDS_RELOAD for the caller to re-run us.
+    A fresh index-world install exits EXIT_NEEDS_RELOAD for the caller to re-run us.
     """
     import traceback
     try:
@@ -935,31 +983,11 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
                 "error": f"'{game_name}' is not in the game index; it can't be installed or loaded.",
             })
 
-        if _y_world_installed(module):
-            # Pip-installed world: the load loop picks it up on first `from worlds import`.
-            set_game_names([game_name], strict=False)
-        else:
-            entry = _y_custom_world_entry(module)
-            if entry is None:
-                # Missing index world: install it, then ask the caller to re-run
-                # so a fresh process loads it.
-                apworlds = ModuleUpdate.install_worlds([module])
-                if not _y_world_installed(module) and f"worlds.{module}" not in apworlds:
-                    return _y_emit({
-                        "ok": False,
-                        "error": f"Could not install '{game_name}' (offline, or wheel/apworld missing). See log.",
-                    })
-                logging.info("Installed '%s'; requesting reload to load it cleanly.", game_name)
-                # additive: old GUIs check the exit code before parsing stdout
-                _y_emit({
-                    "ok": False,
-                    "needs_reload": True,
-                    "reason": "world-installed",
-                    "error": f"Installed '{game_name}'; a fresh process is required to load it.",
-                })
-                return EXIT_NEEDS_RELOAD
-            # Queue the custom world's load entry before the first `from worlds import`.
-            Utils._worlds_to_load.append(entry)
+        try:
+            if _y_stage_world(module, game_name):
+                return _y_emit_needs_reload(f"'{game_name}'")
+        except _WorldUnavailable as e:
+            return _y_emit({"ok": False, "error": str(e)})
 
         from worlds import AutoWorldRegister, failed_world_loads
 
@@ -1009,6 +1037,53 @@ def dump_yaml_options(game_name: str, visibility: str, module: str | None = None
         return _y_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
 
 
+# --export-datapackage: dump selected worlds' data package (for the launcher)
+# ---------------------------------------------------------------------------
+
+def dump_datapackage(modules: list[str]) -> int:
+    """Install/load `modules`, write their combined data package to
+    `datapackage_export.json` in the user directory and report on stdout as JSON.
+
+    Returns a process exit code. Missing index worlds are all installed first,
+    then a single EXIT_NEEDS_RELOAD asks the caller to re-run us. A module that
+    can't be installed or fails to import is listed under `failed` instead of
+    aborting the export; the generic "Archipelago" baseline is always included.
+    """
+    import traceback
+    try:
+        installed: list[str] = []
+        failed: list[str] = []
+        for module in modules:
+            try:
+                if _y_stage_world(module, GameIndex.get_game_name_for_module(module)):
+                    installed.append(module)
+            except _WorldUnavailable as e:
+                logging.warning(str(e))
+                failed.append(module)
+        if installed:
+            return _y_emit_needs_reload(", ".join(repr(module) for module in installed))
+
+        from worlds import AutoWorldRegister
+
+        wanted = set(modules) | {"generic"}
+        games = {}
+        loaded: set[str] = set()
+        for game_name, world in AutoWorldRegister.world_types.items():
+            slug = world.__module__.split(".")[1]
+            loaded.add(slug)
+            if slug in wanted:
+                games[game_name] = world.get_data_package_data()
+        failed += [module for module in modules if module not in loaded and module not in failed]
+
+        path = Utils.user_path("datapackage_export.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"games": games}, f, indent=4)
+        return _y_emit({"ok": True, "path": path, "games": sorted(games), "failed": failed})
+    except Exception as e:
+        logging.error("dump_datapackage failed", exc_info=True)
+        return _y_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
+
+
 if __name__ == '__main__':
     import atexit
     import sys
@@ -1017,6 +1092,8 @@ if __name__ == '__main__':
     if _YAML_OPTIONS_MODE:
         _y_args = mystery_argparse()
         sys.exit(dump_yaml_options(_y_args.yaml_options_game, _y_args.visibility, _y_args.module))
+    if _EXPORT_DATAPACKAGE_MODE:
+        sys.exit(dump_datapackage(mystery_argparse().export_datapackage))
 
     confirmation = atexit.register(input, "Press enter to close.")
     try:
