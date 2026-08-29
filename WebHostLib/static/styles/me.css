@@ -1,5 +1,5 @@
 /* ===========================================================
-   /me dashboard — Phase 6
+   /me dashboard - Phase 6
    ===========================================================
    MDI icon font and per-icon codepoints live in base.css.
    This stylesheet only adds layout / dashboard-specific rules.
@@ -286,7 +286,7 @@
     border-radius: var(--mw-radius-lg);
 }
 
-/* Empty state — first-run dashboard */
+/* Empty state - first-run dashboard */
 .mw-me-empty {
     max-width: 620px;
     margin: 0 auto;
@@ -456,7 +456,7 @@
 }
 
 /* ===========================================================
-   Modals — Phase 8 (session portability)
+   Modals - Phase 8 (session portability)
    =========================================================== */
 
 .mw-modal {
@@ -697,7 +697,7 @@
     border-color: var(--mw-sys-color-primary);
 }
 
-/* Card cluster — primary tap-target card stacked with a secondary action */
+/* Card cluster - primary tap-target card stacked with a secondary action */
 .mw-card-cluster {
     margin-bottom: 8px;
 }

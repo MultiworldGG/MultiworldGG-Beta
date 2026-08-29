@@ -284,7 +284,7 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       reason: "fuzz_image_unavailable",
       message:
         `FUZZ_IMAGE ${options.image} is not available on the host (${preflight.detail ?? "not present"}); ` +
-        `pull or build it — see deploy/README.md. Failing all ${fuzz.worlds.length} world(s).`,
+        `pull or build it - see deploy/README.md. Failing all ${fuzz.worlds.length} world(s).`,
     });
   }
 
@@ -294,7 +294,7 @@ async function runFuzzBatch(a: RunFuzzBatchArgs): Promise<void> {
       results.push({
         slug: job.slug,
         status: "fail",
-        detail: `${job.slug}: FUZZ_IMAGE ${options.image} unavailable — ${preflight.detail ?? "not present"}`,
+        detail: `${job.slug}: FUZZ_IMAGE ${options.image} unavailable - ${preflight.detail ?? "not present"}`,
         exitCode: 125,
         timedOut: false,
       });

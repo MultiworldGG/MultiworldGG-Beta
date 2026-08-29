@@ -157,12 +157,12 @@ def assign_role_env(args) -> str:
 
 
 def should_show_splash(frontend: str) -> bool:
-    """Windows + Kivy GUI cold starts show the splash; spawned clients don't.
-
-    LauncherComponents.spawn_client sets MWGG_NO_SPLASH=1 in the child env
-    (there is no CLI flag), which skips the whole splash block including its
-    update check and up-to-60s wait -- a child must not re-run the updater
-    under a live launcher."""
+    """Windows + Kivy GUI boots front the splash, spawned clients included --
+    the window rides opacity 0 until Kivy is up, so without the splash a spawn
+    is seconds of dead air. BaseUtils.spawn_client sets MWGG_SKIP_UPDATE=1 in
+    the child env so the child's splash skips the updater (a child must not
+    re-run it under a live launcher); MWGG_NO_SPLASH stays a manual escape
+    hatch that suppresses the splash entirely."""
     return is_windows and frontend == "gui" and not os.environ.get("MWGG_NO_SPLASH")
 
 
@@ -245,6 +245,14 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
         logger.warning("Client role was requested but no client launch could be resolved; "
                        "falling back to launcher")
         os.environ["MWGG_ROLE"] = "launcher"
+
+    # Export the routed game so the client-role frontend (which never builds a
+    # launcher screen) can resolve cover art; assign-or-pop for the same
+    # stale-inheritance reason as assign_role_env.
+    if route_module:
+        os.environ["MWGG_GAME"] = route_module
+    else:
+        os.environ.pop("MWGG_GAME", None)
     return route_module, route_kwargs
 
 
@@ -411,8 +419,9 @@ def main(argv: "list[str] | None" = None) -> None:
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
 
-    # Splash is Windows + Kivy GUI cold starts only: it crashes on Mac/Linux,
-    # TUI has nothing to hide, and spawned clients set MWGG_NO_SPLASH=1.
+    # Splash is Windows + Kivy GUI boots only: it crashes on Mac/Linux and the
+    # TUI has nothing to hide. Spawned clients show it too, minus the updater
+    # (MWGG_SKIP_UPDATE, honored inside the splash process).
     splash_queue = None
 
     if should_show_splash(args.frontend):
@@ -423,8 +432,10 @@ def main(argv: "list[str] | None" = None) -> None:
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
         
-        # Wait for splash process to signal ready (after checking/applying updates)
-        logger.info("Checking for updates...")
+        # Wait for splash process to signal ready (after checking/applying
+        # updates, unless MWGG_SKIP_UPDATE makes that a no-op)
+        logger.info("Waiting for splash screen..." if os.environ.get("MWGG_SKIP_UPDATE")
+                    else "Checking for updates...")
         try:
             message = splash_queue.get(timeout=60)  # Wait up to 60 seconds
             if isinstance(message, dict):
@@ -437,7 +448,22 @@ def main(argv: "list[str] | None" = None) -> None:
                     logger.error(f"Splash screen error: {message.get('error')}")
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
-        
+    elif not os.environ.get("MWGG_SKIP_UPDATE"):
+        # The splash only fronts the update on Windows GUI boots; the update
+        # itself is required on every platform, frozen or dev. Spawned clients
+        # inherit MWGG_SKIP_UPDATE=1 and must not re-run it.
+        logger.info("Checking for updates...")
+        try:
+            import ModuleUpdate
+            result = ModuleUpdate.update_worlds()
+            if result:
+                from Utils import exit_restart_for_update
+                exit_restart_for_update()
+            elif result is not None:
+                logger.info("Updates applied successfully")
+        except Exception as e:
+            logger.warning(f"World update failed; continuing with installed versions: {e}")
+
     # Register custom_worlds/ apworlds into the in-memory index so they're
     # selectable; only the zip manifest is read, nothing is imported.
     try:

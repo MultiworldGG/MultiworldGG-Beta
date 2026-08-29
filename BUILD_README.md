@@ -44,7 +44,7 @@ the `Build executable` steps in `release.yml` and `build-release-test.yml`. When
 the repos go public the var can be unset and anonymous fetches will work.
 
 Worlds (infra `_bizhawk`, `_debug`, `_manual`, `_sni`, `_tracker`, `generic`) are bundled
-directly from `src/worlds/` source — there is no separate worlds wheel build. Per-game
+directly from `src/worlds/` source - there is no separate worlds wheel build. Per-game
 worlds and the mwgg_igdb game index are NOT installed at build time; they're git-pulled
 at first run by ModuleUpdate.update() and ModuleUpdate.install_worlds().
 

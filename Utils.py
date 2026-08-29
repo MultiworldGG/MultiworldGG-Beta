@@ -390,7 +390,8 @@ def read_patch_game_name(patch_path: str) -> Optional[str]:
 def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
     """
     Returns the inner callable for custom worlds, or None if the wrapper doesn't match the
-    standard `launch_component(<X>, ...)` shape so that the client canh be launched in the same UI.
+    standard `launch_component(<X>, ...)` / `launch_subprocess(<X>, ...)` shape, so that the
+    client can be launched in the same UI.
     """
     import ast
     import inspect
@@ -416,7 +417,7 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
                 else call.func.attr if isinstance(call.func, ast.Attribute)
                 else None
             )
-            if callee_name in ("launch_component", "launch") and call.args:
+            if callee_name in ("launch_component", "launch", "launch_subprocess") and call.args:
                 if isinstance(call.args[0], ast.Name):
                     launch_arg = call.args[0].id
                     break
@@ -967,6 +968,15 @@ def cache_path(*path: str) -> str:
     return os.path.join(cache_path.cached_path, *path)
 
 
+def players_path(*path: str) -> str:
+    """Path in the settings-resolved player-files dir (the dir Generate scans).
+    Deliberately uncached: get_settings() must never run at module import."""
+    from settings import get_settings
+    base = get_settings().generator.player_files_path
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, *path)
+
+
 def output_path(*path: str) -> str:
     if hasattr(output_path, 'cached_path'):
         return os.path.join(output_path.cached_path, *path)
@@ -1456,7 +1466,7 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
     if is_kivy_running():
         from mwgg_gui.components.dialog import MessageBox
-        MessageBox(title, text, error).open()
+        MessageBox(title, text, is_error=error).open()
         return
 
     textual_app = _get_running_textual_app()
@@ -1492,6 +1502,57 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         root.withdraw()
         showerror(title, text) if error else showinfo(title, text)
         root.update()
+
+
+def messagebox_confirm(title: str, text: str) -> bool:
+    """Blocking OK/Cancel confirm; True when the user confirms. Kivy/Textual
+    dialogs are callback-based and can't block the main thread, so under a
+    running frontend this logs and returns True: the GUI/TUI must pre-confirm."""
+    if not gui_enabled:
+        logging.info(f"{title}: {text} (auto-confirmed: no GUI available)")
+        return True
+
+    if is_kivy_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running Kivy app; "
+                        f"the GUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_textual_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running TUI; "
+                        f"the TUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_linux and "tkinter" not in sys.modules:
+        # prefer native dialog
+        from shutil import which
+        env = env_cleared_lib_path()
+        kdialog = which("kdialog")
+        if kdialog:
+            return subprocess.run([kdialog, f"--title={title}", "--warningyesno", text],
+                                  env=env).returncode == 0
+        zenity = which("zenity")
+        if zenity:
+            return subprocess.run([zenity, f"--title={title}", f"--text={text}", "--question"],
+                                  env=env).returncode == 0
+
+    elif is_windows:
+        import ctypes
+        # MB_OKCANCEL | MB_ICONWARNING; IDOK == 1
+        return ctypes.windll.user32.MessageBoxW(0, text, title, 0x31) == 1
+
+    # fall back to tk
+    try:
+        import tkinter
+        from tkinter.messagebox import askokcancel
+    except Exception:
+        logging.error('Could not load tkinter, which is likely not installed. This attempt was '
+                      f'made because messagebox_confirm was used for "{title}"; declining.')
+        return False
+    root = tkinter.Tk()
+    root.withdraw()
+    result = askokcancel(title, text)
+    root.update()
+    return bool(result)
 
 
 gui_enabled = not sys.stdout or "--nogui" not in sys.argv

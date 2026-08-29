@@ -562,7 +562,7 @@ function makeOpeningProbots(karenWrites: string[], oliverWrites: string[]) {
   return { probot, karenProbot };
 }
 
-describe("handleReleasePublished — .apworld-asset identification", () => {
+describe("handleReleasePublished - .apworld-asset identification", () => {
   it("uses the <name>.apworld asset as the slug under an arbitrary tag, pinning the wheel sha256", async () => {
     // Arbitrary tag with no usable `<slug>-<version>` prefix: only the .apworld
     // asset can identify the world.
@@ -809,7 +809,7 @@ function makeBundleProbots(present: Record<string, string>, writes: string[]) {
   return { probot, karenProbot };
 }
 
-describe("handleReleasePublished — bundled multi-world release", () => {
+describe("handleReleasePublished - bundled multi-world release", () => {
   it("opens one combined Index PR (Oliver token) for worlds already on the Index", async () => {
     const state: RepoState = {
       releases: [

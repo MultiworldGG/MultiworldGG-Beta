@@ -96,7 +96,7 @@ const run = (octokit: any, region: string, extra: Record<string, unknown> = {}) 
     ...extra,
   });
 
-describe("upsertFuzzComment — splice into an existing fenced region", () => {
+describe("upsertFuzzComment - splice into an existing fenced region", () => {
   it("replaces only the bytes between the markers, preserving surrounding review text", async () => {
     const body = [
       MARKER,
@@ -160,7 +160,7 @@ describe("upsertFuzzComment — splice into an existing fenced region", () => {
   });
 });
 
-describe("upsertFuzzComment — append when markers absent", () => {
+describe("upsertFuzzComment - append when markers absent", () => {
   it("appends a fresh fenced region to a marker comment that has none", async () => {
     const body = `${MARKER}\n## Karen: Quality Assurance Manager\n\nNo fuzz region yet.`;
     const state = makeState({ comments: [{ id: 5, body }] });
@@ -195,7 +195,7 @@ describe("upsertFuzzComment — append when markers absent", () => {
   });
 });
 
-describe("upsertFuzzComment — create when no marker comment", () => {
+describe("upsertFuzzComment - create when no marker comment", () => {
   it("creates a minimal sticky comment with the marker line and a fenced region", async () => {
     const state = makeState({
       comments: [{ id: 1, body: "an unrelated comment from a human" }],
@@ -240,7 +240,7 @@ describe("upsertFuzzComment — create when no marker comment", () => {
   });
 });
 
-describe("upsertFuzzComment — no-op when head moved", () => {
+describe("upsertFuzzComment - no-op when head moved", () => {
   it("does not list, create, or update when pull head != headSha", async () => {
     const body = `${MARKER}\n${FUZZ_REGION_START}\nold\n${FUZZ_REGION_END}\n`;
     const state = makeState({ headSha: "b".repeat(40), comments: [{ id: 1, body }] });
@@ -255,7 +255,7 @@ describe("upsertFuzzComment — no-op when head moved", () => {
   });
 });
 
-describe("renderFuzzRegion — Karen-style per-world tables", () => {
+describe("renderFuzzRegion - Karen-style per-world tables", () => {
   it("renders a per-world Check/Status/Notes table with glyph+word status and per-check notes", () => {
     const md = renderFuzzRegion([
       result({
@@ -276,8 +276,8 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
 
     expect(md).toContain("### World generation (fuzzer) results");
     // per-world headings mirror Karen's slug + glyph + status shape
-    expect(md).toContain("#### `hk` — ✅ pass");
-    expect(md).toContain("#### `z3` — ❌ fail");
+    expect(md).toContain("#### `hk` - ✅ pass");
+    expect(md).toContain("#### `z3` - ❌ fail");
     // Karen's columns
     expect(md).toContain("| Check | Status | Notes |");
     // a completed run keeps a meaningful detail next to the stats;
@@ -306,7 +306,7 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
         slug: "dk64",
         status: "warn",
         // the verbose classified line that used to get appended on top of the stats
-        detail: "dk64: warn — classified: status=warn success=0 failure=50 rom=50 real=0 total=50",
+        detail: "dk64: warn - classified: status=warn success=0 failure=50 rom=50 real=0 total=50",
         stats: { success: 0, failure: 50, timeout: 0, ignored: 0, rom: 50, real: 0, total: 50 },
       }),
     ]);
@@ -319,12 +319,12 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
       result({
         slug: "oot",
         status: "warn",
-        detail: "oot: warn — wall-killed after 4/10 generations — partial stats salvaged (host too slow for this world within 1080s)",
+        detail: "oot: warn - wall-killed after 4/10 generations - partial stats salvaged (host too slow for this world within 1080s)",
         stats: { success: 0, failure: 2, timeout: 2, ignored: 0, rom: 0, real: 2, total: 4 },
       }),
     ]);
     expect(md).toContain(
-      "| `fuzzer` | ⚠️ warn | oot: warn — wall-killed after 4/10 generations — partial stats salvaged " +
+      "| `fuzzer` | ⚠️ warn | oot: warn - wall-killed after 4/10 generations - partial stats salvaged " +
         "(host too slow for this world within 1080s) (success=0 failure=2 timeout=2 ignored=0 rom=0 real=2 total=4) |",
     );
   });
@@ -446,6 +446,6 @@ describe("renderFuzzRegion — Karen-style per-world tables", () => {
 
   it("renders an em dash in the fuzzer Notes when there are no stats or detail", () => {
     const md = renderFuzzRegion([result({ slug: "hk", status: "pass", detail: "" })]);
-    expect(md).toContain("| `fuzzer` | ✅ pass | — |");
+    expect(md).toContain("| `fuzzer` | ✅ pass | - |");
   });
 });

@@ -65,7 +65,7 @@ class TrackerSettings(Group):
     class TrackerPlayersPath(UserFolderPath):
         """Players folder for UT to look for YAMLs.
 
-        Note: UT no longer scans this folder by default — the client prompts
+        Note: UT no longer scans this folder by default - the client prompts
         the user to pick a single YAML at launch instead, to avoid ingesting
         stale/leftover YAMLs from prior runs. This setting is only consulted
         when a YAML path is supplied programmatically (e.g. via launcher args

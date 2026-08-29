@@ -7,7 +7,7 @@
     <header id="base-header">
         <div id="base-header-left">
             <a href="{{ url_for('landing') }}" id="site-title">
-                {# 40px tall, width auto — header wordmark/logo lockup #}
+                {# 40px tall, width auto - header wordmark/logo lockup #}
                 <img id="header-logo"
                      src="{{ url_for('static', filename='static/branding/header-logo.png') }}"
                      alt="MultiworldGG logo" />
@@ -53,7 +53,7 @@
             <a class="nav-item" href="https://discord.multiworld.gg" target="_blank" rel="noopener noreferrer">Discord</a>
 
             <a href="{{ url_for('me') }}" class="nav-avatar" aria-label="Games Hub">
-                {# 36px × 36px (28px on mobile) — round controller-icon avatar, cream background #}
+                {# 36px × 36px (28px on mobile) - round controller-icon avatar, cream background #}
                 <img src="{{ slot_avatar_url or url_for('static', filename='static/branding/controller-icon.png') }}"
                      alt="MultiworldGG controller avatar" />
             </a>
@@ -61,7 +61,7 @@
 
         <div id="base-header-right-mobile">
             <a id="base-header-mobile-menu-button" href="#" aria-label="Open menu">
-                {# 28px × 28px — hamburger menu icon #}
+                {# 28px × 28px - hamburger menu icon #}
                 <img src="{{ url_for('static', filename='static/button-images/hamburger-menu-icon.png') }}"
                      alt="Open menu" />
             </a>

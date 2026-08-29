@@ -153,7 +153,7 @@ def _component_name(slug: str) -> str:
     Inno requires Name: to be alphanumeric/underscore/slash and not start with
     a digit. Any slug that starts with a digit is prefixed with '_' so e.g.
     '2048' becomes '_2048'. The python module reference (worlds.<slug>) is
-    unchanged — only the installer-side identifier is mangled.
+    unchanged - only the installer-side identifier is mangled.
     """
     if slug and slug[0].isdigit():
         return f"_{slug}"

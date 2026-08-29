@@ -17,7 +17,8 @@ import LauncherComponents as lc
 import MultiWorld
 import Utils
 from CommonClient import parse_connect_url, safe_avatar_source
-from LauncherComponents import Component, SuffixIdentifier, Type, components, get_exe, identify
+from LauncherComponents import (Component, SuffixIdentifier, Type, components, get_exe, identify,
+                                launch as launch_component, launch_subprocess)
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -38,9 +39,9 @@ def _setup_py_target_names() -> set[str]:
 # Entry-point split: MultiWorld.main()'s role computation and MWGG_ROLE
 # assignment (assigned, never setdefault), the connect-address composer
 # forwarded to spawned clients, the --client-type parser surface, splash
-# gating under MWGG_NO_SPLASH, and the thin Launcher.py dispatcher (headless
-# --version before any heavy import, component dispatch, verbatim delegation
-# to MultiWorld.main).
+# gating (MWGG_NO_SPLASH escape hatch, MWGG_SKIP_UPDATE for spawned clients),
+# and the thin Launcher.py dispatcher (headless --version before any heavy
+# import, component dispatch, verbatim delegation to MultiWorld.main).
 # --------------------------------------------------------------------------- #
 
 def _parsed_args(argv=(), **overrides):
@@ -181,7 +182,7 @@ def test_compose_connect_address_round_trips_through_urlparse():
 def test_compose_connect_address_warns_on_colon_in_slot_name(caplog):
     """A ':' in the slot name mis-splits downstream (InitContext partitions
     userinfo at the first colon, so 'P:1' parses as user P, password 1@...).
-    Behavior is preserved — the composer warns, it does not reject."""
+    Behavior is preserved - the composer warns, it does not reject."""
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         composed = MultiWorld._compose_connect_address("localhost:38281", "P:1", None)
     assert composed == "P:1@localhost:38281"
@@ -213,11 +214,13 @@ def test_resolve_route_unroutable_client_type_falls_back_to_launcher(argv, monke
     resolves no route; without the guard that boots a dead client GUI
     (console + permanent loading overlay, nothing ever launches)."""
     monkeypatch.setenv("MWGG_ROLE", "stale")  # registers teardown restore
+    monkeypatch.setenv("MWGG_GAME", "stale")
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         route_module, route_kwargs = _resolve_with_role(_parsed_args(argv))
     assert route_module is None
     assert route_kwargs == {}
     assert os.environ["MWGG_ROLE"] == "launcher"
+    assert "MWGG_GAME" not in os.environ
     assert any("falling back to launcher" in record.message for record in caplog.records)
 
 
@@ -244,6 +247,7 @@ def test_resolve_route_resolution_error_falls_back_to_launcher(monkeypatch):
 
 def test_resolve_route_available_game_stays_client(monkeypatch):
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
     monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
     args = _parsed_args(["--game", "kh2", "--server-address", "localhost:38281",
                          "--slot-name", "P1"])
@@ -252,26 +256,33 @@ def test_resolve_route_available_game_stays_client(monkeypatch):
     assert route_kwargs["server_address"] == "P1@localhost:38281"
     assert route_kwargs["client_type"] == "game"
     assert os.environ["MWGG_ROLE"] == "client"
+    # Exported for the client-role frontend's cover-art lookup.
+    assert os.environ["MWGG_GAME"] == "kh2"
 
 
 def test_resolve_route_text_client_sentinel_stays_client(monkeypatch):
     """client_type=="text" routes via the "" sentinel (a real route, hence
     the `is None` guard rather than a bool check)."""
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
     route_module, route_kwargs = _resolve_with_role(_parsed_args(["--client-type", "text"]))
     assert route_module == ""
     assert route_kwargs == {"server_address": None, "client_type": "text"}
     assert os.environ["MWGG_ROLE"] == "client"
+    # No game routed: a stale inherited value must not leak a wrong cover.
+    assert "MWGG_GAME" not in os.environ
 
 
 def test_resolve_route_routed_patch_stays_client(monkeypatch):
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
     args = _parsed_args(["seed.apkh3"], patch_module="kh3",
                         patch_file="C:\\seeds\\seed.apkh3")
     route_module, route_kwargs = _resolve_with_role(args)
     assert route_module == "kh3"
     assert route_kwargs == {"patch_file": "C:\\seeds\\seed.apkh3"}
     assert os.environ["MWGG_ROLE"] == "client"
+    assert os.environ["MWGG_GAME"] == "kh3"
 
 
 def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
@@ -295,11 +306,21 @@ def test_splash_shown_on_windows_gui_cold_start(monkeypatch):
 
 
 def test_splash_skipped_under_mwgg_no_splash(monkeypatch):
-    """spawn_client sets MWGG_NO_SPLASH=1 in the child env (there is no CLI
-    flag); the whole splash block, including the 60s update wait, must skip."""
+    """MWGG_NO_SPLASH is the manual escape hatch: the whole splash block,
+    including the 60s wait, must skip."""
     monkeypatch.setattr(MultiWorld, "is_windows", True)
     monkeypatch.setenv("MWGG_NO_SPLASH", "1")
     assert MultiWorld.should_show_splash("gui") is False
+
+
+def test_splash_still_shown_under_mwgg_skip_update(monkeypatch):
+    """spawn_client sets MWGG_SKIP_UPDATE=1 in the child env; that skips the
+    updater (inline here, in-thread in the splash process), not the splash
+    itself -- spawned clients front their boot with it too."""
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    monkeypatch.setenv("MWGG_SKIP_UPDATE", "1")
+    assert MultiWorld.should_show_splash("gui") is True
 
 
 def test_splash_skipped_for_tui_frontend(monkeypatch):
@@ -312,6 +333,39 @@ def test_splash_skipped_off_windows(monkeypatch):
     monkeypatch.setattr(MultiWorld, "is_windows", False)
     monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
     assert MultiWorld.should_show_splash("gui") is False
+
+
+# --- client component unwrapping (in-process launch) ---
+
+def _inner_launch(*args):
+    """Stands in for a world's Client.launch."""
+
+
+def _launch_subprocess_wrapper(*args):
+    launch_subprocess(_inner_launch, name="TestClient", args=args)
+
+
+def _launch_component_wrapper(*args):
+    launch_component(_inner_launch, name="TestClient", args=args)
+
+
+def _opaque_wrapper(*args):
+    print(_inner_launch)
+
+
+def test_unwrap_launch_subprocess_wrapper():
+    """Wheel worlds that ship the upstream launch_subprocess(<launch>) wrapper
+    must unwrap to the inner callable so the client launches in-process instead
+    of spawning a second GUI process."""
+    assert Utils._resolve_launch_from_custom_world(_launch_subprocess_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_launch_component_wrapper():
+    assert Utils._resolve_launch_from_custom_world(_launch_component_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_unrecognized_wrapper_returns_none():
+    assert Utils._resolve_launch_from_custom_world(_opaque_wrapper, "worlds.x") is None
 
 
 # --- Launcher.py dispatcher ---
@@ -409,8 +463,8 @@ def test_launcher_py_version_exits_zero_as_own_process():
 # Launcher component surface: FROZEN_TARGETS as the single source of truth
 # for built exe names, BaseUtils.spawn_client's argv/env/detach
 # construction, the builtin/other component-origin classification that keeps
-# builtin_components() trustworthy, and the worlds.LauncherComponents
-# re-export shim.
+# builtin_components() trustworthy, the install_apworld confirm gate, and the
+# worlds.LauncherComponents re-export shim.
 # --------------------------------------------------------------------------- #
 
 # --- FROZEN_TARGETS single source of truth ---
@@ -483,7 +537,8 @@ def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
     assert env["MWGG_CLIENT_TYPE"] == "game"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
     assert captured["kwargs"]["creationflags"] == (
         BaseUtils.subprocess.DETACHED_PROCESS | BaseUtils.subprocess.CREATE_NEW_PROCESS_GROUP
     )
@@ -513,7 +568,8 @@ def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
     assert env["MWGG_CLIENT_TYPE"] == "text"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
     assert captured["kwargs"]["start_new_session"] is True
     assert "creationflags" not in captured["kwargs"]
 
@@ -541,7 +597,7 @@ def test_spawn_client_component_flag(monkeypatch):
 
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
 
 
 def test_spawn_client_component_requires_game(monkeypatch):
@@ -622,6 +678,109 @@ def test_yaml_type_is_not_manifest_declarable():
     assert "yaml" not in lc._MANIFEST_COMPONENT_TYPES
     assert lc._coerce_manifest_component(
         {"name": "Sneaky", "type": "yaml"}, "world.apworld") is None
+
+
+# --- install_apworld confirm gate / Utils.messagebox_confirm cascade ---
+
+def test_install_apworld_declines_without_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: False)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path))
+    boxes = []
+    monkeypatch.setattr(Utils, "messagebox", lambda *args, **kwargs: boxes.append((args, kwargs)))
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == []
+    assert boxes == []
+
+
+def test_install_apworld_proceeds_on_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: True)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_install_apworld_skips_native_confirm_when_kivy_running(monkeypatch):
+    # the GUI pre-confirms with its own dialog; a second native confirm would
+    # double-warn every GUI install
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: True)
+
+    def _fail_confirm(*args, **kwargs):
+        raise AssertionError("core confirm must not fire when the GUI pre-confirms")
+
+    monkeypatch.setattr(Utils, "messagebox_confirm", _fail_confirm)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_messagebox_confirm_auto_confirms_without_gui(monkeypatch):
+    monkeypatch.setattr(Utils, "gui_enabled", False)
+    assert Utils.messagebox_confirm("Title", "text") is True
+
+
+def test_messagebox_confirm_auto_confirms_under_kivy(monkeypatch, caplog):
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: True)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+def test_messagebox_confirm_textual_branch_beats_native_backends(monkeypatch, caplog):
+    # a running TUI must not fall through to a blocking native dialog
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: True)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+
+    class _Tripwire:
+        def __getattr__(self, name):
+            raise AssertionError("native dialog must not open under a running TUI")
+
+    monkeypatch.setattr(ctypes, "windll", _Tripwire(), raising=False)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+@pytest.mark.parametrize("box_result, expected", [(1, True), (2, False)])
+def test_messagebox_confirm_windows_okcancel(monkeypatch, box_result, expected):
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+    calls = {}
+
+    class _User32:
+        @staticmethod
+        def MessageBoxW(hwnd, text, title, style):
+            calls.update(text=text, title=title, style=style)
+            return box_result
+
+    class _WinDLL:
+        user32 = _User32()
+
+    monkeypatch.setattr(ctypes, "windll", _WinDLL(), raising=False)
+
+    assert Utils.messagebox_confirm("Install APWorld?", "body") is expected
+    assert calls["style"] == 0x31  # MB_OKCANCEL | MB_ICONWARNING
 
 
 # --- worlds.LauncherComponents re-export shim ---

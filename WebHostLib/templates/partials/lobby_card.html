@@ -1,8 +1,8 @@
 {# Renders one lobby as a tappable card.
 
    Loop variables expected:
-     lobby        — Lobby model instance
-     session_key  — current session UUID (so we can show "You're hosting")
+     lobby        - Lobby model instance
+     session_key  - current session UUID (so we can show "You're hosting")
 #}
 {% set state_label = ({0: 'Open', 1: 'Generating', 2: 'Done', 3: 'Locked'}).get(lobby.state, 'Unknown') %}
 {% set pill_class = ({0: 'open', 1: 'paused', 2: 'done', 3: 'paused'}).get(lobby.state, 'open') %}

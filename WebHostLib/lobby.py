@@ -446,7 +446,7 @@ def lobby_join(lobby: UUID):
         # SQLite ignores the FOR UPDATE above, so cleanup can delete the lobby
         # before the commit-time flush (StaleDataError); lock/deadlock failures
         # surface as OperationalError. A failed commit does NOT roll back the
-        # session — rollback() restores it and expunges the pending player and
+        # session - rollback() restores it and expunges the pending player and
         # message.
         rollback()
         flash('The lobby changed while you were joining. Please try again.')

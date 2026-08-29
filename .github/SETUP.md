@@ -6,15 +6,15 @@ Most workflows in this repo run with no extra setup beyond a vanilla GitHub repo
 
 Settings → Actions → General → Workflow permissions:
 
-- ✅ **Read and write permissions** — required for `ci.yml`'s auto-commit of infra wheels back
+- ✅ **Read and write permissions** - required for `ci.yml`'s auto-commit of infra wheels back
   into `default_wheels/` and `worlds_wheels/`.
-- ✅ **Allow GitHub Actions to create and approve pull requests** — currently unused but reserved
+- ✅ **Allow GitHub Actions to create and approve pull requests** - currently unused but reserved
   for any future bot-driven PR flow.
 
 ## Secrets / variables
 
 None required for `ci.yml` or `release.yml`. Per-game worlds are not published from this repo, so
-no PyPI credentials are needed here. (Webhost deployment uses its own secrets — documented in the
+no PyPI credentials are needed here. (Webhost deployment uses its own secrets - documented in the
 webhost deploy configs.)
 
 If you fork the repo and want CI to run on your branch, no further setup is needed: pushing to the
@@ -40,4 +40,4 @@ git push origin v0.0.1-test
 | `ci.yml` doesn't fire | Only listens on the development branch; check `on:` block. |
 | `build-base-worlds` doesn't run | Only triggers on `worlds/*.py` (namespace files) changes. |
 | Auto-commit fails | Repo permissions: enable "Read and write permissions". |
-| Frozen build fails | Most likely a stale `default_wheels/` or `worlds_wheels/` artifact — re-run the matching CI job to refresh. |
+| Frozen build fails | Most likely a stale `default_wheels/` or `worlds_wheels/` artifact - re-run the matching CI job to refresh. |

@@ -8,14 +8,14 @@ Oliver does NOT clone, build, or push to per-world repos. The build is done by t
 
 GitHub Apps have one global permission set per App. To keep the per-world install prompt strictly non-scary while still letting the bot write to the Index, Oliver is split into two App identities:
 
-- **Oliver-Multiworld-Squirrel** — installed on per-world repos AND the Index.
+- **Oliver-Multiworld-Squirrel** - installed on per-world repos AND the Index.
   - Permissions: `Contents: Read`, `Actions: Read`, `Pull requests: Read and write`, `Issues: Write`, `Metadata: Read`.
   - **Subscribe to events:** **Workflow run** and **Release** (both `workflow_run.completed` and `release.published`).
-  - On per-world repos: only the read-shaped permissions are exercised. `Pull requests: Read and write` and `Issues: Write` are unused there but visible at install time (acceptable trade-off — they're the bits Oliver uses on its Index installation).
+  - On per-world repos: only the read-shaped permissions are exercised. `Pull requests: Read and write` and `Issues: Write` are unused there but visible at install time (acceptable trade-off - they're the bits Oliver uses on its Index installation).
   - On the Index installation: `Pull requests: Read and write` lets Oliver open and update the manifest PR; `Issues: Write` lets Oliver apply the `New APWorld` / `APWorld Update` labels via the Issues API (PR labels are managed through Issues endpoints).
-- **Karen** — installed on **the Index only**.
+- **Karen** - installed on **the Index only**.
   - Permissions: `Contents: Read and write`, `Metadata: Read`.
-  - **Subscribe to events:** none (no webhook). Does the branch-create, manifest-commit, and CODEOWNERS append on the Index when Oliver tells her to. Also runs the Index's PR-review workflow under her installation token (Phase D — the APPROVE / REQUEST_CHANGES posting), but that is workflow-side, not Probot-handler-side.
+  - **Subscribe to events:** none (no webhook). Does the branch-create, manifest-commit, and CODEOWNERS append on the Index when Oliver tells her to. Also runs the Index's PR-review workflow under her installation token (Phase D - the APPROVE / REQUEST_CHANGES posting), but that is workflow-side, not Probot-handler-side.
 
 The split exists so the source side and the review side are different identities even though both PEMs live in the same container. Oliver opens (and labels) the PR; Karen commits the files and reviews. Don't collapse the responsibilities.
 
@@ -45,8 +45,8 @@ The Oliver service holds both Apps' PEMs. On a webhook from a per-world repo, th
    jobs:
      publish:
        uses: MultiworldGG/gen-pymod-release/.github/workflows/build.yml@v3
-       # No `with:` needed on release events — slug comes from the release tag.
-       # No `secrets:` — no Oliver secrets needed
+       # No `with:` needed on release events - slug comes from the release tag.
+       # No `secrets:` - no Oliver secrets needed
    ```
 
 3. Cut a GitHub Release tagged `<slug>-<world_version>`, for example `myclgm-1.0.0`.
@@ -64,7 +64,7 @@ The author publishes a release whose assets are already attached (e.g. after dis
 1. Receives `release.published` webhook from the per-world repo.
 2. Skips drafts (defensive; GitHub should not send `release.published` for drafts).
 3. Resolves the tag's commit SHA via the Git refs API.
-4. Identifies the world (apworld folder name / Index slug) — see [World identification](#world-identification) below.
+4. Identifies the world (apworld folder name / Index slug) - see [World identification](#world-identification) below.
 5. Fetches the release by tag; selects the single `.whl` asset and reads its `browser_download_url` + SHA256 `digest`. Bails if the digest is missing (`asset_digest_missing`).
 6. Fetches `worlds/<slug>/archipelago.json` at the tag's commit SHA.
 7. Opens or updates a PR on `MultiworldGG/MultiworldGG-Index` via `update/<slug>-<release_tag>` with `module_location = <browser_download_url>#sha256=<hex>`.
@@ -74,11 +74,11 @@ The author publishes a release whose assets are already attached (e.g. after dis
 
 Fires after the per-world repo's packaging workflow finishes. Oliver only acts if the run references `MultiworldGG/gen-pymod-release/.github/workflows/build.yml`, was triggered by a `release` event, and concluded `success`. It then resolves the head SHA to a release tag and runs the same shared processing logic.
 
-If any step fails (bad release tag, no digest, Oliver not installed on the Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index — failures surface only on the `/status` page.
+If any step fails (bad release tag, no digest, Oliver not installed on the Index, etc.), Oliver writes a `skip` or `error` record to the JSONL log and returns 200 to GitHub. No issues are opened on the per-world repo or the Index - failures surface only on the `/status` page.
 
 ## World identification
 
-For a single-world release Oliver needs the **apworld folder name** (the Index slug — `worlds/<slug>.json`, `worlds/<slug>/archipelago.json`, branch `update/<slug>-<tag>`). It resolves it from two sources, in this precedence:
+For a single-world release Oliver needs the **apworld folder name** (the Index slug - `worlds/<slug>.json`, `worlds/<slug>/archipelago.json`, branch `update/<slug>-<tag>`). It resolves it from two sources, in this precedence:
 
 1. **An attached `<name>.apworld` asset wins.** `<name>` is used as the slug. This supports the **Basic Manual** author flow (a full Archipelago fork, no CI): the author builds the `.whl` and `.apworld` locally, cuts a release under an **arbitrary** tag, and attaches both assets by hand. The tag prefix is meaningless on that path, so the asset is authoritative.
    - The stem must be a valid slug (`^[a-z0-9][a-z0-9_-]{0,63}$`). An invalidly-named asset (e.g. GitHub mangles `My Game.apworld` → `My.Game.apworld`) is ignored and Oliver falls back to the tag prefix.
@@ -87,7 +87,7 @@ For a single-world release Oliver needs the **apworld folder name** (the Index s
 
 If neither yields a usable slug, Oliver logs `no_slug_resolved` and stops.
 
-**Why the asset wins instead of failing on a mismatch:** an arbitrary tag is the entire point of the Basic Manual flow, so a tag/asset "disagreement" is expected, not an error. The hand-attached, deliberately-named `.apworld` is the stronger signal. (Bundled `worlds-wheels-*` releases are unaffected — they derive a slug per wheel and never consult `.apworld` assets.)
+**Why the asset wins instead of failing on a mismatch:** an arbitrary tag is the entire point of the Basic Manual flow, so a tag/asset "disagreement" is expected, not an error. The hand-attached, deliberately-named `.apworld` is the stronger signal. (Bundled `worlds-wheels-*` releases are unaffected - they derive a slug per wheel and never consult `.apworld` assets.)
 
 The `.whl` selection and `module_location` pinning are identical on every path: exactly one `.whl`, its `browser_download_url` plus the GitHub-computed SHA256 `digest`, pinned as `…whl#sha256=<hex>`.
 
@@ -113,10 +113,10 @@ The compose service at `deploy/docker-compose.yml` bind-mounts `deploy/github-bo
 
 Each Index PR Oliver opens gets exactly one of two labels, applied by Karen via `issues.addLabels` after `pulls.create` / `pulls.update`:
 
-- **`New APWorld`** — applied when `worlds/<slug>.json` did not exist on the Index's default branch before this commit.
-- **`APWorld Update`** — applied when `worlds/<slug>.json` already existed.
+- **`New APWorld`** - applied when `worlds/<slug>.json` did not exist on the Index's default branch before this commit.
+- **`APWorld Update`** - applied when `worlds/<slug>.json` already existed.
 
-Both labels must exist on the Index repo for the call to succeed. They are already present on `MultiworldGG/MultiworldGG-Index`; **do not delete or rename them**. If you need new labels, add them alongside — don't repurpose the existing two.
+Both labels must exist on the Index repo for the call to succeed. They are already present on `MultiworldGG/MultiworldGG-Index`; **do not delete or rename them**. If you need new labels, add them alongside - don't repurpose the existing two.
 
 The "new vs update" decision is independent of whether the PR itself is newly opened or being re-pushed for a later release of the same world: a re-push of `myclgm` after the world is already on `main` is always `APWorld Update`, even if Oliver is updating an existing PR rather than opening one.
 
@@ -130,22 +130,22 @@ worlds/<slug>.json @<sourceOwner>
 
 to `.github/CODEOWNERS` (creating the file with a header if it doesn't exist). `<sourceOwner>` is the per-world repo's owner login. Once on `main`, GitHub auto-requests that owner for review on every subsequent PR touching that file, which is the wiring for TODO #2d.
 
-This requires the Index's `main` branch to use **classic branch protection** with "Require review from Code Owners" enabled — that option is not available in the newer rulesets regime as of 2026-05.
+This requires the Index's `main` branch to use **classic branch protection** with "Require review from Code Owners" enabled - that option is not available in the newer rulesets regime as of 2026-05.
 
 Edge cases:
-- **CODEOWNERS already lists this world for a different owner** — Oliver does not overwrite. The existing line is left alone, the PR is still opened and labeled, and a `skip` event is logged with `reason: "codeowners_conflict"` so the operator can decide what to do (typically: an issue from the "Transfer codeowner" template plus a manual edit).
-- **CODEOWNERS already lists this world for the expected owner** — no-op (idempotent on PR re-pushes).
-- **CODEOWNERS does not exist yet** — Oliver creates it with a small header comment.
+- **CODEOWNERS already lists this world for a different owner** - Oliver does not overwrite. The existing line is left alone, the PR is still opened and labeled, and a `skip` event is logged with `reason: "codeowners_conflict"` so the operator can decide what to do (typically: an issue from the "Transfer codeowner" template plus a manual edit).
+- **CODEOWNERS already lists this world for the expected owner** - no-op (idempotent on PR re-pushes).
+- **CODEOWNERS does not exist yet** - Oliver creates it with a small header comment.
 
 ### Testing convention: don't ping real codeowners
 
-When iterating against the sandbox or running test PRs, set `OLIVER_CODEOWNER_PREFIX=MWGGTESTING-` in the env file (see the table above). The appended handle becomes `@MWGGTESTING-<author>` — a placeholder GitHub never resolves to a real user, so no one gets a review-request notification on test PRs. Production deploys leave this unset.
+When iterating against the sandbox or running test PRs, set `OLIVER_CODEOWNER_PREFIX=MWGGTESTING-` in the env file (see the table above). The appended handle becomes `@MWGGTESTING-<author>` - a placeholder GitHub never resolves to a real user, so no one gets a review-request notification on test PRs. Production deploys leave this unset.
 
 The vitest fixtures under `test/` follow the same convention; do not put real GitHub handles in test fixtures even when the prefix env var isn't being exercised.
 
 ## App slugs are immutable
 
-The PR/commit author tag visible on Index PRs is `oliver-the-multiworld-squirrel[bot]` / `karen-head-of-multiworld-qa[bot]` — the **slug** form, not the App's display name. GitHub generates the slug at App-creation time from the original App name (lowercased, dashes), and as of this writing exposes no UI or API to rename it post-creation. Renaming the App's display name does **not** change the slug.
+The PR/commit author tag visible on Index PRs is `oliver-the-multiworld-squirrel[bot]` / `karen-head-of-multiworld-qa[bot]` - the **slug** form, not the App's display name. GitHub generates the slug at App-creation time from the original App name (lowercased, dashes), and as of this writing exposes no UI or API to rename it post-creation. Renaming the App's display name does **not** change the slug.
 
 If a future GitHub release adds a slug rename, do **not** take it without a separate plan. The slug is referenced by:
 - The hardcoded fallbacks in `src/index.ts:38,46`.
@@ -162,11 +162,11 @@ One surface: **`GET /status`**.
 
 Top of the page shows the bot's two App-identity slugs. Below that, a 24h ok/skip/error count summary, then a table of the last 50 skip/error entries from `events.jsonl`. JSON form at `/status/.json` returns the same data plus the last 200 events of all kinds.
 
-The page is intentionally minimal: title, slugs, counts, log table, JSON link. No service-internal details (compose service name, deployment topology, "webhook receiver" descriptions) — those would help an attacker map the deploy footprint and add no value to anyone with legitimate access (operators read `docker compose logs` directly).
+The page is intentionally minimal: title, slugs, counts, log table, JSON link. No service-internal details (compose service name, deployment topology, "webhook receiver" descriptions) - those would help an attacker map the deploy footprint and add no value to anyone with legitimate access (operators read `docker compose logs` directly).
 
 `/status` and `/status/*` pass through the nginx-edge HMAC validation as unauthenticated GET requests; POST traffic still requires a valid GitHub webhook signature.
 
-In-process runtime logs go to stdout via Probot's bundled pino logger — `docker compose logs mwgg-github-bot` for live tailing.
+In-process runtime logs go to stdout via Probot's bundled pino logger - `docker compose logs mwgg-github-bot` for live tailing.
 
 ## Local development
 
@@ -209,7 +209,7 @@ Operator setup on the production host:
    chmod 600 github-bot-secrets/*
    ```
 
-3. Build + start the container (publishes 127.0.0.1:3000 only — not internet-reachable):
+3. Build + start the container (publishes 127.0.0.1:3000 only - not internet-reachable):
    ```
    docker compose -f docker-compose.yml up -d --build mwgg-github-bot
    docker compose logs mwgg-github-bot  # verify "Oliver listening for workflow_run.completed and release.published events"

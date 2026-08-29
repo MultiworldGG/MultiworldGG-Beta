@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { decideFuzzReview, submitFuzzReview } from "../src/fuzz/review";
 
-describe("decideFuzzReview — gate on manifest + fuzz", () => {
+describe("decideFuzzReview - gate on manifest + fuzz", () => {
   it("APPROVES when manifest passed and fuzz passed", () => {
     const d = decideFuzzReview("pass", "pass");
     expect(d?.event).toBe("APPROVE");

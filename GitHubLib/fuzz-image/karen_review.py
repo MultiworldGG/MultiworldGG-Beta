@@ -9,14 +9,14 @@ On every PR open/sync against `main`, the
 `karen-pr-review.yml` workflow invokes this script with the list of changed
 manifest paths. Each manifest is run through 8 checks:
 
-    1. schema               — JSON-Schema validation against schema/world_manifest.schema.json
-    2. manifest_consistency — apworld = filename; URL apworld matches; no duplicate keys
-    3. url_reachability     — module_location, repo_url, tracker respond
-    4. size_sanity          — world dir size <= cap (overridable via --size-cap-mb)
-    5. no_rom_files         — no ROM/media-looking files in the fetched artifact
-    6. no_network_at_import — AST scan: no networking calls at module top level
-    7. bandit               — bandit -r on the fetched world directory
-    8. pip_audit            — pip-audit on requirements.txt / pyproject.toml if present
+    1. schema               - JSON-Schema validation against schema/world_manifest.schema.json
+    2. manifest_consistency - apworld = filename; URL apworld matches; no duplicate keys
+    3. url_reachability     - module_location, repo_url, tracker respond
+    4. size_sanity          - world dir size <= cap (overridable via --size-cap-mb)
+    5. no_rom_files         - no ROM/media-looking files in the fetched artifact
+    6. no_network_at_import - AST scan: no networking calls at module top level
+    7. bandit               - bandit -r on the fetched world directory
+    8. pip_audit            - pip-audit on requirements.txt / pyproject.toml if present
 
 Checks 4-8 require fetching the world's source. Currently supports
 `https://github.com/<org>/<repo>/tree/<ref>/<path>` URLs (sparse-clone of the
@@ -592,8 +592,8 @@ def _scan_module_for_network(path: Path) -> tuple[list[str], list[str]]:
     """Walk a single .py file's AST.
 
     Returns (calls, imports):
-      calls   — top-level network *call* statements (fail-level: actual side effect)
-      imports — top-level imports of network modules (warn-level: imports themselves
+      calls   - top-level network *call* statements (fail-level: actual side effect)
+      imports - top-level imports of network modules (warn-level: imports themselves
                 are harmless but a human reviewer should know they're present)
 
     We deliberately ignore nested-in-function network use: at-import-time is what
@@ -910,7 +910,7 @@ def render_comment(run: ReviewRun) -> str:
             lines.append("")
 
     for w in detailed_worlds:
-        lines.append(f"### `{w.apworld}` — {_STATUS_GLYPH[w.overall]} {w.overall}")
+        lines.append(f"### `{w.apworld}` - {_STATUS_GLYPH[w.overall]} {w.overall}")
         lines.append("")
         lines.append("| Check | Status | Notes |")
         lines.append("| --- | --- | --- |")

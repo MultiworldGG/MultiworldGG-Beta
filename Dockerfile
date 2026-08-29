@@ -69,7 +69,7 @@ RUN pip install --no-cache-dir uv
 
 # Copy and install requirements first (better caching).
 # Root requirements.txt: base + world-runtime deps (pathspec, PyYAML, xxtea,
-# aiohttp, etc.) — imported at module load or needed by world generation.
+# aiohttp, etc.) - imported at module load or needed by world generation.
 # WebHostLib/requirements.txt: Flask/web-specific deps.
 COPY requirements.txt requirements.txt
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt

@@ -153,6 +153,15 @@ class TestKvuiTuiStandins(unittest.TestCase):
             "assert ctx.took_over, 'async_run did not reach the takeover handshake'\n"
         )
 
+    def test_tracker_hint_patch_import_and_classic_screen(self) -> None:
+        """The tracker's hint-patch import line (worlds/tracker/gui.py) and the
+        classic hint screen must resolve to inert stand-ins without Kivy."""
+        self._assert_ok(
+            "from kvui import HintLog, HintLabel, TooltipLabel\n"
+            "from kvui import ClassicHintScreen\n"
+            "import sys; assert 'kivy' not in sys.modules, 'Kivy was imported'"
+        )
+
     def test_catch_all_handles_unenumerated_names_but_not_dunders(self) -> None:
         """Any non-dunder name resolves to a stable inert class; dunders still raise."""
         self._assert_ok(

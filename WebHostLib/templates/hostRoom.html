@@ -29,7 +29,7 @@
         ('Play', url_for('play_hub')),
         ('Seed #' ~ (room.seed_id|suuid), seed_crumb_url),
         ('Room ' ~ (room.id|suuid)[:6], none),
-    ], context=(room.seed.slots|length) ~ ' slots · Port <strong>' ~ (room.last_port if room.last_port and room.last_port > 0 else '—') ~ '</strong>') }}
+    ], context=(room.seed.slots|length) ~ ' slots · Port <strong>' ~ (room.last_port if room.last_port and room.last_port > 0 else '-') ~ '</strong>') }}
     <div id="host-room">
       <span id="host-room-info">
         {% if room.short_id %}

@@ -2,11 +2,11 @@
     /* ============================================================
        Material Design 3-style color tokens. Single source of truth
        for the entire site palette. Conventions follow MD3:
-         • <role>              — the role color (filled buttons, chips)
-         • on-<role>           — text/icon when placed on <role>
-         • <role>-container    — tonal surface variant of that role
+         • <role>              - the role color (filled buttons, chips)
+         • on-<role>           - text/icon when placed on <role>
+         • <role>-container    - tonal surface variant of that role
                                   (alert backgrounds, tinted chips, hovers)
-         • on-<role>-container — text/icon when on the container
+         • on-<role>-container - text/icon when on the container
 
        Dark site palette is the default. Per-theme overrides (themes/
        *.css) shadow these tokens on `body { … }`.
@@ -31,20 +31,20 @@
     --mw-sys-color-outline:                    #36193f;
     --mw-sys-color-outline-variant:            #2a1232;
 
-    /* Primary — pink brand */
+    /* Primary - pink brand */
     --mw-sys-color-primary:                    #ea166c;
     --mw-sys-color-on-primary:                 #ffffff;
     --mw-sys-color-primary-container:          #b80f54;
     --mw-sys-color-on-primary-container:       #ffe6f0;
     --mw-sys-color-primary-fixed:              #a01049;
 
-    /* Secondary — gold accent */
+    /* Secondary - gold accent */
     --mw-sys-color-secondary:                  #ffdd5a;
     --mw-sys-color-on-secondary:               #2a1232;
     --mw-sys-color-secondary-container:        #f9d6a3;
     --mw-sys-color-on-secondary-container:     #5a3a0f;
 
-    /* Tertiary — purple branding (gradient buttons, tracker tables) */
+    /* Tertiary - purple branding (gradient buttons, tracker tables) */
     --mw-sys-color-tertiary:                   #652895;
     --mw-sys-color-on-tertiary:                #ffffff;
     --mw-sys-color-tertiary-container:         #4a2272;
@@ -55,7 +55,7 @@
     --mw-sys-color-tertiary-surface:           #2d1b4e;
     --mw-sys-color-tertiary-outline:           #5a3080;
 
-    /* Error — Bootstrap danger red */
+    /* Error - Bootstrap danger red */
     --mw-sys-color-error:                      #dc3545;
     --mw-sys-color-on-error:                   #ffffff;
     --mw-sys-color-error-container:            #3a0d12;
@@ -63,14 +63,14 @@
     --mw-sys-color-error-hover:                #a71d2a;
     --mw-sys-color-error-outline:              #7a1c26;
 
-    /* Warning — Bootstrap warning yellow */
+    /* Warning - Bootstrap warning yellow */
     --mw-sys-color-warning:                    #ffc107;
     --mw-sys-color-on-warning:                 #2a1232;
     --mw-sys-color-warning-container:          #3a2c07;
     --mw-sys-color-on-warning-container:       #fff3cd;
     --mw-sys-color-warning-outline:            #65500f;
 
-    /* Success — Bootstrap green */
+    /* Success - Bootstrap green */
     --mw-sys-color-success:                    #28a745;
     --mw-sys-color-on-success:                 #ffffff;
     --mw-sys-color-success-container:          #0e2e15;
@@ -78,14 +78,14 @@
     --mw-sys-color-success-hover:              #1e7e34;
     --mw-sys-color-success-outline:            #1d5a2c;
 
-    /* Info — Bootstrap cyan */
+    /* Info - Bootstrap cyan */
     --mw-sys-color-info:                       #17a2b8;
     --mw-sys-color-on-info:                    #ffffff;
     --mw-sys-color-info-container:             #082a2f;
     --mw-sys-color-on-info-container:          #d1ecf1;
     --mw-sys-color-info-outline:               #115560;
 
-    /* Accent orange — apworld upload UI, custom-disclaimer, locked-status pill */
+    /* Accent orange - apworld upload UI, custom-disclaimer, locked-status pill */
     --mw-sys-color-accent-orange:              #e07b00;
     --mw-sys-color-on-accent-orange:           #ffffff;
     --mw-sys-color-accent-orange-container:    #3a1f00;
@@ -108,7 +108,7 @@
     /* Link */
     --mw-sys-color-link:                       #f04b6f;
 
-    /* Accent text (orange-ish highlights — chat sender, version tags) */
+    /* Accent text (orange-ish highlights - chat sender, version tags) */
     --mw-sys-color-accent-text:                #FFA810;
 
     /* Pure */
@@ -150,7 +150,7 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Base body defaults — picked up from the design tokens. Per-theme CSS
+/* Base body defaults - picked up from the design tokens. Per-theme CSS
    shadows the token values on `body { … }` (see Phase 12), which is why
    these `var()` reads resolve to the theme-tinted surface and text. */
 body {
@@ -161,7 +161,7 @@ body {
 }
 
 /* ===========================================================
-   Top navigation — redesigned for Phase 4
+   Top navigation - redesigned for Phase 4
    =========================================================== */
 
 #base-header {
@@ -230,7 +230,7 @@ body {
     margin-left: 2px;
 }
 
-/* Dropdown wrapper — provides the positioning context for .nav-menu
+/* Dropdown wrapper - provides the positioning context for .nav-menu
    so the menu anchors to the trigger instead of the whole header. */
 .nav-dropdown {
     position: relative;
@@ -254,7 +254,7 @@ body {
     display: none;
 }
 
-/* Transparent bridge — keeps the cursor inside the hover region while
+/* Transparent bridge - keeps the cursor inside the hover region while
    crossing the 6px gap between trigger and menu. */
 .nav-menu::before {
     content: "";
@@ -325,7 +325,7 @@ body {
     );
 }
 
-/* Mobile menu trigger (hamburger) — hidden by default */
+/* Mobile menu trigger (hamburger) - hidden by default */
 #base-header-right-mobile {
     display: none;
 }
@@ -378,7 +378,7 @@ body {
 }
 
 /* ===========================================================
-   Breadcrumb bar — Phase 5
+   Breadcrumb bar - Phase 5
    =========================================================== */
 
 .mw-breadcrumb {
@@ -459,7 +459,7 @@ body {
 }
 
 /* ===========================================================
-   Site footer — Discord / GitHub / About + 7-day stats
+   Site footer - Discord / GitHub / About + 7-day stats
    =========================================================== */
 
 #site-footer {
@@ -515,7 +515,7 @@ body {
 }
 
 /* ===========================================================
-   Site fonts — Inter for body copy (--mw-font-sans), Monaspace
+   Site fonts - Inter for body copy (--mw-font-sans), Monaspace
    for monospaced surfaces. Declared here rather than in
    globalStyles.css so pages outside the site wrapper (the
    standalone per-game trackers) resolve them too.
@@ -567,7 +567,7 @@ body {
 }
 
 /* ===========================================================
-   Material Design Icons — shared icon font for the redesign
+   Material Design Icons - shared icon font for the redesign
    ===========================================================
    The font is the Monaspace Nerd Font (MDI codepoints) shipped at
    data/fonts/MonaspiceAgNerdFont-Regular.otf and mirrored as
@@ -632,7 +632,7 @@ body {
    rightward by a glyph-specific amount, so no single rule can center them. The
    --mdi-dx value (em, scales with font-size) shifts each glyph's ink to its box
    center; values are computed from the font's glyph metrics. Vertical needs no
-   correction — the font's typo metrics already center it. Regenerate these if the
+   correction - the font's typo metrics already center it. Regenerate these if the
    icon font is replaced. */
 /* /me dashboard */
 .mdi-monitor                    { --mdi-dx: -0.149em; }

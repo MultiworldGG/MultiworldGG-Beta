@@ -42,7 +42,7 @@ afterEach(() => {
   delete process.env.FUZZ_WHEEL_HOSTS;
 });
 
-describe("validateFuzzPayload — happy path", () => {
+describe("validateFuzzPayload - happy path", () => {
   it("accepts a well-formed karen-fuzz payload", () => {
     const res = validateFuzzPayload("karen-fuzz", payload());
     expect(res.ok).toBe(true);
@@ -61,7 +61,7 @@ describe("validateFuzzPayload — happy path", () => {
   });
 });
 
-describe("validateFuzzPayload — field validation failures", () => {
+describe("validateFuzzPayload - field validation failures", () => {
   it("rejects a slug with path-traversal / arg-injection characters", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ worlds: [world({ apworld: "../etc" })] }));
     expect(res.ok).toBe(false);
@@ -140,7 +140,7 @@ describe("validateFuzzPayload — field validation failures", () => {
   });
 });
 
-describe("validateFuzzPayload — worlds array bounds", () => {
+describe("validateFuzzPayload - worlds array bounds", () => {
   it("rejects an empty worlds array", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ worlds: [] }));
     expect(res.ok).toBe(false);
@@ -162,7 +162,7 @@ describe("validateFuzzPayload — worlds array bounds", () => {
   });
 });
 
-describe("validateFuzzPayload — numeric clamps and defaults", () => {
+describe("validateFuzzPayload - numeric clamps and defaults", () => {
   it("fills in defaults when fuzz/scan params are missing", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ fuzz: {}, scan: {} }));
     expect(res.ok).toBe(true);
@@ -196,7 +196,7 @@ describe("validateFuzzPayload — numeric clamps and defaults", () => {
   });
 });
 
-describe("validateFuzzPayload — manifest_status passthrough", () => {
+describe("validateFuzzPayload - manifest_status passthrough", () => {
   it("passes a string manifest_status through to the value", () => {
     const res = validateFuzzPayload("karen-fuzz", payload({ manifest_status: "pass" }));
     expect(res.ok).toBe(true);

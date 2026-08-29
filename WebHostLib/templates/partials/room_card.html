@@ -1,8 +1,8 @@
 {# Renders one room as a tappable card.
 
    Loop variables expected:
-     room    — Room model instance (with .seed for slot/seed_id access)
-     status  — RoomStatus dataclass from WebHostLib.dashboard.classify_room
+     room    - Room model instance (with .seed for slot/seed_id access)
+     status  - RoomStatus dataclass from WebHostLib.dashboard.classify_room
 #}
 <a href="{{ url_for('host_room', seed=room.seed_id, room=room.id) }}" class="mw-card-link">
     <div class="mw-card">

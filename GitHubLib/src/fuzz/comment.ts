@@ -60,7 +60,7 @@ export function renderFuzzRegion(results: FuzzWorldResult[]): string {
 
   for (const r of results) {
     const head = [
-      `#### \`${r.slug}\` — ${statusLabel(r.status)}`,
+      `#### \`${r.slug}\` - ${statusLabel(r.status)}`,
       "",
       "| Check | Status | Notes |",
       "| --- | --- | --- |",
@@ -115,7 +115,7 @@ function charLen(arr: string[]): number {
  */
 function fuzzerNotes(r: FuzzWorldResult): string {
   const detail = r.detail.trim();
-  if (!r.stats || (r.stats.total ?? 0) <= 0) return detail || "—";
+  if (!r.stats || (r.stats.total ?? 0) <= 0) return detail || "-";
   const stats = formatStats(r.stats);
   if (!detail || detail.includes("classified:")) return stats;
   return `${detail} (${stats})`;

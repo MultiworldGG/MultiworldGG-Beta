@@ -12,7 +12,7 @@ What you'll need:
      updates for older versions are not easily available.
    * Python 3.13.x is the only supported version (3.12 is no longer supported as of the 3.13 cutover)
  * pip: included in downloads from python.org, separate in many Linux distributions
- * [uv](https://docs.astral.sh/uv/getting-started/installation/) — required by `ModuleUpdate.py` for all package
+ * [uv](https://docs.astral.sh/uv/getting-started/installation/) - required by `ModuleUpdate.py` for all package
    installs. The frozen Windows installer auto-installs uv via winget (with an astral PowerShell installer fallback);
    the macOS/Linux frozen builds run astral's installer on first launch. Running from source, install `uv` on
    `PATH` yourself with one of:

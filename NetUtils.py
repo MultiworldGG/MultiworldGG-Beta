@@ -436,6 +436,152 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     def _handle_text(self, node: JSONMessagePart):
         return node.get("text", "")
 
+
+class KivyRefJSONtoTextParser(KivyMarkupJSONtoTextParser):
+    """Ref-emitting variant for the classic hint screen (kvui re-exports it as
+    KivyJSONtoTextParser): wraps nodes in ``[ref=N|payload]`` markup anchors that
+    TooltipLabel hit-tests for per-cell tooltips (Item Class on items, Game/Type
+    on players).
+
+    Escape placement mirrors MAIN's kvui parser, adapted to this parent's flow:
+    the typed handlers (_handle_item_name, _handle_location_name,
+    _handle_entrance_name, _handle_hint_status, _handle_plaintext) escape before
+    delegating to _handle_color, while player_id/player_name and raw "color"
+    nodes arrive unescaped - _handle_color escapes exactly those, and
+    _handle_text only escapes nodes explicitly typed "text" (the one path that
+    dispatches there directly), so nothing is ever escaped twice.
+    """
+    # Node types whose text reaches _handle_color unescaped in the parent flow.
+    _unescaped_color_types = frozenset({"color", "player_id", "player_name"})
+
+    # Own ClassVar so the lazy seeding in the parent __init__ builds a separate
+    # table for this class and the normalization below never touches the parent's.
+    color_codes: typing.ClassVar[typing.Optional[dict]] = None
+
+    def __init__(self, ctx):
+        super().__init__(ctx)
+        self.ref_count = 0
+        # Normalize this class's table to bare hex: kivy hex_colormap values
+        # carry a leading '#', which corrupts consumers that prepend their own
+        # '#' to color_codes values (e.g. dkc2's palette strings). The parent
+        # class's table stays untouched so console output is unchanged.
+        cls = type(self)
+        if any(value.startswith("#") for value in cls.color_codes.values()):
+            cls.color_codes = {name: value.removeprefix("#")
+                               for name, value in cls.color_codes.items()}
+
+    def __call__(self, *args, **kwargs):
+        self.ref_count = 0
+        return super().__call__(*args, **kwargs)
+
+    def _handle_item_name(self, node: JSONMessagePart):
+        flags = node.get("flags", 0)
+        item_types = []
+        if flags & 0b00001:  # progression
+            if flags & 0b10000:  # deprioritized, but still progression
+                item_types.append("progression (deprioritized)")
+            elif flags & 0b01000:  # skip_balancing: goal items/macguffins
+                item_types.append("progression (goal)")
+            else:
+                item_types.append("progression")
+        if flags & 0b00010:  # useful
+            item_types.append("useful")
+        if flags & 0b00100:  # trap
+            item_types.append("trap")
+        if not item_types:
+            item_types.append("normal")
+
+        node.setdefault("refs", []).append("Item Class: " + ", ".join(item_types))
+        return super()._handle_item_name(node)
+
+    def _handle_player_id(self, node: JSONMessagePart):
+        player = int(node["text"])
+        slot_info = self.ctx.slot_info.get(player, None)
+        if slot_info:
+            text = f"Game: {slot_info.game}<br>" \
+                   f"Type: {SlotType(slot_info.type).name}"
+            if slot_info.group_members:
+                text += f"<br>Members:<br> " + "<br> ".join(
+                    escape_markup(self.ctx.player_names[member])
+                    for member in slot_info.group_members
+                )
+            node.setdefault("refs", []).append(text)
+        return super()._handle_player_id(node)
+
+    def _handle_color(self, node: JSONMessagePart):
+        if node.get("type") in self._unescaped_color_types:
+            node["text"] = escape_markup(node["text"])
+        codes = node["color"].split(";")
+        for code in codes:
+            color_hex = self.color_codes.get(code, None)
+            if color_hex:
+                node["text"] = f"[color={color_hex}]{node['text']}[/color]"
+                return self._handle_text(node)
+        return self._handle_text(node)
+
+    def _handle_text(self, node: JSONMessagePart):
+        if node.get("type") == "text":
+            node["text"] = escape_markup(node["text"])
+        for ref in node.get("refs", []):
+            node["text"] = f"[ref={self.ref_count}|{ref}]{node['text']}[/ref]"
+            self.ref_count += 1
+        return super()._handle_text(node)
+
+
+# Console-hover tooltip labels, keyed by the six item-class TEXT_COLORS names.
+# Deliberately excludes command_echo_color (shared with command/help text) and
+# the player/location/entrance colors.
+ITEM_CLASS_TOOLTIP_LABELS: typing.Dict[str, str] = {
+    "progression_goal_item_color": "Goal Item",
+    "progression_item_color": "Required Item",
+    "progression_deprioritized_item_color": "Logically Required Item",
+    "useful_item_color": "Useful Item",
+    "regular_item_color": "Regular or Filler Item",
+    "trap_item_color": "Trap Item",
+}
+
+
+def find_enclosing_color_span(text: str, index: int, window: int = 4096
+                              ) -> typing.Optional[typing.Tuple[int, int, str]]:
+    """(start, end, hex) of the ``[color=hex]...[/color]`` span enclosing
+    ``index``, scanning at most ``window`` chars each way: tag literals count
+    as inside, end is exclusive, hex has no leading ``#``. None between spans,
+    out of range, or on malformed markup; unescaped brackets (player names)
+    degrade to None or a containing span, never an exception."""
+    open_tag = "[color="
+    close_tag = "[/color]"
+    if index < 0 or index >= len(text):
+        return None
+    lo = max(0, index - window)
+    # An index inside the "[/color]" literal belongs to the span it closes;
+    # rescan as if standing at that literal's opening bracket.
+    probe = index
+    close_overlap = text.rfind(close_tag, max(lo, index - len(close_tag) + 1),
+                               index + len(close_tag))
+    if close_overlap != -1:
+        probe = close_overlap
+    # Nearest open tag starting at or before probe (rfind's exclusive end
+    # admits a tag whose literal contains probe).
+    open_idx = text.rfind(open_tag, lo, probe + len(open_tag))
+    if open_idx == -1:
+        return None
+    # A close tag fully between that open tag and probe means the probe sits
+    # after the span, in unwrapped text.
+    if text.rfind(close_tag, lo, probe) > open_idx:
+        return None
+    value_end = text.find("]", open_idx + len(open_tag),
+                          open_idx + len(open_tag) + 10)
+    if value_end == -1:
+        return None
+    hex_value = text[open_idx + len(open_tag):value_end].removeprefix("#")
+    if len(hex_value) not in (6, 8) or not all(c in "0123456789abcdefABCDEF" for c in hex_value):
+        return None
+    close_idx = text.find(close_tag, value_end + 1, index + window)
+    if close_idx == -1:
+        return None
+    return open_idx, close_idx + len(close_tag), hex_value
+
+
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
                 'magenta': 35, 'cyan': 36, 'white': 37, 'black_bg': 40, 'red_bg': 41, 'green_bg': 42, 'yellow_bg': 43,

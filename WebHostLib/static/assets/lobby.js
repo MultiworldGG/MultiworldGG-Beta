@@ -286,7 +286,7 @@
                 const versionSatisfied = !isCustom && y.required_version && !y.version_warning
                     && !y.version_upgrade_available && !hasReplacementApworld;
                 const serverVer = !isCustom && y.server_world_version && !hasReplacementApworld && !versionSatisfied
-                    ? `<span class="yaml-world-version" title="Server has v${escapeHtml(y.server_world_version)} — compatibility unverified (YAML has no version requirement)">v${escapeHtml(y.server_world_version)}</span>`
+                    ? `<span class="yaml-world-version" title="Server has v${escapeHtml(y.server_world_version)} - compatibility unverified (YAML has no version requirement)">v${escapeHtml(y.server_world_version)}</span>`
                     : '';
                 const versionWarning = y.apworld_version_warning || (hasReplacementApworld ? null : y.version_warning);
                 const versionWarn = versionWarning
@@ -326,9 +326,9 @@
                         const verLabel = apw.world_version ? `v${escapeHtml(apw.world_version)}` : (apw.game_name && apw.game_name.startsWith("Manual_") ? "Manual APWorld" : "APWorld");
                         let apwTip = escapeHtml(apw.filename);
                         if (apw.world_version && y.required_version) {
-                            apwTip += ` — v${escapeHtml(apw.world_version)} satisfies requirement v${escapeHtml(y.required_version)}`;
+                            apwTip += ` - v${escapeHtml(apw.world_version)} satisfies requirement v${escapeHtml(y.required_version)}`;
                         } else if (apw.world_version) {
-                            apwTip += ` — v${escapeHtml(apw.world_version)}, compatibility unverified (YAML has no version requirement)`;
+                            apwTip += ` - v${escapeHtml(apw.world_version)}, compatibility unverified (YAML has no version requirement)`;
                         }
                         html += `<span class="apworld-status-ok" title="${apwTip}">&#10003; ${verLabel}</span>`;
                     } else if (!canEditApworld && !hasPendingRequest) {
@@ -353,7 +353,7 @@
                         const verLabel = apw.world_version ? `v${escapeHtml(apw.world_version)}` : (apw.game_name && apw.game_name.startsWith("Manual_") ? "Manual APWorld" : "APWorld");
                         let apwTip = escapeHtml(apw.filename);
                         if (apw.world_version && y.required_version) {
-                            apwTip += ` — v${escapeHtml(apw.world_version)} satisfies requirement v${escapeHtml(y.required_version)}`;
+                            apwTip += ` - v${escapeHtml(apw.world_version)} satisfies requirement v${escapeHtml(y.required_version)}`;
                             if (y.server_world_version) {
                                 apwTip += ` (server has v${escapeHtml(y.server_world_version)})`;
                             }
@@ -1646,7 +1646,7 @@
             const maxPlayersEl = document.getElementById("edit-max-players");
             const newMaxYamls = parseInt(document.getElementById("edit-max-yamls").value);
             if (newMaxYamls < maxYamlsHeld) {
-                showToast(`Cannot lower max YAMLs below ${maxYamlsHeld} — a player already has that many.`);
+                showToast(`Cannot lower max YAMLs below ${maxYamlsHeld} - a player already has that many.`);
                 return;
             }
 

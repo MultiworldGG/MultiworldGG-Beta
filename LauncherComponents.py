@@ -321,6 +321,14 @@ def _install_apworld(path: str = "") -> Optional[pathlib.Path]:
 
 def install_apworld(path: str = "") -> None:
     import Utils
+    # GUI callers pre-confirm with their own dialog; the native gate covers the
+    # headless CLI and .apworld routing that runs before the frontend boots.
+    if not is_kivy_running() and not Utils.messagebox_confirm(
+            "Install APWorld?",
+            "APWorlds contain program code that runs on your computer when the world is loaded. "
+            "Only install APWorlds from sources you trust."):
+        logging.info("APWorld installation declined by user.")
+        return
     try:
         target = _install_apworld(path)
         if target is None:

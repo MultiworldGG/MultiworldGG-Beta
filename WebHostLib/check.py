@@ -47,7 +47,7 @@ def _is_valid_yaml_content(content: bytes, filename: str) -> tuple[bool, str | N
 
     Returns (is_valid, error_message).
     """
-    # Block .apworld files — these should use the APWorld upload button, not the YAML checker.
+    # Block .apworld files - these should use the APWorld upload button, not the YAML checker.
     if filename.endswith('.apworld'):
         return False, f"'{filename}' is an APWorld file. In a lobby, use the APWorld upload button instead."
 

@@ -338,7 +338,7 @@ async function readContainerResult(
       exitCode: dockerExitCode,
       detail:
         `${job.slug}: no readable result.json (${why}); container exit ${dockerExitCode}` +
-        (hint ? ` — ${hint}` : ""),
+        (hint ? ` - ${hint}` : ""),
     };
   }
 
@@ -367,7 +367,7 @@ async function readContainerResult(
   }
 
   const detail =
-    tail.length > 0 ? `${job.slug}: ${status} — ${tail}` : `${job.slug}: ${status}`;
+    tail.length > 0 ? `${job.slug}: ${status} - ${tail}` : `${job.slug}: ${status}`;
   return { status, stats, scan, fuzzerDetails, exitCode, detail };
 }
 
@@ -499,7 +499,7 @@ export async function runFuzzContainer(
       return {
         slug: job.slug,
         status: "fail",
-        detail: `${job.slug}: could not fetch/verify wheel — ${why}`,
+        detail: `${job.slug}: could not fetch/verify wheel - ${why}`,
         exitCode: 1,
         timedOut: false,
       };
@@ -553,7 +553,7 @@ export async function runFuzzContainer(
     if (opts.debug) {
       // FUZZ_DEBUG: keep the per-job dir (result.json, combined.log, fuzz_output/)
       // for inspection. These accumulate; clean workDir when done.
-      opts.log(`fuzz ${job.slug}: FUZZ_DEBUG on — kept artifacts at ${hostOutDir}`);
+      opts.log(`fuzz ${job.slug}: FUZZ_DEBUG on - kept artifacts at ${hostOutDir}`);
     } else {
       // Reclaim the per-job host dir regardless of outcome; never mask a real error.
       await fs.rm(jobDir, { recursive: true, force: true }).catch((err: unknown) => {

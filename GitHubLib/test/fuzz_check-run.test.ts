@@ -117,7 +117,7 @@ describe("completeFuzzCheckRun", () => {
       repo: REPO,
       checkRunId: 1000,
       conclusion: "failure",
-      title: "Karen's Isolated QA Checks — 1 failing",
+      title: "Karen's Isolated QA Checks - 1 failing",
       summary: "1 world failed",
       text: "| world | status |\n| hk | fail |",
     });
@@ -127,7 +127,7 @@ describe("completeFuzzCheckRun", () => {
     expect(update!.payload.check_run_id).toBe(1000);
     expect(update!.payload.status).toBe("completed");
     expect(update!.payload.conclusion).toBe("failure");
-    expect(update!.payload.output.title).toBe("Karen's Isolated QA Checks — 1 failing");
+    expect(update!.payload.output.title).toBe("Karen's Isolated QA Checks - 1 failing");
     expect(update!.payload.output.summary).toBe("1 world failed");
     expect(update!.payload.output.text).toContain("hk");
   });

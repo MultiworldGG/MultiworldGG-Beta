@@ -11,7 +11,7 @@
     {{ breadcrumb([
         ('Games Hub', url_for('me')),
         (kind|capitalize + 's', url_for('my_rooms') if kind == 'room' else url_for('my_lobbies')),
-        ('Share access — ' ~ display_name, none),
+        ('Share access - ' ~ display_name, none),
     ]) }}
 
     <div class="mw-me-page" id="share-page" data-kind="{{ kind }}" data-target-id="{{ target.id|suuid }}">
@@ -30,7 +30,7 @@
                 <div class="mw-card-body">
                     <p class="mw-card-meta" style="margin-bottom: 8px;">
                         Each link is single-use and valid for 7 days. Share it out of band
-                        (Discord, SMS, etc.) — anyone who clicks it while signed in to
+                        (Discord, SMS, etc.) - anyone who clicks it while signed in to
                         their own browser will get access.
                     </p>
                     <div class="mw-modal-key-row">

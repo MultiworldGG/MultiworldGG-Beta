@@ -38,10 +38,10 @@ Utils.user_path()  # initialize cached_path
 # each worlds/ dir with an archipelago.json into the stub GameIndex and _worlds_to_load.
 from mwgg_igdb import GameIndex
 
-# AP_TEST_WORLDS (pytest only) scopes the bootstrap; fixture worlds are always
-# registered for shared fixtures but aren't themselves under test.
+# AP_TEST_WORLDS (test runners only) scopes the bootstrap; fixture worlds are
+# always registered for shared fixtures but aren't themselves under test.
 _SUITE_FIXTURE_WORLDS = {"generic", "apquest", "_debug"}
-_test_worlds_env = os.environ.get("AP_TEST_WORLDS") if "pytest" in sys.modules else None
+_test_worlds_env = os.environ.get("AP_TEST_WORLDS") if ("pytest" in sys.modules or "unittest" in sys.modules) else None
 _requested_worlds = {name.strip() for name in _test_worlds_env.split(",") if name.strip()} if _test_worlds_env else None
 test_worlds_filter = _requested_worlds | _SUITE_FIXTURE_WORLDS if _requested_worlds else None
 
