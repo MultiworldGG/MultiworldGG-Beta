@@ -149,7 +149,8 @@ def select_installer_asset(assets: list[dict], platform_key: str | None = None) 
 
     def rank(asset: dict) -> tuple[bool, bool]:
         name = str(asset.get("name", "")).lower()
-        return name.startswith("setup."), _channel_matches(name)
+        # setup. covers pre-0.9.x assets (GitHub mangled the old space-separated names to dots).
+        return name.startswith(("setup_", "setup.")), _channel_matches(name)
 
     return max(release_assets, key=rank)
 

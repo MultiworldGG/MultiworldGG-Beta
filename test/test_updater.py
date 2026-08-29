@@ -33,8 +33,9 @@ def _release(tag, assets, *, prerelease=False, draft=False, body="Release notes"
     }
 
 
-# GitHub mangles spaces in asset names to dots; inno_setup.iss emits dotted names directly.
-WIN_INSTALLER = "Setup.MultiworldGG-Test.0.9.0b2.exe"
+# Canonical names use underscores; pre-0.9.x assets are dotted (GitHub mangled their spaces).
+WIN_INSTALLER = "Setup_MultiworldGG-Test_0.9.0b2.exe"
+LEGACY_WIN_INSTALLER = "Setup.MultiworldGG-Test.0.9.0b2.exe"
 APP_ASSETS = [
     "MultiworldGG-0.9.0b2-linux-x86_64.tar.gz",
     "MultiworldGG-Test-0.9.0b2-x86_64.AppImage",
@@ -64,21 +65,24 @@ class TestUpdaterAssetSelection(unittest.TestCase):
         self.assertEqual(asset["name"], "multiworldgg_test-0.9.0b2.dmg")
 
     def test_prefers_setup_named_installer_over_other_exe(self):
-        assets = [
-            {"name": "MultiworldGGPortable.exe", "browser_download_url": "https://example.invalid/portable"},
-            {"name": WIN_INSTALLER, "browser_download_url": "https://example.invalid/win"},
-        ]
-        self.assertEqual(Updater.select_installer_asset(assets, "windows")["name"], WIN_INSTALLER)
+        for installer in (WIN_INSTALLER, LEGACY_WIN_INSTALLER):
+            assets = [
+                {"name": "MultiworldGGPortable.exe", "browser_download_url": "https://example.invalid/portable"},
+                {"name": installer, "browser_download_url": "https://example.invalid/win"},
+            ]
+            self.assertEqual(Updater.select_installer_asset(assets, "windows")["name"], installer)
 
     def test_channel_matches_distinguishes_test_and_stable(self):
         with patch.object(Utils, "instance_name", "MultiworldGG-Test"):
-            self.assertTrue(Updater._channel_matches("Setup.MultiworldGG-Test.0.9.0b2.exe"))
+            self.assertTrue(Updater._channel_matches("Setup_MultiworldGG-Test_0.9.0b2.exe"))
+            self.assertTrue(Updater._channel_matches(LEGACY_WIN_INSTALLER))
             self.assertTrue(Updater._channel_matches("multiworldgg_test-0.9.0b2.dmg"))
             self.assertTrue(Updater._channel_matches("MultiworldGG-Test-0.9.0b2-x86_64.AppImage"))
-            self.assertFalse(Updater._channel_matches("Setup.MultiworldGG.0.9.1.exe"))
+            self.assertFalse(Updater._channel_matches("Setup_MultiworldGG_0.9.1.exe"))
         with patch.object(Utils, "instance_name", "MultiworldGG"):
+            self.assertTrue(Updater._channel_matches("Setup_MultiworldGG_0.9.1.exe"))
             self.assertTrue(Updater._channel_matches("Setup.MultiworldGG.0.9.1.exe"))
-            self.assertFalse(Updater._channel_matches("Setup.MultiworldGG-Test.0.9.0b2.exe"))
+            self.assertFalse(Updater._channel_matches("Setup_MultiworldGG-Test_0.9.0b2.exe"))
             self.assertFalse(Updater._channel_matches("MultiworldGG-Test-0.9.0b2-x86_64.AppImage"))
 
 
@@ -99,7 +103,7 @@ class TestUpdaterReleaseSelection(unittest.TestCase):
 
     def test_skips_prerelease_release(self):
         releases = [
-            _release("0.9.1", ["Setup.MultiworldGG-Test.0.9.1.exe"], prerelease=True),
+            _release("0.9.1", ["Setup_MultiworldGG-Test_0.9.1.exe"], prerelease=True),
             _release("0.9.0b2", APP_ASSETS),
         ]
         release, _ = self._find(releases)
@@ -115,7 +119,7 @@ class TestUpdaterReleaseSelection(unittest.TestCase):
 
     def test_skips_draft_release(self):
         releases = [
-            _release("0.9.1", ["Setup.MultiworldGG-Test.0.9.1.exe"], draft=True),
+            _release("0.9.1", ["Setup_MultiworldGG-Test_0.9.1.exe"], draft=True),
             _release("0.9.0b2", APP_ASSETS),
         ]
         release, _ = self._find(releases)
@@ -123,7 +127,7 @@ class TestUpdaterReleaseSelection(unittest.TestCase):
 
     def test_newest_version_wins_regardless_of_list_order(self):
         releases = [
-            _release("0.9.0b1", ["Setup.MultiworldGG-Test.0.9.0b1.exe"]),
+            _release("0.9.0b1", ["Setup_MultiworldGG-Test_0.9.0b1.exe"]),
             _release("0.9.0b2", APP_ASSETS),
             _release("0.8.4b12", ["Setup.MultiworldGG-Test.0.8.4b12.exe"]),
         ]
@@ -140,7 +144,7 @@ class TestUpdaterReleaseSelection(unittest.TestCase):
 
     def test_prefers_own_channel_over_newer_foreign_channel(self):
         releases = [
-            _release("0.9.1", ["Setup.MultiworldGG.0.9.1.exe"]),
+            _release("0.9.1", ["Setup_MultiworldGG_0.9.1.exe"]),
             _release("0.9.0b2", APP_ASSETS),
         ]
         release, installer = self._find(releases)
@@ -203,7 +207,7 @@ class TestUpdaterReleaseInfo(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "checksum"):
             Updater._verify_checksum(path, "0" * 64)
 
-    def test_checksum_manifest_matches_dotted_installer_name(self):
+    def test_checksum_manifest_matches_installer_name(self):
         checksum = "b" * 64
         manifest = f"{checksum}  {WIN_INSTALLER}\n"
 

@@ -578,7 +578,7 @@ jobs:
           ## Downloads
           
           ### Windows
-          - **Installer**: `Setup.MultiworldGG-Test.*.exe` (recommended)
+          - **Installer**: `Setup_MultiworldGG-Test_*.exe` (recommended)
           
           ### Linux
           - **AppImage**: `*.AppImage` (recommended)

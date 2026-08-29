@@ -544,7 +544,7 @@ jobs:
           ## Downloads
           
           ### Windows
-          - **Installer**: `Setup.MultiworldGG.*.exe` (recommended)
+          - **Installer**: `Setup_MultiworldGG_*.exe` (recommended)
           - **Portable**: Extract from `windows-exe.zip`
           
           ### Linux
