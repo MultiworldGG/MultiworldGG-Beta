@@ -203,6 +203,10 @@ else:
     class MarkupToolTip(MDTooltipPlain):
         markup = True
 
+    class ToolTip(MarkupToolTip):
+        # Published world wheels import kvui.ToolTip; keep the name real.
+        pass
+
     class HovererableLabel(HoverBehavior, MDLabel):
         pass
 
