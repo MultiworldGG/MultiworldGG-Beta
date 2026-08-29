@@ -176,18 +176,31 @@ def get_world_display_name(game: str) -> str:
     return getattr(world.web, "display_name", None) or world.game
 
 
-def get_tutorial_name(game: str, file_key: str) -> str | None:
-    """Return the tutorial_name for a given URL file_key under a game, or None if not found."""
+def get_tutorial_name(game: str, file_base: str, lang: str | None = None) -> str | None:
+    """Return the tutorial_name for a given URL file base under a game, or None if not found.
+
+    The URL carries the language separately, so ``file_base`` is the bare slug
+    (``"setup"``) while the declared file names keep the suffix (``"setup_en.md"``);
+    they have to be compared after the split. Translations may name the guide in
+    their own language, so ``lang`` selects that entry, falling back to the first
+    one declared for the base.
+    """
     from worlds.AutoWorld import AutoWorldRegister
     world = AutoWorldRegister.world_types.get(game)
     if world is None or not hasattr(world.web, "tutorials"):
         return None
+    fallback = None
     for tutorial in world.web.tutorials:
         if not hasattr(tutorial, "tutorial_name"):
             continue
-        if secure_filename(tutorial.file_name).rsplit(".", 1)[0] == file_key:
+        base, tutorial_lang = _split_tutorial_file(secure_filename(tutorial.file_name).rsplit(".", 1)[0])
+        if base != file_base:
+            continue
+        if tutorial_lang == lang:
             return tutorial.tutorial_name
-    return None
+        if fallback is None:
+            fallback = tutorial.tutorial_name
+    return fallback
 
 
 @app.errorhandler(404)
@@ -251,6 +264,65 @@ def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]
     return file, default_lang
 
 
+def get_tutorial_languages(game: str, file_base: str, current_lang: str) -> list[dict[str, Any]]:
+    """Return the languages a tutorial is available in, as switcher entries.
+
+    Discovery mirrors ``tutorial_landing``: every ``web.tutorials`` entry whose
+    file slug shares ``file_base`` is the same guide in another language. Returns
+    an empty list when there is nothing to switch between, so the template can
+    skip the control entirely.
+    """
+    from worlds.AutoWorld import AutoWorldRegister
+    world = AutoWorldRegister.world_types.get(game)
+    if world is None or not hasattr(world.web, "tutorials"):
+        return []
+    languages: dict[str, dict[str, Any]] = {}
+    for tutorial in world.web.tutorials:
+        if not hasattr(tutorial, "tutorial_name"):
+            continue
+        base, lang = _split_tutorial_file(secure_filename(tutorial.file_name).rsplit(".", 1)[0])
+        if base != file_base or lang in languages:
+            continue
+        languages[lang] = {
+            "lang": lang,
+            "language": tutorial.language,
+            "url": url_for("tutorial", lang=lang, game=game, file=base),
+            "current": lang == current_lang,
+        }
+    return list(languages.values()) if len(languages) > 1 else []
+
+
+_SETUP_TUTORIAL_HINTS = ("setup", "start guide")
+
+
+def _resolve_setup_tutorial(game: str, lang: str, file_dir: str) -> tuple[str, str] | None:
+    """Resolve the ``setup`` slug to the guide a world actually declares.
+
+    Prefers ``lang``, crossing languages only when it has none. Matches on
+    ``tutorial_name``, first-match-wins: A Link to the Past declares "Multiworld
+    Setup Guide" ahead of "MSU-1 Setup Guide", which matches too. Candidates
+    with no file on disk are skipped, so this cannot resolve to its own URL.
+    """
+    from worlds.AutoWorld import AutoWorldRegister
+    world = AutoWorldRegister.world_types.get(game)
+    if world is None or not hasattr(world.web, "tutorials"):
+        return None
+
+    candidates: list[tuple[str, str, str]] = []
+    for tutorial in world.web.tutorials:
+        if not hasattr(tutorial, "tutorial_name"):
+            continue
+        file_base, file_lang = _split_tutorial_file(secure_filename(tutorial.file_name).rsplit(".", 1)[0])
+        candidates.append((file_base, file_lang, (tutorial.tutorial_name or "").lower()))
+
+    pool = [candidate for candidate in candidates if candidate[1] == lang] or candidates
+    for file_base, file_lang, _name in sorted(
+            pool, key=lambda c: not any(hint in c[2] for hint in _SETUP_TUTORIAL_HINTS)):
+        if os.path.isfile(os.path.join(file_dir, f"{file_base}_{file_lang}.md")):
+            return file_base, file_lang
+    return None
+
+
 @app.route('/learn/<string:lang>/tutorial/<string:game>/<string:file>')
 @cache.cached()
 def tutorial(lang: str, game: str, file: str):
@@ -258,6 +330,8 @@ def tutorial(lang: str, game: str, file: str):
 
     Reads ``static/generated/docs/<game>/<file>_<lang>.md``: the on-disk layout
     keeps the suffix form; the URL exposes the language as a path segment.
+
+    A missing ``setup`` file 302s to the guide the world does declare.
     """
     try:
         theme = get_world_theme(game)
@@ -272,14 +346,20 @@ def tutorial(lang: str, game: str, file: str):
             title=f"{game} Guide",
             html_from_markdown=document,
             theme=theme,
+            tutorial_languages=get_tutorial_languages(game, file, lang),
             breadcrumb_crumbs=[
                 ("Learn", url_for("learn_hub", lang=lang)),
                 ("Setup guides", url_for("tutorial_landing", lang=lang)),
                 (get_world_display_name(game), url_for("game_info", game=game)),
-                (get_tutorial_name(game, file) or file, None),
+                (get_tutorial_name(game, file, lang) or file, None),
             ],
         )
     except FileNotFoundError:
+        # Only "setup"; a general alias would mask 404s from typo'd links.
+        if secure_file == "setup":
+            resolved = _resolve_setup_tutorial(game, secure_lang, file_dir)
+            if resolved:
+                return redirect(url_for("tutorial", lang=resolved[1], game=game, file=resolved[0]))
         return abort(404)
 
 

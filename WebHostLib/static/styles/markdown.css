@@ -12,6 +12,47 @@
     font-size: 16px;
 }
 
+/* Tutorial language switcher - only rendered when a guide ships translations. */
+.mw-doc-languages{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.mw-doc-languages-label{
+    font-family: Inter-Regular, sans-serif;
+    font-size: 14.5px;
+    color: var(--mw-sys-color-on-surface-variant);
+    margin-right: 2px;
+}
+
+.mw-doc-language{
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border: 1px solid var(--mw-sys-color-outline);
+    border-radius: var(--mw-radius-full);
+    font-family: Inter-Regular, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    text-decoration: none;
+}
+
+a.mw-doc-language:hover{
+    border-color: var(--mw-sys-color-secondary);
+    color: var(--mw-sys-color-secondary);
+}
+
+.mw-doc-language.is-current{
+    background: var(--mw-sys-color-surface-container);
+    border-color: var(--mw-sys-color-secondary);
+    color: var(--mw-sys-color-secondary);
+    font-weight: 500;
+}
+
 .markdown img{
     max-width: 100%;
     border-radius: 6px;

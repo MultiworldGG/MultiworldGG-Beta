@@ -12,6 +12,18 @@
         {{ breadcrumb(breadcrumb_crumbs) }}
     {% endif %}
     <div class="markdown">
+        {% if tutorial_languages %}
+            <nav class="mw-doc-languages" aria-label="Guide language">
+                <span class="mw-doc-languages-label">Language</span>
+                {% for entry in tutorial_languages %}
+                    {% if entry.current %}
+                        <span class="mw-doc-language is-current" aria-current="page">{{ entry.language }}</span>
+                    {% else %}
+                        <a class="mw-doc-language" href="{{ entry.url }}" hreflang="{{ entry.lang }}">{{ entry.language }}</a>
+                    {% endif %}
+                {% endfor %}
+            </nav>
+        {% endif %}
         {{ html_from_markdown | safe}}
     </div>
 {%  endblock %}
