@@ -176,18 +176,31 @@ def get_world_display_name(game: str) -> str:
     return getattr(world.web, "display_name", None) or world.game
 
 
-def get_tutorial_name(game: str, file_key: str) -> str | None:
-    """Return the tutorial_name for a given URL file_key under a game, or None if not found."""
+def get_tutorial_name(game: str, file_base: str, lang: str | None = None) -> str | None:
+    """Return the tutorial_name for a given URL file base under a game, or None if not found.
+
+    The URL carries the language separately, so ``file_base`` is the bare slug
+    (``"setup"``) while the declared file names keep the suffix (``"setup_en.md"``);
+    they have to be compared after the split. Translations may name the guide in
+    their own language, so ``lang`` selects that entry, falling back to the first
+    one declared for the base.
+    """
     from worlds.AutoWorld import AutoWorldRegister
     world = AutoWorldRegister.world_types.get(game)
     if world is None or not hasattr(world.web, "tutorials"):
         return None
+    fallback = None
     for tutorial in world.web.tutorials:
         if not hasattr(tutorial, "tutorial_name"):
             continue
-        if secure_filename(tutorial.file_name).rsplit(".", 1)[0] == file_key:
+        base, tutorial_lang = _split_tutorial_file(secure_filename(tutorial.file_name).rsplit(".", 1)[0])
+        if base != file_base:
+            continue
+        if tutorial_lang == lang:
             return tutorial.tutorial_name
-    return None
+        if fallback is None:
+            fallback = tutorial.tutorial_name
+    return fallback
 
 
 @app.errorhandler(404)
@@ -305,7 +318,7 @@ def tutorial(lang: str, game: str, file: str):
                 ("Learn", url_for("learn_hub", lang=lang)),
                 ("Setup guides", url_for("tutorial_landing", lang=lang)),
                 (get_world_display_name(game), url_for("game_info", game=game)),
-                (get_tutorial_name(game, file) or file, None),
+                (get_tutorial_name(game, file, lang) or file, None),
             ],
         )
     except FileNotFoundError:
