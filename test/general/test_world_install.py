@@ -340,17 +340,8 @@ def test_uv_pip_appends_python_target():
 
 
 # --------------------------------------------------------------------------- #
-# First-launch mwgg_igdb import race: `sys.path.insert(0, site_packages)` in
-# ModuleUpdate can run before a fresh venv's site-packages dir is fully in
-# place. A lookup against a not-yet-existing sys.path entry makes CPython
-# cache `None` ("no finder for this path") for that exact path string in
-# sys.path_importer_cache -- unlike a stale directory *listing* (which
-# self-heals via FileFinder's mtime recheck), that None sticks forever, so a
-# module written there later by a background installer (the splash child
-# process) stays invisible to *this* process until invalidate_caches() runs.
-# Regression coverage for that pitfall, plus the gating that gives
-# _bootstrap_fresh_venv_mwgg_igdb its "only once, only for the process that
-# (re)created the venv" contract.
+# First-launch race: a sys.path entry probed before it exists is None-cached
+# in sys.path_importer_cache; only invalidate_caches() clears it.
 # --------------------------------------------------------------------------- #
 def test_missing_syspath_dir_hides_module_until_invalidated(tmp_path, monkeypatch):
     """Proves the actual Python import-cache pitfall the fix addresses (no
@@ -369,8 +360,7 @@ def test_missing_syspath_dir_hides_module_until_invalidated(tmp_path, monkeypatc
     with open(os.path.join(site_dir, f"{module_name}.py"), "w") as f:
         f.write("value = 1\n")
     try:
-        # Stale cache: the dir and module exist on disk, but the cached "no
-        # finder here" verdict predates them and is never mtime-rechecked.
+        # The cached None verdict predates the files and is never rechecked.
         assert importlib.util.find_spec(module_name) is None
 
         importlib.invalidate_caches()
@@ -1183,8 +1173,6 @@ class TestCanCheckForUpdates(unittest.TestCase):
 
 class TestReleasePageUrl(unittest.TestCase):
     def test_release_page_url_points_at_releases_list(self) -> None:
-        # /releases, not /releases/latest: the latter resolves to worlds-wheels
-        # releases and hides prereleases, same failure mode the API path fixes.
         url = Updater.get_release_page_url()
         self.assertEqual(
             url,

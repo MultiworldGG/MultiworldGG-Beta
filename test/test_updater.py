@@ -33,8 +33,7 @@ def _release(tag, assets, *, prerelease=False, draft=False, body="Release notes"
     }
 
 
-# GitHub replaces spaces in uploaded asset names with dots, and inno_setup.iss
-# now emits the dotted form directly: Setup.<AppName>.<version>.exe.
+# GitHub mangles spaces in asset names to dots; inno_setup.iss emits dotted names directly.
 WIN_INSTALLER = "Setup.MultiworldGG-Test.0.9.0b2.exe"
 APP_ASSETS = [
     "MultiworldGG-0.9.0b2-linux-x86_64.tar.gz",
@@ -99,8 +98,6 @@ class TestUpdaterReleaseSelection(unittest.TestCase):
         self.assertEqual(installer["name"], WIN_INSTALLER)
 
     def test_skips_prerelease_release(self):
-        # Prerelease = not yet verified by the maintainer; the updater must
-        # fall back to the newest verified (non-prerelease) release.
         releases = [
             _release("0.9.1", ["Setup.MultiworldGG-Test.0.9.1.exe"], prerelease=True),
             _release("0.9.0b2", APP_ASSETS),

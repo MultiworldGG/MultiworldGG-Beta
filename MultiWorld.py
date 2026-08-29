@@ -371,12 +371,7 @@ def run_client(args=None, queue=None):
 
 
 def _predownload_log_paths() -> "list[str]":
-    """Candidate locations for the predownload diagnostic log/handler.
-
-    The exe dir is listed first: Inno's [Dirs] grants everyone-modify there, so
-    it's writable regardless of which token the runasoriginaluser child ends up
-    with, unlike %TEMP% (which is not guaranteed to match what the interactive
-    user thinks of as "their" %TEMP%)."""
+    """Exe dir first ([Dirs] grants everyone-modify); the child's %TEMP% may not be the user's."""
     import tempfile
     paths = []
     try:
@@ -388,12 +383,7 @@ def _predownload_log_paths() -> "list[str]":
 
 
 def _ensure_uv_discoverable() -> None:
-    """Best-effort: make sure a `uv` a subprocess can exec is on PATH.
-
-    Inno's runasoriginaluser [Run] entry (the predownload step) can end up with
-    a rebuilt environment whose PATH omits entries the interactive shell only
-    has dynamically (shell profile, etc.), even though uv is installed. Only
-    touches this process's own env; never raises."""
+    """Best-effort PATH repair: the runasoriginaluser child's rebuilt env may lack uv. Never raises."""
     import shutil
     if shutil.which("uv"):
         return
@@ -418,13 +408,8 @@ def _ensure_uv_discoverable() -> None:
 
 
 def _run_predownload(worlds: "list[str]") -> None:
-    """Inno's post-install predownload step: create the worlds venv and
-    install `worlds` (the mwgg_igdb_<variant> token plus any selected game
-    components). Non-fatal by design -- worlds also install on demand at first
-    launch -- so this always exits 0. A log handler is attached before
-    ModuleUpdate is imported so its internal diagnostics (venv creation, uv
-    resolution, skip reasons) land in a file instead of a windowed exe's
-    nonexistent console."""
+    """Inno's predownload step. Non-fatal by design (always exits 0); the log
+    handler must attach before the ModuleUpdate import to catch its diagnostics."""
     import logging
     handler = None
     for path in _predownload_log_paths():

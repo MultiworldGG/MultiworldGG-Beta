@@ -23,9 +23,7 @@ from Utils import is_frozen, is_linux, is_macos, is_windows, normalize_tag, tupl
 
 GITHUB_OWNER = "MultiworldGG"
 GITHUB_REPO = "MultiworldGG-Beta"
-# The releases list, not /releases/latest: the repo interleaves installer-less
-# worlds-wheels releases and marks Test-channel app releases as prereleases,
-# so "latest" frequently points at something the updater cannot use.
+# /releases, not /releases/latest: "latest" skips prereleases and often lands on a wheels release.
 GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases"
 ASSET_PATTERNS: dict[str, tuple[str, ...]] = {
     "windows": ("*.exe",),
@@ -90,9 +88,7 @@ def _pep440_newer(candidate: str, baseline: str) -> bool:
 
 
 class ReleaseVersion(Utils.Version):
-    """Version that breaks release-tuple ties against the running build's full
-    PEP 440 version: tuplize_version drops pre-release suffixes, so a released
-    0.9.0b5 and an installed 0.9.0b2 both tuplize to (0, 9, 0)."""
+    """Breaks tuple ties against the running build via full PEP 440 tags (tuplize drops b-suffixes)."""
 
     def __new__(cls, tag: str):
         self = super().__new__(cls, *tuplize_version(tag))
@@ -100,8 +96,7 @@ class ReleaseVersion(Utils.Version):
         return self
 
     def _tie_break(self, other) -> int:
-        # Only the comparison against the running version can be refined; the
-        # full version string of an arbitrary tuple is unknown.
+        # Only ties against the running version are refinable; plain tuples carry no full tag.
         if tuple(other) != tuple(Utils.version_tuple):
             return 0
         if _pep440_newer(self.tag, Utils.__version__):
@@ -139,9 +134,7 @@ def _asset_matches(name: str, patterns: Sequence[str]) -> bool:
 
 
 def _channel_matches(asset_name: str) -> bool:
-    """One repo hosts several channels (MultiworldGG vs MultiworldGG-Test);
-    asset names embed the app name directly before the version, e.g.
-    Setup.MultiworldGG-Test.0.9.0b2.exe / multiworldgg_test-0.9.0b2.dmg."""
+    """Asset names embed the channel (instance_name) directly before the version."""
     normalized = re.sub(r"[^a-z0-9]+", "-", asset_name.lower())
     instance = re.sub(r"[^a-z0-9]+", "-", str(Utils.instance_name).lower())
     return re.search(rf"(^|-)(setup-)?{re.escape(instance)}-[0-9]", normalized) is not None
@@ -192,8 +185,7 @@ def _release_sort_key(tag: str):
 def _select_update_release(releases: list[dict], platform_key: str, require_channel: bool) -> tuple[dict, dict] | None:
     best = None
     for release in releases:
-        # Releases are published prerelease:true and flipped to full releases
-        # once verified by hand; the updater must only offer verified builds.
+        # prerelease = published but not yet verified; the by-hand flag flip is the release switch.
         if release.get("draft") or release.get("prerelease"):
             continue
         tag = normalize_tag(str(release.get("tag_name") or ""))
@@ -215,13 +207,8 @@ def _select_update_release(releases: list[dict], platform_key: str, require_chan
 
 
 def find_update_release(platform_key: str | None = None) -> tuple[dict, dict]:
-    """Newest verified release that carries an installer for this platform
-    and channel.
-
-    /releases/latest is unusable here: it orders by created_at, so the newest
-    non-prerelease is often a worlds-wheels release with only .whl assets.
-    Channel matching is strict first, then dropped entirely so a rebranded
-    install still finds generically named installers."""
+    """Newest verified release carrying an installer for this platform; channel
+    match is strict first, then dropped so a rebranded install still finds one."""
     platform_key = platform_key or _platform_key()
     releases = _fetch_releases()
     selected = (_select_update_release(releases, platform_key, require_channel=True)

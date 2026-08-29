@@ -271,12 +271,8 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGGLaun
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-; Set WorkingDir to the directory containing a real uv.exe (see GetUvDir).
-; The runasoriginaluser child inherits cwd from this directive (lpCurrentDirectory
-; in CreateProcessAsUser, independent of the token's env block); Windows' own
-; unqualified-exe search checks cwd before PATH, so "uv" resolves there even
-; when the child's rebuilt environment doesn't have it. MultiWorld.py's own
-; --update-modules handler also self-repairs PATH as a second line of defense.
+; WorkingDir = a real uv.exe's dir (see GetUvDir): the child's exe search checks
+; cwd before PATH, so "uv" resolves even in a rebuilt env that lacks it.
 ; Runs on the client exe deliberately, not the launcher: --update-modules is a
 ; one-shot headless install step and must not spawn any GUI.
 Filename: "{app}\MultiworldGG.exe"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
@@ -899,11 +895,7 @@ var
   I: Integer;
 begin
   Result := False;
-  // `where uv` exits 0 if uv.exe is on PATH (or on a known winget shim path).
-  // Output is captured into ResolvedUvDir so GetUvDir has a fallback for
-  // non-winget uv installs: this runs in Setup's own (elevated) environment,
-  // which is not guaranteed to match the runasoriginaluser child's rebuilt
-  // environment used for the actual predownload [Run] entry below.
+  // `where uv` output feeds ResolvedUvDir: GetUvDir's fallback for non-winget installs.
   TmpFile := ExpandConstant('{tmp}\uv_where.txt');
   if Exec(ExpandConstant('{cmd}'), '/c where uv > "' + TmpFile + '" 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
   begin
@@ -982,14 +974,8 @@ begin
   end;
 end;
 
-// Returns the directory containing a real uv.exe, used as the WorkingDir: of
-// the updater [Run] entry so the runasoriginaluser child's implicit exe
-// search (which checks cwd before PATH) finds it there. Preference order:
-// 1. The real winget-installed binary under WinGet\Packages\ (ResolveRealUvPath
-//    -- avoids the WinError 448 AppExecLink shim at WinGet\Links\uv.exe).
-// 2. Wherever `where uv` resolved it in Setup's own environment (ResolvedUvDir,
-//    set by IsUvInstalled) -- covers uv installs that aren't winget-managed.
-// 3. {app} as a harmless default when neither is known.
+// WorkingDir for the predownload [Run] entry. Prefer the real winget PE
+// (Links\uv.exe is a WinError-448 AppExecLink), then `where uv`'s answer, then {app}.
 function GetUvDir(Param: String): String;
 var
   UvPath: String;

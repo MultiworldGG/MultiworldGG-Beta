@@ -1176,12 +1176,7 @@ def test_inno_app_exe_name_is_the_launcher():
 
 
 # --------------------------------------------------------------------------- #
-# Inno's predownload step (--update-modules -> MultiWorld._run_predownload).
-# Must never raise out to Inno's [Run] entry (non-fatal by design: worlds also
-# install on demand at first launch) but must make failures observable --
-# the prior implementation only wrote a log on a *raised* exception, so a
-# "successful" no-op (e.g. install_worlds silently skipping because it thinks
-# the venv is read-only) left zero trace anywhere.
+# Inno's predownload step: must exit 0 yet leave a trace on silent no-ops.
 # --------------------------------------------------------------------------- #
 
 @pytest.fixture

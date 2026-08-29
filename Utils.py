@@ -312,10 +312,7 @@ def register_custom_worlds() -> typing.List[str]:
     found: typing.List[str] = []
     if not custom_worlds_dir.exists():
         return found
-    # A background installer (e.g. the splash child on a first launch) may have
-    # written mwgg_igdb to the worlds venv after this process's sys.path lookups
-    # cached that site_packages had no finder; without this, `from mwgg_igdb
-    # import GameIndex` below keeps failing even though the package is on disk.
+    # site-packages may have been populated after a lookup None-cached its finder.
     importlib.invalidate_caches()
     for world_file in custom_worlds_dir.iterdir():
         try:

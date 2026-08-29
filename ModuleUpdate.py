@@ -276,7 +276,7 @@ def venv_is_healthy(venv_path: Path) -> bool:
         return False
 
 
-_venv_just_created = False  # set below; read by _bootstrap_fresh_venv_mwgg_igdb() after install_mwgg_igdb is defined
+_venv_just_created = False
 
 if use_worlds_venv():
     # Route worlds + mwgg_igdb into a dedicated venv under user data
@@ -529,17 +529,8 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
 
 
 def _bootstrap_fresh_venv_mwgg_igdb() -> None:
-    """Install mwgg_igdb synchronously when this process just (re)created the worlds
-    venv, then invalidate import caches so it's visible immediately in this process.
-
-    Closes a first-launch race: if any import lookup touches site_packages (above)
-    before it exists on disk, CPython caches "no finder for this path" in
-    sys.path_importer_cache, permanently -- unlike a stale directory *listing*,
-    that verdict is never mtime-rechecked. So even after a background installer
-    (e.g. the Windows splash child process) finishes, `import mwgg_igdb` keeps
-    failing here until invalidate_caches() runs. Only fires once per process, and
-    only for the process that actually created/repaired the venv.
-    """
+    """The venv creator installs mwgg_igdb synchronously: a sys.path entry probed
+    before it exists is None-cached in sys.path_importer_cache and never rechecked."""
     if _venv_just_created:
         install_mwgg_igdb()
         invalidate_caches()
