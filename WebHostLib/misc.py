@@ -251,6 +251,34 @@ def _split_tutorial_file(file: str, default_lang: str = "en") -> tuple[str, str]
     return file, default_lang
 
 
+def get_tutorial_languages(game: str, file_base: str, current_lang: str) -> list[dict[str, Any]]:
+    """Return the languages a tutorial is available in, as switcher entries.
+
+    Discovery mirrors ``tutorial_landing``: every ``web.tutorials`` entry whose
+    file slug shares ``file_base`` is the same guide in another language. Returns
+    an empty list when there is nothing to switch between, so the template can
+    skip the control entirely.
+    """
+    from worlds.AutoWorld import AutoWorldRegister
+    world = AutoWorldRegister.world_types.get(game)
+    if world is None or not hasattr(world.web, "tutorials"):
+        return []
+    languages: dict[str, dict[str, Any]] = {}
+    for tutorial in world.web.tutorials:
+        if not hasattr(tutorial, "tutorial_name"):
+            continue
+        base, lang = _split_tutorial_file(secure_filename(tutorial.file_name).rsplit(".", 1)[0])
+        if base != file_base or lang in languages:
+            continue
+        languages[lang] = {
+            "lang": lang,
+            "language": tutorial.language,
+            "url": url_for("tutorial", lang=lang, game=game, file=base),
+            "current": lang == current_lang,
+        }
+    return list(languages.values()) if len(languages) > 1 else []
+
+
 @app.route('/learn/<string:lang>/tutorial/<string:game>/<string:file>')
 @cache.cached()
 def tutorial(lang: str, game: str, file: str):
@@ -272,6 +300,7 @@ def tutorial(lang: str, game: str, file: str):
             title=f"{game} Guide",
             html_from_markdown=document,
             theme=theme,
+            tutorial_languages=get_tutorial_languages(game, file, lang),
             breadcrumb_crumbs=[
                 ("Learn", url_for("learn_hub", lang=lang)),
                 ("Setup guides", url_for("tutorial_landing", lang=lang)),
