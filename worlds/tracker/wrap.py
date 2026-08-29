@@ -9,6 +9,7 @@ periodic refresh) on ``ctx.client.features`` for ``ExtrasBuilder``.
 
 from __future__ import annotations
 
+import asyncio
 import functools
 import logging
 import os
@@ -43,9 +44,11 @@ def attach_tracker_overlay(ctx) -> None:
                 _handle_connected(ctx, args)
             except Exception:
                 logger.exception("Tracker overlay failed to handle Connected packet")
-        if cmd in ("ReceivedItems", "RoomUpdate"):
-            # New items/checks change what is in logic; poke the debounced
-            # refresh instead of waiting for the 60s tick.
+        if cmd in ("Connected", "RoomUpdate"):
+            _scout_checked_locations(ctx)
+        if cmd in ("ReceivedItems", "RoomUpdate", "LocationInfo"):
+            # New items/checks/scout replies change what is in logic; poke the
+            # debounced refresh instead of waiting for the 60s tick.
             poke = getattr(ctx, "tracker_overlay_poke", None)
             if poke is not None:
                 poke()
@@ -107,6 +110,37 @@ def _handle_connected(ctx, args: dict) -> None:
             "tracker pane will stay empty",
             game,
         )
+
+
+def _receives_own_items(ctx) -> bool:
+    handling = getattr(ctx, "items_handling", None)
+    return handling is None or bool(handling & 0b010)
+
+
+def _scout_checked_locations(ctx) -> None:
+    """Mirrors TrackerGameContext.scout_checked_locations: without the 0b010
+    items_handling bit the server never echoes the player's own found items,
+    so ask what sits at checked locations; replies land in ctx.locations_info."""
+    if _receives_own_items(ctx):
+        return
+    locations_info = getattr(ctx, "locations_info", {}) or {}
+    unknown = [location for location in (getattr(ctx, "checked_locations", set()) or set())
+               if location not in locations_info]
+    if unknown:
+        asyncio.create_task(ctx.send_msgs([{
+            "cmd": "LocationScouts", "locations": unknown, "create_as_hint": 0}]))
+
+
+def _local_items(ctx) -> list:
+    """Mirrors TrackerGameContext.update_tracker_items: the player's own items
+    recovered from scouted checked locations."""
+    if _receives_own_items(ctx):
+        return []
+    locations_info = getattr(ctx, "locations_info", {}) or {}
+    checked = getattr(ctx, "checked_locations", set()) or set()
+    slot = getattr(ctx, "slot", None)
+    return [locations_info[location] for location in checked
+            if location in locations_info and locations_info[location].player == slot]
 
 
 def start_overlay_ui_refresh(ctx, app) -> None:
@@ -171,7 +205,8 @@ def _refresh(ctx, app) -> None:
         return
 
     tracker_core.set_missing_locations(getattr(ctx, "missing_locations", set()) or set())
-    tracker_core.set_items_received(getattr(ctx, "items_received", []) or [])
+    tracker_core.set_items_received(
+        list(getattr(ctx, "items_received", []) or []) + _local_items(ctx))
     tracker_core.set_hints({})
     updateTracker_ret = tracker_core.updateTracker()
 
