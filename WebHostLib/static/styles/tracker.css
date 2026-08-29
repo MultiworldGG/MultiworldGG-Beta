@@ -35,9 +35,11 @@
 #tracker-navigation {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
     margin: 0 0.5rem 0.5rem 0.5rem;
     user-select: none;
-    height: 2rem;
+    min-height: 2rem;
 }
 
 .tracker-navigation-bar {
@@ -255,20 +257,115 @@ img.icon-sprite {
 .tracker-slot-avatar {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 8px 0;
+    gap: 8px;
+    padding: 4px;
+    background-color: var(--mw-sys-color-tertiary-surface);
+    border-radius: 4px;
 }
 
 .slot-avatar-large {
-    width: 48px;
-    height: 48px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
+    background-color: var(--mw-sys-color-secondary-container);
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
 }
 
-.tracker-slot-avatar form {
+/* "Set avatar" opens as a dropdown so the form never overlaps the tables. */
+.avatar-setter {
+    position: relative;
+}
+
+.avatar-setter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: lighter;
+    color: var(--mw-sys-color-white);
+    cursor: pointer;
+    list-style: none;
+}
+
+.avatar-setter-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.avatar-setter-toggle::after {
+    content: "▾";
+    font-size: 11px;
+}
+
+.avatar-setter-toggle:hover {
+    background-color: var(--mw-sys-color-tertiary);
+}
+
+.avatar-setter[open] > .avatar-setter-toggle {
+    background-color: var(--mw-sys-color-tertiary-container);
+}
+
+.avatar-setter[open] > .avatar-setter-toggle::after {
+    content: "▴";
+}
+
+.avatar-setter-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 6px;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: min(18rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    padding: 12px;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px var(--mw-sys-color-shadow-soft);
+    color: var(--mw-sys-color-white);
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.avatar-setter-panel input[type="file"] {
+    max-width: 100%;
+    color: var(--mw-sys-color-white);
+    font-size: 0.8rem;
+}
+
+.avatar-setter-panel input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 4px 10px;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
+    border-radius: 4px;
+    background-color: var(--mw-sys-color-tertiary-surface);
+    color: var(--mw-sys-color-white);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.avatar-setter-panel input[type="file"]::file-selector-button:hover {
+    background-color: var(--mw-sys-color-tertiary);
+}
+
+.avatar-setter-panel button[type="submit"] {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--mw-sys-color-tertiary);
+    color: var(--mw-sys-color-white);
+}
+
+.avatar-setter-panel button[type="submit"]:hover {
+    background-color: var(--mw-sys-color-tertiary-hover);
+}
+
+.avatar-setter-panel button[type="submit"]:active {
+    margin: 0;
+    padding: 6px 14px;
 }
