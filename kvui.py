@@ -112,7 +112,7 @@ else:
 
     from mwgg_gui.components.dialog import MessageBox
     from mwgg_gui.overrides.screen import CustomScreen
-    from mwgg_gui.overrides.markuptextfield import MarkupTextField as ResizableTextField
+    from kivymd.uix.textfield import MDTextField as ResizableTextField
 
     from mwgg_gui.app import MultiMDApp as ThemedApp, MainScreenMgr as MDScreenManagerBase
     # Legacy widget shapes for world kv files that reference them by bare class name;
@@ -200,7 +200,7 @@ else:
     # Builder.load_string block and status_colors below).
     # ------------------------------------------------------------------
 
-    class ToolTip(MDTooltipPlain):
+    class MarkupToolTip(MDTooltipPlain):
         markup = True
 
     class HovererableLabel(HoverBehavior, MDLabel):
@@ -224,7 +224,7 @@ else:
                 # update
                 self._tooltip.text = text
             else:
-                self._tooltip = ToolTip(text=text, pos_hint={})
+                self._tooltip = MarkupToolTip(text=text, pos_hint={})
                 # Back-ref so the tracker's clear_stray_tooltips can tell a
                 # live hover from an orphan (kivymd sets it for kv children).
                 self._tooltip._tooltip = self
@@ -730,40 +730,17 @@ else:
     bar_width: dp(12)
     effect_cls: "ScrollEffect"
     background_color: self.theme_cls.surfaceContainerLowestColor
+    padding: dp(20)
     SelectableRecycleBoxLayout:
         default_size: None, dp(20)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
         orientation: 'vertical'
-<ToolTip>:
-    size: self.texture_size
-    size_hint: None, None
-    theme_font_size: "Custom"
-    font_size: dp(18)
-    pos_hint: {'center_y': 0.5, 'center_x': 0.5}
-    halign: "left"
-    theme_text_color: "Custom"
-    text_color: app.theme_cls.onSecondaryContainerColor
-    canvas.before:
-        Color: # tooltip bgcolor
-            rgba: app.theme_cls.secondaryContainerColor
-        Rectangle:
-            size: self.size
-            pos: self.pos
-        Color: # bigger line in stripe border of tooltip
-            rgba: app.theme_cls.primaryColor
-        Line:
-            width: 3
-            rectangle: self.x-2, self.y-2, self.width+4, self.height+4
-        Color: # teeny line in stripe border of tooltip
-            rgba: app.theme_cls.secondaryColor
-        Line:
-            width: 1
-            rectangle: self.x-2, self.y-2, self.width+4, self.height+4
+<MarkupToolTip>:
 <AutocompleteHintInput>:
     size_hint_y: None
-    height: "30dp"
+    height: "48dp"
     multiline: False
     write_tab: False
     pos_hint: {"center_x": 0.5, "center_y": 0.5}

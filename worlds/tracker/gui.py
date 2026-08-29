@@ -226,7 +226,7 @@ def _ensure_widgets():
     # Local subclass keeps Tracker.kv's `<ApAsyncImage>:` rule off every
     # other AsyncImage in the app.
     from kivy.uix.image import AsyncImage as _KivyAsyncImage
-    from kvui import ToolTip
+    from kvui import MarkupToolTip
     # Importing registers them with the kivy Factory so Tracker.kv's rules resolve.
     from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout  # noqa: F401
 
@@ -247,7 +247,7 @@ def _ensure_widgets():
     class TrackerLayout(BoxLayout):
         pass
 
-    class TrackerTooltip(ToolTip):
+    class TrackerTooltip(MarkupToolTip):
         pass
 
     class TrackerView(MDRecycleView):
