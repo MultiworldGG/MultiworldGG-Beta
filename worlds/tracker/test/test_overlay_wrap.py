@@ -1,11 +1,14 @@
-"""Overlay wrap glue tests (local-item scouting, refresh feed); add new overlay tests here."""
+"""Overlay wrap glue tests (local-item scouting, refresh feed, tooltip sweep); add new overlay tests here."""
 
 import asyncio
+import sys
+import types
 import unittest
 from types import SimpleNamespace
+from unittest import mock
 
 from NetUtils import NetworkItem
-from worlds.tracker import wrap
+from worlds.tracker import gui, wrap
 
 
 def _ctx(**kwargs) -> SimpleNamespace:
@@ -130,6 +133,41 @@ class TestWrappedOnPackage(unittest.TestCase):
 
         ctx.on_package("LocationInfo", {})
         self.assertEqual(len(pokes), 2)
+
+
+class TestClearStrayTooltips(unittest.TestCase):
+    def test_sweep_keeps_live_hover_removes_orphans(self):
+        class FakePlain:
+            pass
+
+        orphan = FakePlain()  # no owner back-ref (e.g. console tooltip)
+        live = FakePlain()
+        live._tooltip = SimpleNamespace(get_root_window=lambda: object(), hovered=True)
+        detached = FakePlain()  # owner recycled out of the tree
+        detached._tooltip = SimpleNamespace(get_root_window=lambda: None, hovered=True)
+        unhovered = FakePlain()
+        unhovered._tooltip = SimpleNamespace(
+            get_root_window=lambda: object(), hovered=False, hovering=False)
+        kivymd_live = FakePlain()  # kivymd HoverBehavior spells it "hovering"
+        kivymd_live._tooltip = SimpleNamespace(get_root_window=lambda: object(), hovering=True)
+        not_a_tooltip = object()
+
+        removed = []
+        window = SimpleNamespace(
+            children=[orphan, live, detached, unhovered, kivymd_live, not_a_tooltip],
+            remove_widget=removed.append,
+        )
+        kivy_mod = types.ModuleType("kivy.core.window")
+        kivy_mod.Window = window
+        kivymd_mod = types.ModuleType("kivymd.uix.tooltip")
+        kivymd_mod.MDTooltipPlain = FakePlain
+        with mock.patch.dict(sys.modules, {
+            "kivy.core.window": kivy_mod,
+            "kivymd.uix.tooltip": kivymd_mod,
+        }):
+            gui.clear_stray_tooltips()
+
+        self.assertEqual(removed, [orphan, detached, unhovered])
 
 
 if __name__ == "__main__":

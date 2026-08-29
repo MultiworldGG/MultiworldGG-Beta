@@ -16,6 +16,32 @@ logger = logging.getLogger("Client")
 _hint_patch_installed = False
 
 
+def clear_stray_tooltips() -> None:
+    """Remove orphaned hover tooltips from Window.
+
+    Tooltips are parented to Window, so they outlive their owner row when a
+    repaint recycles it (a detached row never dispatches the on_leave that
+    removes its tooltip). A tooltip whose owner is still attached and hovered
+    is kept; everything else plain-tooltip-shaped is swept. Safe without kivy.
+    """
+    try:
+        from kivy.core.window import Window
+        from kivymd.uix.tooltip import MDTooltipPlain
+    except Exception:
+        return
+    if Window is None:
+        return
+    for child in tuple(Window.children):
+        if not isinstance(child, MDTooltipPlain):
+            continue
+        # kivymd convention: the tip and its host cross-reference via _tooltip.
+        owner = getattr(child, "_tooltip", None)
+        if owner is not None and owner.get_root_window() is not None and (
+                getattr(owner, "hovered", False) or getattr(owner, "hovering", False)):
+            continue
+        Window.remove_widget(child)
+
+
 def install_hint_label_patch():
     """Patch kvui.HintLog.on_kv_post once so its viewclass becomes the
     tracker-aware HintLabel (with the in-logic / found / not-found color
@@ -232,6 +258,7 @@ def _ensure_widgets():
 
         def resetData(self):
             self.data.clear()
+            clear_stray_tooltips()
 
         def addLine(self, line: str, sort: bool = False):
             self.data.append({"text": line})
@@ -255,6 +282,8 @@ def _ensure_widgets():
             super().__init__(**kwargs)
             self._tooltip = TrackerTooltip(text="Test")
             self._tooltip.markup = True
+            # Back-ref so clear_stray_tooltips can tell a live hover from an orphan.
+            self._tooltip._tooltip = self
 
         def on_enter(self):
             self._tooltip.text = self.get_text()

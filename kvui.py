@@ -225,6 +225,9 @@ else:
                 self._tooltip.text = text
             else:
                 self._tooltip = ToolTip(text=text, pos_hint={})
+                # Back-ref so the tracker's clear_stray_tooltips can tell a
+                # live hover from an orphan (kivymd sets it for kv children).
+                self._tooltip._tooltip = self
                 self.display_tooltip()
 
         def on_mouse_pos(self, window, pos):

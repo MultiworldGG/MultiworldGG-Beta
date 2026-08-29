@@ -217,6 +217,10 @@ def _refresh(ctx, app) -> None:
     if update_fn is not None:
         update_fn()
 
+    if app is not None:
+        from worlds.tracker.gui import clear_stray_tooltips
+        clear_stray_tooltips()
+
 
 def _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret) -> None:
     """Drive the Tracker page header labels (mirrors TrackerGameContext.updateTracker);
