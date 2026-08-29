@@ -186,6 +186,12 @@ class TestGenerateArgAliases(unittest.TestCase):
         self.assertTrue(underscore.allow_quantity)
         self.assertTrue(underscore.skip_output)
 
+    def test_export_datapackage_takes_module_list(self):
+        for flag in ("--export-datapackage", "--export_datapackage"):
+            args = Generate.mystery_argparse([flag, "apquest", "generic"])
+            self.assertEqual(args.export_datapackage, ["apquest", "generic"])
+        self.assertIsNone(Generate.mystery_argparse([]).export_datapackage)
+
 
 # --yaml-options contract: the data source for mwgg-gui's YAML creator
 # (yaml_creator/world_data.py) -- descriptor type strings, payload schema, the
@@ -464,6 +470,68 @@ class TestDumpYamlOptions(unittest.TestCase):
         self.assertIn("Could not install", payload["error"])
 
 
+class TestDumpDatapackage(unittest.TestCase):
+    """dump_datapackage against the bootstrap-loaded APQuest world, with the
+    same mandatory monkeypatches as TestDumpYamlOptions. `installed` is the
+    set of modules that report pip dist-info."""
+
+    def setUp(self):
+        self.tempdir = TemporaryDirectory(prefix="AP_datapackage_")
+        self.original_user_path = Utils.user_path.cached_path
+        Utils.user_path.cached_path = self.tempdir.name
+
+    def tearDown(self):
+        Utils.user_path.cached_path = self.original_user_path
+        self.tempdir.cleanup()
+
+    def _dump_with(self, modules, *, installed, install_result=None):
+        buf = io.StringIO()
+        install_calls = []
+
+        def install_worlds(worlds, update=False, with_deps=False):
+            install_calls.append(list(worlds))
+            return list(install_result or [])
+
+        with mock.patch.object(Generate, "_JSON_OUT", buf), \
+                mock.patch.object(Utils, "_worlds_to_load", list(Utils._worlds_to_load)), \
+                mock.patch.object(Generate, "_y_world_installed", lambda module: module in installed), \
+                mock.patch.object(Generate, "set_game_names", lambda games, strict=False: None), \
+                mock.patch.object(Generate, "_y_custom_world_entry", lambda module: None), \
+                mock.patch.object(ModuleUpdate, "install_worlds", install_worlds):
+            rv = Generate.dump_datapackage(modules)
+        return rv, json.loads(buf.getvalue()), install_calls
+
+    def test_happy_path_writes_selection_plus_generic(self):
+        rv, payload, install_calls = self._dump_with(["apquest"], installed={"apquest"})
+        self.assertEqual(rv, 0)
+        self.assertTrue(payload["ok"], msg=payload.get("error"))
+        self.assertEqual(install_calls, [])
+        self.assertEqual(payload["failed"], [])
+        self.assertEqual(Path(payload["path"]), Path(self.tempdir.name) / "datapackage_export.json")
+        with open(payload["path"], encoding="utf-8") as f:
+            games = json.load(f)["games"]
+        self.assertEqual(set(games), {"APQuest", "Archipelago"})
+        self.assertEqual(payload["games"], sorted(games))
+        self.assertIn("item_name_to_id", games["APQuest"])
+
+    def test_uninstallable_module_is_reported_not_fatal(self):
+        rv, payload, install_calls = self._dump_with(["apquest", "no_such_world"], installed={"apquest"})
+        self.assertEqual(rv, 0)
+        self.assertTrue(payload["ok"], msg=payload.get("error"))
+        self.assertEqual(install_calls, [["no_such_world"]])
+        self.assertEqual(payload["failed"], ["no_such_world"])
+        self.assertIn("APQuest", payload["games"])
+
+    def test_install_branch_installs_all_then_returns_exit_needs_reload_once(self):
+        rv, marker, install_calls = self._dump_with(
+            ["apquest", "generic"], installed=set(), install_result=["worlds.apquest", "worlds.generic"])
+        self.assertEqual(rv, Generate.EXIT_NEEDS_RELOAD)
+        self.assertEqual(install_calls, [["apquest"], ["generic"]])
+        self.assertFalse(marker["ok"])
+        self.assertTrue(marker["needs_reload"])
+        self.assertEqual(marker["reason"], "world-installed")
+
+
 # sys.argv is set BEFORE `import Generate` so the import-time sniff diverts
 # stdout->stderr (untestable in-process); the world is queued before any
 # `import worlds` so APQuest genuinely loads in-child.
@@ -482,11 +550,28 @@ Generate.set_game_names = lambda games, strict=False: None
 sys.exit(Generate.dump_yaml_options("APQuest", "simple", "apquest"))
 """
 
+# Same shape for --export-datapackage; set_game_names is patched to queue the
+# world itself, so exactly one entry lands whether or not the index stub
+# resolves a game name for apquest.
+_EXPORT_PURITY_CHILD = """\
+import os
+import sys
+sys.argv = ["Generate.py", "--export-datapackage", "apquest"]
+import Generate
+import Utils
+assert "worlds" not in sys.modules, "import Generate must not import the worlds package"
+Utils.user_path.cached_path = os.environ["MWGG_TEST_USER_PATH"]
+Generate._y_world_installed = lambda module: True
+Generate.set_game_names = lambda games, strict=False: Utils._worlds_to_load.append("worlds.apquest")
+sys.exit(Generate.dump_datapackage(["apquest"]))
+"""
+
 
 class TestStdoutPuritySubprocess(unittest.TestCase):
-    def test_stdout_is_exactly_one_ok_json_document(self):
+    def _run_child(self, script: str, **env_extra: str) -> dict:
         env = {
             **os.environ,
+            **env_extra,
             # no network, no venv mutation from a test
             "SKIP_REQUIREMENTS_UPDATE": "1",
             "SKIP_ALL_INSTALLS": "1",
@@ -496,16 +581,30 @@ class TestStdoutPuritySubprocess(unittest.TestCase):
                 + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])),
         }
         result = subprocess.run(
-            [sys.executable, "-c", _STDOUT_PURITY_CHILD],
+            [sys.executable, "-c", script],
             cwd=REPO_ROOT, env=env, capture_output=True, text=True, timeout=300,
         )
         self.assertEqual(result.returncode, 0, msg=f"STDERR:\n{result.stderr[-2000:]}")
         # parsing the FULL stdout also asserts "exactly one document": any
         # stray byte (logging banner, world print) fails the parse
-        payload = json.loads(result.stdout)
+        return json.loads(result.stdout)
+
+    def test_stdout_is_exactly_one_ok_json_document(self):
+        payload = self._run_child(_STDOUT_PURITY_CHILD)
         self.assertTrue(payload["ok"], msg=payload.get("error"))
         self.assertEqual(payload["game_name"], "APQuest")
         self.assertTrue(payload["groups"], "world did not genuinely load (empty groups)")
+
+    def test_export_datapackage_stdout_is_exactly_one_ok_json_document(self):
+        with TemporaryDirectory(prefix="AP_datapackage_") as user_dir:
+            payload = self._run_child(_EXPORT_PURITY_CHILD, MWGG_TEST_USER_PATH=user_dir)
+            self.assertTrue(payload["ok"], msg=payload.get("error"))
+            self.assertEqual(payload["failed"], [])
+            self.assertEqual(Path(payload["path"]), Path(user_dir) / "datapackage_export.json")
+            with open(payload["path"], encoding="utf-8") as f:
+                games = json.load(f)["games"]
+        self.assertEqual(set(games), {"APQuest", "Archipelago"})
+        self.assertTrue(games["APQuest"]["item_name_to_id"], "world did not genuinely load")
 
 
 def _load_gui_world_data():
