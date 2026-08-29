@@ -14,12 +14,18 @@ the on-disk Archipelago tutorial files (``setup_en.md`` etc.) are available.
 """
 from __future__ import annotations
 
+import pathlib
+import shutil
+from types import SimpleNamespace
 from unittest.mock import patch
+from urllib.parse import quote
 
 import pytest
+from werkzeug.utils import secure_filename
 
+from BaseClasses import Tutorial
 from WebHostLib import to_url
-from WebHostLib.misc import _split_tutorial_file
+from WebHostLib.misc import _resolve_setup_tutorial, _split_tutorial_file
 from WebHostLib.short_id import (
     ALPHABET,
     SHORT_ID_LENGTH,
@@ -29,6 +35,7 @@ from WebHostLib.short_id import (
     is_well_formed,
     normalize_short_id,
 )
+from worlds.AutoWorld import AutoWorldRegister
 
 pytestmark = pytest.mark.usefixtures("_wipe_rooms_after_test")
 
@@ -381,12 +388,149 @@ class TestCanonicalTutorialRoute:
         response = client.get("/learn/en/tutorial/NoSuchGame/setup")
         assert response.status_code == 404
 
-    def test_missing_lang_variant_404s(self, client):
-        """Asking for a language whose file doesn't exist on disk 404s
-        rather than falling back to English.
-        """
-        response = client.get("/learn/xx/tutorial/Archipelago/setup")
-        assert response.status_code == 404
+
+# ---------------------------------------------------------------------------
+# Tutorials: "setup" aliases to the world's real primary guide
+# ---------------------------------------------------------------------------
+
+ALIAS_GAME = "Setup Alias Test Game!"
+ALIAS_GAME_URL = quote(ALIAS_GAME, safe="")
+
+
+def _tutorial(tutorial_name: str, file_name: str) -> Tutorial:
+    return Tutorial(tutorial_name, "A guide.", "English", file_name, "unused", ["Nobody"])
+
+
+def _stub_world(tutorials: list[Tutorial]) -> SimpleNamespace:
+    return SimpleNamespace(
+        game=ALIAS_GAME,
+        hidden=False,
+        web=SimpleNamespace(tutorials=tutorials, theme="grass", display_name=ALIAS_GAME),
+    )
+
+
+@pytest.fixture
+def alias_world(tmp_path):
+    def _register(tutorials: list[Tutorial], on_disk: list[str]):
+        for file_name in on_disk:
+            (tmp_path / file_name).write_text("# Guide\n\nBody.\n", encoding="utf-8")
+        return patch.dict(AutoWorldRegister.world_types, {ALIAS_GAME: _stub_world(tutorials)})
+    return _register
+
+
+class TestResolveSetupTutorial:
+    def test_prefers_a_setup_ish_tutorial_name(self, alias_world, tmp_path):
+        tutorials = [_tutorial("Plando Guide", "plando_en.md"),
+                     _tutorial("Multiworld Setup Guide", "multiworld_en.md")]
+        with alias_world(tutorials, ["plando_en.md", "multiworld_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) == ("multiworld", "en")
+
+    def test_first_setup_ish_name_wins(self, alias_world, tmp_path):
+        """A Link to the Past's shape: "MSU-1 Setup Guide" matches too."""
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_en.md"),
+                     _tutorial("MSU-1 Setup Guide", "msu1_en.md"),
+                     _tutorial("Plando Guide", "plando_en.md")]
+        with alias_world(tutorials, ["multiworld_en.md", "msu1_en.md", "plando_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) == ("multiworld", "en")
+
+    def test_matches_start_guide(self, alias_world, tmp_path):
+        with alias_world([_tutorial("Start Guide", "guide_en.md")], ["guide_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) == ("guide", "en")
+
+    def test_falls_back_to_first_tutorial_when_no_name_matches(self, alias_world, tmp_path):
+        tutorials = [_tutorial("How To Play", "howto_en.md"), _tutorial("Plando Guide", "plando_en.md")]
+        with alias_world(tutorials, ["howto_en.md", "plando_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) == ("howto", "en")
+
+    def test_prefers_the_requested_language(self, alias_world, tmp_path):
+        tutorials = [_tutorial("Setup Guide", "guide_en.md"),
+                     _tutorial("Guide d installation", "guide_fr.md")]
+        with alias_world(tutorials, ["guide_en.md", "guide_fr.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "fr", str(tmp_path)) == ("guide", "fr")
+
+    def test_crosses_languages_only_when_the_requested_one_has_none(self, alias_world, tmp_path):
+        tutorials = [_tutorial("Setup Guide", "guide_en.md")]
+        with alias_world(tutorials, ["guide_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "de", str(tmp_path)) == ("guide", "en")
+
+    def test_skips_candidates_with_no_file_on_disk(self, alias_world, tmp_path):
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_en.md"),
+                     _tutorial("Setup Guide", "guide_en.md")]
+        with alias_world(tutorials, ["guide_en.md"]):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) == ("guide", "en")
+
+    def test_returns_none_when_nothing_is_on_disk(self, alias_world, tmp_path):
+        with alias_world([_tutorial("Setup Guide", "guide_en.md")], []):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) is None
+
+    def test_returns_none_for_unknown_game(self, tmp_path):
+        assert _resolve_setup_tutorial("No Such Game", "en", str(tmp_path)) is None
+
+    def test_returns_none_when_world_declares_no_tutorials(self, alias_world, tmp_path):
+        with alias_world([], []):
+            assert _resolve_setup_tutorial(ALIAS_GAME, "en", str(tmp_path)) is None
+
+
+class TestSetupAliasRoute:
+    """One URL per case; ``@cache.cached()`` would let one answer another."""
+
+    @pytest.fixture
+    def docs_dir(self, app):
+        path = pathlib.Path(app.static_folder) / "generated" / "docs" / secure_filename(ALIAS_GAME)
+        path.mkdir(parents=True, exist_ok=True)
+        yield path
+        shutil.rmtree(path, ignore_errors=True)
+
+    @pytest.fixture
+    def alias_route_world(self, docs_dir):
+        def _register(tutorials: list[Tutorial], on_disk: list[str]):
+            for file_name in on_disk:
+                (docs_dir / file_name).write_text("# Guide\n\nBody.\n", encoding="utf-8")
+            return patch.dict(AutoWorldRegister.world_types, {ALIAS_GAME: _stub_world(tutorials)})
+        return _register
+
+    def test_missing_setup_redirects_to_the_real_guide(self, client, alias_route_world):
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_en.md")]
+        with alias_route_world(tutorials, ["multiworld_en.md"]):
+            response = client.get(f"/learn/en/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=False)
+            assert response.status_code == 302
+            assert response.headers["Location"].endswith("/multiworld")
+
+    def test_redirect_lands_on_a_rendered_page(self, client, alias_route_world):
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_fr.md")]
+        with alias_route_world(tutorials, ["multiworld_fr.md"]):
+            response = client.get(f"/learn/fr/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=True)
+            assert response.status_code == 200
+            assert b"<html" in response.data.lower() or b"<!doctype" in response.data.lower()
+
+    def test_other_missing_files_still_404(self, client, alias_route_world):
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_en.md")]
+        with alias_route_world(tutorials, ["multiworld_en.md"]):
+            response = client.get(f"/learn/en/tutorial/{ALIAS_GAME_URL}/setpu")
+            assert response.status_code == 404
+
+    def test_existing_setup_file_is_served_not_redirected(self, client, alias_route_world):
+        tutorials = [_tutorial("Setup Guide", "setup_de.md"), _tutorial("Plando Guide", "plando_de.md")]
+        with alias_route_world(tutorials, ["setup_de.md", "plando_de.md"]):
+            response = client.get(f"/learn/de/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=False)
+            assert response.status_code == 200
+
+    def test_unknown_language_redirects_to_one_that_has_the_guide(self, client, alias_route_world):
+        with alias_route_world([_tutorial("Setup Guide", "setup_pt.md")], ["setup_pt.md"]):
+            response = client.get(f"/learn/xx/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=False)
+            assert response.status_code == 302
+            assert "/learn/pt/tutorial/" in response.headers["Location"]
+            assert response.headers["Location"].endswith("/setup")
+
+    def test_redirect_is_cached_under_the_requested_path(self, client, alias_route_world):
+        """The repeat runs with the world unregistered: only the cache can answer."""
+        tutorials = [_tutorial("Multiworld Setup Guide", "multiworld_es.md")]
+        with alias_route_world(tutorials, ["multiworld_es.md"]):
+            first = client.get(f"/learn/es/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=False)
+        second = client.get(f"/learn/es/tutorial/{ALIAS_GAME_URL}/setup", follow_redirects=False)
+        assert first.status_code == 302
+        assert second.status_code == 302
+        assert first.headers["Location"] == second.headers["Location"]
 
 
 # ---------------------------------------------------------------------------
