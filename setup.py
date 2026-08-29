@@ -196,12 +196,13 @@ executables = [
         shortcut_dir="DesktopFolder"
     ),
     # Standalone Launcher: stays open, spawning everything else as separate
-    # processes; bare double-click behaves like the pre-split client (Win32GUI).
+    # processes; bare double-click behaves like the pre-split client (gui base,
+    # no console window). cx_Freeze >= 8.5 dropped the legacy "Win32GUI" name.
     Executable(
         script="Launcher.py",
         target_name=_launcher_exe_name,
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base="Win32GUI" if is_windows else None,
+        base="gui" if is_windows else None,
         shortcut_name="MultiworldGG Launcher",
         shortcut_dir="DesktopFolder"
     )

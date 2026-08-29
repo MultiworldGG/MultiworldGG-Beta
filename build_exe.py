@@ -373,8 +373,8 @@ def run_cx_freeze_build() -> bool:
         ])
         logger.debug("cx_Freeze build completed successfully")
         return True
-    except Exception as e:
-        logger.debug(f"cx_Freeze build failed: {e}")
+    except Exception:
+        logger.error("cx_Freeze build failed", exc_info=True)
         return False
 
 def clean_build_directory() -> bool:
