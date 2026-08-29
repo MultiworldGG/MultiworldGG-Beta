@@ -6,17 +6,35 @@ mwgg_igdb game-index variant package.
 Three regions are managed:
   - in_client       : `#define InClientDescriptions "..."` near the top
   - components      : the entire `[Components]` block
-  - dispatch        : the body of `GetSelectedWorld` that maps slugs to
-                      `worlds.<slug>` tokens
+  - wheel_downloads : per-world `[Files]` `download`-flag entries that fetch
+                      each world's wheel into `{app}\\wheel_cache` at install
+                      time (Inno 6.5.0+); source and hash come from the
+                      manifest's `module_location` release-asset wheel URL
 
 Each region is delimited by `BEGIN AUTOGEN: <name>` / `END AUTOGEN: <name>`
 markers; everything outside the markers is left untouched.
 
-Disk-size policy:
-  - Prefer `disk_space_kb` from the manifest (author-stamped via per-world CI).
+Disk-size policy (ExtraDiskSpaceRequired is bytes):
+  - Prefer `disk_space_mb` from the manifest (ceil-MB of the wheel, stamped by
+    gen-pymod-release per-world CI), converted to bytes. Legacy `disk_space_kb`
+    inputs are consumed verbatim as bytes, matching the values they seeded.
   - Fall back to the value parsed out of the existing iss file for worlds that
     haven't yet rolled out the gen-pymod-release size step.
   - If both are missing, emit a warning and use 0.
+
+In-client policy:
+  - Worlds flagged `in_client` (manifest `flags`) are rendered into the
+    InClientDescriptions define (bolded as free games in the installer's
+    component list). The live index currently carries no `flags` field, so
+    when no world is flagged the existing region body is preserved verbatim
+    with a warning instead of being blanked.
+
+Wheel-size (ExternalSize) policy:
+  - Prefer `wheel_size` from the manifest/`--from-json` input if present.
+  - Else HEAD the wheel URL for Content-Length (skipped entirely, no network,
+    when `--from-json` is given).
+  - Fall back to the value parsed out of the existing iss file, else warn and
+    use 0.
 
 The script is idempotent: same input -> byte-identical output.
 """
@@ -28,6 +46,8 @@ import json
 import re
 import subprocess
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -136,6 +156,25 @@ def load_index(variant: str) -> dict[str, dict[str, Any]]:
 # ---------------------------- region rendering ------------------------------
 
 
+def _manifest_game(manifest: dict[str, Any]) -> str | None:
+    """Display name; the live index renamed `game` to `game_name`, accept both."""
+    return manifest.get("game_name") or manifest.get("game")
+
+
+def _manifest_disk_space(manifest: dict[str, Any]) -> int | None:
+    """ExtraDiskSpaceRequired bytes from the manifest, or None.
+
+    The live index stamps `disk_space_mb` (ceil-MB of the wheel); the original
+    `disk_space_kb` key never made it into any live manifest but is kept for
+    fixtures, consumed verbatim as bytes like the iss values it mirrors.
+    """
+    if "disk_space_mb" in manifest:
+        return int(manifest["disk_space_mb"]) * 1024 * 1024
+    if "disk_space_kb" in manifest:
+        return int(manifest["disk_space_kb"])
+    return None
+
+
 def _format_kb(value: int) -> str:
     """Render an int as Inno Setup's underscore-separated thousands grouping."""
     s = str(value)
@@ -167,16 +206,16 @@ def render_components(
     lines: list[str] = []
     for slug in sorted(games.keys()):
         manifest = games[slug]
-        description = manifest.get("game") or fallback.get(slug, {}).get("description") or slug
-        size = manifest.get("disk_space_kb")
+        description = _manifest_game(manifest) or fallback.get(slug, {}).get("description") or slug
+        size = _manifest_disk_space(manifest)
         if size is None:
             fb = fallback.get(slug, {})
             if "disk_space_kb" in fb:
                 size = fb["disk_space_kb"]
             else:
                 print(
-                    f"[regen] warning: no disk_space_kb for '{slug}' (manifest "
-                    f"missing field, no fallback in current iss); using 0",
+                    f"[regen] warning: no disk-space value for '{slug}' (manifest "
+                    f"missing disk_space_mb, no fallback in current iss); using 0",
                     file=sys.stderr,
                 )
                 size = 0
@@ -190,22 +229,22 @@ def render_components(
     return "\n".join(lines) + "\n"
 
 
-def render_dispatch(games: dict[str, dict[str, Any]]) -> str:
-    lines: list[str] = []
-    for slug in sorted(games.keys()):
-        lines.append(
-            f"  if WizardIsComponentSelected('worlds\\{_component_name(slug)}') then "
-            f"WorldList := WorldList + ' worlds.{slug}';"
-        )
-    return "\n".join(lines) + "\n"
-
-
-def render_in_client_descriptions(games: dict[str, dict[str, Any]]) -> str:
+def render_in_client_descriptions(
+    games: dict[str, dict[str, Any]],
+    existing_body: str | None,
+) -> str:
     in_client_descs = sorted(
-        manifest.get("game") or slug
+        _manifest_game(manifest) or slug
         for slug, manifest in games.items()
         if "in_client" in (manifest.get("flags") or [])
     )
+    if not in_client_descs and existing_body is not None:
+        print(
+            "[regen] warning: no world carries an 'in_client' flag (the live index "
+            "schema has no `flags` field); preserving the existing in_client region",
+            file=sys.stderr,
+        )
+        return existing_body
     # TStringList.CommaText treats both whitespace and commas as separators
     # unless an item is double-quoted. Quote every item so descriptions like
     # "A Hat in Time" round-trip as a single entry. Embedded double-quotes are
@@ -215,6 +254,100 @@ def render_in_client_descriptions(games: dict[str, dict[str, Any]]) -> str:
     quoted = [f'""{d.replace(chr(34), chr(34) * 2)}""' for d in in_client_descs]
     joined = ",".join(quoted)
     return f'#define InClientDescriptions "{joined}"\n'
+
+
+# ---------------------------- wheel_downloads --------------------------------
+
+# module_location like <base_url>.whl#sha256=<64-hex>; legacy `git+...@ref`
+# entries and any URL missing the sha fragment don't match and are skipped.
+WHEEL_LOCATION_PATTERN = re.compile(r"^(?P<base_url>[^#]+\.whl)#sha256=(?P<sha256>[0-9a-fA-F]{64})$")
+
+# Matches a rendered wheel_downloads [Files] line, for the ExternalSize fallback table.
+WHEEL_DOWNLOAD_LINE = re.compile(
+    r'^\s*Source:\s*"(?P<url>[^"]+)";\s*DestDir:\s*"\{app\}\\wheel_cache";\s*'
+    r'DestName:\s*"(?P<destname>[^"]+)";\s*ExternalSize:\s*(?P<size>\d+);\s*'
+    r'Hash:\s*"(?P<hash>[0-9a-fA-F]+)";\s*Components:\s*(?P<slug>\S+);\s*'
+    r'Flags:\s*external download ignoreversion\s*$',
+    re.MULTILINE,
+)
+
+
+def parse_existing_wheel_sizes(iss_text: str) -> dict[str, int]:
+    """Parse the current `wheel_downloads` region for a slug -> ExternalSize fallback table."""
+    out: dict[str, int] = {}
+    region = _find_region(iss_text, "wheel_downloads")
+    if region is None:
+        return out
+    for m in WHEEL_DOWNLOAD_LINE.finditer(region):
+        out[_slug_from_component_name(m["slug"])] = int(m["size"])
+    return out
+
+
+def _parse_wheel_location(location: Any) -> tuple[str, str] | None:
+    """Split a `module_location` wheel URL into (url_without_fragment, sha256_hex), or None."""
+    if not isinstance(location, str):
+        return None
+    m = WHEEL_LOCATION_PATTERN.match(location)
+    if not m:
+        return None
+    return m["base_url"], m["sha256"].lower()
+
+
+def _fetch_content_length(url: str) -> int | None:
+    """HEAD `url` (following redirects, e.g. GitHub's 302 to a signed S3 host) for its size."""
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            length = resp.headers.get("Content-Length")
+    except (urllib.error.URLError, OSError) as e:
+        print(f"[regen] warning: HEAD request failed for {url}: {e}", file=sys.stderr)
+        return None
+    return int(length) if length else None
+
+
+def resolve_wheel_size(
+    slug: str, manifest: dict[str, Any], url: str, fallback: dict[str, int], use_network: bool,
+) -> int:
+    if "wheel_size" in manifest:
+        return int(manifest["wheel_size"])
+    if use_network:
+        size = _fetch_content_length(url)
+        if size is not None:
+            return size
+    if slug in fallback:
+        return fallback[slug]
+    print(f"[regen] warning: no size available for wheel '{slug}' ({url}); using 0", file=sys.stderr)
+    return 0
+
+
+def render_wheel_downloads(
+    games: dict[str, dict[str, Any]],
+    fallback_sizes: dict[str, int],
+    use_network: bool,
+) -> str:
+    lines: list[str] = []
+    skipped: list[str] = []
+    for slug in sorted(games.keys()):
+        manifest = games[slug]
+        parsed = _parse_wheel_location(manifest.get("module_location"))
+        if parsed is None:
+            skipped.append(slug)
+            continue
+        base_url, sha256_hex = parsed
+        dest_name = base_url.rsplit("/", 1)[-1]
+        size = resolve_wheel_size(slug, manifest, base_url, fallback_sizes, use_network)
+        lines.append(
+            f'Source: "{base_url}"; DestDir: "{{app}}\\wheel_cache"; DestName: "{dest_name}"; '
+            f'ExternalSize: {size}; Hash: "{sha256_hex}"; '
+            f'Components: {_component_name(slug)}; Flags: external download ignoreversion'
+        )
+    if skipped:
+        print(
+            f"[regen] warning: skipped {len(skipped)} world(s) with no downloadable wheel "
+            f"module_location (missing, non-wheel, or unhashed): {', '.join(skipped)}",
+            file=sys.stderr,
+        )
+    return "\n".join(lines) + "\n" if lines else "\n"
 
 
 # -------------------------------- diff log ----------------------------------
@@ -232,11 +365,11 @@ def diff_summary(
     for slug in sorted(old_set & new_set):
         old = old_components[slug]
         new = games[slug]
-        new_desc = new.get("game") or slug
-        new_size = new.get("disk_space_kb")
+        new_desc = _manifest_game(new) or slug
+        new_size = _manifest_disk_space(new)
         if new_size is None:
             new_size = old["disk_space_kb"]
-        if old["description"] != new_desc or old["disk_space_kb"] != int(new_size):
+        if old["description"] != new_desc or old["disk_space_kb"] != new_size:
             changed.append(slug)
     parts = []
     if added:
@@ -264,8 +397,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument(
         "--from-json", type=Path, default=None,
-        help="Read the games dict from a JSON file instead of mwgg_igdb. "
-             "Schema: { '<slug>': { 'game': str, 'flags': [..], 'disk_space_kb': int } }",
+        help="Read the games dict from a JSON file instead of mwgg_igdb, and skip all "
+             "network calls (wheel sizes come from 'wheel_size' or the iss fallback). "
+             "Schema: { '<slug>': { 'game_name': str (or legacy 'game'), 'flags': [..], "
+             "'disk_space_mb': int (or legacy 'disk_space_kb' bytes), "
+             "'module_location': str, 'wheel_size': int } }",
     )
     p.add_argument(
         "--check", action="store_true",
@@ -278,15 +414,23 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.from_json is not None:
         games = json.loads(args.from_json.read_text(encoding="utf-8"))
+        use_network = False
     else:
         games = load_index(args.variant)
+        use_network = True
 
     fallback = parse_existing_components(iss_text)
+    fallback_wheel_sizes = parse_existing_wheel_sizes(iss_text)
 
     new_iss = iss_text
     new_iss = replace_region(new_iss, "components", render_components(games, fallback))
-    new_iss = replace_region(new_iss, "dispatch", render_dispatch(games))
-    new_iss = replace_region(new_iss, "in_client", render_in_client_descriptions(games))
+    new_iss = replace_region(
+        new_iss, "in_client",
+        render_in_client_descriptions(games, _find_region(iss_text, "in_client")),
+    )
+    new_iss = replace_region(
+        new_iss, "wheel_downloads", render_wheel_downloads(games, fallback_wheel_sizes, use_network),
+    )
 
     summary = diff_summary(fallback, games)
     print(f"[regen] {summary}", file=sys.stderr)

@@ -17,6 +17,7 @@ import LauncherComponents as lc
 import ModuleUpdate
 import MultiWorld
 import Utils
+import tools.regen_inno_components as regen_inno
 from CommonClient import parse_connect_url, safe_avatar_source
 from LauncherComponents import (Component, SuffixIdentifier, Type, components, get_exe, identify,
                                 launch as launch_component, launch_subprocess)
@@ -1173,6 +1174,275 @@ def test_inno_app_exe_name_is_the_launcher():
     match = re.search(r'#define MyAppExeName "([^"]+)"', text)
     assert match, "expected a #define MyAppExeName line in inno_setup.iss"
     assert match.group(1) == f"{BaseUtils.FROZEN_TARGETS['Launcher']}.exe"
+
+
+# --------------------------------------------------------------------------- #
+# inno_setup.iss wheel_downloads: Inno itself fetches selected worlds' wheels
+# into {app}\wheel_cache via the [Files] `download` flag (Inno 6.5.0+). This
+# replaces the old runasoriginaluser `--update-modules` predownload step,
+# whose de-elevated token couldn't exec uv through the WinGet AppExecLink
+# shim (WinError 448).
+# --------------------------------------------------------------------------- #
+
+def _read_inno_text() -> str:
+    with open(_INNO_PATH, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def test_inno_predownload_run_entry_removed():
+    text = _read_inno_text()
+    assert "--update-modules" not in text
+    assert "GetSelectedWorld" not in text
+    assert "GetUvDir" not in text
+    assert "ResolveRealUvPath" not in text
+
+
+def test_inno_uv_install_run_entries_survive():
+    """The uv install [Run] entries (and their Check functions) must survive:
+    uv is still required at first launch, even though nothing installs worlds
+    at install time anymore."""
+    text = _read_inno_text()
+    assert 'Check: IsUvNeededViaWinget' in text
+    assert 'Check: IsUvNeededViaPwsh' in text
+    assert "function IsWingetAvailable" in text
+
+
+def test_inno_wheel_downloads_region_markers_in_files_section():
+    text = _read_inno_text()
+    files_idx = text.index("[Files]")
+    begin_idx = text.index("; BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("; END AUTOGEN: wheel_downloads")
+    icons_idx = text.index("[Icons]")
+    assert files_idx < begin_idx < end_idx < icons_idx
+
+
+def test_inno_wheel_downloads_lines_carry_required_fields():
+    """Any populated wheel_downloads line (the region may be empty until CI's
+    regen workflow fills it in) must carry the full download-flag contract."""
+    text = _read_inno_text()
+    begin_idx = text.index("; BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("; END AUTOGEN: wheel_downloads")
+    body = text[begin_idx:end_idx]
+    lines = [line for line in body.splitlines() if line.strip().startswith("Source:")]
+    for line in lines:
+        assert 'DestDir: "{app}\\wheel_cache"' in line
+        assert re.search(r"ExternalSize:\s*\d+", line)
+        assert re.search(r'Hash:\s*"[0-9a-fA-F]+"', line)
+        assert "Flags: external download ignoreversion" in line
+
+
+def test_inno_wheel_cache_install_uninstall_delete_entries():
+    text = _read_inno_text()
+    assert 'Type: filesandordirs; Name: "{app}\\wheel_cache"' in text
+    assert 'Type: filesandordirs; Name: "{app}\\wheel_cache.consuming"' in text
+
+
+def test_inno_post_install_writes_variant_marker():
+    text = _read_inno_text()
+    assert "ssPostInstall" in text
+    assert "mwgg_igdb_variant.txt" in text
+    assert "GetSelectedVariantToken" in text
+
+
+# --------------------------------------------------------------------------- #
+# tools/regen_inno_components.py wheel_downloads rendering: --from-json
+# fixtures so these don't touch the network.
+# --------------------------------------------------------------------------- #
+
+def _minimal_iss(tmp_path):
+    text = (
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions ""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n'
+    )
+    p = tmp_path / "test.iss"
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+def _write_games_json(tmp_path, games):
+    p = tmp_path / "games.json"
+    p.write_text(json.dumps(games), encoding="utf-8")
+    return p
+
+
+def test_regen_wheel_downloads_emits_entry_with_url_hash_size(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    sha = "a" * 64
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={sha}"
+            ),
+            "wheel_size": 12345,
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert ('Source: "https://github.com/o/r/releases/download/v1.0.0/'
+            'worlds_kh2-1.0.0-py3-none-any.whl"') in text
+    assert 'DestDir: "{app}\\wheel_cache"' in text
+    assert 'DestName: "worlds_kh2-1.0.0-py3-none-any.whl"' in text
+    assert "ExternalSize: 12345" in text
+    assert f'Hash: "{sha}"' in text
+    assert "Components: kh2" in text
+    assert "Flags: external download ignoreversion" in text
+
+
+def test_regen_wheel_downloads_skips_non_wheel_locations_with_warning(tmp_path, capsys):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "legacygit": {"game": "Legacy Git", "module_location": "git+https://github.com/o/r@abc123"},
+        "nofragment": {
+            "game": "No Fragment",
+            "module_location": "https://github.com/o/r/releases/download/v1/pkg-1.0-py3-none-any.whl",
+        },
+        "nolocation": {"game": "No Location"},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    begin_idx = text.index("BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("END AUTOGEN: wheel_downloads")
+    body = text[begin_idx:end_idx]
+    assert "legacygit" not in body
+    assert "nofragment" not in body
+    assert "nolocation" not in body
+    err = capsys.readouterr().err
+    assert "skipped 3 world(s)" in err
+    assert "legacygit" in err and "nofragment" in err and "nolocation" in err
+
+
+def test_regen_wheel_downloads_idempotent(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={'b' * 64}"
+            ),
+            "wheel_size": 99,
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text_after_first = iss.read_text(encoding="utf-8")
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text_after_second = iss.read_text(encoding="utf-8")
+    assert text_after_first == text_after_second
+
+
+def test_regen_from_json_never_touches_network(tmp_path, monkeypatch):
+    """--from-json must not HEAD any URL, even for entries missing wheel_size."""
+    def _fail(*args, **kwargs):
+        raise AssertionError("--from-json must not make network calls")
+    monkeypatch.setattr(regen_inno, "_fetch_content_length", _fail)
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={'c' * 64}"
+            ),
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert "ExternalSize: 0" in iss.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# tools/regen_inno_components.py vs the live index schema: game_name rename,
+# flags/disk_space_kb gone (disk_space_mb is the stamped successor).
+# --------------------------------------------------------------------------- #
+
+def test_regen_in_client_preserved_when_index_has_no_flags(tmp_path, capsys):
+    """The live index dropped `flags`; a regen must not blank the bold list."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions """2048"""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "disk_space_mb": 1},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert '#define InClientDescriptions """2048"""' in iss.read_text(encoding="utf-8")
+    assert "preserving the existing in_client region" in capsys.readouterr().err
+
+
+def test_regen_in_client_rendered_from_flags_when_present(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "flags": ["in_client"]},
+        "kh2": {"game_name": "Kingdom Hearts II", "flags": []},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert '#define InClientDescriptions """2048"""' in text
+    assert "Kingdom Hearts" not in text.split("[Components]")[0]
+
+
+def test_regen_components_prefers_disk_space_mb_as_bytes(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II", "disk_space_mb": 2},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert ('Name: "kh2"; Description: "Kingdom Hearts II"; '
+            'ExtraDiskSpaceRequired: 2_097_152') in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_legacy_disk_space_kb_used_verbatim(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game": "Kingdom Hearts II", "disk_space_kb": 82953},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert "ExtraDiskSpaceRequired: 82_953" in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_size_falls_back_to_existing_iss(tmp_path, capsys):
+    """Worlds not yet re-released with disk_space_mb keep their old iss value;
+    worlds with no value anywhere warn and get 0."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions ""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        'Name: "kh2"; Description: "Kingdom Hearts II"; ExtraDiskSpaceRequired: 123_456\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II"},
+        "newworld": {"game_name": "New World"},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert "ExtraDiskSpaceRequired: 123_456" in text
+    assert 'Name: "newworld"; Description: "New World"; ExtraDiskSpaceRequired: 0' in text
+    assert "no disk-space value for 'newworld'" in capsys.readouterr().err
 
 
 # --------------------------------------------------------------------------- #
