@@ -671,7 +671,9 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
                  launch_file: typing.Optional[str] = None,
                  extra_args: typing.Iterable[str] = ()) -> "subprocess.Popen[typing.Any]":
     """Spawn a detached client process; children deliberately survive launcher
-    exit. MWGG_NO_SPLASH=1 goes in the child env (there is no CLI flag).
+    exit. MWGG_SKIP_UPDATE=1 goes in the child env (there is no CLI flag): the
+    child still fronts its boot with the splash, but must not re-run the world
+    updater under a live launcher.
 
     `component` names a `Component.display_name` registered by `game`'s world
     module (e.g. a map tracker); the child resolves it after its world load and
@@ -697,7 +699,7 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
     env = os.environ.copy()
     env["MWGG_ROLE"] = "client"
     env["MWGG_CLIENT_TYPE"] = client_type
-    env["MWGG_NO_SPLASH"] = "1"
+    env["MWGG_SKIP_UPDATE"] = "1"
 
     return subprocess.Popen(argv, env=env, **_detached_popen_kwargs())
 

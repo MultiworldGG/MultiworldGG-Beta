@@ -39,9 +39,9 @@ def _setup_py_target_names() -> set[str]:
 # Entry-point split: MultiWorld.main()'s role computation and MWGG_ROLE
 # assignment (assigned, never setdefault), the connect-address composer
 # forwarded to spawned clients, the --client-type parser surface, splash
-# gating under MWGG_NO_SPLASH, and the thin Launcher.py dispatcher (headless
-# --version before any heavy import, component dispatch, verbatim delegation
-# to MultiWorld.main).
+# gating (MWGG_NO_SPLASH escape hatch, MWGG_SKIP_UPDATE for spawned clients),
+# and the thin Launcher.py dispatcher (headless --version before any heavy
+# import, component dispatch, verbatim delegation to MultiWorld.main).
 # --------------------------------------------------------------------------- #
 
 def _parsed_args(argv=(), **overrides):
@@ -214,11 +214,13 @@ def test_resolve_route_unroutable_client_type_falls_back_to_launcher(argv, monke
     resolves no route; without the guard that boots a dead client GUI
     (console + permanent loading overlay, nothing ever launches)."""
     monkeypatch.setenv("MWGG_ROLE", "stale")  # registers teardown restore
+    monkeypatch.setenv("MWGG_GAME", "stale")
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         route_module, route_kwargs = _resolve_with_role(_parsed_args(argv))
     assert route_module is None
     assert route_kwargs == {}
     assert os.environ["MWGG_ROLE"] == "launcher"
+    assert "MWGG_GAME" not in os.environ
     assert any("falling back to launcher" in record.message for record in caplog.records)
 
 
@@ -245,6 +247,7 @@ def test_resolve_route_resolution_error_falls_back_to_launcher(monkeypatch):
 
 def test_resolve_route_available_game_stays_client(monkeypatch):
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
     monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
     args = _parsed_args(["--game", "kh2", "--server-address", "localhost:38281",
                          "--slot-name", "P1"])
@@ -253,26 +256,33 @@ def test_resolve_route_available_game_stays_client(monkeypatch):
     assert route_kwargs["server_address"] == "P1@localhost:38281"
     assert route_kwargs["client_type"] == "game"
     assert os.environ["MWGG_ROLE"] == "client"
+    # Exported for the client-role frontend's cover-art lookup.
+    assert os.environ["MWGG_GAME"] == "kh2"
 
 
 def test_resolve_route_text_client_sentinel_stays_client(monkeypatch):
     """client_type=="text" routes via the "" sentinel (a real route, hence
     the `is None` guard rather than a bool check)."""
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
     route_module, route_kwargs = _resolve_with_role(_parsed_args(["--client-type", "text"]))
     assert route_module == ""
     assert route_kwargs == {"server_address": None, "client_type": "text"}
     assert os.environ["MWGG_ROLE"] == "client"
+    # No game routed: a stale inherited value must not leak a wrong cover.
+    assert "MWGG_GAME" not in os.environ
 
 
 def test_resolve_route_routed_patch_stays_client(monkeypatch):
     monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
     args = _parsed_args(["seed.apkh3"], patch_module="kh3",
                         patch_file="C:\\seeds\\seed.apkh3")
     route_module, route_kwargs = _resolve_with_role(args)
     assert route_module == "kh3"
     assert route_kwargs == {"patch_file": "C:\\seeds\\seed.apkh3"}
     assert os.environ["MWGG_ROLE"] == "client"
+    assert os.environ["MWGG_GAME"] == "kh3"
 
 
 def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
@@ -296,11 +306,21 @@ def test_splash_shown_on_windows_gui_cold_start(monkeypatch):
 
 
 def test_splash_skipped_under_mwgg_no_splash(monkeypatch):
-    """spawn_client sets MWGG_NO_SPLASH=1 in the child env (there is no CLI
-    flag); the whole splash block, including the 60s update wait, must skip."""
+    """MWGG_NO_SPLASH is the manual escape hatch: the whole splash block,
+    including the 60s wait, must skip."""
     monkeypatch.setattr(MultiWorld, "is_windows", True)
     monkeypatch.setenv("MWGG_NO_SPLASH", "1")
     assert MultiWorld.should_show_splash("gui") is False
+
+
+def test_splash_still_shown_under_mwgg_skip_update(monkeypatch):
+    """spawn_client sets MWGG_SKIP_UPDATE=1 in the child env; that skips the
+    updater (inline here, in-thread in the splash process), not the splash
+    itself -- spawned clients front their boot with it too."""
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    monkeypatch.setenv("MWGG_SKIP_UPDATE", "1")
+    assert MultiWorld.should_show_splash("gui") is True
 
 
 def test_splash_skipped_for_tui_frontend(monkeypatch):
@@ -517,7 +537,8 @@ def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
     assert env["MWGG_CLIENT_TYPE"] == "game"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
     assert captured["kwargs"]["creationflags"] == (
         BaseUtils.subprocess.DETACHED_PROCESS | BaseUtils.subprocess.CREATE_NEW_PROCESS_GROUP
     )
@@ -547,7 +568,8 @@ def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
     assert env["MWGG_CLIENT_TYPE"] == "text"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
     assert captured["kwargs"]["start_new_session"] is True
     assert "creationflags" not in captured["kwargs"]
 
@@ -575,7 +597,7 @@ def test_spawn_client_component_flag(monkeypatch):
 
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
-    assert env["MWGG_NO_SPLASH"] == "1"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
 
 
 def test_spawn_client_component_requires_game(monkeypatch):
