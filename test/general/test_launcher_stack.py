@@ -1359,6 +1359,93 @@ def test_regen_from_json_never_touches_network(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
+# tools/regen_inno_components.py vs the live index schema: game_name rename,
+# flags/disk_space_kb gone (disk_space_mb is the stamped successor).
+# --------------------------------------------------------------------------- #
+
+def test_regen_in_client_preserved_when_index_has_no_flags(tmp_path, capsys):
+    """The live index dropped `flags`; a regen must not blank the bold list."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions """2048"""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "disk_space_mb": 1},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert '#define InClientDescriptions """2048"""' in iss.read_text(encoding="utf-8")
+    assert "preserving the existing in_client region" in capsys.readouterr().err
+
+
+def test_regen_in_client_rendered_from_flags_when_present(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "flags": ["in_client"]},
+        "kh2": {"game_name": "Kingdom Hearts II", "flags": []},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert '#define InClientDescriptions """2048"""' in text
+    assert "Kingdom Hearts" not in text.split("[Components]")[0]
+
+
+def test_regen_components_prefers_disk_space_mb_as_bytes(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II", "disk_space_mb": 2},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert ('Name: "kh2"; Description: "Kingdom Hearts II"; '
+            'ExtraDiskSpaceRequired: 2_097_152') in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_legacy_disk_space_kb_used_verbatim(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game": "Kingdom Hearts II", "disk_space_kb": 82953},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert "ExtraDiskSpaceRequired: 82_953" in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_size_falls_back_to_existing_iss(tmp_path, capsys):
+    """Worlds not yet re-released with disk_space_mb keep their old iss value;
+    worlds with no value anywhere warn and get 0."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions ""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        'Name: "kh2"; Description: "Kingdom Hearts II"; ExtraDiskSpaceRequired: 123_456\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II"},
+        "newworld": {"game_name": "New World"},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert "ExtraDiskSpaceRequired: 123_456" in text
+    assert 'Name: "newworld"; Description: "New World"; ExtraDiskSpaceRequired: 0' in text
+    assert "no disk-space value for 'newworld'" in capsys.readouterr().err
+
+
+# --------------------------------------------------------------------------- #
 # Inno's predownload step: must exit 0 yet leave a trace on silent no-ops.
 # --------------------------------------------------------------------------- #
 

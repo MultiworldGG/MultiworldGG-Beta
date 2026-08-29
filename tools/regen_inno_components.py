@@ -14,11 +14,20 @@ Three regions are managed:
 Each region is delimited by `BEGIN AUTOGEN: <name>` / `END AUTOGEN: <name>`
 markers; everything outside the markers is left untouched.
 
-Disk-size policy:
-  - Prefer `disk_space_kb` from the manifest (author-stamped via per-world CI).
+Disk-size policy (ExtraDiskSpaceRequired is bytes):
+  - Prefer `disk_space_mb` from the manifest (ceil-MB of the wheel, stamped by
+    gen-pymod-release per-world CI), converted to bytes. Legacy `disk_space_kb`
+    inputs are consumed verbatim as bytes, matching the values they seeded.
   - Fall back to the value parsed out of the existing iss file for worlds that
     haven't yet rolled out the gen-pymod-release size step.
   - If both are missing, emit a warning and use 0.
+
+In-client policy:
+  - Worlds flagged `in_client` (manifest `flags`) are rendered into the
+    InClientDescriptions define (bolded as free games in the installer's
+    component list). The live index currently carries no `flags` field, so
+    when no world is flagged the existing region body is preserved verbatim
+    with a warning instead of being blanked.
 
 Wheel-size (ExternalSize) policy:
   - Prefer `wheel_size` from the manifest/`--from-json` input if present.
@@ -152,6 +161,20 @@ def _manifest_game(manifest: dict[str, Any]) -> str | None:
     return manifest.get("game_name") or manifest.get("game")
 
 
+def _manifest_disk_space(manifest: dict[str, Any]) -> int | None:
+    """ExtraDiskSpaceRequired bytes from the manifest, or None.
+
+    The live index stamps `disk_space_mb` (ceil-MB of the wheel); the original
+    `disk_space_kb` key never made it into any live manifest but is kept for
+    fixtures, consumed verbatim as bytes like the iss values it mirrors.
+    """
+    if "disk_space_mb" in manifest:
+        return int(manifest["disk_space_mb"]) * 1024 * 1024
+    if "disk_space_kb" in manifest:
+        return int(manifest["disk_space_kb"])
+    return None
+
+
 def _format_kb(value: int) -> str:
     """Render an int as Inno Setup's underscore-separated thousands grouping."""
     s = str(value)
@@ -184,15 +207,15 @@ def render_components(
     for slug in sorted(games.keys()):
         manifest = games[slug]
         description = _manifest_game(manifest) or fallback.get(slug, {}).get("description") or slug
-        size = manifest.get("disk_space_kb")
+        size = _manifest_disk_space(manifest)
         if size is None:
             fb = fallback.get(slug, {})
             if "disk_space_kb" in fb:
                 size = fb["disk_space_kb"]
             else:
                 print(
-                    f"[regen] warning: no disk_space_kb for '{slug}' (manifest "
-                    f"missing field, no fallback in current iss); using 0",
+                    f"[regen] warning: no disk-space value for '{slug}' (manifest "
+                    f"missing disk_space_mb, no fallback in current iss); using 0",
                     file=sys.stderr,
                 )
                 size = 0
@@ -206,12 +229,22 @@ def render_components(
     return "\n".join(lines) + "\n"
 
 
-def render_in_client_descriptions(games: dict[str, dict[str, Any]]) -> str:
+def render_in_client_descriptions(
+    games: dict[str, dict[str, Any]],
+    existing_body: str | None,
+) -> str:
     in_client_descs = sorted(
         _manifest_game(manifest) or slug
         for slug, manifest in games.items()
         if "in_client" in (manifest.get("flags") or [])
     )
+    if not in_client_descs and existing_body is not None:
+        print(
+            "[regen] warning: no world carries an 'in_client' flag (the live index "
+            "schema has no `flags` field); preserving the existing in_client region",
+            file=sys.stderr,
+        )
+        return existing_body
     # TStringList.CommaText treats both whitespace and commas as separators
     # unless an item is double-quoted. Quote every item so descriptions like
     # "A Hat in Time" round-trip as a single entry. Embedded double-quotes are
@@ -333,10 +366,10 @@ def diff_summary(
         old = old_components[slug]
         new = games[slug]
         new_desc = _manifest_game(new) or slug
-        new_size = new.get("disk_space_kb")
+        new_size = _manifest_disk_space(new)
         if new_size is None:
             new_size = old["disk_space_kb"]
-        if old["description"] != new_desc or old["disk_space_kb"] != int(new_size):
+        if old["description"] != new_desc or old["disk_space_kb"] != new_size:
             changed.append(slug)
     parts = []
     if added:
@@ -366,7 +399,8 @@ def main(argv: list[str] | None = None) -> int:
         "--from-json", type=Path, default=None,
         help="Read the games dict from a JSON file instead of mwgg_igdb, and skip all "
              "network calls (wheel sizes come from 'wheel_size' or the iss fallback). "
-             "Schema: { '<slug>': { 'game': str, 'flags': [..], 'disk_space_kb': int, "
+             "Schema: { '<slug>': { 'game_name': str (or legacy 'game'), 'flags': [..], "
+             "'disk_space_mb': int (or legacy 'disk_space_kb' bytes), "
              "'module_location': str, 'wheel_size': int } }",
     )
     p.add_argument(
@@ -390,7 +424,10 @@ def main(argv: list[str] | None = None) -> int:
 
     new_iss = iss_text
     new_iss = replace_region(new_iss, "components", render_components(games, fallback))
-    new_iss = replace_region(new_iss, "in_client", render_in_client_descriptions(games))
+    new_iss = replace_region(
+        new_iss, "in_client",
+        render_in_client_descriptions(games, _find_region(iss_text, "in_client")),
+    )
     new_iss = replace_region(
         new_iss, "wheel_downloads", render_wheel_downloads(games, fallback_wheel_sizes, use_network),
     )
