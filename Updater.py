@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import plistlib
+import re
 import shlex
 import shutil
 import stat
@@ -22,12 +23,16 @@ from Utils import is_frozen, is_linux, is_macos, is_windows, normalize_tag, tupl
 
 GITHUB_OWNER = "MultiworldGG"
 GITHUB_REPO = "MultiworldGG-Beta"
-GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
+# The releases list, not /releases/latest: the repo interleaves installer-less
+# worlds-wheels releases and marks Test-channel app releases as prereleases,
+# so "latest" frequently points at something the updater cannot use.
+GITHUB_RELEASES_PAGE = f"https://github.com/{GITHUB_OWNER}/{GITHUB_REPO}/releases"
 ASSET_PATTERNS: dict[str, tuple[str, ...]] = {
     "windows": ("*.exe",),
     "linux": ("*.AppImage",),
     "macos": ("*.dmg",),
 }
+RELEASE_PAGE_LIMIT = 3  # pages of 100; app releases interleave with worlds-wheels releases
 
 ProgressCallback = Callable[[int, int], None]
 
@@ -71,6 +76,52 @@ class ReleaseInfo:
     asset: UpdateAsset
     changelog: str
 
+    def __iter__(self):
+        # mwgg-gui unpacks the update check as (version, download_url, changelog).
+        return iter((self.version, self.asset.download_url, self.changelog))
+
+
+def _pep440_newer(candidate: str, baseline: str) -> bool:
+    try:
+        from packaging.version import Version as PackagingVersion
+        return PackagingVersion(candidate) > PackagingVersion(baseline)
+    except Exception:
+        return False
+
+
+class ReleaseVersion(Utils.Version):
+    """Version that breaks release-tuple ties against the running build's full
+    PEP 440 version: tuplize_version drops pre-release suffixes, so a released
+    0.9.0b5 and an installed 0.9.0b2 both tuplize to (0, 9, 0)."""
+
+    def __new__(cls, tag: str):
+        self = super().__new__(cls, *tuplize_version(tag))
+        self.tag = tag
+        return self
+
+    def _tie_break(self, other) -> int:
+        # Only the comparison against the running version can be refined; the
+        # full version string of an arbitrary tuple is unknown.
+        if tuple(other) != tuple(Utils.version_tuple):
+            return 0
+        if _pep440_newer(self.tag, Utils.__version__):
+            return 1
+        if _pep440_newer(Utils.__version__, self.tag):
+            return -1
+        return 0
+
+    def __gt__(self, other):
+        return tuple(self) > tuple(other) or (tuple(self) == tuple(other) and self._tie_break(other) > 0)
+
+    def __lt__(self, other):
+        return tuple(self) < tuple(other) or (tuple(self) == tuple(other) and self._tie_break(other) < 0)
+
+    def __ge__(self, other):
+        return not self.__lt__(other)
+
+    def __le__(self, other):
+        return not self.__gt__(other)
+
 
 def _platform_key() -> str:
     if Utils.is_windows:
@@ -87,6 +138,15 @@ def _asset_matches(name: str, patterns: Sequence[str]) -> bool:
     return any(fnmatch.fnmatchcase(lowered_name, pattern.lower()) for pattern in patterns)
 
 
+def _channel_matches(asset_name: str) -> bool:
+    """One repo hosts several channels (MultiworldGG vs MultiworldGG-Test);
+    asset names embed the app name directly before the version, e.g.
+    Setup.MultiworldGG-Test.0.9.0b2.exe / multiworldgg_test-0.9.0b2.dmg."""
+    normalized = re.sub(r"[^a-z0-9]+", "-", asset_name.lower())
+    instance = re.sub(r"[^a-z0-9]+", "-", str(Utils.instance_name).lower())
+    return re.search(rf"(^|-)(setup-)?{re.escape(instance)}-[0-9]", normalized) is not None
+
+
 def select_installer_asset(assets: list[dict], platform_key: str | None = None) -> dict:
     platform_key = platform_key or _platform_key()
     release_assets = [a for a in assets if _asset_matches(str(a.get("name", "")), ASSET_PATTERNS[platform_key])]
@@ -94,7 +154,81 @@ def select_installer_asset(assets: list[dict], platform_key: str | None = None) 
     if not release_assets:
         raise RuntimeError(f"No feasible installer found in latest release for {platform_key}.")
 
-    return release_assets[0]
+    def rank(asset: dict) -> tuple[bool, bool]:
+        name = str(asset.get("name", "")).lower()
+        return name.startswith("setup."), _channel_matches(name)
+
+    return max(release_assets, key=rank)
+
+
+def _fetch_releases() -> list[dict]:
+    import requests
+    releases: list[dict] = []
+    url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases"
+    for page in range(1, RELEASE_PAGE_LIMIT + 1):
+        resp = requests.get(url, params={"per_page": 100, "page": page},
+                            headers={"Accept": "application/vnd.github.v3+json"}, timeout=30)
+        resp.raise_for_status()
+        page_data = resp.json() or []
+        releases.extend(page_data)
+        if len(page_data) < 100:
+            break
+    return releases
+
+
+def _release_sort_key(tag: str):
+    """None for tags that are not app versions (e.g. worlds-wheels-*)."""
+    try:
+        from packaging.version import Version as PackagingVersion, InvalidVersion
+    except ImportError:
+        version = tuplize_version(tag)
+        return version if version > (0, 0, 0) else None
+    try:
+        return PackagingVersion(tag)
+    except InvalidVersion:
+        return None
+
+
+def _select_update_release(releases: list[dict], platform_key: str, require_channel: bool) -> tuple[dict, dict] | None:
+    best = None
+    for release in releases:
+        # Releases are published prerelease:true and flipped to full releases
+        # once verified by hand; the updater must only offer verified builds.
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        tag = normalize_tag(str(release.get("tag_name") or ""))
+        sort_key = _release_sort_key(tag)
+        if sort_key is None:
+            continue
+        assets = [a for a in release.get("assets") or []
+                  if _asset_matches(str(a.get("name", "")), ASSET_PATTERNS[platform_key])]
+        if require_channel:
+            assets = [a for a in assets if _channel_matches(str(a.get("name", "")))]
+        if not assets:
+            continue
+        if best is None or sort_key > best[0]:
+            best = (sort_key, release, assets)
+    if best is None:
+        return None
+    _, release, assets = best
+    return release, select_installer_asset(assets, platform_key)
+
+
+def find_update_release(platform_key: str | None = None) -> tuple[dict, dict]:
+    """Newest verified release that carries an installer for this platform
+    and channel.
+
+    /releases/latest is unusable here: it orders by created_at, so the newest
+    non-prerelease is often a worlds-wheels release with only .whl assets.
+    Channel matching is strict first, then dropped entirely so a rebranded
+    install still finds generically named installers."""
+    platform_key = platform_key or _platform_key()
+    releases = _fetch_releases()
+    selected = (_select_update_release(releases, platform_key, require_channel=True)
+                or _select_update_release(releases, platform_key, require_channel=False))
+    if not selected:
+        raise RuntimeError(f"No feasible installer found in any release for {platform_key}.")
+    return selected
 
 
 def _select_checksum_asset(assets: list[dict], installer_name: str) -> dict | None:
@@ -139,15 +273,9 @@ def _get_checksum_for_asset(checksum_asset: dict | None, installer_name: str) ->
 
 
 def get_latest_release_info() -> ReleaseInfo:
-    import requests
-    latest_url = f"https://api.github.com/repos/{GITHUB_OWNER}/{GITHUB_REPO}/releases/latest"
-    resp = requests.get(latest_url, headers={"Accept": "application/vnd.github.v3+json"}, timeout=30)
-    resp.raise_for_status()
-    data = resp.json()
-
-    tag = normalize_tag(data["tag_name"])
-    assets = data.get("assets") or []
-    installer = select_installer_asset(assets)
+    release, installer = find_update_release()
+    tag = normalize_tag(str(release["tag_name"]))
+    assets = release.get("assets") or []
     installer_name = str(installer["name"])
     checksum_url, checksum = _get_checksum_for_asset(_select_checksum_asset(assets, installer_name), installer_name)
     asset = UpdateAsset(
@@ -157,9 +285,9 @@ def get_latest_release_info() -> ReleaseInfo:
         checksum_url=checksum_url,
         checksum=checksum,
     )
-    changelog = data.get("body") or "No changelog available."
+    changelog = release.get("body") or "No changelog available."
     logging.info("latest release %s under url %s", tag, asset.download_url)
-    return ReleaseInfo(tuplize_version(tag), asset, changelog)
+    return ReleaseInfo(ReleaseVersion(tag), asset, changelog)
 
 
 def _download_update_asset(asset: UpdateAsset, suffix: str, progress_callback: ProgressCallback | None = None) -> Path:

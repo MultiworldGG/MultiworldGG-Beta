@@ -370,6 +370,97 @@ def run_client(args=None, queue=None):
         colorama.deinit()
 
 
+def _predownload_log_paths() -> "list[str]":
+    """Candidate locations for the predownload diagnostic log/handler.
+
+    The exe dir is listed first: Inno's [Dirs] grants everyone-modify there, so
+    it's writable regardless of which token the runasoriginaluser child ends up
+    with, unlike %TEMP% (which is not guaranteed to match what the interactive
+    user thinks of as "their" %TEMP%)."""
+    import tempfile
+    paths = []
+    try:
+        paths.append(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "mwgg_predownload_error.log"))
+    except OSError:
+        pass
+    paths.append(os.path.join(tempfile.gettempdir(), "mwgg_predownload_error.log"))
+    return paths
+
+
+def _ensure_uv_discoverable() -> None:
+    """Best-effort: make sure a `uv` a subprocess can exec is on PATH.
+
+    Inno's runasoriginaluser [Run] entry (the predownload step) can end up with
+    a rebuilt environment whose PATH omits entries the interactive shell only
+    has dynamically (shell profile, etc.), even though uv is installed. Only
+    touches this process's own env; never raises."""
+    import shutil
+    if shutil.which("uv"):
+        return
+    home = os.path.expanduser("~")
+    candidates = [
+        os.path.join(home, ".local", "bin"),
+        os.path.join(home, "AppData", "Local", "Microsoft", "WinGet", "Links"),
+    ]
+    winget_packages = os.path.join(home, "AppData", "Local", "Microsoft", "WinGet", "Packages")
+    try:
+        for entry in os.listdir(winget_packages):
+            if entry.startswith("astral-sh.uv_"):
+                for root, _dirs, files in os.walk(os.path.join(winget_packages, entry)):
+                    if "uv.exe" in files:
+                        candidates.append(root)
+    except OSError:
+        pass
+    for directory in candidates:
+        if os.path.isfile(os.path.join(directory, "uv.exe")):
+            os.environ["PATH"] = directory + os.pathsep + os.environ.get("PATH", "")
+            return
+
+
+def _run_predownload(worlds: "list[str]") -> None:
+    """Inno's post-install predownload step: create the worlds venv and
+    install `worlds` (the mwgg_igdb_<variant> token plus any selected game
+    components). Non-fatal by design -- worlds also install on demand at first
+    launch -- so this always exits 0. A log handler is attached before
+    ModuleUpdate is imported so its internal diagnostics (venv creation, uv
+    resolution, skip reasons) land in a file instead of a windowed exe's
+    nonexistent console."""
+    import logging
+    handler = None
+    for path in _predownload_log_paths():
+        try:
+            handler = logging.FileHandler(path, mode="w", encoding="utf-8")
+            break
+        except OSError:
+            continue
+    root_logger = logging.getLogger()
+    if handler is not None:
+        root_logger.addHandler(handler)
+        root_logger.setLevel(logging.DEBUG)
+
+    if is_windows:
+        _ensure_uv_discoverable()
+
+    try:
+        import ModuleUpdate
+        result = ModuleUpdate.install_worlds(worlds=worlds)
+        import importlib.util
+        venv_ok = ModuleUpdate.venv_is_healthy(ModuleUpdate.install_path())
+        igdb_ok = importlib.util.find_spec("mwgg_igdb") is not None
+        if not venv_ok or not igdb_ok or result.failed:
+            logging.getLogger("Update").warning(
+                "Predownload finished without raising, but did not fully succeed: "
+                f"venv_healthy={venv_ok} mwgg_igdb_installed={igdb_ok} failed_worlds={result.failed}")
+            print("Unable to fully predownload packages, please start the MultiworldGG Client from your Start Menu")
+    except Exception:
+        logging.getLogger("Update").exception("Predownload failed")
+        print("Unable to predownload packages, please start the MultiworldGG Client from your Start Menu")
+    finally:
+        if handler is not None:
+            handler.close()
+            root_logger.removeHandler(handler)
+
+
 def main(argv: "list[str] | None" = None) -> None:
     """Entry point for the client/launcher process.
 
@@ -382,22 +473,7 @@ def main(argv: "list[str] | None" = None) -> None:
     args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
     if args.update_modules:
-        # Inno's predownload step. Non-fatal: worlds also install on demand at
-        # first launch, so show a friendly note and exit 0.
-        try:
-            import ModuleUpdate
-            ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
-        except Exception:
-            # NB: no local `import os` here -- that would make `os` function-local
-            # for all of main() and break every later os.* reference in it.
-            import traceback, tempfile
-            try:
-                with open(os.path.join(tempfile.gettempdir(), "mwgg_predownload_error.log"),
-                          "w", encoding="utf-8") as f:
-                    traceback.print_exc(file=f)
-            except OSError:
-                pass
-            print("Unable to predownload packages, please start the MultiworldGG Client from your Start Menu")
+        _run_predownload(args.worlds if args.worlds else [])
         sys.exit(0)
 
     # Guard: tracker and manual clients use Kivy-only UI affordances. They cannot run under TUI.

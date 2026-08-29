@@ -79,7 +79,9 @@ def _worlds_venv_is_readonly() -> bool:
         venv_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(dir=venv_dir):
             pass
-    except OSError:
+    except OSError as e:
+        logger.warning(f"Worlds venv at {venv_dir} not writable ({e!r}); "
+                       "treating as read-only (installs disabled).")
         return True
     return False
 
@@ -274,6 +276,8 @@ def venv_is_healthy(venv_path: Path) -> bool:
         return False
 
 
+_venv_just_created = False  # set below; read by _bootstrap_fresh_venv_mwgg_igdb() after install_mwgg_igdb is defined
+
 if use_worlds_venv():
     # Route worlds + mwgg_igdb into a dedicated venv under user data
     if is_frozen():
@@ -300,6 +304,7 @@ if use_worlds_venv():
                 timeout=600,
             )
             venv_ready = venv_result.returncode == 0
+            _venv_just_created = venv_ready
         except Exception as e:
             logger.debug(f"Worlds venv setup failed: {e!r}")
             venv_ready = False
@@ -521,6 +526,26 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
         logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
         return False
     return True
+
+
+def _bootstrap_fresh_venv_mwgg_igdb() -> None:
+    """Install mwgg_igdb synchronously when this process just (re)created the worlds
+    venv, then invalidate import caches so it's visible immediately in this process.
+
+    Closes a first-launch race: if any import lookup touches site_packages (above)
+    before it exists on disk, CPython caches "no finder for this path" in
+    sys.path_importer_cache, permanently -- unlike a stale directory *listing*,
+    that verdict is never mtime-rechecked. So even after a background installer
+    (e.g. the Windows splash child process) finishes, `import mwgg_igdb` keeps
+    failing here until invalidate_caches() runs. Only fires once per process, and
+    only for the process that actually created/repaired the venv.
+    """
+    if _venv_just_created:
+        install_mwgg_igdb()
+        invalidate_caches()
+
+
+_bootstrap_fresh_venv_mwgg_igdb()
 
 
 def _get_game_index():

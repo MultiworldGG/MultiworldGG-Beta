@@ -340,6 +340,74 @@ def test_uv_pip_appends_python_target():
 
 
 # --------------------------------------------------------------------------- #
+# First-launch mwgg_igdb import race: `sys.path.insert(0, site_packages)` in
+# ModuleUpdate can run before a fresh venv's site-packages dir is fully in
+# place. A lookup against a not-yet-existing sys.path entry makes CPython
+# cache `None` ("no finder for this path") for that exact path string in
+# sys.path_importer_cache -- unlike a stale directory *listing* (which
+# self-heals via FileFinder's mtime recheck), that None sticks forever, so a
+# module written there later by a background installer (the splash child
+# process) stays invisible to *this* process until invalidate_caches() runs.
+# Regression coverage for that pitfall, plus the gating that gives
+# _bootstrap_fresh_venv_mwgg_igdb its "only once, only for the process that
+# (re)created the venv" contract.
+# --------------------------------------------------------------------------- #
+def test_missing_syspath_dir_hides_module_until_invalidated(tmp_path, monkeypatch):
+    """Proves the actual Python import-cache pitfall the fix addresses (no
+    mocks): a sys.path entry looked up before it exists on disk stays
+    unimportable -- even after the directory and module are created --
+    until invalidate_caches() runs."""
+    site_dir = str(tmp_path / "site-packages")  # does not exist yet
+    monkeypatch.syspath_prepend(site_dir)
+    module_name = "mwgg_test_fresh_module_xyz"
+
+    # Poison sys.path_importer_cache[site_dir] with None: looked up before it exists.
+    assert importlib.util.find_spec(module_name) is None
+    assert sys.path_importer_cache.get(site_dir) is None
+
+    os.makedirs(site_dir)
+    with open(os.path.join(site_dir, f"{module_name}.py"), "w") as f:
+        f.write("value = 1\n")
+    try:
+        # Stale cache: the dir and module exist on disk, but the cached "no
+        # finder here" verdict predates them and is never mtime-rechecked.
+        assert importlib.util.find_spec(module_name) is None
+
+        importlib.invalidate_caches()
+        assert importlib.util.find_spec(module_name) is not None
+    finally:
+        sys.modules.pop(module_name, None)
+
+
+def test_bootstrap_fresh_venv_igdb_noop_when_venv_not_just_created(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_venv_just_created", False)
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb") as install, \
+            mock.patch.object(ModuleUpdate, "invalidate_caches") as invalidate:
+        ModuleUpdate._bootstrap_fresh_venv_mwgg_igdb()
+    install.assert_not_called()
+    invalidate.assert_not_called()
+
+
+def test_bootstrap_fresh_venv_igdb_installs_and_invalidates_when_just_created(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_venv_just_created", True)
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb") as install, \
+            mock.patch.object(ModuleUpdate, "invalidate_caches") as invalidate:
+        ModuleUpdate._bootstrap_fresh_venv_mwgg_igdb()
+    install.assert_called_once_with()
+    invalidate.assert_called_once_with()
+
+
+def test_register_custom_worlds_invalidates_import_caches(tmp_path, monkeypatch):
+    """register_custom_worlds is one of the two first-launch call sites that
+    import mwgg_igdb (via discover_custom_world_module); it must refresh the
+    import cache before scanning so a just-installed mwgg_igdb is visible."""
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    with mock.patch.object(Utils.importlib, "invalidate_caches") as invalidate:
+        Utils.register_custom_worlds()
+    invalidate.assert_called_once_with()
+
+
+# --------------------------------------------------------------------------- #
 # custom_worlds/ scan into the in-memory GameIndex. custom_worlds are
 # apworld zip files: on launch they must be scanned, their manifest read
 # (never imported), and each handed to GameIndex.add_game so it lands in
@@ -1114,9 +1182,11 @@ class TestCanCheckForUpdates(unittest.TestCase):
 
 
 class TestReleasePageUrl(unittest.TestCase):
-    def test_release_page_url_points_at_latest_release(self) -> None:
+    def test_release_page_url_points_at_releases_list(self) -> None:
+        # /releases, not /releases/latest: the latter resolves to worlds-wheels
+        # releases and hides prereleases, same failure mode the API path fixes.
         url = Updater.get_release_page_url()
         self.assertEqual(
             url,
-            f"https://github.com/{Updater.GITHUB_OWNER}/{Updater.GITHUB_REPO}/releases/latest",
+            f"https://github.com/{Updater.GITHUB_OWNER}/{Updater.GITHUB_REPO}/releases",
         )

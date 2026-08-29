@@ -81,6 +81,12 @@ class WorldSource:
 
 from Utils import game_names
 
+# A background installer (e.g. the splash child on a first launch) may have
+# written mwgg_igdb/world wheels into the venv after this process's sys.path
+# lookups cached that dir as having no finder; without this, an already-
+# installed module can still fail to import below even though it's on disk.
+importlib.invalidate_caches()
+
 world_sources: list[WorldSource] = []
 for game_module in game_names():
     world_sources.append(WorldSource(game_module))
