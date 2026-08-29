@@ -81,6 +81,9 @@ class WorldSource:
 
 from Utils import game_names
 
+# The venv may have been populated after a lookup None-cached its finder.
+importlib.invalidate_caches()
+
 world_sources: list[WorldSource] = []
 for game_module in game_names():
     world_sources.append(WorldSource(game_module))

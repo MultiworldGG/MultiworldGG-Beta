@@ -33,7 +33,7 @@ DisableDirPage=no
 DisableProgramGroupPage=yes
 DefaultGroupName=MultiworldGG-Test
 OutputDir=setups
-OutputBaseFilename=Setup {#MyAppName} {#MyAppVersionText}
+OutputBaseFilename=Setup_{#MyAppName}_{#MyAppVersionText}
 Compression=lzma2
 SolidCompression=yes
 LZMANumBlockThreads=8
@@ -271,14 +271,11 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGGLaun
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-; Set WorkingDir to the directory containing the real winget-installed uv.exe.
-; The runasoriginaluser child inherits cwd from this directive (lpCurrentDirectory
-; in CreateProcessAsUser, independent of the token's env block).  Python-side
-; find_uv() prefers Path.cwd() / "uv.exe", which resolves to the real PE and
-; avoids the AppExecLink WinError 448 from WinGet\Links\uv.exe.
+; WorkingDir = a real uv.exe's dir (see GetUvDir): the child's exe search checks
+; cwd before PATH, so "uv" resolves even in a rebuilt env that lacks it.
 ; Runs on the client exe deliberately, not the launcher: --update-modules is a
 ; one-shot headless install step and must not spawn any GUI.
-Filename: "{app}\MultiworldGG"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
+Filename: "{app}\MultiworldGG.exe"; Parameters: "--update-modules --worlds {code:GetSelectedWorld}"; WorkingDir: "{code:GetUvDir}"; StatusMsg: "Updating modules..."; Flags: runasoriginaluser
 
 ; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 ; Silent install from updater auto starts the launcher again
@@ -649,6 +646,7 @@ Root: HKCR; Subkey: "multiworldgg\shell\open\command"; ValueType: "string"; Valu
 var
   WorldPage: TInputOptionWizardPage;
   ComponentsLabel: TNewStaticText;
+  ResolvedUvDir: String;
 
 procedure InitializeWizard;
 begin
@@ -892,13 +890,30 @@ end;
 function IsUvInstalled: Boolean;
 var
   ResultCode: Integer;
+  TmpFile, Line: String;
+  Lines: TArrayOfString;
+  I: Integer;
 begin
   Result := False;
-  // `where uv` exits 0 if uv.exe is on PATH (or on a known winget shim path).
-  if Exec(ExpandConstant('{cmd}'), '/c where uv', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
+  // `where uv` output feeds ResolvedUvDir: GetUvDir's fallback for non-winget installs.
+  TmpFile := ExpandConstant('{tmp}\uv_where.txt');
+  if Exec(ExpandConstant('{cmd}'), '/c where uv > "' + TmpFile + '" 2>&1', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0) then
   begin
     Log('uv found on PATH');
     Result := True;
+    if FileExists(TmpFile) then
+    begin
+      LoadStringsFromFile(TmpFile, Lines);
+      for I := 0 to GetArrayLength(Lines) - 1 do
+      begin
+        Line := Trim(Lines[I]);
+        if (Length(Line) > 0) and FileExists(Line) then
+        begin
+          ResolvedUvDir := ExtractFileDir(Line);
+          Break;
+        end;
+      end;
+    end;
   end
   else
     Log('uv not found on PATH; will install');
@@ -959,14 +974,8 @@ begin
   end;
 end;
 
-// Returns the directory containing the real winget-installed uv.exe (under
-// %LOCALAPPDATA%\Microsoft\WinGet\Packages\astral-sh.uv_*\uv-...\), or {app}
-// as a harmless default if ResolveRealUvPath finds nothing.  Used as the
-// WorkingDir: of the updater [Run] entry so that the runasoriginaluser child
-// inherits cwd = <real-uv-dir>; Python-side find_uv() then prefers
-// Path.cwd() / "uv.exe" over the AppExecLink shim at WinGet\Links\uv.exe.
-// That sidesteps WinError 448 in the cripple-token child without any PATH
-// or env manipulation.
+// WorkingDir for the predownload [Run] entry. Prefer the real winget PE
+// (Links\uv.exe is a WinError-448 AppExecLink), then `where uv`'s answer, then {app}.
 function GetUvDir(Param: String): String;
 var
   UvPath: String;
@@ -974,6 +983,8 @@ begin
   UvPath := ResolveRealUvPath;
   if UvPath <> '' then
     Result := ExtractFileDir(UvPath)
+  else if ResolvedUvDir <> '' then
+    Result := ResolvedUvDir
   else
     Result := ExpandConstant('{app}');
 end;

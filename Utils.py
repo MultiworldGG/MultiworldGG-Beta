@@ -312,6 +312,8 @@ def register_custom_worlds() -> typing.List[str]:
     found: typing.List[str] = []
     if not custom_worlds_dir.exists():
         return found
+    # site-packages may have been populated after a lookup None-cached its finder.
+    importlib.invalidate_caches()
     for world_file in custom_worlds_dir.iterdir():
         try:
             module_name = discover_custom_world_module(world_file)

@@ -79,7 +79,9 @@ def _worlds_venv_is_readonly() -> bool:
         venv_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(dir=venv_dir):
             pass
-    except OSError:
+    except OSError as e:
+        logger.warning(f"Worlds venv at {venv_dir} not writable ({e!r}); "
+                       "treating as read-only (installs disabled).")
         return True
     return False
 
@@ -274,6 +276,8 @@ def venv_is_healthy(venv_path: Path) -> bool:
         return False
 
 
+_venv_just_created = False
+
 if use_worlds_venv():
     # Route worlds + mwgg_igdb into a dedicated venv under user data
     if is_frozen():
@@ -300,6 +304,7 @@ if use_worlds_venv():
                 timeout=600,
             )
             venv_ready = venv_result.returncode == 0
+            _venv_just_created = venv_ready
         except Exception as e:
             logger.debug(f"Worlds venv setup failed: {e!r}")
             venv_ready = False
@@ -521,6 +526,17 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
         logger.warning(f"Failed to install mwgg_igdb: {result.stderr}")
         return False
     return True
+
+
+def _bootstrap_fresh_venv_mwgg_igdb() -> None:
+    """The venv creator installs mwgg_igdb synchronously: a sys.path entry probed
+    before it exists is None-cached in sys.path_importer_cache and never rechecked."""
+    if _venv_just_created:
+        install_mwgg_igdb()
+        invalidate_caches()
+
+
+_bootstrap_fresh_venv_mwgg_igdb()
 
 
 def _get_game_index():

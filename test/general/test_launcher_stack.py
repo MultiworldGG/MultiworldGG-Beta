@@ -14,6 +14,7 @@ import pytest
 import BaseUtils
 import Launcher
 import LauncherComponents as lc
+import ModuleUpdate
 import MultiWorld
 import Utils
 from CommonClient import parse_connect_url, safe_avatar_source
@@ -1172,3 +1173,68 @@ def test_inno_app_exe_name_is_the_launcher():
     match = re.search(r'#define MyAppExeName "([^"]+)"', text)
     assert match, "expected a #define MyAppExeName line in inno_setup.iss"
     assert match.group(1) == f"{BaseUtils.FROZEN_TARGETS['Launcher']}.exe"
+
+
+# --------------------------------------------------------------------------- #
+# Inno's predownload step: must exit 0 yet leave a trace on silent no-ops.
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def _predownload_stub(monkeypatch, tmp_path):
+    """Route diagnostics to a temp file and stub uv discovery (irrelevant to
+    these tests, which control ModuleUpdate's behavior directly)."""
+    log_path = tmp_path / "predownload.log"
+    monkeypatch.setattr(MultiWorld, "_predownload_log_paths", lambda: [str(log_path)])
+    monkeypatch.setattr(MultiWorld, "_ensure_uv_discoverable", lambda: None)
+    original_level = logging.getLogger().level
+    yield log_path
+    logging.getLogger().setLevel(original_level)
+
+
+def test_predownload_logs_diagnostic_when_venv_unhealthy_without_raising(monkeypatch, _predownload_stub, capsys):
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: ModuleUpdate.WorldInstallResult())
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: False)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])
+
+    assert "Unable to fully predownload" in capsys.readouterr().out
+    assert "venv_healthy=False" in _predownload_stub.read_text(encoding="utf-8")
+
+
+def test_predownload_swallows_exceptions_and_logs_traceback(monkeypatch, _predownload_stub, capsys):
+    def _boom(worlds):
+        raise RuntimeError("uv exploded")
+
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", _boom)
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])  # must not raise
+
+    assert "Unable to predownload" in capsys.readouterr().out
+    assert "uv exploded" in _predownload_stub.read_text(encoding="utf-8")
+
+
+def test_predownload_is_quiet_on_full_success(monkeypatch, _predownload_stub, capsys):
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: ModuleUpdate.WorldInstallResult())
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: True)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])
+
+    assert "Unable" not in capsys.readouterr().out
+
+
+def test_predownload_reports_failed_worlds(monkeypatch, _predownload_stub, capsys):
+    result = ModuleUpdate.WorldInstallResult()
+    result.failed.append("worlds.hk")
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: result)
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: True)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr", "worlds.hk"])
+
+    assert "Unable to fully predownload" in capsys.readouterr().out
+    assert "worlds.hk" in _predownload_stub.read_text(encoding="utf-8")

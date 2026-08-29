@@ -282,12 +282,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.AppImage; do
+            sha256sum "$file" > "$file.sha256"
+          done
+
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
-          path: dist/*.AppImage
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.sha256
           retention-days: 90
 
   build-mac-bundle:
@@ -434,13 +439,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.dmg; do
+            shasum -a 256 "$file" > "$file.sha256"
+          done
+
       - name: Upload macOS bundle artifact
         uses: actions/upload-artifact@v7
         with:
           name: macos-bundle
           path: |
             build/*.dmg
+            build/*.dmg.sha256
           retention-days: 90
 
   build-windows-installer:
@@ -498,12 +507,17 @@ jobs:
         shell: pwsh
         run: |
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
+          $SETUP_NAME = (Get-ChildItem -Path setups/*.exe)[0].Name
+          $SETUP_HASH = (Get-FileHash -Algorithm SHA256 "setups/$SETUP_NAME").Hash.ToLower()
+          "$SETUP_HASH  $SETUP_NAME" | Out-File -Encoding ascii "setups/$SETUP_NAME.sha256"
 
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v7
         with:
           name: windows-installer
-          path: setups/*.exe
+          path: |
+            setups/*.exe
+            setups/*.exe.sha256
           retention-days: 90
 
   create-release:
@@ -530,7 +544,7 @@ jobs:
           ## Downloads
           
           ### Windows
-          - **Installer**: `Setup MultiworldGG *.exe` (recommended)
+          - **Installer**: `Setup_MultiworldGG_*.exe` (recommended)
           - **Portable**: Extract from `windows-exe.zip`
           
           ### Linux
@@ -570,7 +584,10 @@ jobs:
           prerelease: false
           files: |
             release-artifacts/windows-installer/*.exe
+            release-artifacts/windows-installer/*.exe.sha256
             release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/linux-appimage/*.AppImage.sha256
             release-artifacts/macos-bundle/*.dmg
+            release-artifacts/macos-bundle/*.dmg.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

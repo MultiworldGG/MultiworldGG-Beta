@@ -222,12 +222,18 @@ jobs:
           tar -czvf "${release_name}.tar.gz" "${release_name}"
           mkdir -p ../dist
           mv *.tar.gz ../dist/
+          cd ../dist
+          for file in *.tar.gz; do
+            sha256sum "$file" > "$file.sha256"
+          done
 
       - name: Upload Linux tarball artifact
         uses: actions/upload-artifact@v7
         with:
           name: linux-tarball
-          path: src/dist/*.tar.gz
+          path: |
+            src/dist/*.tar.gz
+            src/dist/*.tar.gz.sha256
           retention-days: 90
 
       - name: Create virtual environment
@@ -323,12 +329,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.AppImage; do
+            sha256sum "$file" > "$file.sha256"
+          done
+
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
-          path: src/dist/*.AppImage
+          path: |
+            src/dist/*.AppImage
+            src/dist/*.AppImage.sha256
           retention-days: 90
 
   build-mac-bundle:
@@ -430,13 +441,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.dmg; do
+            shasum -a 256 "$file" > "$file.sha256"
+          done
+
       - name: Upload macOS bundle artifact
         uses: actions/upload-artifact@v7
         with:
           name: macos-bundle
           path: |
             src/build/*.dmg
+            src/build/*.dmg.sha256
           retention-days: 90
 
   build-windows-installer:
@@ -508,12 +523,17 @@ jobs:
         run: |
           cd src
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
-      
+          $SETUP_NAME = (Get-ChildItem -Path setups/*.exe)[0].Name
+          $SETUP_HASH = (Get-FileHash -Algorithm SHA256 "setups/$SETUP_NAME").Hash.ToLower()
+          "$SETUP_HASH  $SETUP_NAME" | Out-File -Encoding ascii "setups/$SETUP_NAME.sha256"
+
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v7
         with:
           name: windows-installer
-          path: src/setups/*.exe
+          path: |
+            src/setups/*.exe
+            src/setups/*.exe.sha256
           retention-days: 90
 
   create-release:
@@ -558,7 +578,7 @@ jobs:
           ## Downloads
           
           ### Windows
-          - **Installer**: `Setup MultiworldGG-Test *.exe` (recommended)
+          - **Installer**: `Setup_MultiworldGG-Test_*.exe` (recommended)
           
           ### Linux
           - **AppImage**: `*.AppImage` (recommended)
@@ -583,9 +603,13 @@ jobs:
           prerelease: true
           files: |
             release-artifacts/windows-installer/*.exe
+            release-artifacts/windows-installer/*.exe.sha256
             release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/linux-appimage/*.AppImage.sha256
             release-artifacts/linux-tarball/*.tar.gz
+            release-artifacts/linux-tarball/*.tar.gz.sha256
             release-artifacts/macos-bundle/*.dmg
+            release-artifacts/macos-bundle/*.dmg.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
