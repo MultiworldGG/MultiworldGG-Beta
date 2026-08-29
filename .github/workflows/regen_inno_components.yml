@@ -84,5 +84,5 @@ jobs:
               --base main \
               --head "${BRANCH}" \
               --title "inno_setup.iss: regenerate from index (${VARIANT})" \
-              --body "Automated regeneration from \`mwgg_igdb_${VARIANT}\`. Review the diff (added/removed/renamed worlds, updated disk-space values, in-client flags) and merge if it looks right. Generator: \`tools/regen_inno_components.py\`."
+              --body "Automated regeneration from \`mwgg_igdb_${VARIANT}\`. Review the diff (added/removed/renamed worlds, updated disk-space values, in-client flags, wheel_downloads Source/Hash/ExternalSize entries) and merge if it looks right. Generator: \`tools/regen_inno_components.py\`."
           fi

@@ -517,7 +517,23 @@ jobs:
       - name: Install Inno Setup
         run: |
           choco install innosetup -y
-      
+
+      - name: Verify Inno Setup version supports the [Files] download flag
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          $productVersion = (Get-Item $iscc).VersionInfo.ProductVersion
+          Write-Host "ISCC.exe ProductVersion: $productVersion"
+          if ($productVersion -notmatch '^(\d+)\.(\d+)') {
+            throw "Could not parse an Inno Setup version out of '$productVersion'"
+          }
+          $major = [int]$Matches[1]
+          $minor = [int]$Matches[2]
+          # inno_setup.iss's wheel_downloads region uses the [Files] 'download' flag, added in 6.5.0.
+          if ($major -lt 6 -or ($major -eq 6 -and $minor -lt 5)) {
+            throw "Inno Setup $productVersion is older than 6.5.0; the [Files] 'download' flag (wheel_downloads region) requires 6.5.0+."
+          }
+
       - name: Build Windows installer
         shell: pwsh
         run: |

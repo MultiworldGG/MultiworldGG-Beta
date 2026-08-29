@@ -382,10 +382,20 @@ def _predownload_log_paths() -> "list[str]":
     return paths
 
 
+def _uv_binary_works(path: str) -> bool:
+    """True if `path --version` actually runs. Never raises."""
+    try:
+        return subprocess.run([path, "--version"], capture_output=True, timeout=5).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
 def _ensure_uv_discoverable() -> None:
-    """Best-effort PATH repair: the runasoriginaluser child's rebuilt env may lack uv. Never raises."""
+    """Best-effort PATH repair for a *working* uv (the WinGet Links shim is an
+    AppExecLink some tokens can't exec: WinError 448 despite `which` finding it). Never raises."""
     import shutil
-    if shutil.which("uv"):
+    which_uv = shutil.which("uv")
+    if which_uv and _uv_binary_works(which_uv):
         return
     home = os.path.expanduser("~")
     candidates = [
@@ -402,7 +412,8 @@ def _ensure_uv_discoverable() -> None:
     except OSError:
         pass
     for directory in candidates:
-        if os.path.isfile(os.path.join(directory, "uv.exe")):
+        exe = os.path.join(directory, "uv.exe")
+        if os.path.isfile(exe) and _uv_binary_works(exe):
             os.environ["PATH"] = directory + os.pathsep + os.environ.get("PATH", "")
             return
 

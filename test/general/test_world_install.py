@@ -20,6 +20,7 @@ import pytest
 
 import LauncherComponents as lc
 import ModuleUpdate
+import MultiWorld
 import Updater
 import Utils
 from mwgg_igdb import GameIndex
@@ -1178,3 +1179,358 @@ class TestReleasePageUrl(unittest.TestCase):
             url,
             f"https://github.com/{Updater.GITHUB_OWNER}/{Updater.GITHUB_REPO}/releases",
         )
+
+
+# --------------------------------------------------------------------------- #
+# _uv_candidate_paths: Windows winget-Packages fallback. The WinGet "Links"
+# shim is an AppExecLink some tokens can't stat/exec (WinError 448); the real
+# installed PE under Packages/astral-sh.uv_*/.../uv.exe is a plain file.
+# --------------------------------------------------------------------------- #
+
+def test_uv_candidate_paths_windows_globs_winget_packages(tmp_path, monkeypatch):
+    pkg_dir = tmp_path / "AppData" / "Local" / "Microsoft" / "WinGet" / "Packages" / "astral-sh.uv_pub"
+    (pkg_dir / "uv-x86_64-pc-windows-msvc").mkdir(parents=True)
+    uv_exe = pkg_dir / "uv-x86_64-pc-windows-msvc" / "uv.exe"
+    uv_exe.write_text("x")
+    monkeypatch.setattr(ModuleUpdate, "is_windows", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    monkeypatch.setattr(ModuleUpdate.Path, "home", lambda: tmp_path)
+
+    cands = ModuleUpdate._uv_candidate_paths()
+
+    assert uv_exe in cands
+    links_shim = tmp_path / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "uv.exe"
+    assert cands.index(uv_exe) > cands.index(links_shim)
+
+
+def test_uv_candidate_paths_windows_tolerates_missing_packages_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "is_windows", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    monkeypatch.setattr(ModuleUpdate.Path, "home", lambda: tmp_path)  # no Packages dir at all
+
+    cands = ModuleUpdate._uv_candidate_paths()  # must not raise
+
+    assert any(str(c) == "uv" for c in cands)
+
+
+# --------------------------------------------------------------------------- #
+# wheel_cache/: Inno's native [Files] download step stages selected worlds'
+# wheels here, next to the exe, before first launch -- replacing the broken
+# de-elevated `runasoriginaluser --update-modules` exec (WinError 448).
+# ModuleUpdate claims the dir atomically and installs it into the worlds venv
+# once at import time; a custom_worlds/ apworld still wins as a manual override.
+# --------------------------------------------------------------------------- #
+
+def _make_wheel_cache(exe_dir, variant=None, wheels=()):
+    cache_dir = exe_dir / "wheel_cache"
+    cache_dir.mkdir()
+    if variant is not None:
+        (cache_dir / "mwgg_igdb_variant.txt").write_text(variant, encoding="utf-8")
+    for name in wheels:
+        (cache_dir / name).write_text("fake wheel contents", encoding="utf-8")
+    return cache_dir
+
+
+@pytest.fixture
+def wheel_cache_exe(tmp_path, monkeypatch):
+    """Point ModuleUpdate's wheel_cache resolution at tmp_path (a fake exe dir)."""
+    fake_exe = tmp_path / "MultiworldGG.exe"
+    fake_exe.write_text("x")
+    monkeypatch.setattr(sys, "executable", str(fake_exe))
+    return tmp_path
+
+
+def test_wheel_cache_dir_is_next_to_executable(wheel_cache_exe):
+    assert ModuleUpdate._wheel_cache_dir() == wheel_cache_exe / "wheel_cache"
+
+
+def test_wheel_cache_variant_token_reads_valid_marker(wheel_cache_exe):
+    _make_wheel_cache(wheel_cache_exe, variant="nr")
+    assert ModuleUpdate._wheel_cache_variant_token() == "nr"
+
+
+def test_wheel_cache_variant_token_rejects_unknown_value(wheel_cache_exe):
+    _make_wheel_cache(wheel_cache_exe, variant="bogus")
+    assert ModuleUpdate._wheel_cache_variant_token() is None
+
+
+def test_wheel_cache_variant_token_none_when_absent(wheel_cache_exe):
+    assert ModuleUpdate._wheel_cache_variant_token() is None
+
+
+def test_wheel_cache_variant_token_reads_explicit_dir(tmp_path):
+    cache_dir = _make_wheel_cache(tmp_path, variant="twelve")
+    assert ModuleUpdate._wheel_cache_variant_token(cache_dir) == "twelve"
+
+
+def test_apply_wheel_cache_variant_precedes_first_igdb_install(wheel_cache_exe, monkeypatch, restore_variant_globals):
+    """Pins the ordering: the marker must be applied before
+    _bootstrap_fresh_venv_mwgg_igdb() runs install_mwgg_igdb(), so a `nr`
+    selection can never silently install `sixteen` on the very first pull."""
+    _make_wheel_cache(wheel_cache_exe, variant="nr")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_venv_just_created", True)
+    monkeypatch.setattr(ModuleUpdate, "invalidate_caches", lambda: None)
+
+    seen_variant = []
+
+    def fake_install_mwgg_igdb(*a, **k):
+        seen_variant.append(ModuleUpdate.MWGG_IGDB_VARIANT)
+        return True
+
+    monkeypatch.setattr(ModuleUpdate, "install_mwgg_igdb", fake_install_mwgg_igdb)
+
+    ModuleUpdate._apply_wheel_cache_variant()
+    ModuleUpdate._bootstrap_fresh_venv_mwgg_igdb()
+
+    assert seen_variant == ["nr"]
+
+
+def test_apply_wheel_cache_variant_noop_when_not_frozen(wheel_cache_exe, monkeypatch, restore_variant_globals):
+    _make_wheel_cache(wheel_cache_exe, variant="nr")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_EXPLICIT_VARIANT", None)
+
+    ModuleUpdate._apply_wheel_cache_variant()
+
+    assert ModuleUpdate._EXPLICIT_VARIANT is None
+
+
+def test_apply_wheel_cache_variant_noop_when_installs_skipped(wheel_cache_exe, monkeypatch, restore_variant_globals):
+    _make_wheel_cache(wheel_cache_exe, variant="nr")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_EXPLICIT_VARIANT", None)
+
+    ModuleUpdate._apply_wheel_cache_variant()
+
+    assert ModuleUpdate._EXPLICIT_VARIANT is None
+
+
+def test_install_wheel_cache_wheels_single_invocation_with_deps(monkeypatch):
+    """Contract: exactly one `uv pip install`, every wheel path, no --no-deps
+    and no --offline -- transitive deps must resolve against PyPI."""
+    recorded = []
+
+    def fake_uv_run(args, timeout=120, check=False):
+        recorded.append(args)
+        return subprocess.CompletedProcess(args, 0, "ok", "")
+
+    monkeypatch.setattr(ModuleUpdate, "_uv_run", fake_uv_run)
+    monkeypatch.setattr(ModuleUpdate, "invalidate_caches", lambda: None)
+
+    wheel_a = "/c/wheel_cache/worlds.a-1.0-py3-none-any.whl"
+    wheel_b = "/c/wheel_cache/worlds.b-1.0-py3-none-any.whl"
+    ModuleUpdate._install_wheel_cache_wheels([wheel_a, wheel_b])
+
+    assert len(recorded) == 1
+    cmd = recorded[0]
+    assert cmd[0] == "pip"
+    assert cmd[1] == "install"
+    assert wheel_a in cmd
+    assert wheel_b in cmd
+    assert "--no-deps" not in cmd
+    assert "--offline" not in cmd
+    assert cmd[-2] == "--python"
+
+
+def test_install_wheel_cache_wheels_logs_failure_without_raising(monkeypatch, caplog):
+    monkeypatch.setattr(
+        ModuleUpdate, "_uv_run",
+        lambda args, timeout=120, check=False: subprocess.CompletedProcess(args, 1, "", "boom"),
+    )
+    with caplog.at_level(logging.WARNING):
+        ModuleUpdate._install_wheel_cache_wheels(["/c/wheel_cache/a-1.0-py3-none-any.whl"])
+    assert any("a-1.0-py3-none-any.whl" in r.message for r in caplog.records)
+
+
+def test_consume_wheel_cache_noop_when_not_frozen(wheel_cache_exe, monkeypatch):
+    _make_wheel_cache(wheel_cache_exe, variant="nr", wheels=["a-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    monkeypatch.setattr(ModuleUpdate.os, "rename",
+                        lambda *a: (_ for _ in ()).throw(AssertionError("dev launch must not touch wheel_cache")))
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert (wheel_cache_exe / "wheel_cache").exists()
+
+
+def test_consume_wheel_cache_noop_when_installs_skipped(wheel_cache_exe, monkeypatch):
+    _make_wheel_cache(wheel_cache_exe, variant="nr", wheels=["a-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: True)
+    monkeypatch.setattr(ModuleUpdate.os, "rename",
+                        lambda *a: (_ for _ in ()).throw(AssertionError("must not touch wheel_cache")))
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert (wheel_cache_exe / "wheel_cache").exists()
+
+
+def test_consume_wheel_cache_claim_is_atomic_loser_skips(wheel_cache_exe, monkeypatch):
+    """A concurrent loser's os.rename raises OSError (EAFP); it just skips."""
+    _make_wheel_cache(wheel_cache_exe, variant="nr", wheels=["a-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate.os, "rename",
+                        lambda *a: (_ for _ in ()).throw(OSError("lost the race")))
+
+    install_called = []
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: install_called.append(paths))
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert install_called == []
+    # Left alone for whoever actually holds the claim.
+    assert (wheel_cache_exe / "wheel_cache").exists()
+
+
+def test_consume_wheel_cache_installs_wheels_and_sets_variant(wheel_cache_exe, monkeypatch, restore_variant_globals):
+    _make_wheel_cache(
+        wheel_cache_exe, variant="ao",
+        wheels=["worlds.a-1.0-py3-none-any.whl", "worlds.b-1.0-py3-none-any.whl"],
+    )
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+
+    installed = []
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: installed.append(sorted(paths)))
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert ModuleUpdate.MWGG_IGDB_VARIANT == "ao"
+    assert len(installed) == 1 and len(installed[0]) == 2
+    assert all(p.endswith(".whl") for p in installed[0])
+    # The claim is released once processing finishes.
+    assert not (wheel_cache_exe / "wheel_cache").exists()
+    assert not (wheel_cache_exe / "wheel_cache.consuming").exists()
+
+
+def test_consume_wheel_cache_empty_dir_marker_only_skips_uv_call(wheel_cache_exe, monkeypatch, restore_variant_globals):
+    """A cache dir with zero worlds selected (marker only) is a clean no-op."""
+    _make_wheel_cache(wheel_cache_exe, variant="sixteen")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+
+    def _fail(*a, **k):
+        raise AssertionError("must not invoke uv with zero wheels")
+
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", _fail)
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert ModuleUpdate.MWGG_IGDB_VARIANT == "sixteen"
+    assert not (wheel_cache_exe / "wheel_cache").exists()
+
+
+def test_consume_wheel_cache_cleans_stale_consuming_dir_from_crash(wheel_cache_exe, monkeypatch):
+    stale = wheel_cache_exe / "wheel_cache.consuming"
+    stale.mkdir()
+    (stale / "leftover.whl").write_text("x")
+    _make_wheel_cache(wheel_cache_exe, wheels=["fresh-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+
+    installed = []
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: installed.append(paths))
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert len(installed) == 1
+    assert any("fresh" in p for p in installed[0])
+    assert not any("leftover" in p for p in installed[0])
+    assert not stale.exists()
+
+
+def test_consume_wheel_cache_survives_unexpected_failure_and_cleans_up(wheel_cache_exe, monkeypatch, caplog):
+    """Best effort: an unexpected failure mid-processing must not raise out of
+    module import, and must not leave wheel_cache.consuming stuck for future launches."""
+    _make_wheel_cache(wheel_cache_exe, wheels=["a-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+
+    def _boom(paths):
+        raise RuntimeError("simulated failure mid-install")
+
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", _boom)
+
+    with caplog.at_level(logging.WARNING):
+        ModuleUpdate._consume_wheel_cache()  # must not raise
+
+    assert not (wheel_cache_exe / "wheel_cache").exists()
+    assert not (wheel_cache_exe / "wheel_cache.consuming").exists()
+
+
+# --------------------------------------------------------------------------- #
+# MultiWorld._ensure_uv_discoverable / _uv_binary_works: a PATH hit from
+# shutil.which is not proof uv actually runs -- the WinGet Links AppExecLink
+# shim resolves but some tokens can't exec it (WinError 448).
+# --------------------------------------------------------------------------- #
+
+def test_uv_binary_works_true_on_success(monkeypatch):
+    monkeypatch.setattr(MultiWorld.subprocess, "run",
+                        lambda *a, **k: subprocess.CompletedProcess(a, 0))
+    assert MultiWorld._uv_binary_works("uv") is True
+
+
+def test_uv_binary_works_false_on_oserror(monkeypatch):
+    def _raise(*a, **k):
+        raise OSError("no such file")
+    monkeypatch.setattr(MultiWorld.subprocess, "run", _raise)
+    assert MultiWorld._uv_binary_works("uv") is False
+
+
+def test_uv_binary_works_false_on_timeout(monkeypatch):
+    def _raise(*a, **k):
+        raise subprocess.TimeoutExpired(cmd="uv", timeout=5)
+    monkeypatch.setattr(MultiWorld.subprocess, "run", _raise)
+    assert MultiWorld._uv_binary_works("uv") is False
+
+
+def test_ensure_uv_discoverable_revalidates_which_result(monkeypatch, tmp_path):
+    """A broken shim on PATH must not short-circuit discovery; a working
+    fallback candidate directory is prepended instead."""
+    import shutil
+    fallback_dir = tmp_path / ".local" / "bin"
+    fallback_dir.mkdir(parents=True)
+    (fallback_dir / "uv.exe").write_text("x")
+    monkeypatch.setattr(os.path, "expanduser",
+                        lambda p: str(tmp_path) if p == "~" else os.path.expanduser(p))
+    monkeypatch.setattr(shutil, "which", lambda name: "C:/broken/links/uv.exe")
+    monkeypatch.setattr(MultiWorld, "_uv_binary_works", lambda path: path == str(fallback_dir / "uv.exe"))
+
+    saved_environ = dict(os.environ)
+    try:
+        os.environ.pop("PATH", None)
+        MultiWorld._ensure_uv_discoverable()
+        assert os.environ["PATH"].startswith(str(fallback_dir) + os.pathsep)
+    finally:
+        os.environ.clear()
+        os.environ.update(saved_environ)
+
+
+def test_ensure_uv_discoverable_noop_when_which_uv_already_works(monkeypatch):
+    import shutil
+    monkeypatch.setattr(shutil, "which", lambda name: "/usr/bin/uv")
+    monkeypatch.setattr(MultiWorld, "_uv_binary_works", lambda path: True)
+
+    def _fail_listdir(path):
+        raise AssertionError("must not walk WinGet Packages once PATH's uv already works")
+    monkeypatch.setattr(os, "listdir", _fail_listdir)
+
+    saved_path = os.environ.get("PATH")
+    MultiWorld._ensure_uv_discoverable()
+    assert os.environ.get("PATH") == saved_path
+
+
+def test_ensure_uv_discoverable_never_raises_when_nothing_works(monkeypatch, tmp_path):
+    import shutil
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    monkeypatch.setattr(os.path, "expanduser",
+                        lambda p: str(tmp_path) if p == "~" else os.path.expanduser(p))
+    monkeypatch.setattr(MultiWorld, "_uv_binary_works", lambda path: False)
+
+    saved_path = os.environ.get("PATH")
+    MultiWorld._ensure_uv_discoverable()  # must not raise
+    assert os.environ.get("PATH") == saved_path

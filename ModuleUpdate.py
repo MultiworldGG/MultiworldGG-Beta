@@ -193,6 +193,13 @@ def _uv_candidate_paths() -> list[Path]:
             Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Links" / "uv.exe",  # winget shim
             Path.home() / ".local" / "bin" / "uv.exe",                          # astral PS installer
         ]
+        try:
+            # The Links shim is an AppExecLink some tokens can't stat/exec (WinError 448);
+            # the actual winget-installed PE is a plain file that works in any token.
+            packages_dir = Path.home() / "AppData" / "Local" / "Microsoft" / "WinGet" / "Packages"
+            candidates += sorted(packages_dir.glob("astral-sh.uv_*/**/uv.exe"))
+        except OSError:
+            pass
     else:
         candidates += [
             Path.home() / ".local" / "bin" / "uv",     # astral installer / pipx
@@ -536,9 +543,6 @@ def _bootstrap_fresh_venv_mwgg_igdb() -> None:
         invalidate_caches()
 
 
-_bootstrap_fresh_venv_mwgg_igdb()
-
-
 def _get_game_index():
     """Lazy-import GameIndex; install mwgg_igdb if missing. Returns None on failure."""
     try:
@@ -603,6 +607,86 @@ def set_variant(variant: str) -> None:
     global _EXPLICIT_VARIANT
     _EXPLICIT_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]  # intentional reassignment of the override sentinel
     _resolve_variant()
+
+
+# Inno's native [Files] download step stages selected worlds' wheels here, next to
+# the exe, before first launch (replaces the broken de-elevated runasoriginaluser exec).
+def _wheel_cache_dir() -> Path:
+    return Path(sys.executable).parent / "wheel_cache"
+
+
+def _wheel_cache_variant_token(cache_dir: Optional[Path] = None) -> Optional[str]:
+    """Read wheel_cache's variant marker; pass a dir explicitly to read a claimed copy."""
+    marker = (cache_dir or _wheel_cache_dir()) / "mwgg_igdb_variant.txt"
+    try:
+        token = marker.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    return token if token in _VARIANTS else None
+
+
+def _apply_wheel_cache_variant() -> None:
+    """Apply the installer's chosen variant; must run before
+    _bootstrap_fresh_venv_mwgg_igdb() or the first mwgg_igdb install misses it."""
+    if not is_frozen() or _skip_all_installs():
+        return
+    token = _wheel_cache_variant_token()
+    if token is not None:
+        set_variant(token)
+
+
+def _install_wheel_cache_wheels(wheel_paths: list[str]) -> None:
+    """Install every cached wheel in one `uv pip install`, deps resolved normally."""
+    args = _uv_pip("install", *wheel_paths)
+    try:
+        result = _uv_run(args, timeout=300)
+    except subprocess.TimeoutExpired:
+        result = None
+    if result is None or result.returncode != 0:
+        stderr = (result.stderr if result else "timed out").strip()
+        for wheel in wheel_paths:
+            logger.warning(f"Failed to install cached wheel {wheel}: {stderr}")
+        return
+    for wheel in wheel_paths:
+        logger.info(f"Installed cached wheel {wheel}")
+    invalidate_caches()
+
+
+def _consume_wheel_cache() -> None:
+    """Claim wheel_cache/ via atomic rename (loser gets OSError, skips) and install
+    it into the worlds venv; best effort, failures degrade to on-demand install."""
+    if not is_frozen() or _skip_all_installs():
+        return
+    cache_dir = _wheel_cache_dir()
+    consuming_dir = cache_dir.with_name(cache_dir.name + ".consuming")
+
+    # A stale claim from a crashed prior run must not wedge every future launch.
+    if consuming_dir.exists():
+        shutil.rmtree(consuming_dir, ignore_errors=True)
+
+    try:
+        os.rename(cache_dir, consuming_dir)
+    except OSError:
+        return  # absent, or another process just claimed it
+
+    try:
+        token = _wheel_cache_variant_token(consuming_dir)
+        if token is not None:
+            set_variant(token)
+        wheels = sorted(str(p) for p in consuming_dir.glob("*.whl"))
+        if wheels:
+            _install_wheel_cache_wheels(wheels)
+    except Exception as e:
+        # Never crash module import; worlds are installed on demand instead.
+        logger.warning(f"wheel_cache processing failed: {e!r}")
+    finally:
+        shutil.rmtree(consuming_dir, ignore_errors=True)
+
+
+# Marker peeked before the first mwgg_igdb install; claim/install runs after.
+_apply_wheel_cache_variant()
+_bootstrap_fresh_venv_mwgg_igdb()
+_consume_wheel_cache()
 
 
 def _world_slug(world: str) -> str:
