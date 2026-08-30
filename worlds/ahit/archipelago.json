@@ -1,5 +1,6 @@
 {
     "game": "A Hat in Time",
+    "world_version": "0.0.1",
     "authors": ["CookieCat45"],
     "minimum_ap_version": "0.6.7",
     "compatible_version": 7,

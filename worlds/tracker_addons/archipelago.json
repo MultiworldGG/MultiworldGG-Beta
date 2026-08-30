@@ -2,5 +2,6 @@
     "version": 7,
     "compatible_version": 7,
     "game": "Universal Tracker Addons",
+    "world_version": "0.0.1",
     "minimum_ap_version": "0.6.2"
 }

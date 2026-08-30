@@ -1,5 +1,6 @@
 {
     "game": "Duke Nukem 3D",
+    "world_version": "0.0.1",
     "authors": ["rand(0)"],
     "minimum_ap_version": "0.6.7",
     "compatible_version": 7,

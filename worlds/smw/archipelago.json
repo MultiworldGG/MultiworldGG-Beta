@@ -1,5 +1,6 @@
   {
     "game": "Super Mario World",
+    "world_version": "0.0.1",
     "version": 7,
     "compatible_version": 7
   }

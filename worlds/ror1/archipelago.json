@@ -1,5 +1,6 @@
 {
     "game": "Risk of Rain",
+    "world_version": "0.0.1",
     "authors": ["studkid"],
     "minimum_ap_version": "0.5.0",
     "compatible_version": 7,

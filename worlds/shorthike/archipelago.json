@@ -1,5 +1,6 @@
 {
     "game": "A Short Hike",
+    "world_version": "0.0.1",
     "authors": ["chandler05", "BrandenEK"],
     "minimum_ap_version": "0.4.4",
     "compatible_version": 7,

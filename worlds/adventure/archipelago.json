@@ -1,5 +1,6 @@
 {
     "game": "Adventure",
+    "world_version": "0.0.1",
     "authors": ["JusticePS"],
     "minimum_ap_version": "0.3.9",
     "compatible_version": 7,
