@@ -1,5 +1,6 @@
 {
     "game": "Final Fantasy V Career Day",
+    "world_version": "0.0.1",
     "version": 7,
     "compatible_version": 7,
     "authors": ["Junglechief", "cleartonic"]

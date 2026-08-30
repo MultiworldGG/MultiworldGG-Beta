@@ -1,5 +1,6 @@
 {
     "game": "Dark Souls III",
+    "world_version": "0.0.1",
     "authors": ["Marech", "nex3"],
     "minimum_ap_version": "0.4.2",
     "compatible_version": 7,

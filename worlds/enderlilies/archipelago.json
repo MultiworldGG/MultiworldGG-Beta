@@ -1,5 +1,6 @@
 {
     "game": "Ender Lilies",
+    "world_version": "0.0.1",
     "authors": ["Trexounay"],
     "minimum_ap_version": "0.6.7",
     "compatible_version": 7,

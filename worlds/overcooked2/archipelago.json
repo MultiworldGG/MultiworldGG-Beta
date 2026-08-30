@@ -1,5 +1,6 @@
 {
     "game": "Overcooked! 2",
+    "world_version": "0.0.1",
     "authors": ["toasterparty"],
     "minimum_ap_version": "0.3.8",
     "compatible_version": 7,

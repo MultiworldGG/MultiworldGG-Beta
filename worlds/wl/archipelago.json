@@ -1,5 +1,6 @@
 {
     "game": "Wario Land",
+    "world_version": "0.0.1",
     "authors": ["rand0"],
     "minimum_ap_version": "0.4.3",
     "compatible_version": 7,

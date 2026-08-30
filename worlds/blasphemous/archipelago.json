@@ -1,5 +1,6 @@
 {
     "game": "Blasphemous",
+    "world_version": "0.0.1",
     "authors": ["TRPG"],
     "minimum_ap_version": "0.4.7",
     "compatible_version": 7,

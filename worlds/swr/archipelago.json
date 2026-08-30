@@ -1,5 +1,6 @@
 {
     "game": "Star Wars Episode I Racer",
+    "world_version": "0.0.1",
     "authors": ["Johnny Hamcobbler"],
     "minimum_ap_version": "0.6.0",
     "compatible_version": 7,

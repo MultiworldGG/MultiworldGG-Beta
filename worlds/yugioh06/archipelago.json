@@ -1,5 +1,6 @@
 {
     "game": "Yu-Gi-Oh! 2006",
+    "world_version": "0.0.1",
     "authors": ["Rensen3"],
     "minimum_ap_version": "0.6.7",
     "compatible_version": 7,
