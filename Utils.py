@@ -478,8 +478,8 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
     import threading
     import asyncio
 
-    # No game selected: _perform_module_launch("") skips the specialized-client
-    # gate and lands at the main_textclient fallback.
+    # No game selected: _perform_module_launch("") skips the world-module gate
+    # and dispatches on client_type (manual / universal_tracker / text fallback).
     if not module_name:
         return _perform_module_launch("", **kwargs)
 

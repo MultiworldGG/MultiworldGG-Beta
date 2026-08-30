@@ -112,10 +112,13 @@ def make_arg_parser() -> ArgumentParser:
     parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
     parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
     parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
-    parser.add_argument("--client-type", type=str, default=None, required=False,
+    parser.add_argument("--client-type", type=str, default=None, required=False, nargs="+",
                         choices=["game", "text", "universal_tracker", "manual"],
-                        help="Which client to boot directly into: a game module's client (default when --game "
-                             "is given), the text client, the universal tracker, or a manual client")
+                        help="Which client(s) to boot directly into: the selected --game module's own client "
+                             "(game; the default when --game is given, and requires --game), the text client, "
+                             "the standalone universal tracker, or a manual client. game/text/manual are "
+                             "mutually exclusive; listing universal_tracker with game attaches the tracker "
+                             "overlay to the game's client instead")
     parser.add_argument("--component", type=str, default=None, required=False,
                         help="Display name of a specific client component registered by --game's world "
                              "module, e.g. a map tracker. Requires --game; unknown names fall back to the "
@@ -196,9 +199,15 @@ def _compose_connect_address(server_address: "str | None", slot_name: "str | Non
 
 
 def _resolve_client_route(args) -> "tuple[str | None, dict]":
-    """Resolve a requested module launch (CLI --game / --client-type, or a routed
-    patch file) to (route_module, route_kwargs) for _route_module_when_ui_ready.
-    "" is the text-client sentinel (a valid route); None means no route.
+    """Resolve which client this process boots to (route_module, route_kwargs)
+    for _route_module_when_ui_ready. --client-type (one or more values) picks
+    the clients and --game names the selected game: "game" (or no type at all)
+    boots the game module's own client, "text" the text client,
+    "universal_tracker" the standalone tracker (list "game" with it to instead
+    attach the tracker overlay to the game's client), and "manual" the manual
+    client (the selected manual game's module client when --game is given).
+    A routed patch file outranks all of it. "" is the game-agnostic client
+    sentinel (a valid route); None means no route.
 
     Must run BEFORE InitContext is constructed: a client-role process with no
     resolvable route is re-assigned MWGG_ROLE="launcher" here, else it would
@@ -207,33 +216,53 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
     route_module = None
     route_kwargs: dict = {}
     try:
-        client_type = getattr(args, "client_type", None) if args else None
+        raw_client_type = getattr(args, "client_type", None) if args else None
+        # Parser yields a list (nargs="+"); hand-built args may carry a bare string.
+        client_types = {raw_client_type} if isinstance(raw_client_type, str) else set(raw_client_type or [])
         composed_address = _compose_connect_address(
             getattr(args, "server_address", None) if args else None,
             getattr(args, "slot_name", None) if args else None,
             getattr(args, "password", None) if args else None)
-        if args and args.game:
-            logger.info(f"Attempting to launch game: {args.game}")
-            from Utils import get_available_worlds
-
-            if args.game in get_available_worlds():
-                route_module = args.game
-                route_kwargs = {"server_address": composed_address,
-                                "slot_name": args.slot_name,
-                                "client_type": client_type or "game",
-                                "component": getattr(args, "component", None),
-                                "_restarted": getattr(args, "no_restart", False)}
-            else:
-                logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
-        elif args and getattr(args, "patch_module", None):
+        if args and getattr(args, "patch_module", None):
             route_module = args.patch_module
             route_kwargs = {"patch_file": args.patch_file}
             if composed_address:
                 route_kwargs["server_address"] = composed_address
-        elif client_type == "text":
+        elif "text" in client_types:
             route_module = ""
             route_kwargs = {"server_address": composed_address,
                             "client_type": "text"}
+        elif args and args.game and (not client_types or client_types & {"game", "manual"}):
+            # "game" listed (or no client_type at all): the module's own client;
+            # universal_tracker alongside it attaches the overlay downstream.
+            # manual+game also routes the module: a manual game's module client
+            # IS its manual client.
+            logger.info(f"Attempting to launch game: {args.game}")
+            from Utils import get_available_worlds
+
+            if args.game in get_available_worlds():
+                # Downstream takes one string; universal_tracker is the value
+                # that triggers the overlay attach.
+                module_client = ("universal_tracker" if "universal_tracker" in client_types
+                                 else "manual" if "manual" in client_types else "game")
+                route_module = args.game
+                route_kwargs = {"server_address": composed_address,
+                                "slot_name": args.slot_name,
+                                "client_type": module_client,
+                                "component": getattr(args, "component", None),
+                                "_restarted": getattr(args, "no_restart", False)}
+            else:
+                logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
+        elif "universal_tracker" in client_types:
+            route_module = ""
+            route_kwargs = {"server_address": composed_address,
+                            "client_type": "universal_tracker",
+                            # _client_launch_argv forwards slot_name (--name) for the tracker only
+                            "slot_name": args.slot_name}
+        elif "manual" in client_types:
+            route_module = ""
+            route_kwargs = {"server_address": composed_address,
+                            "client_type": "manual"}
     except Exception:
         logger.exception("Could not resolve requested module launch; falling back to launcher")
         route_module = None
@@ -246,11 +275,14 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
                        "falling back to launcher")
         os.environ["MWGG_ROLE"] = "launcher"
 
-    # Export the routed game so the client-role frontend (which never builds a
-    # launcher screen) can resolve cover art; assign-or-pop for the same
+    # Export the routed/selected game so the client-role frontend (which never
+    # builds a launcher screen) can resolve cover art: the selected game is
+    # context for whichever client boots. Assign-or-pop for the same
     # stale-inheritance reason as assign_role_env.
-    if route_module:
-        os.environ["MWGG_GAME"] = route_module
+    context_game = route_module if route_module else (
+        args.game if args and route_module is not None else None)
+    if context_game:
+        os.environ["MWGG_GAME"] = context_game
     else:
         os.environ.pop("MWGG_GAME", None)
     return route_module, route_kwargs
@@ -472,11 +504,30 @@ def main(argv: "list[str] | None" = None) -> None:
         _run_predownload(args.worlds if args.worlds else [])
         sys.exit(0)
 
+    client_types = set(args.client_type or [])
+    primaries = client_types & {"game", "text", "manual"}
+    if len(primaries) > 1:
+        print(f"Error: --client-type {' '.join(sorted(primaries))} are mutually exclusive.", file=sys.stderr)
+        sys.exit(2)
+    if "universal_tracker" in client_types and primaries - {"game"}:
+        print("Error: --client-type universal_tracker only combines with game.", file=sys.stderr)
+        sys.exit(2)
+    if "game" in client_types and not args.game:
+        print("Error: --client-type game requires --game.", file=sys.stderr)
+        sys.exit(2)
+
     # Guard: tracker and manual clients use Kivy-only UI affordances. They cannot run under TUI.
     KIVY_ONLY_GAMES = {"tracker", "manual"}
-    if args.frontend == "tui" and args.game and args.game.lower() in KIVY_ONLY_GAMES:
-        print(f"Error: --game={args.game} requires --frontend=gui (uses Kivy-only UI features).", file=sys.stderr)
-        sys.exit(2)
+    KIVY_ONLY_CLIENT_TYPES = {"universal_tracker", "manual"}
+    if args.frontend == "tui":
+        if args.game and args.game.lower() in KIVY_ONLY_GAMES:
+            print(f"Error: --game={args.game} requires --frontend=gui (uses Kivy-only UI features).", file=sys.stderr)
+            sys.exit(2)
+        kivy_only = KIVY_ONLY_CLIENT_TYPES & client_types
+        if kivy_only:
+            print(f"Error: --client-type {' '.join(sorted(kivy_only))} requires --frontend=gui "
+                  f"(uses Kivy-only UI features).", file=sys.stderr)
+            sys.exit(2)
 
     # Propagate the frontend selection to the lazy importer in frontend_protocol.resolve_frontend_class()
     os.environ["MWGG_FRONTEND"] = args.frontend
