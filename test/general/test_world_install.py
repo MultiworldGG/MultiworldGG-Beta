@@ -9,7 +9,9 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 import textwrap
+import time
 import types
 import unittest
 import zipfile
@@ -35,49 +37,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # one restores it so collection order can't leak state. test/__init__.py
 # forces update_ran=True.
 # --------------------------------------------------------------------------- #
-
-# --------------------------------------------------------------------------- #
-# _parse_url_requirement
-# --------------------------------------------------------------------------- #
-def test_parse_url_requirement_tarball_to_pinned_spec():
-    out = ModuleUpdate._parse_url_requirement(
-        "https://github.com/owner/repo/archive/foo-1.2.3.tar.gz"
-    )
-    assert out == "foo==1.2.3"
-
-
-def test_parse_url_requirement_zip_to_pinned_spec():
-    out = ModuleUpdate._parse_url_requirement("https://example.com/dl/bar-0.9.zip")
-    assert out == "bar==0.9"
-
-
-def test_parse_url_requirement_at_in_filename_raises():
-    # An '@' in the trailing filename means the version can't be deduced.
-    with pytest.raises(ValueError):
-        ModuleUpdate._parse_url_requirement("https://example.com/foo@1.0.zip")
-
-
-def test_parse_url_requirement_unsplittable_returns_empty():
-    # Only one '-' segment after suffix substitution -> ValueError -> "".
-    assert ModuleUpdate._parse_url_requirement("https://example.com/noseparator.zip") == ""
-
-
-# --------------------------------------------------------------------------- #
-# _parse_custom_pep508_requirement
-# --------------------------------------------------------------------------- #
-def test_parse_custom_pep508_basic():
-    out = ModuleUpdate._parse_custom_pep508_requirement(
-        "mypackage @ git+https://example.com/x.git#1.2.3"
-    )
-    assert out == "mypackage==1.2.3"
-
-
-def test_parse_custom_pep508_preserves_environment_marker():
-    out = ModuleUpdate._parse_custom_pep508_requirement(
-        "mypackage @ git+https://example.com/x.git#1.2.3 ; python_version >= '3.8'"
-    )
-    assert out == "mypackage==1.2.3; python_version >= '3.8'"
-
 
 # --------------------------------------------------------------------------- #
 # _module_location_tag
@@ -765,6 +724,19 @@ ABSENT = "world_that_is_in_no_index_and_has_no_apworld"
 TARGET = f"worlds.{ABSENT}"
 
 
+def _patch_heal_state_path(target: Path):
+    """Redirect ModuleUpdate's heal-attempts store at `target` so a test never
+    touches the real OS-tempdir/venv-parent file."""
+    return mock.patch.object(ModuleUpdate, "_heal_state_path", lambda: target)
+
+
+@pytest.fixture
+def hermetic_heal_store(tmp_path):
+    path = tmp_path / "heal.json"
+    with _patch_heal_state_path(path):
+        yield path
+
+
 class TestInstallWorldsReportsFailures(unittest.TestCase):
     def setUp(self):
         # Nothing here reaches the network -- the absent slug has no module_location to
@@ -772,6 +744,12 @@ class TestInstallWorldsReportsFailures(unittest.TestCase):
         patcher = mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions")
         patcher.start()
         self.addCleanup(patcher.stop)
+
+        tmp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp_dir.cleanup)
+        heal_patcher = _patch_heal_state_path(Path(tmp_dir.name) / "heal.json")
+        heal_patcher.start()
+        self.addCleanup(heal_patcher.stop)
 
     def test_uninstallable_world_is_reported(self):
         result = ModuleUpdate.install_worlds([TARGET], with_deps=True)
@@ -790,6 +768,226 @@ class TestInstallWorldsReportsFailures(unittest.TestCase):
             result = ModuleUpdate.install_worlds([TARGET], with_deps=True)
         self.assertEqual(result.failed, [])
         self.assertFalse(result)
+
+
+# --------------------------------------------------------------------------- #
+# dependency healing
+# --------------------------------------------------------------------------- #
+
+WHEEL_URL = "https://x/worlds_foo-1.0.0-py3-none-any.whl#sha256=abc"
+
+
+def test_missing_requirements_flags_absent_unconditional_dep():
+    missing = ModuleUpdate._missing_requirements(
+        ["definitely-not-installed-xyz"], installed_names={"colorama"}
+    )
+    assert missing == ["definitely-not-installed-xyz"]
+
+
+def test_missing_requirements_canonicalizes_names():
+    assert ModuleUpdate._missing_requirements(["Foo.Bar"], installed_names={"foo-bar"}) == []
+
+
+def test_missing_requirements_skips_extra_marked_deps():
+    missing = ModuleUpdate._missing_requirements(['x ; extra == "dev"'], installed_names=set())
+    assert missing == []
+
+
+def test_missing_requirements_evaluates_environment_markers():
+    missing = ModuleUpdate._missing_requirements(
+        ['always-present-dep ; python_version >= "3"',
+         'never-present-dep ; python_version < "3"'],
+        installed_names=set(),
+    )
+    assert missing == ["always-present-dep"]
+
+
+def test_missing_requirements_tolerates_unparseable_and_none_requires():
+    assert ModuleUpdate._missing_requirements(None) == []
+    assert ModuleUpdate._missing_requirements(["===bogus==="], installed_names=set()) == []
+
+
+def test_installed_dist_names_contains_known_dist():
+    assert "pytest" in ModuleUpdate._installed_dist_names()
+
+
+def test_heal_attempt_roundtrip_record_suppress_clear(hermetic_heal_store):
+    ModuleUpdate._record_heal_attempt("foo", WHEEL_URL)
+    assert ModuleUpdate._load_heal_attempts() == {"foo": WHEEL_URL}
+
+    ModuleUpdate._clear_heal_attempt("foo")
+    assert ModuleUpdate._load_heal_attempts() == {}
+
+
+def test_heal_attempts_corrupt_file_treated_as_empty(hermetic_heal_store):
+    hermetic_heal_store.write_bytes(b"not json {{{")
+    assert ModuleUpdate._load_heal_attempts() == {}
+
+    hermetic_heal_store.write_text(json.dumps(["a", "b"]))
+    assert ModuleUpdate._load_heal_attempts() == {}
+
+
+def test_world_requires_install_true_when_deps_missing(monkeypatch):
+    dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: dist)
+    games = {"foo": {"module_location": WHEEL_URL}}
+
+    assert ModuleUpdate._world_requires_install(
+        "foo", games, installed_names=set(), heal_attempts={}
+    ) is True
+
+
+def test_world_requires_install_suppressed_after_heal_attempt_same_wheel(monkeypatch):
+    dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: dist)
+    games = {"foo": {"module_location": WHEEL_URL}}
+
+    assert ModuleUpdate._world_requires_install(
+        "foo", games, installed_names=set(), heal_attempts={"foo": WHEEL_URL}
+    ) is False
+
+
+def test_world_requires_install_retries_when_module_location_changes(monkeypatch):
+    dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: dist)
+    games = {"foo": {"module_location": WHEEL_URL}}
+    stale_url = "https://x/worlds_foo-0.9.0-py3-none-any.whl#sha256=old"
+
+    assert ModuleUpdate._world_requires_install(
+        "foo", games, installed_names=set(), heal_attempts={"foo": stale_url}
+    ) is True
+
+
+def test_world_requires_install_version_mismatch_ignores_heal_marker(monkeypatch):
+    # dist.version ("0.9.0") behind the index tag ("1.0.0") wins outright, even
+    # though the exact wheel URL is marked as already-attempted.
+    dist = types.SimpleNamespace(version="0.9.0", requires=[])
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: dist)
+    games = {"foo": {"module_location": WHEEL_URL}}
+
+    assert ModuleUpdate._world_requires_install(
+        "foo", games, installed_names=set(), heal_attempts={"foo": WHEEL_URL}
+    ) is True
+
+
+def test_check_for_updates_worlds_only_flags_dep_broken_world_at_current_tag():
+    dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb", return_value=True), \
+            mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_world_dist", lambda slug: dist), \
+            mock.patch.object(ModuleUpdate, "_installed_dist_names", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "_load_heal_attempts", return_value={}):
+        assert ModuleUpdate.check_for_updates(worlds_only=True) == ["worlds.foo"]
+
+
+def test_check_for_updates_worlds_only_ignores_apworld_extracted_world():
+    # No dist -> never installed (or apworld-extracted, not pip-tracked); it
+    # installs on demand at launch, not through the update-check path.
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb", return_value=True), \
+            mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_world_dist", return_value=None), \
+            mock.patch.object(ModuleUpdate, "_installed_dist_names", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "_load_heal_attempts", return_value={}):
+        assert ModuleUpdate.check_for_updates(worlds_only=True) == []
+
+
+def test_install_worlds_dep_broken_world_reinstalled_with_deps(hermetic_heal_store):
+    dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    calls = []
+
+    def fake_uv_run(args, timeout=120, check=False):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "ok", "")
+
+    with mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_installed_dist_names", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "_load_heal_attempts", return_value={}), \
+            mock.patch.object(ModuleUpdate, "_world_dist", lambda slug: dist), \
+            mock.patch.object(ModuleUpdate, "_uv_run", fake_uv_run), \
+            mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions"):
+        ModuleUpdate.install_worlds(["worlds.foo"])
+
+    assert len(calls) == 1
+    assert WHEEL_URL in calls[0]
+    assert "--no-deps" not in calls[0]
+
+
+def test_install_worlds_dep_satisfied_update_still_skips_deps(hermetic_heal_store):
+    dist = types.SimpleNamespace(version="1.0.0", requires=[])
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    calls = []
+
+    def fake_uv_run(args, timeout=120, check=False):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "ok", "")
+
+    with mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_installed_dist_names", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "_load_heal_attempts", return_value={}), \
+            mock.patch.object(ModuleUpdate, "_world_dist", lambda slug: dist), \
+            mock.patch.object(ModuleUpdate, "_uv_run", fake_uv_run), \
+            mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions"):
+        ModuleUpdate.install_worlds(["worlds.foo"], update=True)
+
+    install_call = next(c for c in calls if c[1] == "install")
+    assert "--no-deps" in install_call
+
+
+def test_install_worlds_success_clears_heal_marker(hermetic_heal_store):
+    ModuleUpdate._record_heal_attempt("foo", WHEEL_URL)
+    assert ModuleUpdate._load_heal_attempts() == {"foo": WHEEL_URL}
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+
+    def fake_uv_run(args, timeout=120, check=False):
+        return subprocess.CompletedProcess(args, 0, "ok", "")
+
+    with mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_uv_run", fake_uv_run), \
+            mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions"):
+        ModuleUpdate.install_worlds(["worlds.foo"], with_deps=True)
+
+    assert ModuleUpdate._load_heal_attempts() == {}
+
+
+def test_install_worlds_failure_records_heal_marker_and_falls_back(hermetic_heal_store, tmp_path, monkeypatch):
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)  # empty: no fallback apworld
+
+    def fake_uv_run(args, timeout=120, check=False):
+        return subprocess.CompletedProcess(args, 1, "", "boom")
+
+    with mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_uv_run", fake_uv_run), \
+            mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions"):
+        result = ModuleUpdate.install_worlds(["worlds.foo"], with_deps=True)
+
+    assert "worlds.foo" in result.failed
+    assert ModuleUpdate._load_heal_attempts() == {"foo": WHEEL_URL}
+
+
+def test_prune_stale_extractions_skips_dist_backed_dirs(tmp_path, monkeypatch):
+    old = time.time() - 60 * 86400
+    dist_dir = tmp_path / "dist_backed"
+    dist_dir.mkdir()
+    os.utime(dist_dir, (old, old))
+    stale_dir = tmp_path / "stale_extraction"
+    stale_dir.mkdir()
+    os.utime(stale_dir, (old, old))
+    monkeypatch.setattr(ModuleUpdate, "_venv_worlds_dir", lambda: tmp_path)
+
+    def fake_distribution(name):
+        if name == "worlds.dist_backed":
+            return object()
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    with mock.patch.object(ModuleUpdate.importlib.metadata, "distribution", fake_distribution):
+        ModuleUpdate._prune_stale_apworld_extractions(max_age_days=0)
+
+    assert dist_dir.exists()
+    assert not stale_dir.exists()
 
 
 # --------------------------------------------------------------------------- #
@@ -1109,10 +1307,13 @@ def test_update_locked_runs_world_update_when_not_skipped(monkeypatch):
     monkeypatch.setattr(ModuleUpdate, "_skip_update", False)
     monkeypatch.setattr(ModuleUpdate, "update_ran", True)
     with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
-            mock.patch.object(ModuleUpdate, "install_mwgg_igdb"), \
+            mock.patch.object(ModuleUpdate, "install_mwgg_igdb") as igdb, \
             mock.patch.object(ModuleUpdate, "update_worlds", return_value=None) as worlds:
         ModuleUpdate._update_locked(yes=True, force=False, worlds=None)
     worlds.assert_called_once_with()
+    # update_worlds() now owns the leading mwgg_igdb pull; a redundant call here
+    # would double the throttled network hit on every launch.
+    igdb.assert_not_called()
 
 
 def test_update_worlds_installs_outdated_worlds():
@@ -1534,3 +1735,48 @@ def test_ensure_uv_discoverable_never_raises_when_nothing_works(monkeypatch, tmp
     saved_path = os.environ.get("PATH")
     MultiWorld._ensure_uv_discoverable()  # must not raise
     assert os.environ.get("PATH") == saved_path
+
+
+# --------------------------------------------------------------------------- #
+# MultiWorld._inline_world_update: the cold-start world update for boots that
+# don't front the splash (Linux/Mac GUI, all TUI, MWGG_NO_SPLASH). Its imports
+# are function-local, so patches target the module attrs (ModuleUpdate.update_worlds,
+# Utils.exit_restart_for_update), not the names as seen from this test module.
+# --------------------------------------------------------------------------- #
+
+def test_inline_world_update_restarts_when_apworld_fallbacks():
+    result = ModuleUpdate.WorldInstallResult(["worlds.foo"])
+    fake_logger = mock.Mock()
+    with mock.patch.object(ModuleUpdate, "update_worlds", return_value=result), \
+            mock.patch.object(Utils, "exit_restart_for_update") as restart:
+        MultiWorld._inline_world_update(fake_logger)
+    restart.assert_called_once_with()
+
+
+def test_inline_world_update_reports_applied_when_result_empty():
+    result = ModuleUpdate.WorldInstallResult()
+    fake_logger = mock.Mock()
+    with mock.patch.object(ModuleUpdate, "update_worlds", return_value=result), \
+            mock.patch.object(Utils, "exit_restart_for_update") as restart:
+        MultiWorld._inline_world_update(fake_logger)
+    restart.assert_not_called()
+    fake_logger.info.assert_any_call("Updates applied successfully")
+
+
+def test_inline_world_update_noop_when_current():
+    fake_logger = mock.Mock()
+    with mock.patch.object(ModuleUpdate, "update_worlds", return_value=None), \
+            mock.patch.object(Utils, "exit_restart_for_update") as restart:
+        MultiWorld._inline_world_update(fake_logger)
+    restart.assert_not_called()
+    assert mock.call("Updates applied successfully") not in fake_logger.info.call_args_list
+
+
+def test_inline_world_update_swallows_update_exceptions():
+    fake_logger = mock.Mock()
+    with mock.patch.object(ModuleUpdate, "update_worlds", side_effect=RuntimeError("boom")), \
+            mock.patch.object(Utils, "exit_restart_for_update") as restart:
+        MultiWorld._inline_world_update(fake_logger)  # must not raise
+    restart.assert_not_called()
+    assert fake_logger.warning.call_count == 1
+    assert "World update failed" in fake_logger.warning.call_args[0][0]

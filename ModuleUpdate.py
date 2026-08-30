@@ -1,13 +1,26 @@
+"""Worlds venv and world install management.
+
+Owns the per-user uv-managed worlds venv, the mwgg_igdb index package, and
+per-world wheel/apworld installs. Importing this module has side effects, in
+this order: read-only venv probe -> skip-flag computation -> custom_worlds
+scan -> venv create/repair + sys.path insert -> installer wheel_cache
+(variant marker, mwgg_igdb bootstrap, cached-wheel install).
+
+Mutable module globals (update_ran, requirements_files, worlds_files,
+custom_worlds_dir, python_cmd, the MWGG_IGDB_* trio) are public API: callers
+and tests read and write them through the module namespace.
+"""
+
 import sys
 import os
 import subprocess
 import multiprocessing
 import json
+import re
 import shutil
 import time
 import datetime
 import zipfile
-import re
 import logging
 import tempfile
 import contextlib
@@ -25,33 +38,25 @@ from collections.abc import Iterable
 from typing import Any, List, Optional, TypeVar, override
 
 from importlib import invalidate_caches
-from BaseUtils import tuplize_version, Version, local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
-from APContainer import APWorldContainer
+from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
 
-# mwgg_igdb package source: orphan branch on the Index repo
-# See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
-DEFAULT_MWGG_IGDB_VARIANT = "sixteen"  # ultimate fallback when nothing is installed
-_VARIANTS = ("nr", "ao", "twelve", "sixteen")
-_EXPLICIT_VARIANT: Optional[str] = None  # set via set_variant(); wins over detection
-MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
-# The three globals below mirror the currently *resolved* variant. _resolve_variant()
-# keeps them consistent; callers should treat them as read-only.
-MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
-MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
-MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+
+# ── Platform & paths ─────────────────────────────────────────────────────────
 
 def is_windows() -> bool:
     return sys.platform in ("win32", "cygwin", "msys")
 
+
 def is_macos() -> bool:
     return sys.platform == "darwin"
+
 
 def is_linux() -> bool:
     return sys.platform.startswith("linux")
 
+
 def install_path() -> Path:
-    # Returns the path to the install directory for the python modules
-    # Frozen builds only
+    """Per-user worlds venv location (frozen builds)."""
     if is_windows():
         return Path.home() / "AppData" / "Local" / "MultiworldGG" / "mwgg_venv"
     elif is_macos():
@@ -61,17 +66,19 @@ def install_path() -> Path:
     else:
         raise RuntimeError("Unsupported platform")
 
-# Version compatibility checks
+
 if (is_windows() or is_macos()) and sys.version_info < (3, 13, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. Official 3.13.+ is supported.")
 elif sys.version_info < (3, 13, 0):
     raise RuntimeError(f"Incompatible Python Version found: {sys.version_info}. 3.13.+ is supported.")
 
+
+# ── Install gating ───────────────────────────────────────────────────────────
+
 def _worlds_venv_is_readonly() -> bool:
     """True when the worlds venv lives on a read-only mount (e.g. a Docker `:ro`
     bind mount). Such consumers must never attempt installs; the mwgg_upgrader
-    service is the sole writer of the venv. Only meaningful when use_worlds_venv()
-    is set; always False on a normal dev/user install (writable venv)."""
+    service is the sole writer of the venv."""
     if not use_worlds_venv():
         return False
     venv_dir = install_path()
@@ -98,8 +105,10 @@ def _skip_all_installs() -> bool:
     return bool(os.environ.get("SKIP_ALL_INSTALLS")) or _VENV_READONLY
 
 
-# Skip update if running in splash screen process
-# Allow updates in main process and main client process
+# True in spawned children (any multiprocessing child not named "MultiworldGG",
+# splash included) and under the env opt-outs. Gates the custom_worlds scan and
+# the dev pipeline in _update_locked; update_worlds() ignores it on purpose so
+# the splash child can run the world update.
 _skip_update = bool(
     (multiprocessing.parent_process() and multiprocessing.current_process().name != "MultiworldGG")
     or os.environ.get("SKIP_REQUIREMENTS_UPDATE", "")
@@ -107,13 +116,14 @@ _skip_update = bool(
 )
 
 update_ran = _skip_update
-need_update: List[str] = []
 
 _T = TypeVar("_T")
 
 
+# ── Mutable public state ─────────────────────────────────────────────────────
+
 class RequirementsSet(set[_T]):
-    """Custom set that tracks whether updates have been run."""
+    """Set that re-arms the updater (update_ran) whenever a file is added."""
 
     @override
     def add(self, e: _T) -> None:
@@ -134,6 +144,7 @@ core_constraints: Path = Path(local_path("requirements.txt"))
 requirements_files: RequirementsSet[Path] = RequirementsSet({core_constraints})
 worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
+
 # custom_worlds lives next to the executable / source checkout: single source of
 # truth for the launch scan. Do NOT special-case frozen builds to write_path(),
 # or custom worlds silently stop being selectable.
@@ -143,19 +154,17 @@ def _resolve_custom_worlds_dir() -> Path:
 
 custom_worlds_dir = _resolve_custom_worlds_dir()
 
-# Best-effort mkdir. Skipped silently on the rare read-only filesystem; the
-# downstream readers already handle missing directories.
 try:
     custom_worlds_dir.mkdir(parents=True, exist_ok=True)
 except OSError:
-    pass
+    pass  # best-effort; read-only filesystems tolerated
+
 
 def _scan_custom_worlds() -> None:
-    """Register any .whl/.apworld files in custom_worlds_dir into worlds_files.
+    """Register .whl/.apworld files in custom_worlds_dir into worlds_files.
 
-    Skipped once a full update has run (those files are handled by the updater).
-    Reads the module-level update_ran / custom_worlds_dir / worlds_files, so tests
-    can monkeypatch them and call this directly instead of re-implementing it.
+    Skipped once a full update has run. Tests monkeypatch the module globals
+    and call this directly.
     """
     if update_ran or not custom_worlds_dir.exists():
         return
@@ -167,6 +176,9 @@ def _scan_custom_worlds() -> None:
 
 _scan_custom_worlds()
 
+
+# ── uv runner ────────────────────────────────────────────────────────────────
+
 # Default for dev mode (not frozen): use the running interpreter and let uv install into its venv.
 python_cmd = sys.executable
 
@@ -175,10 +187,9 @@ _uv_unavailable: bool = False
 
 
 def _uv_candidate_paths() -> list[Path]:
-    """uv lookup order; don't hunt for it
-    """
+    """uv lookup order; fixed list, no filesystem hunting."""
     candidates: list[Path] = []
-    # Frozen builds on Linux/macOS ship uv next to the executable 
+    # Frozen builds on Linux/macOS ship uv next to the executable
     if is_frozen():
         exe_dir = Path(sys.executable).parent
         if is_macos():
@@ -269,6 +280,8 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
     return subprocess.CompletedProcess(args, 127, "", "uv not found at any known path")
 
 
+# ── Worlds-venv bootstrap ────────────────────────────────────────────────────
+
 def venv_is_healthy(venv_path: Path) -> bool:
     """True if the venv's interpreter actually runs.
 
@@ -330,99 +343,19 @@ if use_worlds_venv():
             sys.path.insert(0, site_packages)
 
 
-def confirm(msg: str) -> None:
-    """Get user confirmation for an action."""
-    try:
-        input(f"\n{msg}")
-    except KeyboardInterrupt:
-        logger.info("\nAborting")
-        sys.exit(1)
+# ── mwgg_igdb index & variants ───────────────────────────────────────────────
 
-
-def _format_manual_install_hint(module_location: str) -> str:
-    """Render a copy-pasteable `uv pip install` command for the host shell.
-    """
-    return (
-        "To install manually on the host (where build tools are available), run:\n"
-        f"    bash:      source {mwgg_venv_site_packages()}/bin/activate\n"
-        f"    win PS:    & {mwgg_venv_site_packages()}/Scripts/Activate.ps1\n"
-        f"    docker:    source ~/<your-local-venv>/bin/activate\n"
-        f"    then run:\n"
-        f"               uv pip install '{module_location}' --upgrade --no-cache\n"
-        f"    docker admins will need to copy the site packages to /var/lib/mwgg/mwgg_venv"
-    )
-
-
-def parse_requirements_file(file_path: Path) -> List[str]:
-    """
-    Parse a requirements.txt file and return a list of requirement strings.
-    Handles line continuations, comments, and various requirement formats.
-    """
-    requirements: list[str] = []
-    
-    with open(file_path, 'r') as f:
-        lines = f.readlines()
-    
-    prev_line = ""
-    
-    for line in lines:
-        line = line.rstrip('\r\n')
-        
-        # Handle line continuations
-        if line.endswith('\\'):
-            prev_line += line[:-1] + " "
-            continue
-        
-        line = prev_line + line
-        prev_line = ""
-        
-        # Skip empty lines and comments
-        if not line.strip() or line.strip().startswith('#'):
-            continue
-        
-        # Remove hash specifications for version checking
-        line = line.split("--hash=")[0].strip()
-        
-        # Handle URL-based requirements
-        if line.startswith(("https://", "git+https://")):
-            line = _parse_url_requirement(line)
-        
-        # Handle custom PEP 508 syntax
-        elif "@" in line and "#" in line:
-            line = _parse_custom_pep508_requirement(line)
-        
-        if line.strip():
-            requirements.append(line.strip())
-    
-    return requirements
-
-
-def _parse_url_requirement(line: str) -> str:
-    """Parse URL-based requirements and extract package name and version."""
-    rest = line.split('/')[-1]
-    
-    # Extract from filename
-    if "@" in rest:
-        raise ValueError("Can't deduce version from requirement")
-    
-    rest = rest.replace(".zip", "-").replace(".tar.gz", "-")
-    try:
-        name, version, _ = rest.split("-", 2)
-        return f'{name}=={version}'
-    except ValueError:
-        return ""
-
-
-def _parse_custom_pep508_requirement(line: str) -> str:
-    """Parse custom PEP 508 syntax: name @ url#version ; marker."""
-    name, rest = line.split("@", 1)
-    version = rest.split("#", 1)[1].split(";", 1)[0].rstrip()
-    result = f"{name.rstrip()}=={version}"
-    
-    if ";" in rest:  # keep marker
-        result += rest[rest.find(";"):]
-    
-    return result
+# mwgg_igdb package source: orphan branch on the Index repo.
+# See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
+DEFAULT_MWGG_IGDB_VARIANT = "sixteen"  # ultimate fallback when nothing is installed
+_VARIANTS = ("nr", "ao", "twelve", "sixteen")
+_EXPLICIT_VARIANT: Optional[str] = None  # set via set_variant(); wins over detection
+MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
+# The three globals below mirror the currently *resolved* variant. _resolve_variant()
+# keeps them consistent; callers should treat them as read-only.
+MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
+MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
+MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
 
 
 def _detect_installed_variant() -> Optional[str]:
@@ -454,13 +387,34 @@ def _resolve_variant() -> str:
         variant = _EXPLICIT_VARIANT
     else:
         variant = _detect_installed_variant() or DEFAULT_MWGG_IGDB_VARIANT
-    # These UPPERCASE names are public, documented module globals that are
-    # intentionally reassigned here (callers and tests read ModuleUpdate.MWGG_IGDB_*);
-    # the "constant" rule doesn't apply and renaming would break the public API.
+    # Public globals, intentionally reassigned (callers and tests read them).
     MWGG_IGDB_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]
     MWGG_IGDB_BRANCH = f"game_index_{variant}"  # pyright: ignore[reportConstantRedefinition]
     MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"  # pyright: ignore[reportConstantRedefinition]
     return variant
+
+
+def set_variant(variant: str) -> None:
+    """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call."""
+    global _EXPLICIT_VARIANT
+    _EXPLICIT_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]  # override sentinel
+    _resolve_variant()
+
+
+def _parse_variant_token(token: str) -> Optional[str]:
+    """Return the variant name if `token` is `mwgg_igdb` or `mwgg_igdb_<variant>`, else None.
+
+    Bare `mwgg_igdb` maps to the canonical default `sixteen`. Inno Setup passes
+    one of these tokens in the `--worlds` list to select the parental-rating gate.
+    """
+    if token == "mwgg_igdb":
+        return "sixteen"
+    prefix = "mwgg_igdb_"
+    if token.startswith(prefix):
+        variant = token[len(prefix):]
+        if variant in _VARIANTS:
+            return variant
+    return None
 
 
 def _igdb_install_date() -> Optional[datetime.date]:
@@ -476,23 +430,10 @@ def _igdb_install_date() -> Optional[datetime.date]:
 
 
 def _igdb_upgraded_recently() -> bool:
-    """True when an upgrade pull would be a no-op: `mwgg_igdb` was installed
-    today. Variant switches do NOT rely on this throttle: they go through the
-    callers that pass force=True (the `mwgg_igdb_<variant>` token path in
-    install_worlds and the mwgg_upgrader), which bypass it entirely.
-    """
+    """True when an upgrade pull would be a no-op: mwgg_igdb was installed today."""
+    # force=True callers (variant switches, CLI) bypass this throttle entirely.
     install_date = _igdb_install_date()
     return install_date is not None and install_date == datetime.date.today()
-
-
-# Consumed by the upgrader tools (tools/mwgg_upgrade.py, tools/mcp_mwgg_upgrader.py),
-# so it is unused within this module, hence the targeted ignore.
-def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
-    try:
-        worlds_dir = _venv_worlds_dir()
-        return worlds_dir.exists() and any(worlds_dir.iterdir())
-    except OSError:
-        return False
 
 
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
@@ -503,15 +444,11 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
 
     Args:
         upgrade: Run pip with --upgrade.
-        force: With upgrade=True, bypass the once-daily throttle. Use for variant
-               switches and standalone CLI invocation where a fresh pull is required.
-
-    Concurrency: two processes that race on a stale stamp can both run pip into the
-    same venv. uv pip writes to a temp location before rename, so the worst outcome
-    is two pulls instead of one, not corruption.
+        force: With upgrade=True, bypass the once-daily throttle.
 
     Returns True if the install succeeded (or was throttled).
     """
+    # Racing installs from two processes are benign: uv writes temp-then-rename.
     if _skip_all_installs():
         return True
     _resolve_variant()
@@ -559,55 +496,7 @@ def _get_game_index():
         return None
 
 
-def _module_location_tag(url: str) -> Optional[str]:
-    """Extract the version from a release-asset wheel URL.
-
-    Expects URLs like
-    ``https://github.com/<owner>/<repo>/releases/download/<release_tag>/<dist>-<ver>-py3-none-any.whl``,
-    optionally with a ``#sha256=<hex>`` fragment. Returns None for anything
-    that isn't a recognizable wheel URL (legacy ``git+...@<ref>`` URLs from
-    the v2 publish flow degrade to None; the caller then skips the
-    comparison rather than crashing).
-    """
-    if not url:
-        return None
-    name = url.rsplit("/", 1)[-1]
-    name = name.split("#", 1)[0].split("?", 1)[0]
-    if not name.endswith(".whl"):
-        return None
-    parts = name[:-len(".whl")].split("-")
-    # PEP 427: dist, version, [build,] python, abi, platform; version is index 1.
-    if len(parts) < 5:
-        return None
-    return parts[1]
-
-
-def _parse_variant_token(token: str) -> Optional[str]:
-    """Return the variant name if `token` is `mwgg_igdb` or `mwgg_igdb_<variant>`, else None.
-
-    Bare `mwgg_igdb` (no suffix) maps to the canonical default `sixteen`. Inno Setup
-    passes one of these tokens in the `--worlds` list to select the parental-rating gate.
-    """
-    if token == "mwgg_igdb":
-        return "sixteen"
-    prefix = "mwgg_igdb_"
-    if token.startswith(prefix):
-        variant = token[len(prefix):]
-        if variant in _VARIANTS:
-            return variant
-    return None
-
-
-def set_variant(variant: str) -> None:
-    """Switch the runtime mwgg_igdb variant; takes effect on next install_mwgg_igdb call.
-
-    Sets the explicit-override sentinel so this choice wins over any detected
-    installed variant on subsequent _resolve_variant() calls.
-    """
-    global _EXPLICIT_VARIANT
-    _EXPLICIT_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]  # intentional reassignment of the override sentinel
-    _resolve_variant()
-
+# ── Installer wheel_cache (Inno) ─────────────────────────────────────────────
 
 # Inno's native [Files] download step stages selected worlds' wheels here, next to
 # the exe, before first launch (replaces the broken de-elevated runasoriginaluser exec).
@@ -689,118 +578,30 @@ _bootstrap_fresh_venv_mwgg_igdb()
 _consume_wheel_cache()
 
 
+# ── World install primitives ─────────────────────────────────────────────────
+
 def _world_slug(world: str) -> str:
     return world.removeprefix("worlds.")
 
 
-def _world_requires_install(slug: str, games: dict[str, dict[str, object]]) -> bool:
-    try:
-        dist = importlib.metadata.distribution(f"worlds.{slug}")
-    except importlib.metadata.PackageNotFoundError:
-        return True
+def _module_location_tag(url: str) -> Optional[str]:
+    """Extract the version from a release-asset wheel URL.
 
-    module_location = games.get(slug, {}).get("module_location")
-    if not isinstance(module_location, str):
-        return False
-
-    tag = _module_location_tag(module_location)
-    return bool(tag and dist.version != tag)
-
-
-def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, object]]) -> list[str]:
-    return [world for world in worlds if _world_requires_install(_world_slug(world), games)]
-
-
-def check_for_updates(worlds_only: bool = False) -> List[str]:
+    Expects ``https://.../<dist>-<ver>-py3-none-any.whl``, optionally with a
+    ``#sha256=<hex>`` fragment. Returns None for anything that isn't a
+    recognizable wheel URL; the caller then skips the comparison.
     """
-    Return packages with newer versions available.
-
-    For worlds: re-pull mwgg_igdb (always latest), then return slugs whose
-    installed dist version doesn't match the tag in `module_location`.
-    For non-world packages: query PyPI against requirements.txt entries.
-    """
-    if is_frozen() and not worlds_only:
-        return []
-
-    if worlds_only:
-        install_mwgg_igdb(upgrade=True)
-        index = _get_game_index()
-        if index is None:
-            return []
-        outdated: List[str] = []
-        for slug, entry in index.get_all_games().items():
-            loc = entry.get("module_location")
-            if not loc:
-                continue
-            tag = _module_location_tag(loc)
-            if not tag:
-                continue
-            try:
-                dist = importlib.metadata.distribution(f"worlds.{slug}")
-            except importlib.metadata.PackageNotFoundError:
-                continue
-            if dist.version != tag:
-                outdated.append(f"worlds.{slug}")
-        logger.info(f"Worlds with available updates: {outdated}")
-        return outdated
-
-    # Dev-only path: ask uv for outdated dists. uv's resolver enforces requirements.txt
-    # specifiers at install time, so we don't need to pre-filter here.
-    try:
-        executable_args = _uv_pip("list", "--outdated", "--format", "json")
-        logger.info(f"Executing subprocess command: {executable_args}")
-        response = _uv_run(executable_args, timeout=45)
-        if response.returncode != 0:
-            logger.warning(f"Could not check for updates: {response.stderr}")
-            return []
-
-        outdated_packages = json.loads(response.stdout)
-        logger.info(f"Newer versions of the following packages are available: {outdated_packages}")
-        return [pkg["name"] for pkg in outdated_packages]
-
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
-        logger.warning(f"Could not check for updates: {e}")
-        return []
-
-
-def uninstall_worlds(worlds: List[str]) -> None:
-    """Uninstall a list of `worlds.<slug>` packages from the venv."""
-    for world in worlds:
-        # uv pip uninstall is non-interactive by default; no --yes equivalent needed.
-        try:
-            _uv_run(_uv_pip("uninstall", world), timeout=60)
-        except subprocess.TimeoutExpired:
-            logger.warning(f"uv uninstall of {world} timed out.")
-
-
-def find_world_modules() -> set[str]:
-    """Return all known world slugs: union of mwgg_igdb entries and currently installed `worlds.<slug>` dists."""
-    world_modules_set: set[str] = set()
-
-    index = _get_game_index()
-    if index is not None:
-        world_modules_set.update(index.get_all_games().keys())
-
-    try:
-        executable_args = _uv_pip("list", "--format", "json")
-        logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
-        response = _uv_run(executable_args, timeout=45)
-        if response.returncode == 0:
-            for package in json.loads(response.stdout):
-                package_name = package.get("name", "")
-                if package_name.startswith("worlds") and len(package_name) > 7:
-                    # uv hyphenates dist names (worlds.dark_souls_3 -> worlds-dark-souls-3); restore the slug.
-                    world_name = package_name[7:].replace("-", "_")
-                    if not world_name.startswith("_"):
-                        world_modules_set.add(world_name)
-        else:
-            logger.warning(f"Could not list installed packages: {response.stderr}")
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
-        logger.warning(f"Could not check installed world modules: {e}")
-    except Exception as e:
-        logger.warning(f"Unexpected error while checking installed world modules: {e}")
-
-    return world_modules_set
+    if not url:
+        return None
+    name = url.rsplit("/", 1)[-1]
+    name = name.split("#", 1)[0].split("?", 1)[0]
+    if not name.endswith(".whl"):
+        return None
+    parts = name[:-len(".whl")].split("-")
+    # PEP 427: dist, version, [build,] python, abi, platform; version is index 1.
+    if len(parts) < 5:
+        return None
+    return parts[1]
 
 
 def _venv_worlds_dir() -> Path:
@@ -814,6 +615,16 @@ def _venv_worlds_dir() -> Path:
     # Dev: matches the hardcoded path in src/worlds/__init__.py
     from sysconfig import get_path
     return Path(get_path("purelib")) / "worlds"
+
+
+# Consumed by the upgrader tools (tools/mwgg_upgrade.py, tools/mcp_mwgg_upgrader.py),
+# so it is unused within this module, hence the targeted ignore.
+def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
+    try:
+        worlds_dir = _venv_worlds_dir()
+        return worlds_dir.exists() and any(worlds_dir.iterdir())
+    except OSError:
+        return False
 
 
 def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
@@ -859,7 +670,6 @@ def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
     Distribution (pip-installed wheels), so this only ever touches our own
     extraction output.
     """
-    import importlib.metadata
     venv_worlds = _venv_worlds_dir()
     if not venv_worlds.exists():
         return
@@ -884,10 +694,257 @@ def _prune_stale_apworld_extractions(max_age_days: int = 30) -> None:
             logger.warning(f"Could not prune stale apworld {entry}: {e}")
 
 
+def uninstall_worlds(worlds: List[str]) -> None:
+    """Uninstall a list of `worlds.<slug>` packages from the venv."""
+    for world in worlds:
+        try:
+            _uv_run(_uv_pip("uninstall", world), timeout=60)
+        except subprocess.TimeoutExpired:
+            logger.warning(f"uv uninstall of {world} timed out.")
+
+
+def find_world_modules() -> set[str]:
+    """Return all known world slugs: union of mwgg_igdb entries and currently installed `worlds.<slug>` dists."""
+    world_modules_set: set[str] = set()
+
+    index = _get_game_index()
+    if index is not None:
+        world_modules_set.update(index.get_all_games().keys())
+
+    try:
+        executable_args = _uv_pip("list", "--format", "json")
+        logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
+        response = _uv_run(executable_args, timeout=45)
+        if response.returncode == 0:
+            for package in json.loads(response.stdout):
+                package_name = package.get("name", "")
+                if package_name.startswith("worlds") and len(package_name) > 7:
+                    # uv hyphenates dist names (worlds.dark_souls_3 -> worlds-dark-souls-3); restore the slug.
+                    world_name = package_name[7:].replace("-", "_")
+                    if not world_name.startswith("_"):
+                        world_modules_set.add(world_name)
+        else:
+            logger.warning(f"Could not list installed packages: {response.stderr}")
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+        logger.warning(f"Could not check installed world modules: {e}")
+    except Exception as e:
+        logger.warning(f"Unexpected error while checking installed world modules: {e}")
+
+    return world_modules_set
+
+
+def _format_manual_install_hint(module_location: str) -> str:
+    """Render a copy-pasteable `uv pip install` command for the host shell."""
+    return (
+        "To install manually on the host (where build tools are available), run:\n"
+        f"    bash:      source {mwgg_venv_site_packages()}/bin/activate\n"
+        f"    win PS:    & {mwgg_venv_site_packages()}/Scripts/Activate.ps1\n"
+        f"    docker:    source ~/<your-local-venv>/bin/activate\n"
+        f"    then run:\n"
+        f"               uv pip install '{module_location}' --upgrade --no-cache\n"
+        f"    docker admins will need to copy the site packages to /var/lib/mwgg/mwgg_venv"
+    )
+
+
+# ── Dependency healing ───────────────────────────────────────────────────────
+
+def _canonical_name(name: str) -> str:
+    """PEP 503 name normalization."""
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def _installed_dist_names() -> set[str]:
+    """Canonical names of every dist visible to this process (one venv pass)."""
+    names: set[str] = set()
+    for dist in importlib.metadata.distributions():
+        try:
+            name = dist.metadata["Name"]
+        except Exception:
+            continue
+        if name:  # email.Message returns None for a missing key despite the str stub
+            names.add(_canonical_name(name))
+    return names
+
+
+def _missing_requirements(requires: Optional[list[str]],
+                          installed_names: Optional[set[str]] = None) -> list[str]:
+    """Names a dist's declared requirements need that are absent from the venv.
+
+    Presence-only: version specifiers are ignored (uv reconciles versions on
+    reinstall). Extras-gated and false-marker requirements don't apply;
+    unparseable requirement strings are skipped (unhealable, never loop on them).
+    """
+    if not requires:
+        return []
+    try:
+        from packaging.requirements import InvalidRequirement, Requirement
+    except ImportError:
+        # Stale env without `packaging` yet; healing resumes once requirements install.
+        return []
+    if installed_names is None:
+        installed_names = _installed_dist_names()
+    missing: list[str] = []
+    for raw in requires:
+        try:
+            req = Requirement(raw)
+        except InvalidRequirement:
+            continue
+        if req.marker is not None and not req.marker.evaluate({"extra": ""}):
+            continue
+        if _canonical_name(req.name) not in installed_names:
+            missing.append(req.name)
+    return missing
+
+
+def _world_dist(slug: str) -> Optional[importlib.metadata.Distribution]:
+    try:
+        return importlib.metadata.distribution(f"worlds.{slug}")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _state_dir() -> Path:
+    """Shared writable dir for cross-process state (install lock, heal markers)."""
+    state_dir = install_path().parent if use_worlds_venv() else Path(tempfile.gettempdir())
+    state_dir.mkdir(parents=True, exist_ok=True)
+    return state_dir
+
+
+def _heal_state_path() -> Path:
+    return _state_dir() / ".mwgg-heal-attempts.json"
+
+
+def _load_heal_attempts() -> dict[str, str]:
+    """slug -> module_location of that world's last failed install.
+
+    Suppresses re-healing a wheel that already failed; a new release URL in the
+    index mismatches the stored value and re-arms exactly one retry. The store
+    is an optimization, never authority: any read failure degrades to {}.
+    """
+    try:
+        data = json.loads(_heal_state_path().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    attempts: dict[Any, Any] = data
+    return {key: value for key, value in attempts.items()
+            if isinstance(key, str) and isinstance(value, str)}
+
+
+def _save_heal_attempts(attempts: dict[str, str]) -> None:
+    try:
+        _heal_state_path().write_text(json.dumps(attempts), encoding="utf-8")
+    except OSError:
+        pass  # worst case: one extra heal attempt next cold start
+
+
+def _record_heal_attempt(slug: str, module_location: str) -> None:
+    attempts = _load_heal_attempts()
+    if attempts.get(slug) != module_location:
+        attempts[slug] = module_location
+        _save_heal_attempts(attempts)
+
+
+def _clear_heal_attempt(slug: str) -> None:
+    attempts = _load_heal_attempts()
+    if slug in attempts:
+        del attempts[slug]
+        _save_heal_attempts(attempts)
+
+
+# ── Install decisions ────────────────────────────────────────────────────────
+
+def _world_requires_install(slug: str, games: dict[str, dict[str, object]],
+                            installed_names: Optional[set[str]] = None,
+                            heal_attempts: Optional[dict[str, str]] = None) -> bool:
+    """True when the world's wheel should be (re)installed: dist missing,
+    version behind the index tag, or installed with missing dependencies.
+
+    The dependency branch is the healing path: the caller reinstalls WITH deps
+    from the current module_location. A wheel that already failed (recorded
+    heal attempt for this exact URL) is left alone until the index serves a
+    new URL, bounding retries to one per (slug, wheel URL).
+    """
+    dist = _world_dist(slug)
+    if dist is None:
+        return True
+
+    module_location = games.get(slug, {}).get("module_location")
+    if not isinstance(module_location, str):
+        return False
+
+    tag = _module_location_tag(module_location)
+    if tag and dist.version != tag:
+        return True
+
+    missing = _missing_requirements(dist.requires, installed_names)
+    if not missing:
+        return False
+    if heal_attempts is None:
+        heal_attempts = _load_heal_attempts()
+    if heal_attempts.get(slug) == module_location:
+        return False
+    logger.info(f"World {slug} is missing dependencies {missing}; reinstalling with them")
+    return True
+
+
+def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, object]],
+                              installed_names: Optional[set[str]] = None,
+                              heal_attempts: Optional[dict[str, str]] = None) -> list[str]:
+    return [world for world in worlds
+            if _world_requires_install(_world_slug(world), games, installed_names, heal_attempts)]
+
+
+def check_for_updates(worlds_only: bool = False) -> List[str]:
+    """Return packages with newer versions (or, for worlds, missing deps) available.
+
+    For worlds: re-pull mwgg_igdb (throttled), then return installed worlds
+    that _world_requires_install flags — version behind the index tag or
+    dependencies missing. Never-installed and apworld-extracted worlds (no
+    dist) are not returned; they install on demand at launch.
+    For non-world packages (dev only): query PyPI against requirements.txt entries.
+    """
+    if worlds_only:
+        install_mwgg_igdb(upgrade=True)
+        index = _get_game_index()
+        if index is None:
+            return []
+        games: dict[str, dict[str, Any]] = index.get_all_games()
+        installed_names = _installed_dist_names()
+        heal_attempts = _load_heal_attempts()
+        outdated = [
+            f"worlds.{slug}" for slug in games
+            if _world_dist(slug) is not None
+            and _world_requires_install(slug, games, installed_names, heal_attempts)
+        ]
+        logger.info(f"Worlds with available updates: {outdated}")
+        return outdated
+
+    # Dev-only path: ask uv for outdated dists. uv's resolver enforces requirements.txt
+    # specifiers at install time, so we don't need to pre-filter here.
+    try:
+        executable_args = _uv_pip("list", "--outdated", "--format", "json")
+        logger.info(f"Executing subprocess command: {executable_args}")
+        response = _uv_run(executable_args, timeout=45)
+        if response.returncode != 0:
+            logger.warning(f"Could not check for updates: {response.stderr}")
+            return []
+
+        outdated_packages = json.loads(response.stdout)
+        logger.info(f"Newer versions of the following packages are available: {outdated_packages}")
+        return [pkg["name"] for pkg in outdated_packages]
+
+    except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+        logger.warning(f"Could not check for updates: {e}")
+        return []
+
+
+# ── install_worlds & the cold-start world update ─────────────────────────────
+
 class WorldInstallResult(List[str]):
-    """The list of apworld fallbacks `install_worlds` has always returned, plus
-    `.failed`: `worlds.<slug>` targets that neither installed nor fell back, so the
-    venv is missing them. Subclassing list keeps existing callers working unchanged.
+    """The apworld-fallback list install_worlds returns, plus `.failed`:
+    targets that neither installed nor fell back, so the venv is missing them.
     """
     def __init__(self, *args: Any) -> None:
         super().__init__(*args)
@@ -908,8 +965,9 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         worlds: List of apworlds to install.
         update: If True, uninstall old versions first.
         with_deps: If True, install the wheel *with* its transitive dependencies.
-            Otherwise, dependencies are still installed for new worlds and skipped
-            for worlds that were already present.
+            Otherwise, dependencies are still installed for new worlds and for
+            worlds flagged by the dependency-healing check, and skipped for
+            worlds already healthy at the current tag.
 
     Returns:
         The apworlds that fell back to a custom apworld, carrying `.failed` -- the
@@ -949,19 +1007,28 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
     index = _get_game_index()
     games: dict[str, dict[str, Any]] = index.get_all_games() if index is not None else {}
-    # Snapshot BEFORE uninstall_worlds: a world properly installed at the current
-    # mwgg_igdb tag stays in the set so update=True reinstalls can skip deps.
-    installed_world_slugs = {
-        _world_slug(world) for world in world_slugs
-        if not _world_requires_install(_world_slug(world), games)
-    }
+
+    # with_deps installs never consult the healthy-world snapshot, so skip the scan.
+    installed_names: Optional[set[str]] = None
+    heal_attempts: dict[str, str] = {}
+    installed_world_slugs: set[str] = set()
+    if not with_deps:
+        installed_names = _installed_dist_names()
+        heal_attempts = _load_heal_attempts()
+        # Snapshot BEFORE uninstall_worlds: a world properly installed at the current
+        # mwgg_igdb tag with its deps present stays in the set so update=True
+        # reinstalls can skip deps.
+        installed_world_slugs = {
+            _world_slug(world) for world in world_slugs
+            if not _world_requires_install(_world_slug(world), games, installed_names, heal_attempts)
+        }
 
     if update:
         logger.info(f"Uninstalling old versions of: {world_slugs}")
         uninstall_worlds(world_slugs)
 
     if not update and not with_deps and world_slugs:
-        worlds_to_install = _worlds_requiring_install(world_slugs, games)
+        worlds_to_install = _worlds_requiring_install(world_slugs, games, installed_names, heal_attempts)
         skipped_worlds = sorted(set(world_slugs) - set(worlds_to_install))
         if skipped_worlds:
             logger.debug(f"Skipping already-installed worlds: {skipped_worlds}")
@@ -999,6 +1066,7 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
         except subprocess.TimeoutExpired:
             logger.warning(f"uv install of {target} timed out; treating as failure.")
             logger.warning(_format_manual_install_hint(module_location))
+            _record_heal_attempt(slug, module_location)
             fall_back_to_apworld(slug, target)
             continue
         logger.info(result.stdout)
@@ -1007,9 +1075,11 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
             logger.warning(f"World {target} failed to install from {module_location}:\n{stderr_text}")
             logger.warning(_format_manual_install_hint(module_location))
+            _record_heal_attempt(slug, module_location)
             fall_back_to_apworld(slug, target)
         else:
             logger.info(f"Successfully installed {target}")
+            _clear_heal_attempt(slug)
 
     _prune_stale_apworld_extractions()
     invalidate_caches()
@@ -1017,8 +1087,8 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
 
 
 def update_worlds() -> Optional[WorldInstallResult]:
-    """Pull the latest mwgg_igdb, then reinstall every world wheel whose
-    installed version no longer matches its index tag.
+    """Pull the latest mwgg_igdb, then reinstall every installed world whose
+    version no longer matches its index tag or whose dependencies are missing.
 
     Platform- and freeze-neutral; the launcher runs this on every cold start,
     with the Windows splash fronting the same call. Returns None when nothing
@@ -1032,191 +1102,55 @@ def update_worlds() -> Optional[WorldInstallResult]:
     return install_worlds(updates)
 
 
-def update_world_from_package() -> None:
-    """Install/update wheel files from custom_worlds directory."""
-    # Use threading version if frozen, otherwise use subprocess
-    if is_frozen():
-        for world in worlds_files["wheels"]:
-            logger.info(f"Installing wheel: {world}")
-            # uv prefers wheels by default, no --prefer-binary equivalent needed.
-            executable_args = _uv_pip("install", world, "--upgrade", "--no-cache")
+# ── Dev requirements pipeline ────────────────────────────────────────────────
 
-            # Use threading instead of multiprocessing to avoid argument contamination
-            import threading
-            import queue
-
-            result_queue: queue.Queue[tuple[int, str, str]] = queue.Queue()
-
-            def _pip_install_thread():
-                try:
-                    result = _uv_run(executable_args, timeout=30)
-                    result_queue.put((result.returncode, result.stdout, result.stderr))
-                except Exception as e:
-                    result_queue.put((1, "", str(e)))
-            
-            install_thread = threading.Thread(target=_pip_install_thread, daemon=True)
-            install_thread.start()
-            install_thread.join()
-            
-            # Get the return values from the worker thread
-            try:
-                returncode, stdout, stderr = result_queue.get_nowait()
-                logger.info(stdout)
-            except:
-                returncode = 1  # Assume failure if we can't get the result
-                stdout = ""
-                stderr = "Failed to get process result"
-            
-            if returncode != 0:
-                logger.warning(f"Failed to install wheel {world}")
-                if stderr:
-                    logger.error(f"{stderr}")
-            else:
-                logger.info(f"Successfully installed wheel {world}")
-
-        for world in worlds_files["apworlds"]:
-            logger.info(f"APWorld found, checking versions: {world}")
-            try:
-                # Extract module name from apworld filename (e.g., "world_name.apworld" -> "world_name")
-                world_path = Path(world)
-                module_name = world_path.stem  # Gets filename without extension
-                
-                # Read version from the apworld zip file using APWorldContainer
-                new_version: Optional[Version] = None
-                manifest: dict[str, object] = {}
-                try:
-                    apworld_container = APWorldContainer(world_path)
-                    # Set manifest path to expected location
-                    with zipfile.ZipFile(world, 'r') as apworld_zip:
-                        manifest = apworld_container.read_contents(apworld_zip)
-                    if "world_version" in manifest:
-                        # manifest is untrusted external data (dict[str, object]); coerce the
-                        # value to str so a non-string world_version can't crash tuplize_version.
-                        new_version = tuplize_version(str(manifest["world_version"]))
-                        logger.info(f"APworld {world} has version {new_version}")
-                    else:
-                        logger.info(f"APworld {world} has no world_version specified")
-                except Exception as e:
-                    logger.warning(f"Failed to read version from APworld {world}: {e}")
-                
-                # Check if world is already installed using pip show
-                package_name = f"worlds.{module_name}"
-                installed_version: Optional[Version] = None
-                
-                try:
-                    executable_args = _uv_pip("show", package_name)
-                    result = _uv_run(executable_args, timeout=10)
-
-                    if result.returncode == 0:
-                        # Package is installed, parse version from output
-                        for line in result.stdout.splitlines():
-                            if line.startswith("Version:"):
-                                version_str = line.split(":", 1)[1].strip()
-                                installed_version = tuplize_version(version_str)
-                                logger.info(f"Installed world {module_name} has version {version_str}")
-                                break
-                        else:
-                            logger.info(f"Installed world {module_name} found but no version in pip show output")
-                    else:
-                        # Package not installed
-                        logger.info(f"World {module_name} is not installed")
-                except (subprocess.TimeoutExpired, Exception) as e:
-                    logger.warning(f"Failed to check installed version for {module_name} using pip show: {e}")
-                
-                # Compare versions: install if new_version > installed_version
-                # According to spec: "An APWorld without a world_version is always treated as older than one with a version"
-                if new_version is None and installed_version is not None:
-                    logger.info(f"There is a custom apworld file with no world version specified, please remove it from your custom_worlds directory.")
-                elif installed_version is None or (new_version is not None and new_version > installed_version):
-                    if installed_version is not None and new_version is not None:
-                        uninstall_worlds([package_name])
-                        logger.info(f"New version {new_version.as_simple_string()} > installed {installed_version.as_simple_string()}, uninstalling old version so new version will be picked up.")
-                else:
-                    logger.info(f"There is a custom apworld file with an older version than what is installed. Please remove it from your custom_worlds directory.")
-
-            except Exception as e:
-                logger.warning(f"Failed to check versions for APworld {world}: {e}")
-    else:
-        for wheel in worlds_files["wheels"]:
-            logger.info(f"Installing wheel: {wheel}")
-            executable_args = _uv_pip("install", wheel, "--upgrade")
-            result = _uv_run(executable_args, timeout=30)
-            if result.returncode != 0:
-                logger.warning(f"Failed to install wheel {wheel}")
-            else:
-                logger.info(f"Successfully installed wheel {wheel}")
+def confirm(msg: str) -> None:
+    """Get user confirmation for an action."""
+    try:
+        input(f"\n{msg}")
+    except KeyboardInterrupt:
+        logger.info("\nAborting")
+        sys.exit(1)
 
 
 def update_requirements(needed_packages: List[str]) -> None:
+    """Install/upgrade from all registered requirements files, then worlds.
+
+    Empty `needed_packages` upgrades everything; otherwise uv upgrades only the
+    named dists (--upgrade-package names absent from a file's resolution are
+    ignored by uv). Core requirements.txt constrains every install.
     """
-    Update packages from requirements.txt files and install worlds.
-
-    uv's resolver respects each requirement's version specifier on its own; we don't
-    pre-parse with `packaging`. When `needed_packages` is empty, upgrade everything in
-    each requirements file. Otherwise, upgrade only the named entries.
-    """
-    if is_frozen():
-        # Base requirements are baked into the frozen bundle at build time; the runtime
-        # venv only carries additional packages (worlds, mwgg_igdb). Worlds in
-        # `needed_packages` are still handled below.
-        worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
-        if worlds_to_install:
-            logger.info(f"Installing/updating worlds: {worlds_to_install}")
-            install_worlds(worlds_to_install)
-        return
-
-    update_all = len(needed_packages) == 0
-
     for req_file in requirements_files:
         if not req_file.exists():
             logger.warning(f"Requirements file not found: {req_file}")
             continue
-
         logger.debug(f"Processing requirements from: {req_file}")
-        if update_all:
-            executable_args = _uv_pip("install", "--upgrade", "-r", str(req_file),
-                                      "--constraint", str(core_constraints))
-        else:
-            # Resolve the whole file so sibling constraints are respected;
-            # --upgrade-package targets only the dists check_for_updates flagged.
-            req_pkg_names = {
-                re.split(r'[<>=!~;@\s]', line, maxsplit=1)[0].strip()
-                for line in parse_requirements_file(req_file)
-            }
-            relevant = [p for p in needed_packages if p in req_pkg_names]
-            if not relevant:
-                continue
-            executable_args = _uv_pip("install", "-r", str(req_file),
-                                      "--constraint", str(core_constraints))
-            for pkg in relevant:
+        executable_args = _uv_pip("install", "-r", str(req_file),
+                                  "--constraint", str(core_constraints))
+        if needed_packages:
+            for pkg in needed_packages:
                 executable_args.extend(["--upgrade-package", pkg])
-
+        else:
+            executable_args.append("--upgrade")
         result = _uv_run(executable_args, timeout=30)
         if result.returncode != 0:
             logger.warning(f"Failed to install/update from {req_file.name}")
 
-    # Handle worlds (these are not in requirements.txt files)
+    # Worlds are not in requirements.txt files; route them to install_worlds.
     worlds_to_install = [pkg for pkg in needed_packages if pkg.startswith("worlds") or pkg.startswith("mwgg")]
     if worlds_to_install:
         logger.info(f"Installing/updating worlds: {worlds_to_install}")
         install_worlds(worlds_to_install)
 
 
-def check_requirements_satisfied(yes: bool = False) -> bool:
-    """
-    Ensure all requirements files are satisfied. Returns True on success.
-
-    With uv this is fast and idempotent: install runs unconditionally; if everything
-    is already present, uv reports "Audited N packages" and exits in milliseconds.
-    """
-    if is_frozen():
-        # Base requirements are baked into the frozen bundle at build time.
-        return True
+def check_requirements_satisfied() -> bool:
+    """Ensure all requirements files are satisfied. Returns True on success."""
     for req_file in requirements_files:
         if not req_file.exists():
             logger.warning(f"Requirements file not found: {req_file}")
             continue
         logger.info(f"Ensuring requirements from {req_file.name} are satisfied")
+        # Idempotent: uv audits and exits fast when everything is present.
         result = _uv_run(
             _uv_pip("install", "-r", str(req_file), "--constraint", str(core_constraints)),
             timeout=30,
@@ -1227,16 +1161,12 @@ def check_requirements_satisfied(yes: bool = False) -> bool:
     return True
 
 
+# ── Top-level update pipeline ────────────────────────────────────────────────
+
 @contextlib.contextmanager
 def _install_lock():
-    """Serialize the top-level update pipeline across processes.
-
-    Frozen clients and webhost workers share the runtime worlds venv. Direct
-    install_worlds() callers remain unlocked unless contention shows up there.
-    """
-    lock_dir = install_path().parent if use_worlds_venv() else Path(tempfile.gettempdir())
-    lock_dir.mkdir(parents=True, exist_ok=True)
-    lock_path = lock_dir / ".mwgg-install.lock"
+    """Serialize the top-level update pipeline across processes."""
+    lock_path = _state_dir() / ".mwgg-install.lock"
     with open(lock_path, "a+b") as lock_file:
         lock_file.seek(0, os.SEEK_END)
         if lock_file.tell() == 0:
@@ -1274,17 +1204,7 @@ def _install_lock():
 
 
 def update(yes: bool = True, force: bool = False, worlds: Optional[List[str]] = None) -> None:
-    """
-    Main update function.
-
-    Args:
-        yes: Answer yes to all prompts
-        force: Force update without checking
-        worlds: List of specific worlds to update
-
-    Returns:
-        None
-    """
+    """Run the update pipeline (worlds, then dev requirements) under the install lock."""
     if _skip_all_installs():
         return
     with _install_lock():
@@ -1299,78 +1219,65 @@ def _update_locked(yes: bool, force: bool, worlds: Optional[List[str]]) -> None:
         install_worlds(worlds, update=force)
         return
     if _skip_update and not force:
-        # Children spawned under a live launcher (SKIP_REQUIREMENTS_UPDATE,
-        # multiprocessing children) must not re-run the updater; the launcher
-        # owns the world update via update_worlds() on cold start.
+        # Children spawned under a live launcher must not re-run the updater;
+        # the launcher owns the world update via update_worlds() on cold start.
         return
-    install_mwgg_igdb(upgrade=True)
-
-    if is_frozen() and (exe_dir / "custom_wheels").exists():
-        logger.debug("Custom Worlds found, checking...")
-        update_world_from_package()
     restart_needed = update_worlds()
     if restart_needed:
-        # Apworld fallbacks were staged into the venv, need to restart
+        # Apworld fallbacks were staged into the venv; a restart loads them.
         from Utils import exit_restart_for_update
         exit_restart_for_update()
-    global update_ran
 
+    global update_ran
     if update_ran:
         return
-
     update_ran = True
 
+    if is_frozen():
+        # Base requirements are baked into the frozen bundle at build time.
+        return
+
     if force:
-        logger.debug("Force update requested - skipping update checks")
-        # Force mode updates all requirements and worlds
-        update_requirements([])  # Empty list means update all
-    
-    # Check for available updates
+        logger.debug("Force update requested - upgrading everything")
+        update_requirements([])
+        return
+
     logger.debug("Checking for available updates...")
     available_updates = check_for_updates()
-    
     if available_updates:
         logger.debug(f"Found updates for: {available_updates}")
         if not yes:
             confirm("Updates available. Press enter to continue with updates.")
     else:
         logger.debug("No updates found.")
-    
-    # Check if requirements are satisfied
-    logger.debug("Checking if all requirements are satisfied...")
-    if not check_requirements_satisfied(yes=yes):
+
+    if not check_requirements_satisfied():
         logger.debug("Installing missing requirements...")
-        update_requirements([])  # Empty list means update all missing requirements
-    
-    # Update packages that need updates (including worlds)
+        update_requirements([])
+
     if available_updates:
-        logger.debug("Updating packages that need updates...")
         update_requirements(available_updates)
-    
+
     logger.debug("Update process completed.")
 
-
-class RestartException(Exception):
-    """Exception raised when a restart is needed."""
-    pass
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='Install archipelago requirements')
-    parser.add_argument('-y', '--yes', dest='yes', action='store_true', 
-                       help='answer "yes" to all questions')
-    parser.add_argument('-f', '--force', dest='force', action='store_true', 
-                       help='force update')
+    parser = argparse.ArgumentParser(description='Install MultiworldGG requirements')
+    parser.add_argument('-y', '--yes', dest='yes', action='store_true',
+                        help='answer "yes" to all questions')
+    parser.add_argument('-f', '--force', dest='force', action='store_true',
+                        help='force update')
     parser.add_argument('-a', '--append', nargs="*", dest='additional_requirements',
-                       help='List paths to additional requirement files.')
+                        help='List paths to additional requirement files.')
     parser.add_argument('-w', '--worlds', nargs="*", dest='worlds',
-                       help='List of worlds to update.')
-    
+                        help='List of worlds to update.')
+
     args = parser.parse_args()
 
-    # Standalone always pulls fresh; the stamp written here suppresses the
-    # throttled install_mwgg_igdb(upgrade=True) calls inside the subsequent update().
+    # Standalone always pulls fresh; today's install mtime then throttles the
+    # upgrade=True calls inside the subsequent update().
     install_mwgg_igdb(upgrade=True, force=True)
 
     if args.additional_requirements:

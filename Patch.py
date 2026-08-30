@@ -22,9 +22,7 @@ if use_worlds_venv():
 
 if __name__ == "__main__":
     import ModuleUpdate
-    callback = ModuleUpdate.update()
-    if callback:
-        callback()
+    ModuleUpdate.update()
 
     games: List[str] = [""]
 
