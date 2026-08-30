@@ -667,7 +667,8 @@ def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False) -> bool:
 
 def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Optional[str] = None,
                  slot_name: typing.Optional[str] = None, password: typing.Optional[str] = None,
-                 client_type: str = "game", component: typing.Optional[str] = None,
+                 client_type: typing.Union[str, typing.Iterable[str]] = "game",
+                 component: typing.Optional[str] = None,
                  launch_file: typing.Optional[str] = None,
                  extra_args: typing.Iterable[str] = ()) -> "subprocess.Popen[typing.Any]":
     """Spawn a detached client process; children deliberately survive launcher
@@ -689,7 +690,8 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
         argv += ["--slot-name", slot_name]
     if password is not None:
         argv += ["--password", password]
-    argv += ["--client-type", client_type]
+    client_types = [client_type] if isinstance(client_type, str) else list(client_type)
+    argv += ["--client-type", *client_types]
     if component is not None:
         if game is None:
             raise ValueError("spawn_client(component=...) requires game=")
@@ -698,7 +700,7 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
 
     env = os.environ.copy()
     env["MWGG_ROLE"] = "client"
-    env["MWGG_CLIENT_TYPE"] = client_type
+    env["MWGG_CLIENT_TYPE"] = " ".join(client_types)
     env["MWGG_SKIP_UPDATE"] = "1"
 
     return subprocess.Popen(argv, env=env, **_detached_popen_kwargs())

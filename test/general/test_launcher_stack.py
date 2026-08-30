@@ -117,7 +117,12 @@ def test_assign_role_env_sets_when_unset(monkeypatch):
 @pytest.mark.parametrize("client_type", ["game", "text", "universal_tracker", "manual"])
 def test_parser_accepts_client_type_choices(client_type):
     args = MultiWorld.make_arg_parser().parse_args(["--client-type", client_type])
-    assert args.client_type == client_type
+    assert args.client_type == [client_type]
+
+
+def test_parser_accepts_client_type_combo():
+    args = MultiWorld.make_arg_parser().parse_args(["--client-type", "game", "universal_tracker"])
+    assert args.client_type == ["game", "universal_tracker"]
 
 
 def test_parser_client_type_defaults_to_none():
@@ -206,19 +211,20 @@ def _resolve_with_role(args):
     return MultiWorld._resolve_client_route(args)
 
 
-@pytest.mark.parametrize("argv", [
-    ["--client-type", "universal_tracker"],
-    ["--client-type", "manual"],
-    ["--client-type", "game"],
+@pytest.mark.parametrize("overrides", [
+    {"client_type": "game"},
+    {"client_type": "bogus"},
 ])
-def test_resolve_route_unroutable_client_type_falls_back_to_launcher(argv, monkeypatch, caplog):
-    """--client-type without a routable --game computes role=client yet
-    resolves no route; without the guard that boots a dead client GUI
-    (console + permanent loading overlay, nothing ever launches)."""
+def test_resolve_route_unroutable_client_type_falls_back_to_launcher(overrides, monkeypatch, caplog):
+    """Defense-in-depth under main()'s argv validation (which exits 2 on
+    game-without---game and on unknown types via parser choices): hand-built
+    args carrying these compute role=client yet resolve no route; without the
+    guard that boots a dead client GUI (console + permanent loading overlay,
+    nothing ever launches)."""
     monkeypatch.setenv("MWGG_ROLE", "stale")  # registers teardown restore
     monkeypatch.setenv("MWGG_GAME", "stale")
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
-        route_module, route_kwargs = _resolve_with_role(_parsed_args(argv))
+        route_module, route_kwargs = _resolve_with_role(_parsed_args([], **overrides))
     assert route_module is None
     assert route_kwargs == {}
     assert os.environ["MWGG_ROLE"] == "launcher"
@@ -275,6 +281,98 @@ def test_resolve_route_text_client_sentinel_stays_client(monkeypatch):
     assert "MWGG_GAME" not in os.environ
 
 
+def test_resolve_route_explicit_text_outranks_game(monkeypatch):
+    """Picking the text client for a selected game must boot the text client:
+    an explicit --client-type text routes the "" sentinel even when --game is
+    present and available, instead of letting the game's own client resolve."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "text",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281", "client_type": "text"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    # The selected game stays context (cover art) for the client that boots.
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_game_and_universal_tracker_is_overlay_mode(monkeypatch):
+    """Listing game AND universal_tracker boots the game's client with the
+    tracker overlay: the module routes, with the overlay-triggering
+    client_type string for downstream."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "game", "universal_tracker"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "kh2"
+    assert route_kwargs["client_type"] == "universal_tracker"
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_universal_tracker_with_game_is_standalone_tracker(monkeypatch):
+    """universal_tracker without game in the list boots the standalone tracker
+    even when a game is selected; the game rides along as context (MWGG_GAME
+    for cover art), not as a module route."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "universal_tracker",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281",
+                            "client_type": "universal_tracker",
+                            "slot_name": "P1"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_universal_tracker_sentinel_stays_client(monkeypatch):
+    """No-game universal tracker (launcher spawn / desktop shortcut) routes via
+    the "" sentinel; slot_name rides along separately because the tracker's
+    launch argv takes it as --name."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    args = _parsed_args(["--client-type", "universal_tracker",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281",
+                            "client_type": "universal_tracker",
+                            "slot_name": "P1"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert "MWGG_GAME" not in os.environ
+
+
+def test_resolve_route_universal_tracker_bare_stays_client(monkeypatch):
+    """A bare --client-type universal_tracker (no server/slot) is a
+    server-acceptable state and must still route."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    route_module, route_kwargs = _resolve_with_role(
+        _parsed_args(["--client-type", "universal_tracker"]))
+    assert route_module == ""
+    assert route_kwargs == {"server_address": None,
+                            "client_type": "universal_tracker",
+                            "slot_name": None}
+    assert os.environ["MWGG_ROLE"] == "client"
+
+
+def test_resolve_route_manual_sentinel_stays_client(monkeypatch):
+    """No-game manual client routes via the "" sentinel; no slot_name kwarg
+    (the manual launch argv has no --name)."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    args = _parsed_args(["--client-type", "manual", "--server-address", "localhost:38281"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "localhost:38281", "client_type": "manual"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert "MWGG_GAME" not in os.environ
+
+
 def test_resolve_route_routed_patch_stays_client(monkeypatch):
     monkeypatch.setenv("MWGG_ROLE", "stale")
     monkeypatch.delenv("MWGG_GAME", raising=False)
@@ -297,6 +395,58 @@ def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
     assert route_kwargs == {}
     assert os.environ["MWGG_ROLE"] == "launcher"
     assert not any("falling back to launcher" in record.message for record in caplog.records)
+
+
+def test_empty_module_text_route_reaches_text_client(monkeypatch):
+    """The "" sentinel with client_type text must land on main_textclient --
+    the manual/universal_tracker dispatch now shares the no-game path and must
+    not intercept it."""
+    import types
+    import CommonClient
+    # nest_asyncio.apply() patches asyncio globally and leaks into later async
+    # tests; dispatch order is what's under test, so stub it out.
+    monkeypatch.setitem(sys.modules, "nest_asyncio", types.SimpleNamespace(apply=lambda *a, **kw: None))
+    calls = []
+    monkeypatch.setattr(CommonClient, "main_textclient", lambda server_address: calls.append(server_address))
+    Utils.discover_and_launch_module("", server_address="P1@localhost:38281", client_type="text")
+    assert calls == ["P1@localhost:38281"]
+
+
+# --- client-type combo validation ---
+
+@pytest.mark.parametrize("argv, message", [
+    (["--client-type", "game", "text"], "mutually exclusive"),
+    (["--client-type", "text", "manual"], "mutually exclusive"),
+    (["--client-type", "text", "universal_tracker"], "only combines with game"),
+    (["--client-type", "manual", "universal_tracker"], "only combines with game"),
+    (["--client-type", "game"], "requires --game"),
+    (["--client-type", "game", "universal_tracker"], "requires --game"),
+])
+def test_main_rejects_conflicting_client_types(argv, message, capsys):
+    """game/text/manual are mutually exclusive primaries; universal_tracker
+    combines with game only; the game client is meaningless without --game."""
+    with pytest.raises(SystemExit) as excinfo:
+        MultiWorld.main(argv)
+    assert excinfo.value.code == 2
+    assert message in capsys.readouterr().err
+
+
+# --- Kivy-only client guard (TUI frontend) ---
+
+@pytest.mark.parametrize("argv", [
+    ["--frontend", "tui", "--game", "tracker"],
+    ["--frontend", "tui", "--game", "Manual"],
+    ["--frontend", "tui", "--client-type", "universal_tracker"],
+    ["--frontend", "tui", "--client-type", "manual"],
+])
+def test_main_rejects_kivy_only_clients_under_tui(argv, capsys):
+    """Tracker and manual clients use Kivy-only UI affordances: main() must
+    exit 2 before any heavy import, whether they arrive as --game or as a
+    no-game --client-type route."""
+    with pytest.raises(SystemExit) as excinfo:
+        MultiWorld.main(argv)
+    assert excinfo.value.code == 2
+    assert "requires --frontend=gui" in capsys.readouterr().err
 
 
 # --- splash gating ---
@@ -600,6 +750,29 @@ def test_spawn_client_component_flag(monkeypatch):
     env = captured["kwargs"]["env"]
     assert env["MWGG_ROLE"] == "client"
     assert env["MWGG_SKIP_UPDATE"] == "1"
+
+
+def test_spawn_client_client_type_combo(monkeypatch):
+    """An iterable client_type expands into one --client-type flag with all
+    values (nargs="+" on the receiving parser) and a space-joined env hint;
+    a plain string stays the single-value argv older cores expect."""
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client(game="kh2", client_type=("game", "universal_tracker"))
+
+    argv = captured["argv"]
+    idx = argv.index("--client-type")
+    assert argv[idx + 1:idx + 3] == ["game", "universal_tracker"]
+    assert captured["kwargs"]["env"]["MWGG_CLIENT_TYPE"] == "game universal_tracker"
 
 
 def test_spawn_client_component_requires_game(monkeypatch):
