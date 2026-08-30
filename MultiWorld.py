@@ -169,6 +169,23 @@ def should_show_splash(frontend: str) -> bool:
     return is_windows and frontend == "gui" and not os.environ.get("MWGG_NO_SPLASH")
 
 
+def _inline_world_update(logger: logging.Logger) -> None:
+    """Cold-start world update for boots that don't front the splash (Linux/Mac
+    GUI, all TUI, MWGG_NO_SPLASH). Same update_worlds() the splash child runs."""
+    logger.info("Checking for updates...")
+    try:
+        import ModuleUpdate
+        result = ModuleUpdate.update_worlds()
+        if result:
+            # Apworld fallbacks were staged into the venv; restart to load them.
+            from Utils import exit_restart_for_update
+            exit_restart_for_update()
+        elif result is not None:
+            logger.info("Updates applied successfully")
+    except Exception as e:
+        logger.warning(f"World update failed; continuing with installed versions: {e}")
+
+
 def _compose_connect_address(server_address: "str | None", slot_name: "str | None",
                              password: "str | None") -> "str | None":
     """Compose the "slot[:password]@host:port" form that CommonClient's
@@ -575,17 +592,7 @@ def main(argv: "list[str] | None" = None) -> None:
         # The splash only fronts the update on Windows GUI boots; the update
         # itself is required on every platform, frozen or dev. Spawned clients
         # inherit MWGG_SKIP_UPDATE=1 and must not re-run it.
-        logger.info("Checking for updates...")
-        try:
-            import ModuleUpdate
-            result = ModuleUpdate.update_worlds()
-            if result:
-                from Utils import exit_restart_for_update
-                exit_restart_for_update()
-            elif result is not None:
-                logger.info("Updates applied successfully")
-        except Exception as e:
-            logger.warning(f"World update failed; continuing with installed versions: {e}")
+        _inline_world_update(logger)
 
     # Register custom_worlds/ apworlds into the in-memory index so they're
     # selectable; only the zip manifest is read, nothing is imported.
