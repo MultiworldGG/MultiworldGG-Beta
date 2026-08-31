@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico">
+<meta http-equiv="refresh" content="30">
+<title>503 - MultiworldGG</title>
+<style>
+  :root {
+    --bg: #0f0612;
+    --surface: #1a0a20;
+    --outline: #36193f;
+    --text: #e8d8e8;
+    --muted: #a87890;
+    --pink: #ea166c;
+    --gold: #ffdd5a;
+    --link: #f04b6f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    max-width: 560px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    padding: 40px 36px 32px;
+    text-align: center;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .55);
+  }
+  .stripe {
+    height: 6px;
+    border-radius: 3px;
+    margin: 0 auto 28px;
+    max-width: 240px;
+    background: linear-gradient(90deg,
+      #ea166c 0 20%, #ff8a3d 20% 40%, #ffdd5a 40% 60%,
+      #37c98b 60% 80%, #4aa8ff 80% 100%);
+  }
+  .logo { width: min(320px, 80%); height: auto; margin-bottom: 30px; }
+  .code {
+    font-size: 84px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: var(--pink);
+    text-shadow: 0 0 34px rgba(234, 22, 108, .45);
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 26px;
+  }
+  .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 10px 22px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #ffffff;
+    background: var(--pink);
+  }
+  .btn.alt {
+    background: transparent;
+    color: var(--link);
+    border: 1px solid var(--outline);
+  }
+  .btn:hover { filter: brightness(1.12); }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="stripe"></div>
+    <img class="logo" src="/static/static/branding/header-logo.webp" alt="MultiworldGG" onerror="this.style.display='none'">
+    <div class="code">503</div>
+    <h1>Down for maintenance</h1>
+    <p>The site is briefly offline while we work on it. Hold tight - this page will keep checking for you.</p>
+    <div class="actions">
+      <a class="btn" href="/">Back to the site</a>
+      <a class="btn alt" href="https://discord.multiworld.gg">Discord</a>
+    </div>
+  </main>
+</body>
+</html>
