@@ -331,6 +331,16 @@ class CustomBdistMac(bdist_mac):
     def run(self):
         _register_custom_hooks()
         super().run()
+        # bdist_mac strands loose build-dir files in Contents/Resources (only
+        # directories get MacOS symlinks); the runtime probes the exe dir for
+        # uv-<arch>, so move the bundled uv into Contents/MacOS.
+        import shutil
+        for name in ("uv-arm64", "uv-x86_64"):
+            source = os.path.join(self.resources_dir, name)
+            if os.path.exists(source):
+                target = os.path.join(self.bin_dir, name)
+                shutil.move(source, target)
+                os.chmod(target, 0o755)
 
 
 if __name__ == "__main__":
