@@ -174,6 +174,18 @@ def get_option_dict_schema(option: type[Options.OptionDict]) -> dict | None:
     return {"keys": fixed_keys, "additional": additional_value}
 
 
+def _mro_issubclass(cls: type, base: type) -> bool:
+    """issubclass stand-in for the options templates, bypassing abc machinery.
+
+    Option classes are ABCs (AssembleOptions extends ABCMeta), so a negative
+    builtin issubclass walks every loaded Option subclass -- thousands with all
+    worlds loaded -- and grows per-class negative caches by tens of MB per
+    render, enough to OOM a memory-capped webhost worker. No Option uses
+    abc virtual registration, so an MRO check is equivalent.
+    """
+    return base in cls.__mro__
+
+
 def render_options_page(template: str, world_name: str, is_complex: bool = False) -> Union[Response, str]:
     from worlds.AutoWorld import AutoWorldRegister
     world = AutoWorldRegister.world_types[world_name]
@@ -191,7 +203,7 @@ def render_options_page(template: str, world_name: str, is_complex: bool = False
         world=world,
         option_groups=Options.get_option_groups(world, visibility_level=visibility_flag),
         start_collapsed=start_collapsed,
-        issubclass=issubclass,
+        issubclass=_mro_issubclass,
         Options=Options,
         option_counter_keys=get_option_counter_keys,
         option_dict_schema=get_option_dict_schema,
