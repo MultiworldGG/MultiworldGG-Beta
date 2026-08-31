@@ -37,7 +37,7 @@ if not logging.getLogger().hasHandlers():
 
 from pathlib import Path
 from collections.abc import Iterable
-from typing import Any, List, Optional, TypeVar, override
+from typing import Any, List, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
 from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
@@ -1179,16 +1179,18 @@ def _load_tagged_index_games(tag: str) -> Optional[dict[str, Any]]:
                 return None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            games = None
-            game_index = getattr(module, "GameIndex", None)
+            games: Any = None
+            game_index: Any = getattr(module, "GameIndex", None)
             if game_index is not None and hasattr(game_index, "get_all_games"):
                 games = game_index.get_all_games()
             if not isinstance(games, dict):
                 games = getattr(module, "GAMES_DATA", None)
             if not isinstance(games, dict):
                 return None
-            _TAGGED_INDEX_GAMES_CACHE[tag] = games
-            return games
+            # isinstance narrows Any to dict[Unknown, Unknown]; re-widen for strict pyright.
+            typed_games = cast("dict[str, Any]", games)
+            _TAGGED_INDEX_GAMES_CACHE[tag] = typed_games
+            return typed_games
     except Exception as e:
         logger.warning(f"Could not load tagged index {tag}: {e!r}")
         return None
@@ -1199,10 +1201,10 @@ def module_location_from_tag(slug: str, tag: str) -> Optional[str]:
     games = _load_tagged_index_games(tag)
     if not games:
         return None
-    entry = games.get(slug)
+    entry: Any = games.get(slug)
     if not isinstance(entry, dict):
         return None
-    location = entry.get("module_location")
+    location: Any = cast("dict[str, Any]", entry).get("module_location")
     return location if isinstance(location, str) and location else None
 
 
