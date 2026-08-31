@@ -64,7 +64,7 @@ if __name__ == "__main__":
     ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
-    SlotType, LocationStore, MultiData, Hint, HintStatus
+    SlotType, LocationStore, MultiData, WorldVersionPin, Hint, HintStatus
 from BaseClasses import ItemClassification
 
 min_client_version = Version(0, 1, 6)
@@ -378,6 +378,8 @@ class Context:
         self.stored_data_notification_clients = collections.defaultdict(weakref.WeakSet)
         self.read_data = {}
         self.spheres = []
+        self.world_versions: typing.Dict[int, NetUtils.WorldVersionPin] = {}
+        self.igdb_tag: typing.Optional[str] = None
 
         # init empty to satisfy linter, I suppose
         self.gamespackage = {}
@@ -643,6 +645,11 @@ class Context:
 
         # sorted access spheres
         self.spheres = decoded_obj.get("spheres", [])
+
+        # per-slot apworld version pins; absent on pre-feature seeds
+        self.world_versions = decoded_obj.get("world_versions", {})
+        # mwgg_igdb release tag this seed was generated against; None on pre-feature seeds
+        self.igdb_tag = decoded_obj.get("igdb_tag")
 
     # saving
 
@@ -1009,6 +1016,16 @@ async def server(websocket: "ServerConnection", path: str = "/", ctx: Context = 
 async def on_client_connected(ctx: Context, client: Client):
     games = {ctx.games[x] for x in range(1, len(ctx.games) + 1)}
     games.add("Archipelago")
+
+    # Collapse slot-keyed world_versions into a game-keyed map for the RoomInfo fan-out.
+    # The client doesn't know its slot at RoomInfo time, so we key by game name.
+    # Slots that share a game name share a version; last one written wins (they should agree).
+    game_world_versions: dict[str, WorldVersionPin] = {}
+    for slot, pin in ctx.world_versions.items():
+        slot_info = ctx.slot_info.get(slot, None)
+        if slot_info is not None:
+            game_world_versions[slot_info.game] = pin
+
     await ctx.send_msgs(client, [{
         'cmd': 'RoomInfo',
         'password': bool(ctx.password),
@@ -1025,6 +1042,8 @@ async def on_client_connected(ctx: Context, client: Client):
                                   in ctx.gamespackage.items() if game in games and "checksum" in game_data},
         'seed_name': ctx.seed_name,
         'time': time.time(),
+        'world_versions': game_world_versions,
+        'igdb_tag': ctx.igdb_tag,
     }])
 
 

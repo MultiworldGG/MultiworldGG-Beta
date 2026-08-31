@@ -480,5 +480,127 @@ class TestServerCommandProcessor(unittest.TestCase):
         self.assertEqual(MultiServer.get_received_items(ctx, 0, 2, False), [])
 
 
+SLOT_PINS = {
+    1: {"version": (1, 2, 3), "custom": False},
+    2: {"version": (0, 5, 0), "custom": True},
+}
+
+# Everything Context._load reassigns; snapshotted around the _load tests so the
+# shared base Context keeps the fixture slots/locations the other classes rely on.
+_LOAD_CLOBBERED = (
+    "read_data", "generator_version", "minimum_client_versions", "slot_info", "games",
+    "groups", "clients", "def_allow_collecting_from", "seed_name", "connect_names",
+    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "igdb_tag",
+    "player_names", "player_name_lookup",
+)
+
+
+class TestWorldVersionPinFlow(unittest.TestCase):
+    """world_versions/igdb_tag: multidata blob -> Context._load -> game-keyed RoomInfo."""
+
+    @staticmethod
+    def _minimal_multidata(with_pins: bool) -> dict:
+        data = {
+            "slot_info": {
+                1: NetworkSlot("Player1", "Game A", SlotType.player),
+                2: NetworkSlot("Player2", "Game B", SlotType.player),
+            },
+            "connect_names": {"Player1": (0, 1), "Player2": (0, 2)},
+            "locations": {1: {}, 2: {}},
+            "slot_data": {1: {}, 2: {}},
+            "er_hint_data": {},
+            "precollected_items": {1: [], 2: []},
+            "precollected_hints": {1: set(), 2: set()},
+            "version": (0, 6, 2),
+            "minimum_versions": {"server": (0, 1, 6), "clients": {}},
+            "seed_name": "TESTSEED",
+            "spheres": [],
+            "datapackage": {},
+        }
+        if with_pins:
+            data["world_versions"] = {slot: dict(pin) for slot, pin in SLOT_PINS.items()}
+            data["igdb_tag"] = "sixteen-2026.06.10"
+        return data
+
+    def _load(self, ctx: Context, multidata: dict) -> None:
+        missing = object()
+        saved = {attr: getattr(ctx, attr, missing) for attr in _LOAD_CLOBBERED}
+        saved["player_names"] = dict(ctx.player_names)
+        saved["player_name_lookup"] = dict(ctx.player_name_lookup)
+        try:
+            ctx._load(multidata, {}, False)
+            self.loaded_world_versions = ctx.world_versions
+            self.loaded_igdb_tag = ctx.igdb_tag
+        finally:
+            for attr, value in saved.items():
+                if value is missing:
+                    delattr(ctx, attr)
+                else:
+                    setattr(ctx, attr, value)
+
+    def test_pin_survives_multidata_blob(self) -> None:
+        """world_versions must round-trip through the same path Main writes / MultiServer reads."""
+        import zlib
+        from Utils import restricted_dumps, restricted_loads
+        blob = zlib.compress(restricted_dumps({"world_versions": SLOT_PINS}), 9)
+        restored = restricted_loads(zlib.decompress(blob))
+        self.assertEqual(restored["world_versions"], SLOT_PINS)
+
+    def test_load_populates_world_versions(self) -> None:
+        ctx = build_context()
+        self._load(ctx, self._minimal_multidata(with_pins=True))
+        self.assertEqual(self.loaded_world_versions, SLOT_PINS)
+        self.assertEqual(self.loaded_igdb_tag, "sixteen-2026.06.10")
+
+    def test_load_tolerates_pre_feature_seed(self) -> None:
+        ctx = build_context()
+        self._load(ctx, self._minimal_multidata(with_pins=False))
+        self.assertEqual(self.loaded_world_versions, {})
+        self.assertIsNone(self.loaded_igdb_tag)
+
+    def test_roominfo_collapses_slots_to_game_keys(self) -> None:
+        ctx = build_context()
+        ctx.slot_info = {
+            1: NetworkSlot("Player1", "Game A", SlotType.player),
+            2: NetworkSlot("Player2", "Game B", SlotType.player),
+        }
+        ctx.world_versions = dict(SLOT_PINS)
+        ctx.igdb_tag = "sixteen-2026.06.10"
+        try:
+            client = make_client(ctx)
+            asyncio.run(MultiServer.on_client_connected(ctx, client))
+        finally:
+            ctx.slot_info = _base_ctx_slot_info()
+            ctx.world_versions = {}
+            ctx.igdb_tag = None
+
+        room_info = sent_packets(ctx)[-1]
+        self.assertEqual(room_info["cmd"], "RoomInfo")
+        # game-keyed (the client cannot key by slot at RoomInfo time)
+        self.assertEqual(
+            room_info["world_versions"],
+            {"Game A": {"version": (1, 2, 3), "custom": False},
+             "Game B": {"version": (0, 5, 0), "custom": True}},
+        )
+        self.assertEqual(room_info["igdb_tag"], "sixteen-2026.06.10")
+
+    def test_roominfo_empty_pins_on_pre_feature_seed(self) -> None:
+        ctx = build_context()
+        ctx.world_versions = {}
+        ctx.igdb_tag = None
+        client = make_client(ctx)
+        asyncio.run(MultiServer.on_client_connected(ctx, client))
+        room_info = sent_packets(ctx)[-1]
+        self.assertEqual(room_info["world_versions"], {})
+        self.assertIsNone(room_info["igdb_tag"])
+
+
+def _base_ctx_slot_info() -> dict:
+    return {
+        1: NetworkSlot("PlayerOne", GAME, SlotType.player),
+        2: NetworkSlot("PlayerTwo", GAME, SlotType.player),
+    }
+
+
 if __name__ == "__main__":
     unittest.main()

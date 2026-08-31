@@ -21,12 +21,14 @@ import shutil
 import time
 import datetime
 import zipfile
+import tarfile
 import logging
 import tempfile
 import contextlib
 import errno
 import importlib.metadata
 import importlib.util
+import urllib.request
 
 logger = logging.getLogger("Update")
 
@@ -35,7 +37,7 @@ if not logging.getLogger().hasHandlers():
 
 from pathlib import Path
 from collections.abc import Iterable
-from typing import Any, List, Optional, TypeVar, override
+from typing import Any, List, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
 from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
@@ -434,6 +436,35 @@ def _igdb_upgraded_recently() -> bool:
     # force=True callers (variant switches, CLI) bypass this throttle entirely.
     install_date = _igdb_install_date()
     return install_date is not None and install_date == datetime.date.today()
+
+
+def installed_igdb_tag() -> Optional[str]:
+    """Return the Index release tag the installed mwgg_igdb corresponds to, or None.
+
+    Stamped into a generated seed so a client can reconstruct the exact world set
+    from that index snapshot (the Index branches are force-pushed, but every release
+    is preserved as a `<variant>-<date>` tag). Prefers a `__tag__` baked by the Index
+    build; otherwise derives `<variant>-<zero-padded CalVer>` from the package version
+    (e.g. variant 'sixteen' + version '2026.6.10' -> 'sixteen-2026.06.10').
+    """
+    try:
+        import mwgg_igdb
+    except ImportError:
+        return None
+    baked = getattr(mwgg_igdb, "__tag__", None)
+    if isinstance(baked, str) and baked:
+        return baked
+    variant = _detect_installed_variant() or DEFAULT_MWGG_IGDB_VARIANT
+    try:
+        version = importlib.metadata.version("mwgg_igdb")
+    except importlib.metadata.PackageNotFoundError:
+        return None
+    parts = version.split(".")
+    if len(parts) >= 3 and all(p.isdigit() for p in parts[:3]):
+        year, month, day, *rest = parts
+        date = ".".join([year, f"{int(month):02d}", f"{int(day):02d}", *rest])
+        return f"{variant}-{date}"
+    return f"{variant}-{version}"
 
 
 def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
@@ -1100,6 +1131,128 @@ def update_worlds() -> Optional[WorldInstallResult]:
     if not updates:
         return None
     return install_worlds(updates)
+
+
+# ── Room-pinned installs from a tagged index snapshot ────────────────────────
+# A room records the mwgg_igdb release tag it was generated against
+# (NetUtils.MultiData["igdb_tag"], stamped by installed_igdb_tag()). To install a world
+# at the version current at that tag WITHOUT disturbing the installed/active mwgg_igdb,
+# we read that one world's module_location straight out of the tagged index snapshot and
+# pip-install just that wheel. The snapshot is fetched as the tag's source TARBALL: the
+# variant branches are force-pushed (history rewritten) so `git+...@<tag>` is unreliable,
+# but GitHub serves `archive/refs/tags/<tag>.tar.gz` for any tag.
+
+# Cache of tag -> games-data dict, so a room with several worlds downloads the snapshot once.
+_TAGGED_INDEX_GAMES_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def _tagged_index_tarball_url(tag: str) -> str:
+    return f"https://github.com/{MWGG_INDEX_REPO}/archive/refs/tags/{tag}.tar.gz"
+
+
+def _load_tagged_index_games(tag: str) -> Optional[dict[str, Any]]:
+    """Return the games dict from the mwgg_igdb snapshot at `tag`, or None.
+
+    Downloads the tag's source tarball and loads its mwgg_igdb module in ISOLATION -- it
+    is never installed and the active mwgg_igdb is never touched. Cached per tag. Returns
+    None on any download/parse failure so callers degrade gracefully.
+    """
+    if tag in _TAGGED_INDEX_GAMES_CACHE:
+        return _TAGGED_INDEX_GAMES_CACHE[tag]
+    url = _tagged_index_tarball_url(tag)
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            archive = os.path.join(tmp, "index.tar.gz")
+            urllib.request.urlretrieve(url, archive)
+            with tarfile.open(archive, "r:gz") as tf:
+                tf.extractall(tmp, filter="data")
+            module_path = None
+            for root, _dirs, files in os.walk(tmp):
+                if "mwgg_igdb.py" in files:
+                    module_path = os.path.join(root, "mwgg_igdb.py")
+                    break
+            if module_path is None:
+                logger.warning(f"Tagged index {tag} has no mwgg_igdb.py")
+                return None
+            spec = importlib.util.spec_from_file_location(f"_mwgg_igdb_pinned_{tag}", module_path)
+            if spec is None or spec.loader is None:
+                return None
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            games: Any = None
+            game_index: Any = getattr(module, "GameIndex", None)
+            if game_index is not None and hasattr(game_index, "get_all_games"):
+                games = game_index.get_all_games()
+            if not isinstance(games, dict):
+                games = getattr(module, "GAMES_DATA", None)
+            if not isinstance(games, dict):
+                return None
+            # isinstance narrows Any to dict[Unknown, Unknown]; re-widen for strict pyright.
+            typed_games = cast("dict[str, Any]", games)
+            _TAGGED_INDEX_GAMES_CACHE[tag] = typed_games
+            return typed_games
+    except Exception as e:
+        logger.warning(f"Could not load tagged index {tag}: {e!r}")
+        return None
+
+
+def module_location_from_tag(slug: str, tag: str) -> Optional[str]:
+    """The module_location (wheel URL) for `slug` as recorded in the index at `tag`."""
+    games = _load_tagged_index_games(tag)
+    if not games:
+        return None
+    entry: Any = games.get(slug)
+    if not isinstance(entry, dict):
+        return None
+    location: Any = cast("dict[str, Any]", entry).get("module_location")
+    return location if isinstance(location, str) and location else None
+
+
+def install_worlds_from_tag(slugs: list[str], tag: str, with_deps: bool = False) -> list[str]:
+    """Install the given managed worlds at the versions recorded in the index `tag`.
+
+    Reads each world's module_location from the tagged snapshot (the active mwgg_igdb is
+    left untouched) and reinstalls only those whose installed version differs from the
+    tagged one, with `--reinstall --no-cache` (NOT `--upgrade`, so a downgrade takes).
+    Returns the slugs that could not be resolved or installed.
+    """
+    if _skip_all_installs():
+        return []
+    failed: list[str] = []
+    for raw_slug in slugs:
+        slug = _world_slug(raw_slug)
+        url = module_location_from_tag(slug, tag)
+        if not url:
+            logger.warning(f"No module_location for worlds.{slug} in tagged index {tag}")
+            failed.append(slug)
+            continue
+        want = _module_location_tag(url)  # version embedded in the wheel filename
+        try:
+            installed = importlib.metadata.distribution(f"worlds.{slug}").version
+        except importlib.metadata.PackageNotFoundError:
+            installed = None
+        if want and installed == want:
+            continue  # already at the tagged version
+        install_args = ["install", url, "--reinstall", "--no-cache"]
+        # A swap (already installed at a different version) must restore the pinned
+        # version's deps; only a from-scratch install honors a deps opt-out.
+        if not with_deps and installed is None:
+            install_args.append("--no-deps")
+        try:
+            result = _uv_run(_uv_pip(*install_args), timeout=300)
+        except subprocess.TimeoutExpired:
+            logger.warning(f"Tagged install of worlds.{slug} timed out.")
+            failed.append(slug)
+            continue
+        if result.returncode != 0:
+            stderr_text = (result.stderr or "").strip() or "uv returned non-zero with no stderr"
+            logger.warning(f"Tagged install of worlds.{slug} failed:\n{stderr_text}")
+            failed.append(slug)
+            continue
+        logger.info(f"Installed worlds.{slug} from index tag {tag} ({want})")
+    _prune_stale_apworld_extractions()
+    invalidate_caches()
+    return failed
 
 
 # ── Dev requirements pipeline ────────────────────────────────────────────────

@@ -104,6 +104,121 @@ def test_igdb_upgraded_recently_true_only_for_today(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
+# installed_igdb_tag / module_location_from_tag / install_worlds_from_tag
+# (the tagged-index snapshot install path; network/fs stubbed out)
+# --------------------------------------------------------------------------- #
+TAGGED_WHEEL = ("https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/"
+                "worlds-wheels-2026-05-16/worlds_alttp-5.1.0-py3-none-any.whl#sha256=deadbeef")
+TAGGED_GAMES = {"alttp": {"module_location": TAGGED_WHEEL}}
+INDEX_TAG = "sixteen-2026.05.16"
+
+
+def test_installed_igdb_tag_derives_zero_padded(monkeypatch):
+    import mwgg_igdb
+    monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
+    monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
+    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10"
+
+
+def test_installed_igdb_tag_preserves_same_day_suffix(monkeypatch):
+    import mwgg_igdb
+    monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
+    monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "ao")
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.5.11.3")
+    assert ModuleUpdate.installed_igdb_tag() == "ao-2026.05.11.3"
+
+
+def test_installed_igdb_tag_prefers_baked_tag(monkeypatch):
+    import mwgg_igdb
+    monkeypatch.setattr(mwgg_igdb, "__tag__", "sixteen-2026.06.10-rc1", raising=False)
+    monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
+    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10-rc1"
+
+
+def test_installed_igdb_tag_none_when_version_unavailable(monkeypatch):
+    import mwgg_igdb
+
+    def _raise(name):
+        raise importlib.metadata.PackageNotFoundError(name)
+
+    monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
+    monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
+    monkeypatch.setattr(importlib.metadata, "version", _raise)
+    assert ModuleUpdate.installed_igdb_tag() is None
+
+
+def test_module_location_from_tag_reads_snapshot(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: TAGGED_GAMES)
+    assert ModuleUpdate.module_location_from_tag("alttp", INDEX_TAG) == TAGGED_WHEEL
+
+
+def test_module_location_from_tag_unknown_slug(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: TAGGED_GAMES)
+    assert ModuleUpdate.module_location_from_tag("nope", INDEX_TAG) is None
+
+
+def test_module_location_from_tag_snapshot_unavailable(monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: None)
+    assert ModuleUpdate.module_location_from_tag("alttp", INDEX_TAG) is None
+
+
+@pytest.fixture
+def tagged_install_calls(monkeypatch):
+    """Capture the uv install arg-lists; stub out network/fs side effects."""
+    calls: list = []
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: TAGGED_GAMES)
+    monkeypatch.setattr(ModuleUpdate, "_prune_stale_apworld_extractions", lambda *a, **k: None)
+    monkeypatch.setattr(ModuleUpdate, "_uv_pip", lambda *args: list(args))
+
+    def _run(args, **kw):
+        calls.append(args)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(ModuleUpdate, "_uv_run", _run)
+    return calls
+
+
+def _set_installed_world_version(monkeypatch, version):
+    def _dist(name):
+        if version is None:
+            raise importlib.metadata.PackageNotFoundError(name)
+        return types.SimpleNamespace(version=version)
+
+    monkeypatch.setattr(importlib.metadata, "distribution", _dist)
+
+
+def test_from_tag_skips_when_already_at_tagged_version(monkeypatch, tagged_install_calls):
+    _set_installed_world_version(monkeypatch, "5.1.0")  # == tagged version
+    assert ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG) == []
+    assert tagged_install_calls == []  # no install ran
+
+
+def test_from_tag_reinstalls_on_mismatch_without_upgrade(monkeypatch, tagged_install_calls):
+    _set_installed_world_version(monkeypatch, "5.0.0")  # swap to 5.1.0
+    assert ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG) == []
+    assert len(tagged_install_calls) == 1
+    args = tagged_install_calls[0]
+    assert TAGGED_WHEEL in args and "--reinstall" in args and "--no-cache" in args
+    assert "--upgrade" not in args      # downgrades/swaps must not be blocked
+    assert "--no-deps" not in args      # a swap restores the pinned version's deps
+
+
+def test_from_tag_fresh_install_uses_no_deps(monkeypatch, tagged_install_calls):
+    _set_installed_world_version(monkeypatch, None)  # not installed
+    ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG)
+    assert "--no-deps" in tagged_install_calls[0]
+
+
+def test_from_tag_unresolved_world_reported_as_failed(monkeypatch, tagged_install_calls):
+    monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: {})  # alttp absent
+    _set_installed_world_version(monkeypatch, "5.0.0")
+    assert ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG) == ["alttp"]
+    assert tagged_install_calls == []
+
+
+# --------------------------------------------------------------------------- #
 # _detect_installed_variant / _resolve_variant
 # --------------------------------------------------------------------------- #
 @pytest.fixture
