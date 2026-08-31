@@ -3,7 +3,7 @@ import logging
 import os
 import ssl
 from dataclasses import dataclass, field
-from typing import Protocol, runtime_checkable, Any, Optional
+from typing import Protocol, runtime_checkable, Any, Callable, Optional
 from multiprocessing import Queue
 
 
@@ -67,6 +67,17 @@ class FrontendProtocol(Protocol):
     def dismiss_error_dialog(self, handle: Any) -> None:
         """Dismiss an error dialog previously returned by `show_error_dialog`.
         No-op if the handle has already been dismissed."""
+        ...
+
+    def show_confirm_dialog(self, title: str, message: str, callback: Callable[[bool], None],
+                            ok_text: str = "OK", cancel_text: str = "Cancel") -> Any:
+        """Display a modal confirm/cancel prompt (e.g. the world downpatch offer).
+
+        `callback` is invoked exactly once on the UI thread with True (confirm) or
+        False (cancel). Returns an opaque dialog handle, or None if the frontend
+        could not show it. CommonClient feature-detects this method with hasattr,
+        so frontends built before it existed keep working.
+        """
         ...
 
     # --- NOT-YET-IMPLEMENTED: per-world custom UI surface ---

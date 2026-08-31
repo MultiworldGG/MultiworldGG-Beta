@@ -536,15 +536,15 @@ class GeneralOptions(Group):
 
     class AutoInstallPinnedWorlds(Bool):
         """
-        When a room specifies the apworld version it was generated with, automatically install
-        that pinned version and relaunch the client so the correct world logic is loaded.
-        Set to false to skip the automatic install and always use the locally installed version.
+        When a room specifies the apworld version it was generated with and the installed
+        version differs, install that pinned version and relaunch the client without asking.
+        When false (the default), the client offers the install in a confirmation dialog instead.
         Only applies to managed (index-tracked) worlds; custom/off-index worlds are never
         installed or relaunched automatically.
         """
 
     output_path: OutputPath = OutputPath("output")
-    auto_install_pinned_worlds: AutoInstallPinnedWorlds | bool = True
+    auto_install_pinned_worlds: AutoInstallPinnedWorlds | bool = False
 
 
 class ServerOptions(Group):
