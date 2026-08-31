@@ -32,7 +32,7 @@ additional software you need, which client to use, and how to connect.
 
 ## 3. Download and install MultiworldGG
 
-1. Open the [Downloads page](/downloads) and grab the installer for your operating
+1. Open the [Downloads page](/downloads/) and grab the installer for your operating
    system. You can also download the latest build directly from the
    [GitHub releases page](https://github.com/MultiworldGG/MultiworldGG-Beta/releases/latest).
 2. Run the installer and follow the prompts.
@@ -48,7 +48,7 @@ Once you have the software installed and a YAML ready, you have three ways to ge
 into a game from this site:
 
 - **[Browse lobbies](/play/lobbies)** - join a group that's already forming.
-- **[Create a lobby](/play/create)** - start your own and invite friends; it generates a
+- **[Create a lobby](/lobby/create)** - start your own and invite friends; it generates a
   game once everyone has uploaded their YAML.
 - **[Generate a game](/play/new)** - skip the lobby and generate directly if you
   already have everyone's YAML files.
