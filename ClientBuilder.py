@@ -112,7 +112,7 @@ class GameClient(ClientBuilder):
             legacy_result = await legacy_builder.build()
 
             # ExtrasBuilder is a sibling of the legacy path: it operates on
-            # ctx.client.features regardless of which builder wired the per-game frontend.
+            # ctx.feature_registry.features regardless of which builder wired the per-game frontend.
             extras_builder = ExtrasBuilder(
                 self.ctx,
                 {"ui": self._init_data.get("ui")},
@@ -237,9 +237,9 @@ class LegacyKvuiClientBuilder(ClientBuilder):
 
 
 class ExtrasBuilder(ClientBuilder):
-    """Activate opt-in overlay features registered on ``ctx.client``.
+    """Activate opt-in overlay features registered on ``ctx.feature_registry``.
 
-    Runs after the per-game UI is wired up. Iterates ``ctx.client.features``
+    Runs after the per-game UI is wired up. Iterates ``ctx.feature_registry.features``
     and calls each as ``feature(ctx, app)``. Per-feature failures are logged
     and skipped so one broken overlay can't poison the others. Frontend-
     agnostic: it does not care whether the per-game UI was wired up by
@@ -254,8 +254,8 @@ class ExtrasBuilder(ClientBuilder):
     async def build(self) -> Dict[str, Any]:
         self._is_running = True
         app = self._init_data.get("ui") or getattr(self.ctx, "ui", None)
-        client = getattr(self.ctx, "client", None)
-        features = client.features if client else []
+        registry = getattr(self.ctx, "feature_registry", None)
+        features = registry.features if registry else []
         for feature in features:
             try:
                 feature(self.ctx, app)
@@ -273,13 +273,16 @@ class ExtrasBuilder(ClientBuilder):
         return self._is_running
 
 
-class Client():
+class FeatureRegistry():
     """Per-context registry of opt-in overlay features.
 
     Each feature is a callable ``feature(ctx, app)`` registered during a
     feature's Phase-1 attach (e.g. ``attach_tracker_overlay`` appending
     ``start_overlay_ui_refresh``). ExtrasBuilder iterates and invokes them
     in registration order after the per-game UI is wired.
+
+    Lives at ``ctx.feature_registry``; ``ctx.client`` is off-limits because
+    upstream world contexts assign their own game client there.
     """
     def __init__(self):
         self.features: list = []
@@ -287,7 +290,7 @@ class Client():
         self.features.append(feature)
     def __str__(self) -> str:
         names = [getattr(f, "__name__", repr(f)) for f in self.features]
-        return "Client with features: " + ", ".join(names)
+        return "FeatureRegistry with features: " + ", ".join(names)
 
 
 class ClientDirector():

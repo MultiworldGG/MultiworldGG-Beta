@@ -1,7 +1,7 @@
 """Overlay features for game-specific clients with the Universal Tracker attached.
 
 Each feature is a ``feature(ctx, app)`` callable registered into
-``ctx.client.features`` by ``attach_tracker_overlay`` (wrap.py) and invoked by
+``ctx.feature_registry.features`` by ``attach_tracker_overlay`` (wrap.py) and invoked by
 ``ClientBuilder.ExtrasBuilder.build`` after the per-game UI is wired up.
 """
 
