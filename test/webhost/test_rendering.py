@@ -1,7 +1,7 @@
 """Webhost rendering-helper tests; add new rendering tests here.
 
-Covers the breadcrumb Jinja macro, ``render_markdown`` heading ids and
-self-links, and pure/IO helpers in ``WebHostLib.misc`` that pin two
+Covers the breadcrumb Jinja macro, the /play setup-checklist partial,
+``render_markdown`` heading ids and self-links, and pure/IO helpers in ``WebHostLib.misc`` that pin two
 non-obvious behaviors previously documented only by inline comments: how
 ``format_authors_string`` joins three-or-more authors, and how ``_read_log``
 consumes (or seeks past) an optional UTF-8 BOM and then applies ``offset``
@@ -9,6 +9,7 @@ relative to the current stream position.
 """
 import io
 import os
+import re
 import unittest
 from tempfile import NamedTemporaryFile
 
@@ -70,6 +71,21 @@ def test_breadcrumb_last_item_not_linked(env):
     assert ">Current<" in rendered
     # And should be in the "current" span
     assert 'mw-breadcrumb-current">Current' in rendered
+
+
+# ---------------------------------------------------------------------------
+# /play setup checklist partial
+# ---------------------------------------------------------------------------
+
+def test_play_checklist_is_ephemeral(env):
+    rendered = env.get_template("partials/play_checklist.html").render()
+
+    boxes = re.findall(r'<input[^>]*type="checkbox"[^>]*>', rendered)
+    assert len(boxes) == 7
+    # Without autocomplete=off Firefox restores checkbox state across reloads.
+    assert all('autocomplete="off"' in box for box in boxes)
+    assert 'data-tooltip="Pick a game, player options, and turn the YAML in"' in rendered
+    assert 'data-tooltip="GO!"' in rendered
 
 
 # ---------------------------------------------------------------------------

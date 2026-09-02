@@ -1,0 +1,80 @@
+{# Pop-out setup checklist for /play. Ephemeral by design: nothing is stored
+   and every box clears when the panel closes.
+
+   Included by play_hub.html; styles live in styles/hub.css. #}
+<button type="button" class="mw-checklist-fab" id="play-checklist-fab"
+        aria-expanded="false" aria-controls="play-checklist">
+    <i class="mdi mdi-check-all"></i> Setup checklist
+</button>
+
+<div class="mw-checklist" id="play-checklist" role="dialog" aria-label="Setup checklist" tabindex="-1" hidden>
+    <div class="mw-checklist-head">
+        <h2>Setup checklist</h2>
+        <button type="button" class="mw-checklist-close" data-checklist-close aria-label="Close">
+            <i class="mdi mdi-close"></i>
+        </button>
+    </div>
+    <p class="mw-checklist-lead">Hover a step for a hint. Ticks clear when you close this.</p>
+    <ol class="mw-checklist-list">
+        {% for label, hint in [
+            ('Create YAML', 'Pick a game, player options, and turn the YAML in'),
+            ('Get Room Link', 'Your host will generate and give you the link'),
+            ('Download and Patch', 'This opens up the client, too!'),
+            ('Open the MWGG Client', "Only if the patch didn't open it for you."),
+            ('Grab the port #', 'This is on your link'),
+            ('Start your game', 'And connect!'),
+            ('Connect & Countdown!', 'GO!'),
+        ] %}
+        <li>
+            <label class="mw-checklist-item" data-tooltip="{{ hint }}">
+                {# autocomplete=off: Firefox otherwise restores ticks across a reload #}
+                <input type="checkbox" autocomplete="off">
+                <span>{{ label }}</span>
+                <i class="mdi mdi-help-circle" aria-hidden="true"></i>
+            </label>
+        </li>
+        {% endfor %}
+    </ol>
+    <div class="mw-checklist-foot">
+        <span id="play-checklist-count" aria-live="polite"></span>
+        <button type="button" class="mw-checklist-reset" data-checklist-reset>Reset</button>
+    </div>
+</div>
+
+<script>
+(function () {
+    const fab = document.getElementById('play-checklist-fab');
+    const panel = document.getElementById('play-checklist');
+    if (!fab || !panel) return;
+    const boxes = Array.from(panel.querySelectorAll('input[type="checkbox"]'));
+    const count = document.getElementById('play-checklist-count');
+
+    function updateCount() {
+        const done = boxes.filter(b => b.checked).length;
+        count.textContent = done === boxes.length ? 'All set. GO!' : `${done} of ${boxes.length} done`;
+    }
+    function reset() {
+        boxes.forEach(b => { b.checked = false; });
+        updateCount();
+    }
+    function open() {
+        panel.hidden = false;
+        fab.setAttribute('aria-expanded', 'true');
+        panel.focus({ preventScroll: true });
+    }
+    function close(refocus) {
+        panel.hidden = true;
+        fab.setAttribute('aria-expanded', 'false');
+        reset();
+        if (refocus) fab.focus();
+    }
+
+    fab.addEventListener('click', () => panel.hidden ? open() : close(true));
+    panel.querySelectorAll('[data-checklist-close]').forEach(el => el.addEventListener('click', () => close(true)));
+    panel.querySelectorAll('[data-checklist-reset]').forEach(el => el.addEventListener('click', reset));
+    boxes.forEach(b => b.addEventListener('change', updateCount));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) close(true); });
+    window.addEventListener('pageshow', e => { if (e.persisted) close(false); });
+    reset();
+})();
+</script>
