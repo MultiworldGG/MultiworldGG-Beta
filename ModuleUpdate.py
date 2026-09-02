@@ -347,17 +347,25 @@ if use_worlds_venv():
 
 # ── mwgg_igdb index & variants ───────────────────────────────────────────────
 
-# mwgg_igdb package source: orphan branch on the Index repo.
+# mwgg_igdb package source: orphan branch on the Index repo, fetched as GitHub's source
+# tarball -- a `git+` URL makes uv shell out to a git executable that end users lack.
 # See MultiworldGG-Index/scripts/build_variants.py for variant definitions.
 DEFAULT_MWGG_IGDB_VARIANT = "sixteen"  # ultimate fallback when nothing is installed
 _VARIANTS = ("nr", "ao", "twelve", "sixteen")
 _EXPLICIT_VARIANT: Optional[str] = None  # set via set_variant(); wins over detection
 MWGG_INDEX_REPO = "MultiworldGG/MultiworldGG-Index"
+
+
+def _index_archive_url(ref: str) -> str:
+    """Source tarball URL for `ref` (`heads/<branch>` or `tags/<tag>`) on the Index repo."""
+    return f"https://github.com/{MWGG_INDEX_REPO}/archive/refs/{ref}.tar.gz"
+
+
 # The three globals below mirror the currently *resolved* variant. _resolve_variant()
 # keeps them consistent; callers should treat them as read-only.
 MWGG_IGDB_VARIANT = DEFAULT_MWGG_IGDB_VARIANT
 MWGG_IGDB_BRANCH = f"game_index_{MWGG_IGDB_VARIANT}"
-MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"
+MWGG_IGDB_URL = _index_archive_url(f"heads/{MWGG_IGDB_BRANCH}")
 
 
 def _detect_installed_variant() -> Optional[str]:
@@ -384,7 +392,7 @@ def _resolve_variant() -> str:
 
     Precedence: explicit `set_variant()` > detected install > default fallback.
     """
-    global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_GIT_URL
+    global MWGG_IGDB_VARIANT, MWGG_IGDB_BRANCH, MWGG_IGDB_URL
     if _EXPLICIT_VARIANT is not None:
         variant = _EXPLICIT_VARIANT
     else:
@@ -392,7 +400,7 @@ def _resolve_variant() -> str:
     # Public globals, intentionally reassigned (callers and tests read them).
     MWGG_IGDB_VARIANT = variant  # pyright: ignore[reportConstantRedefinition]
     MWGG_IGDB_BRANCH = f"game_index_{variant}"  # pyright: ignore[reportConstantRedefinition]
-    MWGG_IGDB_GIT_URL = f"git+https://github.com/{MWGG_INDEX_REPO}@{MWGG_IGDB_BRANCH}"  # pyright: ignore[reportConstantRedefinition]
+    MWGG_IGDB_URL = _index_archive_url(f"heads/{MWGG_IGDB_BRANCH}")  # pyright: ignore[reportConstantRedefinition]
     return variant
 
 
@@ -486,7 +494,7 @@ def install_mwgg_igdb(upgrade: bool = False, force: bool = False) -> bool:
     if upgrade and not force and _igdb_upgraded_recently():
         logger.debug("mwgg_igdb already installed today; skipping upgrade pull")
         return True
-    args = _uv_pip("install", MWGG_IGDB_GIT_URL, "--no-cache")
+    args = _uv_pip("install", MWGG_IGDB_URL, "--no-cache")
     if upgrade:
         # --reinstall rewrites the package even when the branch HEAD is unchanged,
         # advancing its mtime so the once-daily throttle stays satisfied until tomorrow.
@@ -1138,16 +1146,12 @@ def update_worlds() -> Optional[WorldInstallResult]:
 # (NetUtils.MultiData["igdb_tag"], stamped by installed_igdb_tag()). To install a world
 # at the version current at that tag WITHOUT disturbing the installed/active mwgg_igdb,
 # we read that one world's module_location straight out of the tagged index snapshot and
-# pip-install just that wheel. The snapshot is fetched as the tag's source TARBALL: the
-# variant branches are force-pushed (history rewritten) so `git+...@<tag>` is unreliable,
-# but GitHub serves `archive/refs/tags/<tag>.tar.gz` for any tag.
+# pip-install just that wheel. The snapshot is the tag's source tarball: the variant
+# branches are force-pushed (history rewritten) so `git+...@<tag>` is unreliable, but
+# GitHub serves `archive/refs/tags/<tag>.tar.gz` for any tag.
 
 # Cache of tag -> games-data dict, so a room with several worlds downloads the snapshot once.
 _TAGGED_INDEX_GAMES_CACHE: dict[str, dict[str, Any]] = {}
-
-
-def _tagged_index_tarball_url(tag: str) -> str:
-    return f"https://github.com/{MWGG_INDEX_REPO}/archive/refs/tags/{tag}.tar.gz"
 
 
 def _load_tagged_index_games(tag: str) -> Optional[dict[str, Any]]:
@@ -1159,7 +1163,7 @@ def _load_tagged_index_games(tag: str) -> Optional[dict[str, Any]]:
     """
     if tag in _TAGGED_INDEX_GAMES_CACHE:
         return _TAGGED_INDEX_GAMES_CACHE[tag]
-    url = _tagged_index_tarball_url(tag)
+    url = _index_archive_url(f"tags/{tag}")
     try:
         with tempfile.TemporaryDirectory() as tmp:
             archive = os.path.join(tmp, "index.tar.gz")
