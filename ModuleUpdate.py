@@ -32,8 +32,9 @@ import urllib.request
 
 logger = logging.getLogger("Update")
 
-if not logging.getLogger().hasHandlers():
-    logging.basicConfig(level=logging.DEBUG, format='%(message)s', stream=sys.stdout)
+# Fallback for entry points that call update() before their own init_logging.
+if not logging.getLogger().hasHandlers() and sys.stdout:
+    logging.basicConfig(level=logging.INFO, format='%(message)s', stream=sys.stdout)
 
 from pathlib import Path
 from collections.abc import Iterable
