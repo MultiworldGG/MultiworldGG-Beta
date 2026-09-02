@@ -16,6 +16,55 @@ from settings import Group, ServerOptions, Settings, _loaded_world_settings_name
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
+class TestHostYamlBackslashRepair(unittest.TestCase):
+    """A hand-edited Windows path in double quotes ("C:\\Users\\...") is invalid
+    YAML; the loader re-reads such values literally instead of dropping the
+    whole config, and the dumper single-quotes backslash values so copied
+    styles stay literal."""
+
+    def _load(self, body: str) -> Settings:
+        import tempfile
+        settings.skip_autosave = True
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "host.yaml")
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(textwrap.dedent(body))
+            return Settings(path)
+
+    def test_unescaped_backslashes_read_literally(self) -> None:
+        loaded = self._load('''
+            general_options:
+              output_path: "C:\\Users\\x\\new\\output"  # \\n and \\U alike
+        ''')
+        self.assertEqual(loaded.general_options.output_path, "C:\\Users\\x\\new\\output")
+        self.assertIsNotNone(loaded.filename)
+        self.assertTrue(loaded.changed)
+
+    def test_valid_escapes_untouched(self) -> None:
+        text = 'general_options:\n  output_path: "C:\\\\Users\\\\x"\n  player_files_path: "tab\\there"\n'
+        self.assertIsNone(settings._repair_unescaped_backslashes(text))
+        loaded = self._load(text)
+        self.assertEqual(loaded.general_options.output_path, "C:\\Users\\x")
+        self.assertEqual(loaded.general_options.player_files_path, "tab\there")
+
+    def test_other_errors_still_fall_back_to_defaults(self) -> None:
+        with self.assertLogs(level="ERROR") as logs:
+            loaded = self._load('general_options:\n  output_path: "unterminated\n')
+        self.assertIsNone(loaded.filename)
+        self.assertIn("Could not parse", logs.output[0])
+
+    def test_dump_single_quotes_backslash_values(self) -> None:
+        from Utils import parse_yaml
+        settings.skip_autosave = True
+        s = Settings(None)
+        s.general_options.output_path = "C:\\x\\y"
+        out = io.StringIO()
+        s.dump(out)
+        text = out.getvalue()
+        self.assertIn("output_path: 'C:\\x\\y'", text)
+        self.assertEqual(parse_yaml(text)["general_options"]["output_path"], "C:\\x\\y")
+
+
 # --------------------------------------------------------------------------- #
 # Settings must never import the `worlds` package or load a world. The
 # former settings._update_cache() did `from worlds import

@@ -6,6 +6,7 @@ This is different from player options.
 import os
 import os.path
 import pathlib
+import re
 import shutil
 import sys
 import types
@@ -239,8 +240,10 @@ class Group:
                         return res
 
                     def represent_str(self, data: str) -> ScalarNode:
-                        # default double quote all strings
-                        return self.represent_scalar("tag:yaml.org,2002:str", data, style='"')
+                        # default double quote all strings; backslash-bearing values (Windows
+                        # paths) go single-quoted so hand edits that copy the style stay literal
+                        style = "'" if "\\" in data else '"'
+                        return self.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
                 Dumper.add_representer(str, Dumper.represent_str)
                 Group._dumper = Dumper
@@ -331,6 +334,28 @@ def _to_builtin(o: object) -> Any:
     while c.__module__ != "builtins":
         c = c.__base__
     return c.__call__(o)
+
+
+_DOUBLE_QUOTED_VALUE = re.compile(
+    r'^(?P<head>[ \t]*(?:- )?[^\s#"\'][^#"\n]*?:[ \t]+)"(?P<body>[^"\n]*)"(?P<tail>[ \t]*(?:#[^\n]*)?)$',
+    re.MULTILINE)
+# Consumes each escape whole so the second backslash of a valid "\\" pair isn't re-read.
+_YAML_ESCAPE = re.compile(
+    r'\\(?:(?P<valid>[0abtnvfre "/\\N_LP \t]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})|)')
+
+
+def _repair_unescaped_backslashes(text: str) -> str | None:
+    """Hand-edited Windows paths land as "C:\\Users\\..." where backslashes are
+    YAML escapes. Any double-quoted value holding an invalid escape is re-quoted
+    single-quoted so every backslash reads literally; None when nothing matched."""
+    def requote(match: re.Match[str]) -> str:
+        body = match["body"]
+        if all(escape["valid"] is not None for escape in _YAML_ESCAPE.finditer(body)):
+            return match[0]
+        return f"{match['head']}'{body.replace(chr(39), chr(39) * 2)}'{match['tail']}"
+
+    repaired = _DOUBLE_QUOTED_VALUE.sub(requote, text)
+    return repaired if repaired != text else None
 
 
 class APPathLib(str):
@@ -867,32 +892,49 @@ class Settings(Group):
     def __init__(self, location: str | None):  # change to PathLike[str] once we drop 3.8?
         super().__init__()
         if location:
+            import logging
             from Utils import parse_yaml
+            from yaml.error import MarkedYAMLError
             with open(location, encoding="utf-8-sig") as f:
-                from yaml.error import MarkedYAMLError
-                try:
-                    options = parse_yaml(f.read())
-                except MarkedYAMLError as ex:
+                text = f.read()
+            try:
+                options = parse_yaml(text)
+            except MarkedYAMLError as ex:
+                options = None
+                repaired = _repair_unescaped_backslashes(text)
+                if repaired is not None:
+                    try:
+                        options = parse_yaml(repaired)
+                    except MarkedYAMLError:
+                        pass
+                if options is not None:
+                    logging.warning(
+                        f"{location}: unescaped backslashes in a double-quoted value (line "
+                        f"{ex.problem_mark.line + 1 if ex.problem_mark else '?'}); read as a literal path. "
+                        f"The file is rewritten with proper quoting on next save."
+                    )
+                    self.update(options or {})
+                    self._filename = location
+                    self._changed = True
+                else:
                     # A malformed host.yaml must not take down everything that reads
                     # settings: fall back to defaults and skip _filename so autosave
                     # can't clobber the file the user needs to repair by hand.
-                    import logging
                     detail = ""
                     if ex.problem_mark:
-                        f.seek(0)
-                        lines = f.readlines()
+                        lines = text.splitlines()
                         if 0 <= ex.problem_mark.line < len(lines):
-                            problem_line = lines[ex.problem_mark.line].rstrip("\n")
+                            problem_line = lines[ex.problem_mark.line]
                             error_line = " " * ex.problem_mark.column + "^"
                             detail = f"\n{problem_line}\n{error_line}"
                     logging.error(
                         f"Could not parse {location}: {ex.context} {ex.problem}{detail}\n"
                         f"Using default settings; fix the file and restart to restore your configuration."
                     )
-                else:
-                    # TODO: detect if upgrade is required
-                    self.update(options or {})
-                    self._filename = location
+            else:
+                # TODO: detect if upgrade is required
+                self.update(options or {})
+                self._filename = location
 
         def autosave() -> None:
             if __debug__:
