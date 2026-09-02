@@ -490,13 +490,13 @@ SLOT_PINS = {
 _LOAD_CLOBBERED = (
     "read_data", "generator_version", "minimum_client_versions", "slot_info", "games",
     "groups", "clients", "def_allow_collecting_from", "seed_name", "connect_names",
-    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "igdb_tag",
+    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "mwgg_index_tag",
     "player_names", "player_name_lookup",
 )
 
 
 class TestWorldVersionPinFlow(unittest.TestCase):
-    """world_versions/igdb_tag: multidata blob -> Context._load -> game-keyed RoomInfo."""
+    """world_versions/mwgg_index_tag: multidata blob -> Context._load -> game-keyed RoomInfo."""
 
     @staticmethod
     def _minimal_multidata(with_pins: bool) -> dict:
@@ -519,7 +519,7 @@ class TestWorldVersionPinFlow(unittest.TestCase):
         }
         if with_pins:
             data["world_versions"] = {slot: dict(pin) for slot, pin in SLOT_PINS.items()}
-            data["igdb_tag"] = "sixteen-2026.06.10"
+            data["mwgg_index_tag"] = "sixteen-2026.06.10"
         return data
 
     def _load(self, ctx: Context, multidata: dict) -> None:
@@ -530,7 +530,7 @@ class TestWorldVersionPinFlow(unittest.TestCase):
         try:
             ctx._load(multidata, {}, False)
             self.loaded_world_versions = ctx.world_versions
-            self.loaded_igdb_tag = ctx.igdb_tag
+            self.loaded_mwgg_index_tag = ctx.mwgg_index_tag
         finally:
             for attr, value in saved.items():
                 if value is missing:
@@ -550,13 +550,13 @@ class TestWorldVersionPinFlow(unittest.TestCase):
         ctx = build_context()
         self._load(ctx, self._minimal_multidata(with_pins=True))
         self.assertEqual(self.loaded_world_versions, SLOT_PINS)
-        self.assertEqual(self.loaded_igdb_tag, "sixteen-2026.06.10")
+        self.assertEqual(self.loaded_mwgg_index_tag, "sixteen-2026.06.10")
 
     def test_load_tolerates_pre_feature_seed(self) -> None:
         ctx = build_context()
         self._load(ctx, self._minimal_multidata(with_pins=False))
         self.assertEqual(self.loaded_world_versions, {})
-        self.assertIsNone(self.loaded_igdb_tag)
+        self.assertIsNone(self.loaded_mwgg_index_tag)
 
     def test_roominfo_collapses_slots_to_game_keys(self) -> None:
         ctx = build_context()
@@ -565,14 +565,14 @@ class TestWorldVersionPinFlow(unittest.TestCase):
             2: NetworkSlot("Player2", "Game B", SlotType.player),
         }
         ctx.world_versions = dict(SLOT_PINS)
-        ctx.igdb_tag = "sixteen-2026.06.10"
+        ctx.mwgg_index_tag = "sixteen-2026.06.10"
         try:
             client = make_client(ctx)
             asyncio.run(MultiServer.on_client_connected(ctx, client))
         finally:
             ctx.slot_info = _base_ctx_slot_info()
             ctx.world_versions = {}
-            ctx.igdb_tag = None
+            ctx.mwgg_index_tag = None
 
         room_info = sent_packets(ctx)[-1]
         self.assertEqual(room_info["cmd"], "RoomInfo")
@@ -582,17 +582,17 @@ class TestWorldVersionPinFlow(unittest.TestCase):
             {"Game A": {"version": (1, 2, 3), "custom": False},
              "Game B": {"version": (0, 5, 0), "custom": True}},
         )
-        self.assertEqual(room_info["igdb_tag"], "sixteen-2026.06.10")
+        self.assertEqual(room_info["mwgg_index_tag"], "sixteen-2026.06.10")
 
     def test_roominfo_empty_pins_on_pre_feature_seed(self) -> None:
         ctx = build_context()
         ctx.world_versions = {}
-        ctx.igdb_tag = None
+        ctx.mwgg_index_tag = None
         client = make_client(ctx)
         asyncio.run(MultiServer.on_client_connected(ctx, client))
         room_info = sent_packets(ctx)[-1]
         self.assertEqual(room_info["world_versions"], {})
-        self.assertIsNone(room_info["igdb_tag"])
+        self.assertIsNone(room_info["mwgg_index_tag"])
 
 
 def _base_ctx_slot_info() -> dict:

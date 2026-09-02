@@ -541,6 +541,14 @@ def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Opti
     parts.append({"text": text if text != None else status_names.get(hint_status, "(unknown)"),
                   "hint_status": hint_status, "type": JSONTypes.hint_status, **kwargs})
 
+def get_item_classification_label(item_flags: int) -> str:
+    """Return a player-facing label for the classification bits sent over the network."""
+    labels = [
+        label for flag, label in ((0b001, "progression"), (0b010, "useful"), (0b100, "trap"))
+        if item_flags & flag
+    ]
+    return ", ".join(labels) if labels else "filler"
+
 
 class Hint(typing.NamedTuple):
     receiving_player: int
@@ -722,13 +730,6 @@ class DataPackage(typing.TypedDict):
 
 
 class WorldVersionPin(typing.TypedDict):
-    """Per-slot apworld version the seed was generated with.
-
-    ``version`` is the slot world's ``world_version`` (read from its archipelago.json
-    at load time). ``custom`` is True for off-index / ``custom_worlds`` apworlds, which
-    the client treats as report-only: it records the version to flag a mismatch but never
-    installs or relaunches for them.
-    """
     version: tuple[int, int, int]
     custom: bool
 
@@ -749,10 +750,8 @@ class MultiData(typing.TypedDict):
     seed_name: str
     spheres: list[dict[int, set[int]]]
     datapackage: dict[str, GamesPackage]
-    # Slot-keyed apworld version pins; absent on seeds generated before the feature.
     world_versions: typing.NotRequired[dict[int, WorldVersionPin]]
-    # mwgg_igdb release tag (e.g. "sixteen-2026.06.10") this seed was generated against.
-    igdb_tag: typing.NotRequired[str]
+    mwgg_index_tag: typing.NotRequired[str]
     race_mode: int
     allow_collecting_from: dict[int, bool]
 

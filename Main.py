@@ -388,11 +388,11 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
                 # client can reconstruct the same world set from that index snapshot.
                 try:
                     import ModuleUpdate
-                    igdb_tag = ModuleUpdate.installed_igdb_tag()
+                    mwgg_index_tag = ModuleUpdate.installed_mwgg_index_tag()
                 except Exception:
-                    igdb_tag = None
-                if igdb_tag:
-                    multidata["igdb_tag"] = igdb_tag
+                    mwgg_index_tag = None
+                if mwgg_index_tag:
+                    multidata["mwgg_index_tag"] = mwgg_index_tag
                 # TODO: change to `"version": version_tuple` after getting better serialization
                 AutoWorld.call_all(multiworld, "modify_multidata", multidata)
 

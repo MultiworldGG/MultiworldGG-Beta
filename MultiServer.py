@@ -379,7 +379,7 @@ class Context:
         self.read_data = {}
         self.spheres = []
         self.world_versions: typing.Dict[int, NetUtils.WorldVersionPin] = {}
-        self.igdb_tag: typing.Optional[str] = None
+        self.mwgg_index_tag: typing.Optional[str] = None
 
         # init empty to satisfy linter, I suppose
         self.gamespackage = {}
@@ -649,7 +649,7 @@ class Context:
         # per-slot apworld version pins; absent on pre-feature seeds
         self.world_versions = decoded_obj.get("world_versions", {})
         # mwgg_igdb release tag this seed was generated against; None on pre-feature seeds
-        self.igdb_tag = decoded_obj.get("igdb_tag")
+        self.mwgg_index_tag = decoded_obj.get("mwgg_index_tag")
 
     # saving
 
@@ -1043,7 +1043,7 @@ async def on_client_connected(ctx: Context, client: Client):
         'seed_name': ctx.seed_name,
         'time': time.time(),
         'world_versions': game_world_versions,
-        'igdb_tag': ctx.igdb_tag,
+        'mwgg_index_tag': ctx.mwgg_index_tag,
     }])
 
 
