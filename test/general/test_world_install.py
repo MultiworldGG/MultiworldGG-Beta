@@ -228,14 +228,14 @@ def restore_variant_globals():
         ModuleUpdate._EXPLICIT_VARIANT,
         ModuleUpdate.MWGG_IGDB_VARIANT,
         ModuleUpdate.MWGG_IGDB_BRANCH,
-        ModuleUpdate.MWGG_IGDB_GIT_URL,
+        ModuleUpdate.MWGG_IGDB_URL,
     )
     yield
     (
         ModuleUpdate._EXPLICIT_VARIANT,
         ModuleUpdate.MWGG_IGDB_VARIANT,
         ModuleUpdate.MWGG_IGDB_BRANCH,
-        ModuleUpdate.MWGG_IGDB_GIT_URL,
+        ModuleUpdate.MWGG_IGDB_URL,
     ) = saved
 
 
@@ -269,8 +269,8 @@ def test_resolve_variant_explicit_override_wins(monkeypatch, restore_variant_glo
     assert ModuleUpdate._resolve_variant() == "ao"
     assert ModuleUpdate.MWGG_IGDB_VARIANT == "ao"
     assert ModuleUpdate.MWGG_IGDB_BRANCH == "game_index_ao"
-    assert ModuleUpdate.MWGG_IGDB_GIT_URL == (
-        "git+https://github.com/MultiworldGG/MultiworldGG-Index@game_index_ao"
+    assert ModuleUpdate.MWGG_IGDB_URL == (
+        "https://github.com/MultiworldGG/MultiworldGG-Index/archive/refs/heads/game_index_ao.tar.gz"
     )
 
 
@@ -280,6 +280,30 @@ def test_resolve_variant_falls_back_to_default_when_undetectable(monkeypatch, re
 
     assert ModuleUpdate._resolve_variant() == ModuleUpdate.DEFAULT_MWGG_IGDB_VARIANT
     assert ModuleUpdate.MWGG_IGDB_BRANCH == f"game_index_{ModuleUpdate.DEFAULT_MWGG_IGDB_VARIANT}"
+
+
+# --------------------------------------------------------------------------- #
+# install_mwgg_igdb -> uv args
+# --------------------------------------------------------------------------- #
+def test_install_mwgg_igdb_pulls_branch_tarball_not_git(monkeypatch, restore_variant_globals):
+    """uv resolves `git+` URLs through a git executable that end users lack, so the
+    branch must be installed from GitHub's source tarball."""
+    calls: list = []
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_EXPLICIT_VARIANT", "twelve")
+    monkeypatch.setattr(ModuleUpdate, "_uv_pip", lambda *args: list(args))
+
+    def _run(args, **kw):
+        calls.append(args)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(ModuleUpdate, "_uv_run", _run)
+
+    assert ModuleUpdate.install_mwgg_igdb(upgrade=True, force=True)
+    [args] = calls
+    assert "https://github.com/MultiworldGG/MultiworldGG-Index/archive/refs/heads/game_index_twelve.tar.gz" in args
+    assert not any(a.startswith("git+") for a in args)
+    assert "--reinstall" in args and "--no-cache" in args
 
 
 # --------------------------------------------------------------------------- #
