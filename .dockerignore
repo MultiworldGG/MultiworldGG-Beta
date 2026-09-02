@@ -4,7 +4,6 @@
 docs
 test
 typings
-*Client.py
 
 .idea
 .vscode
