@@ -414,14 +414,16 @@ def get_frontend_versions() -> "dict[str, str]":
     """Return {package: version} for the bundled frontend packages.
 
     Reads dist-info via importlib.metadata so the heavy modules (which pull in
-    Kivy) are never imported just to read a version. Packages with no
-    discoverable metadata report "unknown".
+    Kivy) are never imported just to read a version. Absent packages report
+    "not installed"; packages with unreadable metadata report "unknown".
     """
     import importlib.metadata as _md
     versions: dict[str, str] = {}
     for name in _FRONTEND_PACKAGES:
         try:
             versions[name] = _md.version(name)
+        except _md.PackageNotFoundError:
+            versions[name] = "not installed"
         except Exception:
             versions[name] = "unknown"
     return versions

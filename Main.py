@@ -53,7 +53,9 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
     multiworld.state = CollectionState(multiworld)
     logger.info('%s Version %s  -  Seed: %s\n', instance_name, __version__, multiworld.seed)
 
-    logger.info(f"Found {len(AutoWorld.AutoWorldRegister.world_types)} World Types:")
+    listed_worlds = {name: cls for name, cls in AutoWorld.AutoWorldRegister.world_types.items()
+                     if not cls.hidden and len(cls.item_names) > 0}
+    logger.info(f"Found {len(listed_worlds)} World Types:")
     longest_name = max(len(text) for text in AutoWorld.AutoWorldRegister.world_types)
 
     world_classes = AutoWorld.AutoWorldRegister.world_types.values()
@@ -62,12 +64,11 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
     item_count = len(str(max(len(cls.item_names) for cls in world_classes)))
     location_count = len(str(max(len(cls.location_names) for cls in world_classes)))
 
-    for name, cls in AutoWorld.AutoWorldRegister.world_types.items():
-        if not cls.hidden and len(cls.item_names) > 0:
-            logger.info(f" {name:{longest_name}}: "
-                        f"v{cls.world_version.as_simple_string():{version_count}} | "
-                        f"Items: {len(cls.item_names):{item_count}} | "
-                        f"Locations: {len(cls.location_names):{location_count}}")
+    for name, cls in listed_worlds.items():
+        logger.info(f" {name:{longest_name}}: "
+                    f"v{cls.world_version.as_simple_string():{version_count}} | "
+                    f"Items: {len(cls.item_names):{item_count}} | "
+                    f"Locations: {len(cls.location_names):{location_count}}")
 
     del item_count, location_count
 
@@ -340,6 +341,29 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
                     if current_sphere:
                         spheres.append(dict(current_sphere))
 
+                # Determine which slugs are index-managed (have module_location in mwgg_igdb).
+                # Custom/off-index worlds lack module_location; be defensive if mwgg_igdb is unavailable.
+                try:
+                    from mwgg_igdb import GameIndex as _gi
+                    _index_games: dict = _gi.get_all_games()
+                except Exception:
+                    _index_games = {}
+
+                def _is_custom_world(world: AutoWorld.World) -> bool:
+                    slug = world.__module__.split(".")[1]
+                    entry = _index_games.get(slug)
+                    # In-index worlds have module_location; custom worlds added via
+                    # register_custom_worlds / GameIndex.add_game do not.
+                    return entry is None or not entry.get("module_location")
+
+                world_versions: dict[int, NetUtils.WorldVersionPin] = {
+                    slot: {
+                        "version": tuple(multiworld.worlds[slot].world_version),  # type: ignore[typeddict-item]
+                        "custom": _is_custom_world(multiworld.worlds[slot]),
+                    }
+                    for slot in multiworld.player_ids
+                }
+
                 multidata: NetUtils.MultiData = {
                     "slot_data": slot_data,
                     "slot_info": slot_info,
@@ -357,8 +381,18 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
                     "spheres": spheres,
                     "datapackage": data_package,
                     "race_mode": int(multiworld.is_race),
-                    "allow_collecting_from": allow_collecting_from
+                    "allow_collecting_from": allow_collecting_from,
+                    "world_versions": world_versions,
                 }
+                # Record the mwgg_igdb release tag this seed was generated against, so a
+                # client can reconstruct the same world set from that index snapshot.
+                try:
+                    import ModuleUpdate
+                    igdb_tag = ModuleUpdate.installed_igdb_tag()
+                except Exception:
+                    igdb_tag = None
+                if igdb_tag:
+                    multidata["igdb_tag"] = igdb_tag
                 # TODO: change to `"version": version_tuple` after getting better serialization
                 AutoWorld.call_all(multiworld, "modify_multidata", multidata)
 

@@ -40,7 +40,6 @@ from pathlib import Path
 
 logger = logging.getLogger("MultiWorld")
 
-init_logging("Update")
 update_logger = logging.getLogger("Update")
 
 import ModuleUpdate

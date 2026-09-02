@@ -721,6 +721,18 @@ class DataPackage(typing.TypedDict):
     games: dict[str, GamesPackage]
 
 
+class WorldVersionPin(typing.TypedDict):
+    """Per-slot apworld version the seed was generated with.
+
+    ``version`` is the slot world's ``world_version`` (read from its archipelago.json
+    at load time). ``custom`` is True for off-index / ``custom_worlds`` apworlds, which
+    the client treats as report-only: it records the version to flag a mismatch but never
+    installs or relaunches for them.
+    """
+    version: tuple[int, int, int]
+    custom: bool
+
+
 class MultiData(typing.TypedDict):
     slot_data: dict[int, Mapping[str, typing.Any]]
     slot_info: dict[int, NetworkSlot]
@@ -737,6 +749,10 @@ class MultiData(typing.TypedDict):
     seed_name: str
     spheres: list[dict[int, set[int]]]
     datapackage: dict[str, GamesPackage]
+    # Slot-keyed apworld version pins; absent on seeds generated before the feature.
+    world_versions: typing.NotRequired[dict[int, WorldVersionPin]]
+    # mwgg_igdb release tag (e.g. "sixteen-2026.06.10") this seed was generated against.
+    igdb_tag: typing.NotRequired[str]
     race_mode: int
     allow_collecting_from: dict[int, bool]
 

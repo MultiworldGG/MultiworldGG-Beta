@@ -520,13 +520,15 @@ def new_room(seed: UUID):
     commit()
     return redirect(url_for("host_room", seed=room.seed_id, room=room.id))
 
-@app.route('/downloads/')
+# strict_slashes=False: the auto-308 for a missing slash builds an absolute URL
+# from the proxied Host header, which can point at the upstream loopback.
+@app.route('/downloads/', strict_slashes=False)
 @cache.cached()
 def downloads():
     return render_template("clients.html", version=__version__)
 
 
-@app.route('/legal/')
+@app.route('/legal/', strict_slashes=False)
 @cache.cached()
 def legal():
     return render_template("legal.html")

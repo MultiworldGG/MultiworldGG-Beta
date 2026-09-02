@@ -704,6 +704,14 @@ class CommonContext(InitContext):
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
+        # Game-keyed world version pins from the last RoomInfo packet. The client doesn't
+        # know its slot at RoomInfo time, so the server keys by game name. Checked after
+        # Connected via _check_world_version_pin.
+        self.world_versions: dict[str, dict] = {}
+        # The mwgg_igdb release tag the room was generated against (from RoomInfo). Used to
+        # install a managed world at its gen-time version WITHOUT overwriting the active index.
+        self.igdb_tag: typing.Optional[str] = None
+
         # Launcher-provided callbacks
         ready_cb, error_cb = _consume_pending_launch_callbacks()
         self._ready_callback = _make_one_shot(ready_cb)
@@ -1511,6 +1519,168 @@ async def server_autoreconnect(ctx: CommonContext):
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
 
+def _perform_pinned_install(game: str, slug: str, tag: str, want_str: str) -> bool:
+    """Blocking install of the tagged world version; True when a relaunch should follow."""
+    logger.info(
+        f"[{game}] Installing world version {want_str} from index tag {tag}..."
+    )
+    try:
+        import ModuleUpdate
+        failed = ModuleUpdate.install_worlds_from_tag([slug], tag)
+    except Exception as e:
+        logger.warning(f"[{game}] Install of worlds.{slug} from index tag {tag} failed: {e}")
+        return False
+    if slug in failed:
+        logger.warning(
+            f"[{game}] Could not install worlds.{slug} from index tag {tag}; "
+            f"continuing with the installed version."
+        )
+        return False
+    return True
+
+
+async def _downpatch_and_relaunch(game: str, slug: str, tag: str, want_str: str) -> None:
+    # Off-thread so the install (network + uv subprocess) doesn't freeze the UI/receive loop.
+    if await asyncio.to_thread(_perform_pinned_install, game, slug, tag, want_str):
+        # Module is already imported; the only clean way to load the new version is a relaunch.
+        Utils._restart_client_with_args()
+
+
+def _start_downpatch(ctx: CommonContext, slug: str, tag: str, want_str: str) -> None:
+    Utils.async_start(_downpatch_and_relaunch(ctx.game, slug, tag, want_str), name="world downpatch")
+
+
+def _check_world_version_pin(ctx: CommonContext) -> None:
+    """After Connected, check if this client's game has a world version pin and act.
+
+    - custom pin: emit a non-blocking user notice if the installed version differs; never install.
+    - managed pin and versions differ: with auto_install_pinned_worlds, install the pinned
+      version and relaunch without asking; otherwise offer the downpatch in a frontend
+      confirm dialog (falling back to a log notice when no dialog is available).
+      Failures degrade to a warning; the client continues with whatever is installed.
+    - generic text client (ctx.game is None): no-op.
+    """
+    if ctx.game is None:
+        return
+    pin = ctx.world_versions.get(ctx.game)
+    if not pin:
+        return
+
+    want_version: "typing.Any" = pin.get("version")  # [maj,min,build] from server (JSON array)
+    is_custom: bool = bool(pin.get("custom", False))
+
+    if want_version is None:
+        return
+
+    # Normalize to dot-string for comparison and display.
+    if isinstance(want_version, (list, tuple)):
+        want_str = ".".join(str(x) for x in want_version)
+    else:
+        want_str = str(want_version)
+
+    # An unset world_version (0.0.0) is not a real pin; nothing to enforce.
+    if want_str == "0.0.0":
+        return
+
+    # Determine installed version from importlib.metadata.
+    import importlib.metadata
+    try:
+        from mwgg_igdb import GameIndex
+        slug = GameIndex.get_module_for_game(ctx.game)
+    except Exception:
+        slug = None
+
+    installed_str: "typing.Optional[str]" = None
+    if slug:
+        try:
+            installed_str = importlib.metadata.distribution(f"worlds.{slug}").version
+        except importlib.metadata.PackageNotFoundError:
+            pass
+
+    if is_custom:
+        # Custom worlds: report-only, never install or relaunch.
+        if installed_str and installed_str != want_str:
+            logger.warning(
+                f"[{ctx.game}] Room was generated with custom world version {want_str}; "
+                f"you have {installed_str} installed. Behaviour may differ."
+            )
+        return
+
+    # Managed world: check if a pinned install + relaunch is needed.
+    if not slug:
+        logger.warning(
+            f"[{ctx.game}] Could not resolve an index slug; cannot verify world version pin {want_str}"
+        )
+        return
+
+    if installed_str == want_str:
+        return  # already correct
+
+    # One-shot guard: _restart_client_with_args re-execs with --no-restart. If we are
+    # already in that relaunched process and the version STILL doesn't match, the pinned
+    # wheel wasn't resolvable and the install fell back to latest. Warn and continue
+    # rather than relaunch forever.
+    if "--no-restart" in sys.argv:
+        logger.warning(
+            f"[{ctx.game}] Could not apply pinned world version {want_str} "
+            f"(installed: {installed_str or 'none'}); continuing without another relaunch."
+        )
+        return
+
+    # Resolve the gen-time version from the room's igdb tag. We read this one world's
+    # module_location out of the tagged index snapshot and install just that wheel -- the
+    # installed/active mwgg_igdb is never overwritten.
+    tag = ctx.igdb_tag
+    if not tag:
+        logger.warning(
+            f"[{ctx.game}] Room requires world version {want_str} "
+            f"(installed: {installed_str or 'none'}) but sent no igdb tag; "
+            f"cannot pin -- continuing with the installed version."
+        )
+        return
+
+    from settings import get_settings
+    try:
+        auto_install = bool(get_settings().general_options.auto_install_pinned_worlds)
+    except Exception:
+        auto_install = False
+
+    if auto_install:
+        logger.info(
+            f"[{ctx.game}] Room requires world version {want_str} "
+            f"(installed: {installed_str or 'none'}); installing it from index tag {tag} and restarting"
+        )
+        _start_downpatch(ctx, slug, tag, want_str)
+        return
+
+    prompt = (
+        f"This room was generated with {ctx.game} apworld {want_str}, but you have "
+        f"{installed_str or 'no version'} installed. A game patched with the older apworld "
+        f"usually can't talk to the newer one. Install {want_str} and relaunch the client?"
+    )
+    if ctx.ui is not None and hasattr(ctx.ui, "show_confirm_dialog"):
+        def _on_choice(confirmed: bool) -> None:
+            if confirmed:
+                _start_downpatch(ctx, slug, tag, want_str)
+            else:
+                logger.warning(
+                    f"[{ctx.game}] Keeping installed version {installed_str or 'none'}; "
+                    f"the room expects {want_str} -- version-specific features may misbehave."
+                )
+        ctx.ui.show_confirm_dialog(
+            title="World version mismatch",
+            message=prompt,
+            callback=_on_choice,
+            ok_text=f"Install {want_str} & relaunch",
+            cancel_text="Keep current",
+        )
+        return
+    logger.warning(
+        prompt + " (no dialog available -- set auto_install_pinned_worlds: true in host.yaml "
+        "to do this automatically)"
+    )
+
+
 async def process_server_cmd(ctx: CommonContext, args: dict):
     try:
         cmd = args["cmd"]
@@ -1565,6 +1735,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             # update data package
             data_package_checksums = args.get("datapackage_checksums", {})
             await ctx.prepare_data_package(set(args["games"]), data_package_checksums)
+
+            # Store game-keyed world version pins + the index tag for use after Connected.
+            ctx.world_versions = args.get("world_versions", {}) or {}
+            ctx.igdb_tag = args.get("igdb_tag")
 
             await ctx.server_auth(args['password'])
 
@@ -1651,6 +1825,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
         if ctx.ui:
             ctx.ui.on_connect()
+
+        # Check world version pin for this slot now that ctx.game is known.
+        _check_world_version_pin(ctx)
 
     elif cmd == 'ReceivedItems':
         start_index = args["index"]
