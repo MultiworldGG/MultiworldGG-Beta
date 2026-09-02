@@ -104,7 +104,7 @@ def test_igdb_upgraded_recently_true_only_for_today(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# installed_igdb_tag / module_location_from_tag / install_worlds_from_tag
+# installed_mwgg_index_tag / module_location_from_tag / install_worlds_from_tag
 # (the tagged-index snapshot install path; network/fs stubbed out)
 # --------------------------------------------------------------------------- #
 TAGGED_WHEEL = ("https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/"
@@ -113,30 +113,30 @@ TAGGED_GAMES = {"alttp": {"module_location": TAGGED_WHEEL}}
 INDEX_TAG = "sixteen-2026.05.16"
 
 
-def test_installed_igdb_tag_derives_zero_padded(monkeypatch):
+def test_installed_mwgg_index_tag_derives_zero_padded(monkeypatch):
     import mwgg_igdb
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
-    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "sixteen-2026.06.10"
 
 
-def test_installed_igdb_tag_preserves_same_day_suffix(monkeypatch):
+def test_installed_mwgg_index_tag_preserves_same_day_suffix(monkeypatch):
     import mwgg_igdb
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "ao")
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.5.11.3")
-    assert ModuleUpdate.installed_igdb_tag() == "ao-2026.05.11.3"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "ao-2026.05.11.3"
 
 
-def test_installed_igdb_tag_prefers_baked_tag(monkeypatch):
+def test_installed_mwgg_index_tag_prefers_baked_tag(monkeypatch):
     import mwgg_igdb
     monkeypatch.setattr(mwgg_igdb, "__tag__", "sixteen-2026.06.10-rc1", raising=False)
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
-    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10-rc1"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "sixteen-2026.06.10-rc1"
 
 
-def test_installed_igdb_tag_none_when_version_unavailable(monkeypatch):
+def test_installed_mwgg_index_tag_none_when_version_unavailable(monkeypatch):
     import mwgg_igdb
 
     def _raise(name):
@@ -145,7 +145,7 @@ def test_installed_igdb_tag_none_when_version_unavailable(monkeypatch):
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
     monkeypatch.setattr(importlib.metadata, "version", _raise)
-    assert ModuleUpdate.installed_igdb_tag() is None
+    assert ModuleUpdate.installed_mwgg_index_tag() is None
 
 
 def test_module_location_from_tag_reads_snapshot(monkeypatch):

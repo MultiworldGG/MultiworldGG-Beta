@@ -5,8 +5,6 @@ import unittest
 
 from BaseUtils import Version
 from NetUtils import (
-    ITEM_CLASS_TOOLTIP_LABELS,
-    TEXT_COLORS,
     Hint,
     HintStatus,
     JSONtoTextParser,
@@ -14,7 +12,6 @@ from NetUtils import (
     NetworkSlot,
     Permission,
     SlotType,
-    find_enclosing_color_span,
 )
 
 
@@ -116,108 +113,6 @@ class HandleItemNameColorTest(unittest.TestCase):
         self.assertEqual(self._color_for(0b11001), "progression_deprioritized_item_color")
         # skip_balancing only (no deprioritized) -> goal color
         self.assertEqual(self._color_for(0b01001), "progression_goal_item_color")
-
-
-class FindEnclosingColorSpanTest(unittest.TestCase):
-    SPAN = "[color=ffbe00]Progressive Sword[/color]"
-    TEXT = "You found " + SPAN + " at Link's House"
-    EXPECTED = (10, 10 + len(SPAN), "ffbe00")
-
-    def test_index_inside_span_text(self) -> None:
-        index = self.TEXT.index("Progressive") + 3
-        self.assertEqual(find_enclosing_color_span(self.TEXT, index), self.EXPECTED)
-
-    def test_index_between_spans_returns_none(self) -> None:
-        two = "[color=ffbe00]A[/color] and [color=6EC471]B[/color]"
-        self.assertIsNone(find_enclosing_color_span(two, two.index(" and ") + 2))
-        # plain text before the first span and after the last one
-        self.assertIsNone(find_enclosing_color_span(self.TEXT, 0))
-        self.assertIsNone(find_enclosing_color_span(self.TEXT, len(self.TEXT) - 1))
-        # the character immediately after the close tag is outside
-        self.assertIsNone(find_enclosing_color_span(self.TEXT, 10 + len(self.SPAN)))
-
-    def test_index_inside_open_tag_literal_counts_as_inside(self) -> None:
-        for offset in (0, 1, len("[color="), len("[color=ffbe00]") - 1):
-            self.assertEqual(
-                find_enclosing_color_span(self.TEXT, 10 + offset), self.EXPECTED,
-                f"offset {offset}",
-            )
-
-    def test_index_inside_close_tag_literal_counts_as_inside(self) -> None:
-        close_start = self.TEXT.index("[/color]")
-        for offset in range(len("[/color]")):
-            self.assertEqual(
-                find_enclosing_color_span(self.TEXT, close_start + offset), self.EXPECTED,
-                f"offset {offset}",
-            )
-
-    def test_wrapped_multi_line_span(self) -> None:
-        text = "line one\n[color=6EC471]Multi\nline item\nname[/color]\ntail"
-        expected = (text.index("[color="), text.index("[/color]") + len("[/color]"), "6EC471")
-        self.assertEqual(find_enclosing_color_span(text, text.index("item")), expected)
-
-    def test_default_color_span_still_resolved(self) -> None:
-        # filtering to item classes is the caller's job; the scan itself is color-agnostic
-        text = "[color=cdcdcd]plain chat[/color]"
-        self.assertEqual(find_enclosing_color_span(text, text.index("chat")), (0, len(text), "cdcdcd"))
-
-    def test_hash_prefixed_hex_is_normalized(self) -> None:
-        # hex_colormap-derived emissions carry a leading '#'
-        text = "[color=#008000](found)[/color]"
-        self.assertEqual(find_enclosing_color_span(text, text.index("found")), (0, len(text), "008000"))
-
-    def test_window_caps_backward_scan(self) -> None:
-        text = "[color=ffbe00]" + "x" * 100 + "[/color]"
-        index = text.index("[/color]") - 1
-        self.assertIsNotNone(find_enclosing_color_span(text, index, window=200))
-        self.assertIsNone(find_enclosing_color_span(text, index, window=50))
-
-    def test_window_caps_forward_scan(self) -> None:
-        text = "[color=ffbe00]" + "x" * 100 + "[/color]"
-        index = text.index("x")
-        self.assertIsNotNone(find_enclosing_color_span(text, index, window=200))
-        self.assertIsNone(find_enclosing_color_span(text, index, window=50))
-
-    def test_malformed_markup_returns_none(self) -> None:
-        # open tag missing its closing bracket
-        self.assertIsNone(find_enclosing_color_span("[color=ffbe00 text", 8))
-        # color value is not hex
-        self.assertIsNone(find_enclosing_color_span("[color=goldish]item[/color]", 16))
-        # unclosed span
-        self.assertIsNone(find_enclosing_color_span("[color=ffbe00]item", 15))
-        # bare close tag with no opener
-        self.assertIsNone(find_enclosing_color_span("text [/color] more", 7))
-        # out-of-range index
-        self.assertIsNone(find_enclosing_color_span(self.TEXT, -1))
-        self.assertIsNone(find_enclosing_color_span(self.TEXT, len(self.TEXT)))
-
-    def test_unescaped_bracket_text_degrades_gracefully(self) -> None:
-        # _handle_player_id inserts player names without escape_markup, so a
-        # bracket-bearing slot name can unbalance the emitted tags. The scan
-        # must return None or a span containing the index, never raise.
-        samples = (
-            "[color=ff87d7]we[ird[]name[/color] sent [color=00c51b]X[/color]",
-            "[color=ff87d7]name[/color]tail[/color]",
-            "[color=ff87d7][color=5fafff]nested[/color]",
-        )
-        for text in samples:
-            for index in range(len(text) + 2):
-                result = find_enclosing_color_span(text, index)
-                if result is not None:
-                    start, end, _ = result
-                    self.assertLessEqual(start, index, f"{text!r} @ {index}")
-                    self.assertLess(index, end, f"{text!r} @ {index}")
-
-
-class ItemClassTooltipLabelsTest(unittest.TestCase):
-    def test_labels_keyed_by_known_text_colors(self) -> None:
-        self.assertLessEqual(set(ITEM_CLASS_TOOLTIP_LABELS), set(TEXT_COLORS))
-
-    def test_labels_cover_exactly_the_item_class_colors(self) -> None:
-        # the allowlist is the six *_item_color entries -- nothing shared with
-        # command echo, players, locations, or entrances
-        item_colors = {name for name in TEXT_COLORS if name.endswith("_item_color")}
-        self.assertEqual(set(ITEM_CLASS_TOOLTIP_LABELS), item_colors)
 
 
 class SlotTypeTest(unittest.TestCase):

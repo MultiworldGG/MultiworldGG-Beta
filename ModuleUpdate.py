@@ -447,7 +447,7 @@ def _igdb_upgraded_recently() -> bool:
     return install_date is not None and install_date == datetime.date.today()
 
 
-def installed_igdb_tag() -> Optional[str]:
+def installed_mwgg_index_tag() -> Optional[str]:
     """Return the Index release tag the installed mwgg_igdb corresponds to, or None.
 
     Stamped into a generated seed so a client can reconstruct the exact world set
@@ -1144,7 +1144,7 @@ def update_worlds() -> Optional[WorldInstallResult]:
 
 # ── Room-pinned installs from a tagged index snapshot ────────────────────────
 # A room records the mwgg_igdb release tag it was generated against
-# (NetUtils.MultiData["igdb_tag"], stamped by installed_igdb_tag()). To install a world
+# (NetUtils.MultiData["mwgg_index_tag"], stamped by installed_mwgg_index_tag()). To install a world
 # at the version current at that tag WITHOUT disturbing the installed/active mwgg_igdb,
 # we read that one world's module_location straight out of the tagged index snapshot and
 # pip-install just that wheel. The snapshot is the tag's source tarball: the variant
