@@ -92,19 +92,8 @@ for world_source in world_sources:
     world_source.load()
 
 from .AutoWorld import AutoWorldRegister
-# Add version + manifest for each world.
-for world in AutoWorldRegister.world_types.values():
-    if world.game not in ["Archipelago"]:
-        module_slug = world.__module__.split(".")[1]
-        world_name, author, minimum_ap_version, version = get_archipelago_json(module_slug)
-        AutoWorldRegister.world_types[world.game].world_version = tuplize_version(version)
-        manifest = get_apworld_manifest(module_slug)
-        if manifest:
-            # version/compatible_version aren't world-facing; match the folder-load behavior
-            manifest.pop("version", None)
-            manifest.pop("compatible_version", None)
-            AutoWorldRegister.world_types[world.game].manifest = manifest
-
+# world_version/manifest are stamped per class at registration (AutoWorldRegister),
+# so worlds imported after this loop get them too.
 
 # Build the data package for each game.
 network_data_package: DataPackage = {
