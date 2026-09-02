@@ -67,28 +67,38 @@ a.mw-doc-language:hover{
 .markdown h1, .markdown details summary.h1{
     font-size: 32px;
     font-weight: normal;
-    font-family: Inter-Regular, sans-serif;
+    font-family: Inter-Bold, sans-serif;
     width: 100%;
-    text-shadow: 1px 1px 4px var(--mw-sys-color-shadow);
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 5px var(--mw-sys-color-primary),
+        1px 1px 0px var(--mw-sys-color-primary);
 }
 
 .markdown h2, .markdown details summary.h2{
     font-size: 24px;
     font-weight: normal;
-    font-family: Inter-Light, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     width: 100%;
     margin-top: 20px;
     margin-bottom: 0.5rem;
-    text-shadow: 1px 1px 2px var(--mw-sys-color-shadow);
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 4px var(--mw-sys-color-primary),
+        1px 1px 0px var(--mw-sys-color-primary);
 }
 
 .markdown h3, .markdown details summary.h3{
     font-size: 20px;
-    font-family: Inter-Regular, sans-serif;
+    font-family: Inter-Light, sans-serif;
     text-transform: none;
     text-align: left;
     width: 100%;
     margin-bottom: 0.5rem;
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 3px var(--mw-sys-color-tertiary),
+        1px 1px 0px var(--mw-sys-color-tertiary);
 }
 
 .markdown h4, .markdown details summary.h4{
@@ -135,6 +145,31 @@ a.mw-doc-language:hover{
 
 .markdown li{
 
+}
+
+.markdown sub{
+    font-size: 0.8rem;
+    vertical-align: sub;
+}
+
+.markdown blockquote{
+    border-left: 4px solid var(--mw-sys-color-outline);
+    background-color: var(--mw-sys-color-surface-container);
+    font-family: Inter-Bold, sans-serif;
+    padding-left: 16px;
+    margin-left: 1rem;
+    margin-right: 0;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown mark{
+    background-color: var(--mw-sys-color-secondary-container);
+    color: var(--mw-sys-color-on-secondary-container);
+    font-family: Inter-Bold, sans-serif;
+    font-weight: 600;
+    padding: 0px 4px;
+    border-radius: 2px;
 }
 
 .markdown #tutorial-video-container{
