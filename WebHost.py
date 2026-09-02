@@ -5,6 +5,10 @@ import logging
 import typing
 from pathlib import Path
 
+# Must precede the ModuleUpdate import (its fallback would claim the root logger)
+# and live at module level so spawn()ed children, which only re-import, get it too.
+logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+
 import ModuleUpdate
 from BaseUtils import local_path
 
@@ -192,7 +196,6 @@ def find_docs_folder_recursive(root_dir, max_depth=3):
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     multiprocessing.set_start_method('spawn')
-    logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
 
     from WebHostLib.autolauncher import autohost, autogen, stop
     from WebHostLib.options import create as create_options_files

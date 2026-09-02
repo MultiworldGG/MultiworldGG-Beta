@@ -54,6 +54,9 @@ def render_markdown(path: str, img_url_base: str | None = None) -> str:
             "footnotes",
             "table",
             "speedup",
+            "task_lists",
+            "mark",
+            "subscript",
         ],
     )
 

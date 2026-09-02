@@ -104,7 +104,7 @@ def test_igdb_upgraded_recently_true_only_for_today(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# installed_igdb_tag / module_location_from_tag / install_worlds_from_tag
+# installed_mwgg_index_tag / module_location_from_tag / install_worlds_from_tag
 # (the tagged-index snapshot install path; network/fs stubbed out)
 # --------------------------------------------------------------------------- #
 TAGGED_WHEEL = ("https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/"
@@ -113,30 +113,30 @@ TAGGED_GAMES = {"alttp": {"module_location": TAGGED_WHEEL}}
 INDEX_TAG = "sixteen-2026.05.16"
 
 
-def test_installed_igdb_tag_derives_zero_padded(monkeypatch):
+def test_installed_mwgg_index_tag_derives_zero_padded(monkeypatch):
     import mwgg_igdb
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
-    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "sixteen-2026.06.10"
 
 
-def test_installed_igdb_tag_preserves_same_day_suffix(monkeypatch):
+def test_installed_mwgg_index_tag_preserves_same_day_suffix(monkeypatch):
     import mwgg_igdb
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "ao")
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.5.11.3")
-    assert ModuleUpdate.installed_igdb_tag() == "ao-2026.05.11.3"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "ao-2026.05.11.3"
 
 
-def test_installed_igdb_tag_prefers_baked_tag(monkeypatch):
+def test_installed_mwgg_index_tag_prefers_baked_tag(monkeypatch):
     import mwgg_igdb
     monkeypatch.setattr(mwgg_igdb, "__tag__", "sixteen-2026.06.10-rc1", raising=False)
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "2026.6.10")
-    assert ModuleUpdate.installed_igdb_tag() == "sixteen-2026.06.10-rc1"
+    assert ModuleUpdate.installed_mwgg_index_tag() == "sixteen-2026.06.10-rc1"
 
 
-def test_installed_igdb_tag_none_when_version_unavailable(monkeypatch):
+def test_installed_mwgg_index_tag_none_when_version_unavailable(monkeypatch):
     import mwgg_igdb
 
     def _raise(name):
@@ -145,7 +145,7 @@ def test_installed_igdb_tag_none_when_version_unavailable(monkeypatch):
     monkeypatch.delattr(mwgg_igdb, "__tag__", raising=False)
     monkeypatch.setattr(ModuleUpdate, "_detect_installed_variant", lambda: "sixteen")
     monkeypatch.setattr(importlib.metadata, "version", _raise)
-    assert ModuleUpdate.installed_igdb_tag() is None
+    assert ModuleUpdate.installed_mwgg_index_tag() is None
 
 
 def test_module_location_from_tag_reads_snapshot(monkeypatch):
@@ -228,14 +228,14 @@ def restore_variant_globals():
         ModuleUpdate._EXPLICIT_VARIANT,
         ModuleUpdate.MWGG_IGDB_VARIANT,
         ModuleUpdate.MWGG_IGDB_BRANCH,
-        ModuleUpdate.MWGG_IGDB_GIT_URL,
+        ModuleUpdate.MWGG_IGDB_URL,
     )
     yield
     (
         ModuleUpdate._EXPLICIT_VARIANT,
         ModuleUpdate.MWGG_IGDB_VARIANT,
         ModuleUpdate.MWGG_IGDB_BRANCH,
-        ModuleUpdate.MWGG_IGDB_GIT_URL,
+        ModuleUpdate.MWGG_IGDB_URL,
     ) = saved
 
 
@@ -269,8 +269,8 @@ def test_resolve_variant_explicit_override_wins(monkeypatch, restore_variant_glo
     assert ModuleUpdate._resolve_variant() == "ao"
     assert ModuleUpdate.MWGG_IGDB_VARIANT == "ao"
     assert ModuleUpdate.MWGG_IGDB_BRANCH == "game_index_ao"
-    assert ModuleUpdate.MWGG_IGDB_GIT_URL == (
-        "git+https://github.com/MultiworldGG/MultiworldGG-Index@game_index_ao"
+    assert ModuleUpdate.MWGG_IGDB_URL == (
+        "https://github.com/MultiworldGG/MultiworldGG-Index/archive/refs/heads/game_index_ao.tar.gz"
     )
 
 
@@ -280,6 +280,30 @@ def test_resolve_variant_falls_back_to_default_when_undetectable(monkeypatch, re
 
     assert ModuleUpdate._resolve_variant() == ModuleUpdate.DEFAULT_MWGG_IGDB_VARIANT
     assert ModuleUpdate.MWGG_IGDB_BRANCH == f"game_index_{ModuleUpdate.DEFAULT_MWGG_IGDB_VARIANT}"
+
+
+# --------------------------------------------------------------------------- #
+# install_mwgg_igdb -> uv args
+# --------------------------------------------------------------------------- #
+def test_install_mwgg_igdb_pulls_branch_tarball_not_git(monkeypatch, restore_variant_globals):
+    """uv resolves `git+` URLs through a git executable that end users lack, so the
+    branch must be installed from GitHub's source tarball."""
+    calls: list = []
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_EXPLICIT_VARIANT", "twelve")
+    monkeypatch.setattr(ModuleUpdate, "_uv_pip", lambda *args: list(args))
+
+    def _run(args, **kw):
+        calls.append(args)
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(ModuleUpdate, "_uv_run", _run)
+
+    assert ModuleUpdate.install_mwgg_igdb(upgrade=True, force=True)
+    [args] = calls
+    assert "https://github.com/MultiworldGG/MultiworldGG-Index/archive/refs/heads/game_index_twelve.tar.gz" in args
+    assert not any(a.startswith("git+") for a in args)
+    assert "--reinstall" in args and "--no-cache" in args
 
 
 # --------------------------------------------------------------------------- #

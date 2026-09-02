@@ -710,7 +710,7 @@ class CommonContext(InitContext):
         self.world_versions: dict[str, dict] = {}
         # The mwgg_igdb release tag the room was generated against (from RoomInfo). Used to
         # install a managed world at its gen-time version WITHOUT overwriting the active index.
-        self.igdb_tag: typing.Optional[str] = None
+        self.mwgg_index_tag: typing.Optional[str] = None
 
         # Launcher-provided callbacks
         ready_cb, error_cb = _consume_pending_launch_callbacks()
@@ -1631,7 +1631,7 @@ def _check_world_version_pin(ctx: CommonContext) -> None:
     # Resolve the gen-time version from the room's igdb tag. We read this one world's
     # module_location out of the tagged index snapshot and install just that wheel -- the
     # installed/active mwgg_igdb is never overwritten.
-    tag = ctx.igdb_tag
+    tag = ctx.mwgg_index_tag
     if not tag:
         logger.warning(
             f"[{ctx.game}] Room requires world version {want_str} "
@@ -1739,7 +1739,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
             # Store game-keyed world version pins + the index tag for use after Connected.
             ctx.world_versions = args.get("world_versions", {}) or {}
-            ctx.igdb_tag = args.get("igdb_tag")
+            ctx.mwgg_index_tag = args.get("mwgg_index_tag")
 
             await ctx.server_auth(args['password'])
 

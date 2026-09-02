@@ -107,7 +107,7 @@ def _pin_ctx(game="Some Game", version=(1, 2, 3), custom=False, tag=PIN_TAG):
     return types.SimpleNamespace(
         game=game,
         world_versions={game: {"version": version, "custom": custom}} if game else {},
-        igdb_tag=tag,
+        mwgg_index_tag=tag,
         ui=None,
     )
 

@@ -159,20 +159,11 @@ else:
 
     from mwgg_gui.hint.legacyhint import *
 
-    # Legacy hint-surface names: the classes moved to mwgg_gui, so reimport
-    # them under the old kvui names that world wheels and worlds/tracker use.
-    from mwgg_gui.hint.legacyhint import (status_names, status_colors, status_sort_weights,
-                                          status_icons, remove_between_brackets,
-                                          HintTooltipLabel as TooltipLabel)
+    from mwgg_gui.hint.legacyhint import RefToolTip as ToolTip
+    from mwgg_gui.hint.legacyhint import HintTooltipLabel as TooltipLabel
+
     from mwgg_gui.components.columns import ColumnSorter, ColumnSortMixin
     from mwgg_gui.overrides import HoverLabel as HovererableLabel
-
-    class MarkupToolTip(MDTooltipPlain):
-        markup = True
-
-    class ToolTip(MarkupToolTip):
-        # Published world wheels import kvui.ToolTip; keep the name real.
-        pass
 
     class ClassicHintScreen(CustomScreen):
         """Classic (pre-split) hint table wrapped in a CustomScreen.
