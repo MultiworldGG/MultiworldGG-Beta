@@ -155,7 +155,7 @@ else:
     from kivymd.uix.menu.menu import MDDropdownTextItem
     from kivymd.uix.textfield.textfield import MDTextField
     from kivymd.uix.tooltip import MDTooltip, MDTooltipPlain
-    from kivymd.uix.behaviors import HoverBehavior
+    from kivymd.uix.behaviors import HoverBehavior as MDHoverBehavior
 
     from mwgg_gui.hint.legacyhint import *
 
@@ -164,6 +164,26 @@ else:
 
     from mwgg_gui.components.columns import ColumnSorter, ColumnSortMixin
     from mwgg_gui.overrides import HoverLabel as HovererableLabel
+
+    class HoverBehavior(MDHoverBehavior):
+        hovered = BooleanProperty(False)
+        def __init__(self, **kwargs):
+            self.register_event_type("on_enter")
+            self.register_event_type("on_leave")
+            Window.bind(mouse_pos=self.on_mouse_pos)
+            self.bind(hover_visible=lambda instance, value: setattr(self, 'hovered', value))
+            super(HoverBehavior, self).__init__(**kwargs)
+
+        def on_mouse_pos(self, *args):
+            self.on_mouse_update(*args)
+
+        def on_enter(self):
+            self.dispatch("on_enter")
+
+        def on_leave(self):
+            self.dispatch("on_leave")
+
+    Factory.register("HoverBehavior", HoverBehavior)
 
     class ClassicHintScreen(CustomScreen):
         """Classic (pre-split) hint table wrapped in a CustomScreen.

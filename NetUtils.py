@@ -406,6 +406,7 @@ class RawJSONtoTextParser(JSONtoTextParser):
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
     color_codes: typing.ClassVar[typing.Optional[dict]] = None
+    ref_count: int = 0
 
     def __init__(self, ctx):
         super().__init__(ctx)
