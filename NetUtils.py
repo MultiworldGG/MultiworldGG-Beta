@@ -466,11 +466,16 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
         if color_hex:
             # Get the plain text without wrapping it in default color
             text = node.get("text", "")
+            for ref in node.get("refs", []):
+                ret_text = f"\n[ref={self.ref_count}|{ref}][color={color_hex}]{text}[/color][/ref]"
+                self.ref_count += 1
+                return ret_text # Return without 'handling' the text again, as it's already formatted with color and ref
             return f'[color={color_hex}]{text}[/color]'
         else:
             return self._handle_text(node)
 
     def _handle_text(self, node: JSONMessagePart):
+        '''This returns only the text, without any color formatting for the plaintext map'''
         return node.get("text", "")
 
 # setting ansi colors - Added many 8 bit to go with the 4 bit.

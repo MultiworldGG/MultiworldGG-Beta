@@ -118,7 +118,7 @@ else:
     # Legacy widget shapes for world kv files that reference them by bare class name;
     # importing registers them with the kivy Factory and keeps the old import path working.
     from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout
-    from NetUtils import HintStatus, KivyRefJSONtoTextParser as KivyJSONtoTextParser
+    from NetUtils import HintStatus, KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
     from kivymd.uix.scrollview import MDScrollView as ScrollBox
     from kivymd.uix.boxlayout import MDBoxLayout
     from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty
