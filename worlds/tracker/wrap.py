@@ -25,6 +25,7 @@ def attach_tracker_overlay(ctx) -> None:
         return
 
     from .TrackerCore import TrackerCore
+    from .map_controller import UTMapController
 
     tracker_core = TrackerCore(logger, False, False)
     _noop = lambda *args, **kwargs: None
@@ -33,6 +34,7 @@ def attach_tracker_overlay(ctx) -> None:
     tracker_core.set_clear_page(_noop)
     tracker_core.set_get_ut_color(lambda _color: "DD00FF")
     ctx.tracker_core = tracker_core
+    UTMapController(ctx, tracker_core)
 
     original_on_package = ctx.on_package
 
@@ -44,6 +46,11 @@ def attach_tracker_overlay(ctx) -> None:
                 _handle_connected(ctx, args)
             except Exception:
                 logger.exception("Tracker overlay failed to handle Connected packet")
+        if cmd in ("SetReply", "Retrieved"):
+            try:
+                ctx._map_controller.handle_stored_data(args)
+            except Exception:
+                logger.exception("Tracker overlay failed to handle %s packet", cmd)
         if cmd in ("Connected", "RoomUpdate"):
             _scout_checked_locations(ctx)
         if cmd in ("ReceivedItems", "RoomUpdate", "LocationInfo"):
@@ -57,9 +64,10 @@ def attach_tracker_overlay(ctx) -> None:
 
     registry = getattr(ctx, "feature_registry", None)
     if registry is not None:
-        from .overlay_features import register_tracker_page_tab
+        from .overlay_features import register_tracker_page_tab, register_tracker_map_tab
         registry.add(register_tracker_page_tab)
         registry.add(start_overlay_ui_refresh)
+        registry.add(register_tracker_map_tab)
     else:
         logger.warning(
             "Tracker overlay: ctx.feature_registry missing; "
@@ -104,12 +112,24 @@ def _handle_connected(ctx, args: dict) -> None:
         ctx.tracker_core.run_generator(None, None)
 
     ctx.tracker_core.initalize_tracker_core(connected_cls, raw_slot_data)
+    if ctx.tracker_core.tracker_disabled:
+        # World author requested UT be disabled; mirrors the standalone
+        # context's early return, no map/tab to build.
+        return
     if not ctx.tracker_core.multiworld:
         logger.error(
             "Tracker overlay: internal world generation failed for %r; "
             "tracker pane will stay empty",
             game,
         )
+        return
+
+    ctx._map_controller.build_tracker_world(connected_cls)
+    app = getattr(ctx, "ui", None)
+    if app is not None:
+        # Phase 2 (register_tracker_map_tab) already ran and built the
+        # widget; activate immediately. Otherwise it activates once it runs.
+        ctx._map_controller.activate(app)
 
 
 def _receives_own_items(ctx) -> bool:
@@ -216,6 +236,10 @@ def _refresh(ctx, app) -> None:
     update_fn = getattr(console_screen, "update_tracker_locations", None) if console_screen else None
     if update_fn is not None:
         update_fn()
+    # The hint table's In Logic column reads tracker_core, so rebuild it too.
+    update_hints = getattr(app, "update_hints", None)
+    if update_hints is not None:
+        update_hints()
 
     if app is not None:
         from worlds.tracker.gui import clear_stray_tooltips

@@ -161,6 +161,7 @@ else:
 
     from mwgg_gui.hint.legacyhint import RefToolTip as ToolTip
     from mwgg_gui.hint.legacyhint import HintTooltipLabel as TooltipLabel
+    MarkupToolTip = ToolTip
 
     from mwgg_gui.components.columns import (
         ColumnSorter, ColumnSortMixin, ColumnFilter, ColumnFilterMixin,

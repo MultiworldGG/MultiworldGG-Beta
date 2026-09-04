@@ -16,12 +16,13 @@ KVUI_PATH = os.path.join(REPO_ROOT, "kvui.py")
 
 # Old kvui names still imported by world wheels and worlds/tracker; bound via
 # class def, assignment, or import alias. HintLog/HintLabel/HintLayout/
-# MarkupDropdown arrive through the legacyhint star import (checked separately).
+# MarkupDropdown, the status_* tables and remove_between_brackets arrive
+# through the legacyhint star import (checked separately).
 LEGACY_NAMES = {
     "MarkupToolTip", "ToolTip", "TooltipLabel", "HovererableLabel",
-    "ColumnSorter", "ColumnSortMixin", "ClassicHintScreen",
-    "status_names", "status_colors", "status_sort_weights", "status_icons",
-    "remove_between_brackets",
+    "ColumnSorter", "ColumnSortMixin", "ColumnFilter", "ColumnFilterMixin",
+    "ColumnFilterMulti", "ColumnFilterItemClassification", "ExtraColumn",
+    "ClassicHintScreen",
 }
 
 
@@ -70,10 +71,10 @@ class TestKvuiHintSurface(unittest.TestCase):
         for node in self.gui_branch:
             if isinstance(node, ast.ImportFrom) and node.module == "NetUtils":
                 aliases = {alias.asname or alias.name: alias.name for alias in node.names}
-                if aliases.get("KivyJSONtoTextParser") == "KivyRefJSONtoTextParser":
+                if aliases.get("KivyJSONtoTextParser") == "KivyMarkupJSONtoTextParser":
                     return
         self.fail(
-            "GUI branch must re-export NetUtils.KivyRefJSONtoTextParser as KivyJSONtoTextParser"
+            "GUI branch must re-export NetUtils.KivyMarkupJSONtoTextParser as KivyJSONtoTextParser"
         )
 
     def test_openpyxl_never_imported(self) -> None:
