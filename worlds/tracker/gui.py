@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 logger = logging.getLogger("Client")
 
 
-_hint_patch_installed = False
+_hint_column_installed = False
 
 
 def clear_stray_tooltips() -> None:
@@ -42,62 +42,45 @@ def clear_stray_tooltips() -> None:
         Window.remove_widget(child)
 
 
-def install_hint_label_patch():
-    """Patch kvui.HintLog.on_kv_post once so its viewclass becomes the
-    tracker-aware HintLabel (with the in-logic / found / not-found color
-    column). Safe to call repeatedly."""
-    global _hint_patch_installed
-    if _hint_patch_installed:
+def install_hint_log_column():
+    """Register the tracker's "In Logic" column on kvui.HintLog once.
+
+    Uses HintLog.register_extra_column (the mixin table's data-driven hook)
+    instead of patching on_kv_post, so the column sorts/filters like any
+    other. Must run before the hint screen is built. Safe to call repeatedly.
+    """
+    global _hint_column_installed
+    if _hint_column_installed:
         return
 
-    from kvui import HintLog, HintLabel, TooltipLabel
-    from kivy.properties import StringProperty
-    from worlds import AutoWorld
+    from kvui import HintLog, ColumnSorter, ColumnFilter, ExtraColumn, remove_between_brackets
+    from NetUtils import HintStatus
+    from worlds.tracker.TrackerClient import get_ut_color
 
-    class TrackerHintLabel(HintLabel):
-        logic_text = StringProperty("")
+    def build_in_logic(hint: dict, row: dict) -> None:
+        from kivy.app import App
+        ctx = App.get_running_app().ctx
+        if hint["status"] == HintStatus.HINT_FOUND:
+            state, color_key, text = "found", "collected", "Found"
+        elif hint["location"] in ctx.tracker_core.locations_available:
+            state, color_key, text = "in_logic", "in_logic", "In Logic"
+        else:
+            state, color_key, text = "not_found", "out_of_logic", "Not Found"
+        row["in_logic"] = {"text": f"[color={get_ut_color(color_key)}]{text}[/color]", "state": state}
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            logic = TooltipLabel(
-                sort_key="finding",
-                text="", halign="center", valign="center", pos_hint={"center_y": 0.5},
-            )
-            self.add_widget(logic)
+    weights = {"in_logic": 0, "not_found": 1, "found": 2}
+    sorter = ColumnSorter("in_logic", lambda row: weights[row["in_logic"]["state"]])
+    filt = ColumnFilter("in_logic", lambda row: remove_between_brackets.sub("", row["in_logic"]["text"]))
+    filt.option_list.update(("Found", "In Logic", "Not Found"))
 
-            def set_text(_, value):
-                logic.text = value
-            self.bind(logic_text=set_text)
-
-        def refresh_view_attrs(self, rv, index, data):
-            super().refresh_view_attrs(rv, index, data)
-            if data["item"]["text"] == rv.header["item"]["text"]:
-                self.logic_text = "[u]In Logic[/u]"
-                return
-            from kivy.app import App
-            ctx = App.get_running_app().ctx
-            if "status" in data:
-                loc = data["status"]["hint"]["location"]
-                from NetUtils import HintStatus
-                found = data["status"]["hint"]["status"] == HintStatus.HINT_FOUND
-            else:
-                prefix = len("[color=00FF7F]")
-                suffix = len("[/color]")
-                loc_name = data["location"]["text"][prefix:-1*suffix]
-                loc = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_name_to_id.get(loc_name)
-                found = "Not Found" not in data["found"]["text"]
-
-            in_logic = loc in ctx.tracker_core.locations_available
-            self.logic_text = rv.parser.handle_node({
-                "type": "color",
-                "color": "green" if found else "orange" if in_logic else "red",
-                "text": "Found" if found else "In Logic" if in_logic else "Not Found",
-            })
-
-    def _on_kv_post(self, base_widget):
-        self.viewclass = TrackerHintLabel
-    HintLog.on_kv_post = _on_kv_post
-    _hint_patch_installed = True
+    HintLog.register_extra_column(ExtraColumn(
+        key="in_logic",
+        header_text="In Logic",
+        build_value=build_in_logic,
+        sorter=sorter,
+        filter=filt,
+    ))
+    _hint_column_installed = True
 
 
 _kv_loaded = False
@@ -132,7 +115,7 @@ def build_tracker_view(ctx):
     # Widget classes must exist before the kv string loads so its rules resolve.
     _ensure_widgets()
     load_tracker_kv()
-    install_hint_label_patch()
+    install_hint_log_column()
 
     # Local imports keep the no-GUI path from pulling Kivy.
     from kivy.uix.boxlayout import BoxLayout

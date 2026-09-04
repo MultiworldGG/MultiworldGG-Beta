@@ -162,7 +162,10 @@ else:
     from mwgg_gui.hint.legacyhint import RefToolTip as ToolTip
     from mwgg_gui.hint.legacyhint import HintTooltipLabel as TooltipLabel
 
-    from mwgg_gui.components.columns import ColumnSorter, ColumnSortMixin
+    from mwgg_gui.components.columns import (
+        ColumnSorter, ColumnSortMixin, ColumnFilter, ColumnFilterMixin,
+        ColumnFilterMulti, ColumnFilterItemClassification, ExtraColumn,
+    )
     from mwgg_gui.overrides import HoverLabel as HovererableLabel
 
     class HoverBehavior(MDHoverBehavior):
