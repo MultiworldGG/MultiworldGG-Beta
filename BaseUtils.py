@@ -432,9 +432,15 @@ def get_frontend_versions() -> "dict[str, str]":
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
                  write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
                  add_timestamp: bool = False, exception_logger: typing.Optional[str] = None,
-                 show_logo: bool = False):
+                 show_logo: bool = False, log_network: typing.Optional[bool] = None):
+    """Install the root file + stream handlers; log_network (None: host.yaml) gates websockets frame tracing."""
     import datetime
     loglevel: int = loglevel_mapping.get(loglevel, loglevel)
+    if log_network is None and loglevel < logging.INFO:
+        # before the handler swap: the settings import reaches ModuleUpdate, whose
+        # basicConfig fallback fires on a handler-less root logger
+        from settings import get_settings
+        log_network = get_settings().server_options.log_network
     log_folder = user_path("logs")
     os.makedirs(log_folder, exist_ok=True)
     root_logger = logging.getLogger()
@@ -442,7 +448,8 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         root_logger.removeHandler(handler)
         handler.close()
     root_logger.setLevel(loglevel)
-    logging.getLogger("websockets").setLevel(loglevel)  # make sure level is applied for websockets
+    # websockets traces every frame at DEBUG; that is the traffic log_network gates
+    logging.getLogger("websockets").setLevel(loglevel if log_network else max(loglevel, logging.INFO))
     for logger_name in ("asyncio", "PIL"):
         logging.getLogger(logger_name).setLevel(max(loglevel, logging.INFO))
     if "a" not in write_mode:

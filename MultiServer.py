@@ -3099,7 +3099,8 @@ async def main(args: argparse.Namespace):
     Utils.init_logging(name="Server",
                        loglevel=args.loglevel.lower(),
                        add_timestamp=args.logtime,
-                       show_logo=True)
+                       show_logo=True,
+                       log_network=args.log_network)
 
     ctx = Context(args.host, args.port, args.admin_password, args.password, args.location_check_points,
                   args.hint_cost, not args.disable_item_cheat, args.release_mode, args.collect_mode,

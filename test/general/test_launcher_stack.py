@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import types
 import urllib.parse
 import zipfile
 
@@ -17,6 +18,7 @@ import LauncherComponents as lc
 import ModuleUpdate
 import MultiWorld
 import Utils
+import settings
 import tools.regen_inno_components as regen_inno
 from CommonClient import parse_connect_url, safe_avatar_source
 from LauncherComponents import (Component, SuffixIdentifier, Type, components, get_exe, identify,
@@ -485,6 +487,79 @@ def test_splash_skipped_off_windows(monkeypatch):
     monkeypatch.setattr(MultiWorld, "is_windows", False)
     monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
     assert MultiWorld.should_show_splash("gui") is False
+
+
+# --- init_logging: host.yaml log_network gates websockets frame tracing ---
+
+@pytest.fixture
+def restored_root_logger(monkeypatch, tmp_path):
+    """init_logging replaces the root handlers: keep its log file out of the
+    repo and hand pytest's capture handlers back afterwards."""
+    monkeypatch.setattr(BaseUtils, "user_path", lambda *parts: str(tmp_path.joinpath(*parts)))
+    root = logging.getLogger()
+    websockets_logger = logging.getLogger("websockets")
+    saved_handlers, saved_level, saved_ws_level = root.handlers[:], root.level, websockets_logger.level
+    yield
+    for handler in root.handlers[:]:
+        if handler not in saved_handlers:
+            root.removeHandler(handler)
+            handler.close()
+    for handler in saved_handlers:
+        if handler not in root.handlers:
+            root.addHandler(handler)
+    root.setLevel(saved_level)
+    websockets_logger.setLevel(saved_ws_level)
+
+
+def _fake_settings(log_network):
+    return types.SimpleNamespace(server_options=types.SimpleNamespace(log_network=log_network))
+
+
+def test_init_logging_debug_keeps_websockets_quiet_without_log_network(restored_root_logger, monkeypatch):
+    """--loglevel debug is the client default; websockets logs every frame at
+    DEBUG, and that traffic is what host.yaml log_network controls."""
+    monkeypatch.setattr(settings, "get_settings", lambda: _fake_settings(0))
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert logging.getLogger().level == logging.DEBUG
+    assert logging.getLogger("websockets").level == logging.INFO
+
+
+def test_init_logging_debug_traces_websockets_with_log_network(restored_root_logger, monkeypatch):
+    monkeypatch.setattr(settings, "get_settings", lambda: _fake_settings(1))
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert logging.getLogger("websockets").level == logging.DEBUG
+
+
+def test_init_logging_explicit_log_network_skips_host_yaml(restored_root_logger, monkeypatch):
+    """MultiServer passes its --log_network flag; host.yaml is not consulted."""
+    monkeypatch.setattr(settings, "get_settings", lambda: pytest.fail("host.yaml consulted"))
+    BaseUtils.init_logging("LogNetworkTest", "debug", log_network=True)
+    assert logging.getLogger("websockets").level == logging.DEBUG
+
+
+def test_init_logging_info_skips_host_yaml(restored_root_logger, monkeypatch):
+    monkeypatch.setattr(settings, "get_settings", lambda: pytest.fail("host.yaml consulted"))
+    BaseUtils.init_logging("LogNetworkTest", "info")
+    assert logging.getLogger("websockets").level == logging.INFO
+
+
+def test_init_logging_host_yaml_lookup_precedes_handler_swap(restored_root_logger, monkeypatch):
+    """The settings import reaches ModuleUpdate, whose basicConfig fallback
+    fires on a handler-less root logger; the lookup must run before
+    init_logging strips the handlers or that fallback survives it."""
+    def get_settings_with_fallback():
+        if not logging.getLogger().hasHandlers():
+            logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+        return _fake_settings(0)
+    monkeypatch.setattr(settings, "get_settings", get_settings_with_fallback)
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        root.removeHandler(handler)
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert root.level == logging.DEBUG
+    stream_handlers = [h for h in root.handlers
+                       if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)]
+    assert len(stream_handlers) == 1
 
 
 # --- client component unwrapping (in-process launch) ---
