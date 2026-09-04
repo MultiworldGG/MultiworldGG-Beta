@@ -115,7 +115,7 @@ class TestWrappedOnPackage(unittest.TestCase):
 
         ctx = _ctx(
             tracker_core=None,
-            client=None,
+            feature_registry=None,
             on_package=lambda cmd, args: None,
             send_msgs=send_msgs,
             checked_locations={21},

@@ -57,7 +57,7 @@ from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, Netwo
                       Permission, SlotType, LocationStore, Hint, HintStatus, MWGGUIHintStatus,JSONtoTextParser,
                       RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes, TEXT_COLORS)
 from ClientState import ClientState
-from ClientBuilder import GameClient, Client
+from ClientBuilder import GameClient, FeatureRegistry
 from multiprocessing import Queue
 
 # GUI-only dialog components are imported lazily at their call sites so
@@ -719,7 +719,8 @@ class CommonContext(InitContext):
 
         # Overlay-feature registry: phase-1 attach hooks register a phase-2 activator
         # here; ExtrasBuilder runs them after the per-game UI is wired up.
-        self.client = Client()
+        # Not named "client": upstream world contexts own self.client for their game client.
+        self.feature_registry = FeatureRegistry()
 
         # Universal Tracker opt-in (client_type='universal_tracker'). Runs before the world's
         # launch() schedules server_task, so on_package is patched before any Connected packet.

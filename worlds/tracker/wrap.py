@@ -4,7 +4,7 @@ When the launcher's "Universal Tracker" checkbox is set alongside a game
 module, ``CommonContext.__init__`` calls ``attach_tracker_overlay``: it
 installs a ``TrackerCore`` on the context, patches ``on_package`` to catch
 the first ``Connected`` packet, and registers overlay features (Tracker tab,
-periodic refresh) on ``ctx.client.features`` for ``ExtrasBuilder``.
+periodic refresh) on ``ctx.feature_registry.features`` for ``ExtrasBuilder``.
 """
 
 from __future__ import annotations
@@ -55,14 +55,14 @@ def attach_tracker_overlay(ctx) -> None:
 
     ctx.on_package = wrapped_on_package
 
-    client = getattr(ctx, "client", None)
-    if client is not None:
+    registry = getattr(ctx, "feature_registry", None)
+    if registry is not None:
         from .overlay_features import register_tracker_page_tab
-        client.add(register_tracker_page_tab)
-        client.add(start_overlay_ui_refresh)
+        registry.add(register_tracker_page_tab)
+        registry.add(start_overlay_ui_refresh)
     else:
         logger.warning(
-            "Tracker overlay: ctx.client missing; "
+            "Tracker overlay: ctx.feature_registry missing; "
             "Phase 2 features will not be scheduled"
         )
 

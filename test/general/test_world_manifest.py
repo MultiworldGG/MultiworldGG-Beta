@@ -40,6 +40,37 @@ def get_source_world_manifest_path(game: str) -> Path | None:
     assert False, f"{world_type_path} not found in any worlds path"
 
 
+class TestRegistrationStampsManifest(unittest.TestCase):
+    """world_version/manifest are applied at class registration, so a world
+    imported after the loader's one-shot loop (client launch, Generate) has them."""
+
+    def test_lazily_registered_world_gets_version_and_manifest(self) -> None:
+        import sys
+        import types
+        from unittest import mock
+
+        import BaseUtils
+        from Utils import Version
+        from worlds.AutoWorld import World
+
+        module = types.ModuleType("worlds.stamptest")
+        module.__file__ = "/fake/worlds/stamptest/__init__.py"
+        manifest = {"game": "Stamp Test", "world_version": "1.2.3", "version": 7, "compatible_version": 7}
+        sys.modules["worlds.stamptest"] = module
+        try:
+            with mock.patch.object(BaseUtils, "get_archipelago_json",
+                                   return_value=("Stamp Test", ["a"], "0.6.5", "1.2.3")), \
+                    mock.patch.object(BaseUtils, "get_apworld_manifest", return_value=dict(manifest)):
+                world_cls = type("StampTestWorld", (World,), {
+                    "__module__": "worlds.stamptest", "game": "Stamp Test",
+                    "item_name_to_id": {}, "location_name_to_id": {}})
+            self.assertEqual(world_cls.world_version, Version(1, 2, 3))
+            self.assertEqual(world_cls.manifest, {"game": "Stamp Test", "world_version": "1.2.3"})
+        finally:
+            AutoWorldRegister.world_types.pop("Stamp Test", None)
+            sys.modules.pop("worlds.stamptest", None)
+
+
 # TODO: remove the filter once manifests are mandatory.
 @classvar_matrix(game=filter(get_source_world_manifest_path, source_world_names))
 class TestWorldManifest(unittest.TestCase):

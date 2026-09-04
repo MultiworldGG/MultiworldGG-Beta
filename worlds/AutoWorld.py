@@ -27,6 +27,30 @@ class InvalidItemError(KeyError):
     pass
 
 
+def _stamp_world_manifest(world_cls: Type[World]) -> None:
+    """Apply archipelago.json (world_version, manifest) to a freshly registered
+    world. Runs at registration rather than in the loader's one-shot loop so
+    lazily imported worlds (client launches, Generate's per-yaml loads) get it too.
+    """
+    module = world_cls.__module__
+    if world_cls.game == "Archipelago" or not module.startswith("worlds."):
+        return
+    from BaseUtils import get_archipelago_json, get_apworld_manifest, tuplize_version
+    slug = module.split(".")[1]
+    try:
+        *_, version = get_archipelago_json(slug)
+        manifest = get_apworld_manifest(slug)
+    except Exception:
+        logging.debug("No readable archipelago.json for %s; keeping default world_version", slug, exc_info=True)
+        return
+    world_cls.world_version = tuplize_version(version)
+    if manifest:
+        # version/compatible_version aren't world-facing; match the folder-load behavior
+        manifest.pop("version", None)
+        manifest.pop("compatible_version", None)
+        world_cls.manifest = manifest
+
+
 class AutoWorldRegister(type):
     world_types: dict[str, Type[World]] = {}
     testable_worlds: dict[str, Type[World]] = world_types
@@ -96,6 +120,7 @@ class AutoWorldRegister(type):
                 {AutoWorldRegister.world_types[dct["game"]].__file__} when attempting to register from
                 {new_class.__file__}.""")
             AutoWorldRegister.world_types[dct["game"]] = new_class
+            _stamp_world_manifest(new_class)
         if ".apworld" in new_class.__file__:
             new_class.zip_path = pathlib.Path(new_class.__file__).parents[1]
         if "settings_key" not in dct:
