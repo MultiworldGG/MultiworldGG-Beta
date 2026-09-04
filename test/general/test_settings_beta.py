@@ -31,12 +31,18 @@ class TestHostYamlBackslashRepair(unittest.TestCase):
                 f.write(textwrap.dedent(body))
             return Settings(path)
 
+    @staticmethod
+    def _stored(loaded: Settings, key: str) -> str:
+        # Group.__getattribute__ roots non-absolute paths under user_path, so a
+        # Windows path resolves to <cwd>/C:\... on POSIX; assert the stored literal.
+        return vars(loaded.general_options)[key]
+
     def test_unescaped_backslashes_read_literally(self) -> None:
         loaded = self._load('''
             general_options:
               output_path: "C:\\Users\\x\\new\\output"  # \\n and \\U alike
         ''')
-        self.assertEqual(loaded.general_options.output_path, "C:\\Users\\x\\new\\output")
+        self.assertEqual(self._stored(loaded, "output_path"), "C:\\Users\\x\\new\\output")
         self.assertIsNotNone(loaded.filename)
         self.assertTrue(loaded.changed)
 
@@ -44,7 +50,7 @@ class TestHostYamlBackslashRepair(unittest.TestCase):
         text = 'general_options:\n  output_path: "C:\\\\Users\\\\x"\n  player_files_path: "tab\\there"\n'
         self.assertIsNone(settings._repair_unescaped_backslashes(text))
         loaded = self._load(text)
-        self.assertEqual(loaded.general_options.output_path, "C:\\Users\\x")
+        self.assertEqual(self._stored(loaded, "output_path"), "C:\\Users\\x")
         self.assertEqual(loaded.general_options.player_files_path, "tab\there")
 
     def test_other_errors_still_fall_back_to_defaults(self) -> None:

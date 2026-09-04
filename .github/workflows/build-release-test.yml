@@ -112,7 +112,11 @@ jobs:
           # /usr/lib/x86_64-linux-gnu/ into the build so Kivy's ctypes load
           # at runtime succeeds. Must be installed BEFORE `setup.py build_exe`.
           sudo apt -y install libmtdev1
-      
+          # libcairo2-dev: kivymd>=2.0.0 -> materialshapes -> pycairo, which has no
+          # Linux wheel and needs cairo headers via pkg-config to build. build_exe.py
+          # installs the mwgg-gui wheel, so this must precede it.
+          sudo apt -y install libcairo2-dev
+
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -259,6 +263,14 @@ jobs:
           owner: MultiworldGG
           repositories: mwgg-gui,mwgg-tui,mwgg-splash
 
+      - name: Install Linux system libs for sibling wheels
+        run: |
+          sudo apt update
+          # libcairo2-dev: pycairo (kivymd>=2.0.0 -> materialshapes, and PyGObject<3.51)
+          # has no Linux wheel; its meson build needs cairo headers via pkg-config
+          # (without this the pip install fails with `Dependency "cairo" not found`).
+          sudo apt -y install libcairo2-dev
+
       - name: Install sibling-repo wheels
         env:
           MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -274,10 +286,6 @@ jobs:
           sudo apt update
           sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
           sudo apt -y install python3-gi libgirepository1.0-dev
-          # libcairo2-dev: PyGObject<3.51 pulls pycairo as a build dep; pycairo's
-          # meson build needs cairo headers via pkg-config (without this the pip
-          # install fails with `Dependency "cairo" not found`).
-          sudo apt -y install libcairo2-dev
           # libmtdev1: bundled via cx_Freeze bin_includes; needed at build time so it can be found.
           sudo apt -y install libmtdev1
           source venv/bin/activate
