@@ -556,7 +556,7 @@ def display_log(room: UUID) -> Union[str, Response, Tuple[str, int]]:
     if room is None:
         return abort(404)
     if is_authorized(room, session["_id"]):
-        file_path = os.path.join("logs", str(room.id) + ".txt")
+        file_path = os.path.join(app.config["LOGS_FOLDER"], str(room.id) + ".txt")
         try:
             log = open(file_path, "rb")
             range_header = request.headers.get("Range")
@@ -617,7 +617,7 @@ def host_room(seed: UUID, room: UUID):
         if max_size == 0:
             return "…", 0
         try:
-            with open(os.path.join("logs", str(room.id) + ".txt"), "rb") as log:
+            with open(os.path.join(app.config["LOGS_FOLDER"], str(room.id) + ".txt"), "rb") as log:
                 raw_size = 0
                 fragments: List[str] = []
                 for block in _read_log(log):
