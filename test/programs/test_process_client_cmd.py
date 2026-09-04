@@ -12,6 +12,8 @@ changes rather than on "did not raise".
 
 import asyncio
 import collections
+import pickle
+import time
 import unittest
 import weakref
 
@@ -130,6 +132,7 @@ def build_context() -> Context:
     ctx.clients = {0: collections.defaultdict(list)}
     ctx.endpoints = []
     ctx.location_checks = collections.defaultdict(set)
+    ctx.location_check_times = collections.defaultdict(dict)
     ctx.received_items = {}
     ctx.start_inventory = {}
     ctx.stored_data = {}
@@ -296,6 +299,44 @@ class TestLocationChecks(unittest.TestCase):
         self.assertEqual(packets[0]["cmd"], "InvalidPacket")
         # nothing should have been marked
         self.assertEqual(ctx.location_checks[0, 1], set())
+
+    def test_records_check_timestamps(self) -> None:
+        ctx = build_context()
+        sender = make_client(ctx, slot=1)
+        make_client(ctx, slot=2)
+
+        before = int(time.time())
+        run_cmd(ctx, sender, {"cmd": "LocationChecks", "locations": [10]})
+        first = ctx.location_check_times[0, 1][10]
+        self.assertGreaterEqual(first, before)
+        self.assertLessEqual(first, int(time.time()))
+
+        # re-sending an already checked location must not touch its timestamp
+        ctx.location_check_times[0, 1][10] = 1
+        run_cmd(ctx, sender, {"cmd": "LocationChecks", "locations": [10, 11]})
+        self.assertEqual(ctx.location_check_times[0, 1][10], 1)
+        self.assertIn(11, ctx.location_check_times[0, 1])
+        self.assertEqual(set(ctx.location_check_times[0, 1]), ctx.location_checks[0, 1])
+
+    def test_check_timestamps_survive_save_roundtrip(self) -> None:
+        ctx = build_context()
+        sender = make_client(ctx, slot=1)
+        make_client(ctx, slot=2)
+        run_cmd(ctx, sender, {"cmd": "LocationChecks", "locations": [10, 11]})
+        times = dict(ctx.location_check_times[0, 1])
+
+        save = pickle.loads(pickle.dumps(ctx.get_save()))
+        self.assertEqual(save["location_check_times"], {(0, 1): times})
+
+        ctx.location_check_times = collections.defaultdict(dict)
+        ctx.set_save(save)
+        self.assertEqual(ctx.location_check_times[0, 1], times)
+
+        # saves written before timestamps existed load without the key
+        del save["location_check_times"]
+        ctx.location_check_times = collections.defaultdict(dict)
+        ctx.set_save(save)
+        self.assertEqual(ctx.location_check_times, {})
 
     def test_register_location_checks_ignores_unknown_location_ids(self) -> None:
         ctx = build_context()

@@ -3,32 +3,83 @@
     {{ super() }}
     <title>Multiworld Sphere Tracker</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for("static", filename="styles/tracker.css") }}" />
-    <script type="application/ecmascript" src="{{ url_for("static", filename="assets/trackerCommon.js") }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for("static", filename="styles/sphereTracker.css") }}" />
+    <script type="application/ecmascript" src="{{ url_for("static", filename="assets/sphereTracker.js") }}"></script>
 {% endblock %}
 
 {% block body %}
     {% include 'header/baseHeader.html' %}
 
-    <div id="tracker-wrapper" data-tracker="{{ room.tracker | suuid }}">
+    <div id="tracker-wrapper"
+         data-tracker="{{ room.tracker | suuid }}"
+         data-second="{{ saving_second }}"
+         data-rows-url="{{ url_for("api.sphere_tracker_rows", tracker=room.tracker) }}"
+         data-csv-url="{{ url_for("api.sphere_tracker_rows_csv", tracker=room.tracker) }}">
         <div id="tracker-header-bar">
             <input placeholder="Search" id="search" />
 
             <div class="info">
-                {% if tracker_data.get_spheres() %}
+                {% if has_spheres %}
                 This tracker lists already found locations by their logical access sphere.
                 It ignores items that cannot be sent
                 and will therefore differ from the sphere numbers in the spoiler playthrough.
-                This tracker will automatically update itself periodically.
+                Rows load one page at a time and refresh periodically;
+                the CSV download contains every row matching the current filters.
                 {% else %}
                 This Multiworld has no Sphere data, likely due to being too old, cannot display data.
                 {% endif %}
             </div>
         </div>
 
+        <form id="sphere-filters" class="sphere-filters" autocomplete="off">
+            <label>Finder
+                <select name="finder">
+                    <option value="">Any</option>
+                    {%- for slot, name, game in slots %}
+                    <option value="{{ slot }}">{{ name }}</option>
+                    {%- endfor %}
+                </select>
+            </label>
+            <label>Receiver
+                <select name="receiver">
+                    <option value="">Any</option>
+                    {%- for slot, name, game in slots %}
+                    <option value="{{ slot }}">{{ name }}</option>
+                    {%- endfor %}
+                </select>
+            </label>
+            <label>Game
+                <select name="game">
+                    <option value="">Any</option>
+                    {%- for game in games %}
+                    <option value="{{ game }}">{{ game }}</option>
+                    {%- endfor %}
+                </select>
+            </label>
+            <label>Sphere
+                <span class="sphere-range">
+                    <input type="number" name="sphere_min" min="1" placeholder="from" />
+                    <span>to</span>
+                    <input type="number" name="sphere_max" min="1" placeholder="to" />
+                </span>
+            </label>
+            <fieldset class="sphere-classifications">
+                <legend>Type</legend>
+                <label><input type="checkbox" name="classification" value="progression" checked /> Progression</label>
+                <label><input type="checkbox" name="classification" value="useful" checked /> Useful</label>
+                <label><input type="checkbox" name="classification" value="trap" checked /> Trap</label>
+                <label><input type="checkbox" name="classification" value="filler" checked /> Filler</label>
+            </fieldset>
+            <span class="sphere-filter-actions">
+                <button type="submit">Apply</button>
+                <button type="reset">Reset</button>
+                <a id="csv-link" href="{{ url_for("api.sphere_tracker_rows_csv", tracker=room.tracker) }}">Download CSV</a>
+            </span>
+        </form>
+
         <div id="tables-container">
-        {%- for team, players in tracker_data.get_all_players().items() %}
-            <div class="table-wrapper">
-                <table id="checks-table" class="table non-unique-item-table">
+            <div id="sphere-table-wrapper" class="table-wrapper">
+                <table id="sphere-table" class="table non-unique-item-table">
                     <thead>
                         <tr>
                             <th>Sphere</th>
@@ -36,37 +87,15 @@
                             <th>Finder</th>
                             <th>Receiver</th>
                             <th>Item</th>
+                            <th>Type</th>
                             <th>Location</th>
                             <th>Game</th>
+                            <th>Checked</th>
                         </tr>
                     </thead>
-                    <tbody>
-                    {%- for sphere in tracker_data.get_spheres() %}
-                    {%- set current_sphere = loop.index %}
-                    {%- for player, sphere_location_ids in sphere.items() %}
-                        {%- set checked_locations = tracker_data.get_player_checked_locations(team, player) %}
-                        {%- set finder_game = tracker_data.get_player_game(player) %}
-                        {%- set player_location_data = tracker_data.get_player_locations(player) %}
-                        {%- for location_id in sphere_location_ids.intersection(checked_locations) %}
-                        <tr>
-                            {%- set item_id, receiver, item_flags = player_location_data[location_id] %}
-                            {%- set receiver_game = tracker_data.get_player_game(receiver) %}
-                            <td>{{ current_sphere }}</td>
-                            <td>{{ tracker_data.get_player_name(player) }}</td>
-                            <td>{{ tracker_data.get_player_name(receiver) }}</td>
-                            <td>{{ tracker_data.item_id_to_name[receiver_game][item_id] }}</td>
-                            <td>{{ tracker_data.location_id_to_name[finder_game][location_id] }}</td>
-                            <td>{{ finder_game }}</td>
-                        </tr>
-                        {%- endfor %}
-
-                    {%- endfor %}
-                    {%- endfor %}
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
-
-        {%- endfor -%}
         </div>
     </div>
 {% endblock %}

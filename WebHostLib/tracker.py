@@ -116,6 +116,12 @@ class TrackerData:
         """Retrieves the set of all locations marked complete by this player."""
         return self._multisave.get("location_checks", {}).get((team, player), set())
 
+    def get_player_location_check_times(self, team: int, player: int) -> Dict[int, int]:
+        """Retrieves unix timestamps keyed by location id for this player's checks.
+        Empty for rooms saved before check times were recorded.
+        """
+        return self._multisave.get("location_check_times", {}).get((team, player), {})
+
     @_cache_results
     def get_player_missing_locations(self, team: int, player: int) -> Set[int]:
         """Retrieves the set of all locations not marked complete by this player."""
@@ -482,10 +488,18 @@ def render_generic_multiworld_tracker(tracker_data: TrackerData, enabled_tracker
 
 
 def render_generic_multiworld_sphere_tracker(tracker_data: TrackerData) -> str:
+    """Renders the sphere tracker shell; rows are paged in by the client from api.sphere_tracker_rows."""
+    slots = [
+        (slot, tracker_data.get_player_name(slot), tracker_data.get_player_game(slot))
+        for team_slots in tracker_data.get_all_slots().values() for slot in team_slots
+    ]
     return render_template(
         "multispheretracker.html",
         room=tracker_data.room,
-        tracker_data=tracker_data,
+        has_spheres=bool(tracker_data.get_spheres()),
+        slots=slots,
+        games=sorted({game for _, _, game in slots}),
+        saving_second=tracker_data.get_room_saving_second(),
     )
 
 
