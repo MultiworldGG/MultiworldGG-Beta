@@ -10,6 +10,7 @@ import logging
 
 from cx_Freeze import setup, Executable, build_exe
 from cx_Freeze.command.bdist_mac import bdist_mac
+from Cython.Build import cythonize
 
 # cx_Freeze's bundled numpy hook (cx_Freeze/hooks/_numpy_.py) is for numpy < 2.0, 
 # so the workaround is not needed; stub the hook to prevent frozen exe errors.
@@ -242,6 +243,18 @@ def pre_build_setup():
     except ImportError as e:
         logger.warning(f"Warning: Could not load custom kivy hook: {e}")
 
+def bundle_extensions(build_ext, build_exe_dir):
+    """Copy build_ext outputs into lib/; cx_Freeze's finder never sees them."""
+    import shutil
+    outputs = build_ext.get_outputs()
+    if not outputs:
+        raise RuntimeError("build_ext produced no extension modules; is ext_modules set?")
+    lib_dir = os.path.join(build_exe_dir, "lib")
+    for src in outputs:
+        shutil.copy(src, lib_dir)
+        logger.info(f"Bundled {src} -> {lib_dir}")
+
+
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
@@ -312,16 +325,19 @@ class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
 
     def run(self):
-        # Register our custom hooks before building
         _register_custom_hooks()
 
-        # Run the normal build
+        # cx_Freeze never runs build_ext itself. Not in-place: a root-level .pyd
+        # shadows pyximport in dev checkouts and stays locked on Windows.
+        build_ext = self.distribution.get_command_obj("build_ext")
+        build_ext.inplace = False
+        self.run_command("build_ext")
+
         super().run()
-        # Get the build directory
         build_dir = self.build_exe
         if build_dir:
             logger.info(f"Build completed in: {build_dir}")
-            # Run post-build setup
+            bundle_extensions(build_ext, build_dir)
             post_build_setup(build_dir)
 
 
@@ -365,6 +381,7 @@ if __name__ == "__main__":
         version=version_tuple.as_pep440_string(),
         description=f"{instance_name} - MultiWorld.GG - More, and Faster",
         author="DelilahIsDidi, TreZc0",
+        ext_modules=cythonize("_speedups.pyx"),
         options=options,
         executables=executables,
         cmdclass=cmdclass,

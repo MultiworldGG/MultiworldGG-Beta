@@ -33,7 +33,7 @@ distributables (Windows installer via Inno Setup, Linux AppImage, macOS .app) by
 
 1. Creating a fresh venv per OS.
 2. Installing `default_wheels/*.whl` and `worlds_wheels/*.whl` into the venv.
-3. Running `python build_exe.py`.
+3. Running `python build_exe.py`, which also compiles the `_speedups` Cython extension into `lib/`.
 4. Packaging via `setup.py bdist_appimage` / `bdist_mac` / Inno Setup.
 5. Uploading per-platform artifacts (90-day retention).
 
