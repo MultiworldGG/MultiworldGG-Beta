@@ -252,14 +252,11 @@ def register_tracker_map_tab(ctx, app) -> None:
 
     Registered after register_tracker_page_tab/start_overlay_ui_refresh so
     ``tracker_overlay_refresh`` is wired before any command needs it. If
-    Connected hasn't populated ``ctx.tracker_world`` yet, the eager widget
-    build still runs (mirrors the standalone build_gui) but activation is a
-    no-op; wrap._handle_connected activates it once Connected arrives and
-    sees the app already live. Idempotent and a no-op for worlds without a
-    ``tracker_world``.
+    Connected has not populated ``ctx.tracker_world`` yet this is a no-op and
+    wrap._handle_connected activates the map once Connected arrives with the
+    app already live. Worlds without a ``tracker_world`` never get a map tab.
     """
     controller = getattr(ctx, "_map_controller", None)
     if controller is None or app is None:
         return
-    controller.prebuild_widget()
     controller.activate(app)

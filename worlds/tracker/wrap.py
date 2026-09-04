@@ -125,6 +125,9 @@ def _handle_connected(ctx, args: dict) -> None:
         return
 
     ctx._map_controller.build_tracker_world(connected_cls)
+    if ctx.tracker_world is None:
+        logger.info("Tracker overlay: %s declares no map page (no tracker_world), map tab skipped", game)
+        return
     app = getattr(ctx, "ui", None)
     if app is not None:
         # Phase 2 (register_tracker_map_tab) already ran and built the
