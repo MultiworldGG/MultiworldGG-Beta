@@ -282,6 +282,12 @@ class Context:
                       "hint_mode": str,
                       "item_cheat": bool,
                       "compatibility": int}
+    option_choices = {"release_mode": ("goal", "enabled", "disabled", "auto", "auto_enabled"),
+                      "collect_mode": ("goal", "enabled", "disabled", "auto", "auto_enabled"),
+                      "remaining_mode": ("goal", "enabled", "disabled"),
+                      "countdown_mode": ("enabled", "disabled", "auto"),
+                      "hint_mode": ("default", "own", "all")}
+    secret_options = frozenset({"admin_password", "password"})
     # team -> slot id -> list of clients authenticated to slot.
     clients: typing.Dict[int, typing.Dict[int, typing.List[Client]]]
     endpoints: list[Client]
@@ -1164,6 +1170,66 @@ def get_status_string(ctx: Context, team: int, tag: str):
         text += f"\n{ctx.get_aliased_name(team, slot)} has {connected} connection{'' if connected == 1 else 's'}" \
                 f"{tag_text}{status_text} {completion_text}"
     return text
+
+
+def build_player_rows(ctx: Context) -> typing.List[dict]:
+    """Admin view of every player slot, sorted by (team, slot); spectator and group slots are skipped."""
+    rows = []
+    for team, slot in sorted(ctx.player_names):
+        slot_info = ctx.slot_info[slot]
+        if slot_info.type != SlotType.player:
+            continue
+        clients = ctx.clients[team].get(slot, [])
+        last_activity = ctx.client_activity_timers.get((team, slot))
+        rows.append({
+            "team": team,
+            "slot": slot,
+            "name": ctx.player_names[team, slot],
+            "alias": ctx.name_aliases.get((team, slot), ""),
+            "game": slot_info.game,
+            "connected": bool(clients),
+            "status": int(ctx.client_game_state.get((team, slot), ClientStatus.CLIENT_UNKNOWN)),
+            "checks": len(ctx.location_checks.get((team, slot), ())),
+            "total": len(ctx.locations[slot]),
+            "last_activity": last_activity.timestamp() if last_activity else None,
+            "tags": sorted({tag for client in clients for tag in client.tags}),
+        })
+    return rows
+
+
+_status_names = {status.value: status.name.removeprefix("CLIENT_").lower() for status in ClientStatus}
+
+
+def format_players_table(rows: typing.List[dict], now: typing.Optional[float] = None) -> str:
+    if now is None:
+        now = time.time()
+    table = [("name", "game", "status", "checks", "%", "last activity", "connected")]
+    for row in rows:
+        name = f"{row['alias']} ({row['name']})" if row["alias"] else row["name"]
+        percent = row["checks"] / row["total"] * 100 if row["total"] else 0.0
+        if row["last_activity"] is None:
+            age = "never"
+        else:
+            age = f"{datetime.timedelta(seconds=int(max(0.0, now - row['last_activity'])))} ago"
+        table.append((name, row["game"], _status_names.get(row["status"], str(row["status"])),
+                      f"{row['checks']}/{row['total']}", f"{percent:.1f}", age, "yes" if row["connected"] else "no"))
+    widths = [max(len(cell) for cell in column) for column in zip(*table)]
+    return "\n".join("  ".join(cell.ljust(width) for cell, width in zip(line, widths)).rstrip() for line in table)
+
+
+def build_options_payload(ctx: Context) -> typing.List[dict]:
+    """One entry per simple option in declaration order, passwords masked."""
+    entries = []
+    for name, value_type in ctx.simple_options.items():
+        value = getattr(ctx, name)
+        entry = {"name": name, "type": value_type.__name__, "value": value}
+        if name in ctx.option_choices:
+            entry["choices"] = list(ctx.option_choices[name])
+        if name in ctx.secret_options:
+            entry["value"] = "********" if value else ""
+            entry["secret"] = True
+        entries.append(entry)
+    return entries
 
 
 def get_received_items(ctx: Context, team: int, player: int, remote_items: bool) -> typing.List[NetworkItem]:
@@ -2497,9 +2563,10 @@ class ServerCommandProcessor(CommonCommandProcessor):
         self.ctx = ctx
         super(ServerCommandProcessor, self).__init__()
 
-    def output(self, text: str):
+    def output(self, text: str, **extra):
+        # extra keys become top-level PrintJSON fields, seen only by the remote admin
         if self.client:
-            self.ctx.notify_client(self.client, text, {"type": "AdminCommandResult"})
+            self.ctx.notify_client(self.client, text, {"type": "AdminCommandResult", **extra})
         super(ServerCommandProcessor, self).output(text)
 
     def default(self, raw: str):
@@ -2517,7 +2584,16 @@ class ServerCommandProcessor(CommonCommandProcessor):
 
     def _cmd_players(self) -> bool:
         """Get information about connected players"""
-        self.output(get_players_string(self.ctx))
+        rows = build_player_rows(self.ctx)
+        self.output(format_players_table(rows), players=rows)
+        return True
+
+    def _cmd_options(self) -> bool:
+        """List all current options. Warning: lists password."""
+        # Same lines as CommonCommandProcessor; the structured payload rides on the header.
+        self.output("Current options:", options=build_options_payload(self.ctx))
+        for option in self.ctx.simple_options:
+            self.output(f"Option {option} is set to {getattr(self.ctx, option)}")
         return True
 
     def _cmd_status(self, tag: str = "") -> bool:
@@ -2525,7 +2601,7 @@ class ServerCommandProcessor(CommonCommandProcessor):
         Optionally mention a Tag name and get information on who has that Tag.
         For example: DeathLink or EnergyLink."""
         for team in self.ctx.clients:
-            self.output(get_status_string(self.ctx, team, tag))
+            self.output(get_status_string(self.ctx, team, tag), status={"team": team, "tag": tag})
         return True
 
     def _cmd_exit(self) -> bool:
@@ -2843,28 +2919,18 @@ class ServerCommandProcessor(CommonCommandProcessor):
         elif value_type == str and option_name.endswith("password"):
             def value_type(input_text: str):
                 return None if input_text.lower() in {"null", "none", '""', "''"} else input_text
-        elif option_name == "countdown_mode":
-            valid_values = {"enabled", "disabled", "auto"}
-            if option_value.lower() not in valid_values:
-                self.output(f"Unrecognized {option_name} value '{option_value}', known: {', '.join(valid_values)}")
-                return False
-        elif option_name == "hint_mode":
-            valid_values = {"default", "own", "all"}
-            if option_value.lower() not in valid_values:
-                self.output(f"Unrecognized {option_name} value '{option_value}', known: {', '.join(valid_values)}")
-                return False
         elif option_name == "release_threshold":
             def value_type(input_text: str):
                 return max(0, min(int(input_text), 100))
-        elif value_type == str and option_name.endswith("mode"):
-            valid_values = {"goal", "enabled", "disabled"}
-            valid_values.update(("auto", "auto_enabled") if option_name != "remaining_mode" else [])
+        elif option_name in self.ctx.option_choices:
+            valid_values = self.ctx.option_choices[option_name]
             if option_value.lower() not in valid_values:
                 self.output(f"Unrecognized {option_name} value '{option_value}', known: {', '.join(valid_values)}")
                 return False
 
         setattr(self.ctx, option_name, value_type(option_value))
-        self.output(f"Set option {option_name} to {getattr(self.ctx, option_name)}")
+        self.output(f"Set option {option_name} to {getattr(self.ctx, option_name)}",
+                    options=build_options_payload(self.ctx))
         if option_name in {"release_mode", "remaining_mode", "collect_mode"}:
             self.ctx.broadcast_all([{"cmd": "RoomUpdate", 'permissions': get_permissions(self.ctx)}])
         elif option_name in {"hint_cost", "location_check_points"}:

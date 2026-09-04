@@ -1874,14 +1874,19 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         ctx.on_print(args)
 
     elif cmd == 'PrintJSON':
-        data = args.get("data", [])
-        if "CommandResult" in args.get("type", "") and any("successful" in a.get("text", "") for a in data if "text" in a):
-            text_parts = [a["text"] for a in data if "text" in a]
-            if "Login" in text_parts:
+        if args.get("type") == "CommandResult":
+            # MultiServer's !admin replies arrive as one text part:
+            # "Login successful. ..." / "Logout successful. ...".
+            text = "".join(part.get("text", "") for part in args.get("data", []))
+            if text.startswith("Login successful"):
                 ctx.admin = True
-            elif "Logout" in text_parts:
+            elif text.startswith("Logout successful"):
                 ctx.admin = False
         ctx.on_print_json(args)
+        if args.get("type") == "AdminCommandResult":
+            on_admin_command_result = getattr(ctx.ui, "on_admin_command_result", None)
+            if callable(on_admin_command_result):
+                on_admin_command_result(args)
 
     elif cmd == 'InvalidPacket':
         logger.warning(f"Invalid Packet of {args['type']}: {args['text']}")

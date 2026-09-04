@@ -456,7 +456,7 @@ class TestServerCommandProcessor(unittest.TestCase):
     def test_option_sets_valid_value(self) -> None:
         ctx = build_context()
         proc = ServerCommandProcessor(ctx)
-        proc.output = lambda text: None
+        proc.output = lambda text, **extra: None
         self.assertTrue(proc._cmd_option("release_mode", "enabled"))
         self.assertEqual(ctx.release_mode, "enabled")
 

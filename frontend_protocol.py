@@ -80,6 +80,16 @@ class FrontendProtocol(Protocol):
         """
         ...
 
+    def on_admin_command_result(self, args: dict) -> None:
+        """Receive the full PrintJSON packet of a remote-admin reply (`type == "AdminCommandResult"`).
+
+        Structured payloads ride along as top-level keys next to `data`: `players` for
+        `/players`, `options` for `/options` and a successful `/option`. The text has
+        already been routed through `print_json`. CommonClient feature-detects this
+        method with getattr, so frontends may omit it.
+        """
+        ...
+
     # --- NOT-YET-IMPLEMENTED: per-world custom UI surface ---
     # Protocol stubs reserved for deprecating kvui.GameManager. `content` stays `Any`,
     # never a kivy Widget; nothing checks isinstance(app, FrontendProtocol) at runtime,

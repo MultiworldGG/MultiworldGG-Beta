@@ -6,7 +6,7 @@ from contextlib import ExitStack
 from unittest import mock
 
 import NetUtils
-from CommonClient import CommonContext
+from CommonClient import CommonContext, process_server_cmd
 
 
 class TestCommonContext(unittest.IsolatedAsyncioTestCase):
@@ -289,3 +289,30 @@ class TestDownpatchAndRelaunch(unittest.IsolatedAsyncioTestCase):
         self._raise = RuntimeError("network down")
         await _downpatch_and_relaunch("Some Game", "some_game", PIN_TAG, "1.2.3")
         self.assertEqual(self.restarts, [])
+
+
+class TestAdminCommandResultHook(unittest.IsolatedAsyncioTestCase):
+    PACKET = {"cmd": "PrintJSON", "type": "AdminCommandResult", "data": [{"text": "name  game"}], "players": []}
+
+    async def test_forwards_full_packet_to_ui_hook(self):
+        ctx = CommonContext()
+        printed, received = [], []
+        ctx.ui = types.SimpleNamespace(print_json=printed.append, on_admin_command_result=received.append)
+        await process_server_cmd(ctx, dict(self.PACKET))
+        self.assertEqual(received, [self.PACKET])
+        # text routing still runs alongside the hook
+        self.assertEqual(printed, [self.PACKET["data"]])
+
+    async def test_ui_without_hook_still_routes_text(self):
+        ctx = CommonContext()
+        printed = []
+        ctx.ui = types.SimpleNamespace(print_json=printed.append)
+        await process_server_cmd(ctx, dict(self.PACKET))
+        self.assertEqual(printed, [self.PACKET["data"]])
+
+    async def test_other_print_json_types_do_not_call_hook(self):
+        ctx = CommonContext()
+        received = []
+        ctx.ui = types.SimpleNamespace(print_json=lambda data: None, on_admin_command_result=received.append)
+        await process_server_cmd(ctx, {"cmd": "PrintJSON", "type": "CommandResult", "data": [{"text": "x"}]})
+        self.assertEqual(received, [])
