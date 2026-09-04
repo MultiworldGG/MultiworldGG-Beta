@@ -255,6 +255,9 @@ else:
 
                 manager.build()
                 app._legacy_kvui_manager = manager
+                # Subclasses declare the window title; the live app owns the property.
+                if manager.base_title:
+                    app.base_title = manager.base_title
                 return manager
             finally:
                 if previous_state is not None:
