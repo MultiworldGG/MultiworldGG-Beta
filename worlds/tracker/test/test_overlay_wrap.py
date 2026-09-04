@@ -104,6 +104,20 @@ class TestRefreshFeed(unittest.TestCase):
         self.assertEqual(recorded["items"], [received, local])
         self.assertEqual(recorded["missing"], {5})
 
+    def test_refresh_rebuilds_hint_table(self):
+        core = SimpleNamespace(
+            multiworld=object(), player_id=1,
+            set_missing_locations=lambda v: None, set_items_received=lambda v: None,
+            set_hints=lambda v: None, updateTracker=lambda: None,
+        )
+        ctx = _ctx(tracker_core=core, items_received=[], missing_locations=set(),
+                   checked_locations=set(), locations_info={})
+        calls = []
+        app = SimpleNamespace(console_screen=None, update_hints=lambda: calls.append("hints"))
+        with mock.patch("worlds.tracker.gui.clear_stray_tooltips", lambda: None):
+            wrap._refresh(ctx, app)
+        self.assertEqual(calls, ["hints"])
+
 
 class TestWrappedOnPackage(unittest.TestCase):
     def test_room_update_scouts_and_location_info_pokes(self):

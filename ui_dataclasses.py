@@ -109,6 +109,7 @@ class UIHint:
         self.from_shop = bool(mwgg_status & MWGGUIHintStatus.HINT_SHOP)
         self.for_goal = bool(mwgg_status & MWGGUIHintStatus.HINT_GOAL)
         self.for_bk_mode = bool(mwgg_status & MWGGUIHintStatus.HINT_BK_MODE)
+        self._hide = bool(mwgg_status & MWGGUIHintStatus.HINT_HIDDEN)
 
         self.mwgg_hint_status = mwgg_status
 
@@ -132,6 +133,7 @@ class UIHint:
         self.from_shop = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP)
         self.for_goal = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL)
         self.for_bk_mode = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE)
+        self._hide = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_HIDDEN)
 
     @property
     def from_shop(self) -> bool:

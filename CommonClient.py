@@ -1092,12 +1092,17 @@ class CommonContext(InitContext):
         async_start(self.send_msgs([msg]), name="update_hint")
 
     def update_mwgg_hint(self, location: int, finding_player: int, mwgg_status: MWGGUIHintStatus) -> None:
-        msg = {"cmd": "Set", 
-               "key": f"hints_{self.team}_{self.slot}_mwgg", 
-               "want_reply": False, 
-               "default": {}, 
-               "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
-        async_start(self.send_msgs([msg]), name="update_mwgg_hint")
+        self.update_mwgg_hints({f"{finding_player}_{location}": int(mwgg_status)})
+
+    def update_mwgg_hints(self, statuses: typing.Dict[str, int]) -> None:
+        """Merge ``{"{finding_player}_{location}": MWGGUIHintStatus value}`` entries into
+        this slot's hints_*_mwgg key; "update" leaves every other hint's flags alone."""
+        msg = {"cmd": "Set",
+               "key": f"hints_{self.team}_{self.slot}_mwgg",
+               "want_reply": False,
+               "default": {},
+               "operations": [{"operation": "update", "value": statuses}]}
+        async_start(self.send_msgs([msg]), name="update_mwgg_hints")
 
     @property
     def shared_activity_time(self) -> float | None:
@@ -1457,6 +1462,9 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     hostname = urllib.parse.urlparse(address).hostname
     port = str(urllib.parse.urlparse(address).port)
     logger.info(f'Connecting to {apname} server at {hostname}:{port}{username}.')
+    # The ws:// -> wss:// retry below recurses; only the innermost frame may close
+    # the connection and schedule a reconnect, or the outer finally double-schedules.
+    delegated = False
     try:
         socket = await websockets.connect(address, ping_timeout=None, ping_interval=None,
                                           ssl=get_ssl_context() if address.startswith("wss://") else None,
@@ -1488,6 +1496,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         # probably encrypted
         if address.startswith("ws://"):
             # try wss
+            delegated = True
             await server_loop(ctx, "ws" + address[1:])
         else:
             ctx.handle_connection_loss(f"Lost connection to the multiworld server due to InvalidMessage"
@@ -1504,12 +1513,14 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     except Exception:
         ctx.handle_connection_loss(f"Lost connection to the multiworld server{reconnect_hint()}")
     finally:
-        await ctx.connection_closed()
-        if ctx.server_address and ctx.username and not ctx.disconnected_intentionally:
-            logger.info(f"... automatically reconnecting in {ctx.current_reconnect_delay} seconds")
-            assert ctx.autoreconnect_task is None
-            ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
-        ctx.current_reconnect_delay *= 2
+        if not delegated:
+            await ctx.connection_closed()
+            if (ctx.server_address and ctx.username and not ctx.disconnected_intentionally
+                    and not ctx.exit_event.is_set()):
+                logger.info(f"... automatically reconnecting in {ctx.current_reconnect_delay} seconds")
+                assert ctx.autoreconnect_task is None
+                ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
+            ctx.current_reconnect_delay *= 2
 
 
 async def server_autoreconnect(ctx: CommonContext):

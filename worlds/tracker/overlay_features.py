@@ -244,3 +244,19 @@ def register_tracker_page_tab(ctx, app) -> None:
         )
     else:
         logger.info("Tracker overlay: 'tracker' tab registered")
+
+
+def register_tracker_map_tab(ctx, app) -> None:
+    """Show the Map page (Poptracker pack) once both a live app and the
+    connected world's ``tracker_world`` are known.
+
+    Registered after register_tracker_page_tab/start_overlay_ui_refresh so
+    ``tracker_overlay_refresh`` is wired before any command needs it. If
+    Connected has not populated ``ctx.tracker_world`` yet this is a no-op and
+    wrap._handle_connected activates the map once Connected arrives with the
+    app already live. Worlds without a ``tracker_world`` never get a map tab.
+    """
+    controller = getattr(ctx, "_map_controller", None)
+    if controller is None or app is None:
+        return
+    controller.activate(app)

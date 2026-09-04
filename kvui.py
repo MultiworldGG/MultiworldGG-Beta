@@ -161,8 +161,12 @@ else:
 
     from mwgg_gui.hint.legacyhint import RefToolTip as ToolTip
     from mwgg_gui.hint.legacyhint import HintTooltipLabel as TooltipLabel
+    MarkupToolTip = ToolTip
 
-    from mwgg_gui.components.columns import ColumnSorter, ColumnSortMixin
+    from mwgg_gui.components.columns import (
+        ColumnSorter, ColumnSortMixin, ColumnFilter, ColumnFilterMixin,
+        ColumnFilterMulti, ColumnFilterItemClassification, ExtraColumn,
+    )
     from mwgg_gui.overrides import HoverLabel as HovererableLabel
 
     class HoverBehavior(MDHoverBehavior):
@@ -200,7 +204,7 @@ else:
             # CustomLayout is an MDRelativeLayout: children need explicit
             # size/pos or they render tiny in the bottom-left corner (same fix
             # as the tracker's build_tracker_view).
-            self.hint_layout = HintLayout(self.hint_log, size_hint=(1, 1), pos_hint={"x": 0, "y": 0}, padding=[dp(20),dp(20),dp(20),dp(20)])
+            self.hint_layout = HintLayout(self.hint_log, size_hint=(1, 1), pos_hint={"center_x": 0.5, "y": 0})
             self.custom_layout.add_widget(self.hint_layout)
 
         def update_hints_list(self):
