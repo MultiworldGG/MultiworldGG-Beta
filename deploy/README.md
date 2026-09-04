@@ -285,18 +285,23 @@ while it is empty, so that volume shadowed every later pull or rebuild
 state out before switching:
 
 ```bash
-docker compose down                  # stops the old stack; volumes are kept
+docker compose down                                  # stops the old stack; volumes are kept
 sudo mkdir -p /var/lib/mwgg-db
-docker compose create                # creates app_uploads/app_logs, starts nothing
-docker run --rm -v deploy_app_volume:/old -v /var/lib/mwgg-db:/db \
-  -v deploy_app_uploads:/uploads -v deploy_app_logs:/logs alpine sh -c \
-  'cp -a /old/ap.db3 /db/; for d in uploads logs; do if [ -d /old/$d ]; then cp -a /old/$d/. /$d/; fi; done'
+P=$(docker compose config | sed -n 's/^name: //p')  # project name of the running stack
+docker compose -p "$P" -f deploy/migrate-app-volume.yml run --rm migrate_app_volume
 docker compose up -d
-docker volume rm deploy_app_volume   # once the new stack checks out
 ```
 
-Volumes are named `<compose project>_<name>` (`deploy_...` when run from this
-directory); confirm with `docker volume ls`. If you maintain your own
+Run these from wherever you normally run `docker compose` (the repo root for
+the upgrade flow above) so `$P` is the project name the old stack used.
+Volumes are named `<project>_<name>`; `-p` pins the one-off
+`migrate-app-volume.yml` project to that name, so `app_volume`, `app_uploads`
+and `app_logs` resolve to the right volumes without typing any of them. The
+container lists the old volume, stops if `ap.db3` is not in it, copies it to
+`/var/lib/mwgg-db`, and copies `uploads/` and `logs/` into their new volumes.
+It needs only `docker compose`, no `docker run`. The old volume is no longer
+declared in the stack, so nothing reads or removes it; an admin can drop it
+later with `docker volume rm "${P}_app_volume"`. If you maintain your own
 `config.yaml` rather than the example, add the `PONY` block from
 `example_config.yaml` so the database is found at `/app/db/ap.db3`. A
 `host.yaml` edited inside the old volume (ROM paths for generation) is not
