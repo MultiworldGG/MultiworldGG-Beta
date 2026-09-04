@@ -316,30 +316,21 @@ def test_resolve_route_game_and_universal_tracker_is_overlay_mode(monkeypatch):
 
 def test_resolve_route_universal_tracker_with_game_is_standalone_tracker(monkeypatch):
     """universal_tracker without game in the list boots the standalone tracker
-    even when a game is selected; the game module still routes so it is
-    imported (the tracker needs its world class), under a client_type that
-    skips the module's own client."""
+    even when a game is selected; the game rides along as context (MWGG_GAME
+    for cover art), not as a module route."""
     monkeypatch.setenv("MWGG_ROLE", "stale")
     monkeypatch.delenv("MWGG_GAME", raising=False)
     monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
     args = _parsed_args(["--game", "kh2", "--client-type", "universal_tracker",
                          "--server-address", "localhost:38281", "--slot-name", "P1"])
     route_module, route_kwargs = _resolve_with_role(args)
-    assert route_module == "kh2"
+    assert route_module == ""
     assert route_kwargs == {"server_address": "P1@localhost:38281",
-                            "client_type": "standalone_tracker",
+                            "client_type": "universal_tracker",
                             "slot_name": "P1"}
     assert os.environ["MWGG_ROLE"] == "client"
     assert os.environ["MWGG_GAME"] == "kh2"
 
-
-def test_resolve_route_universal_tracker_with_unknown_game_falls_back_to_sentinel(monkeypatch):
-    monkeypatch.setenv("MWGG_ROLE", "stale")
-    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
-    args = _parsed_args(["--game", "nope", "--client-type", "universal_tracker"])
-    route_module, route_kwargs = _resolve_with_role(args)
-    assert route_module == ""
-    assert route_kwargs["client_type"] == "universal_tracker"
 
 def test_resolve_route_universal_tracker_sentinel_stays_client(monkeypatch):
     """No-game universal tracker (launcher spawn / desktop shortcut) routes via
