@@ -1092,12 +1092,17 @@ class CommonContext(InitContext):
         async_start(self.send_msgs([msg]), name="update_hint")
 
     def update_mwgg_hint(self, location: int, finding_player: int, mwgg_status: MWGGUIHintStatus) -> None:
-        msg = {"cmd": "Set", 
-               "key": f"hints_{self.team}_{self.slot}_mwgg", 
-               "want_reply": False, 
-               "default": {}, 
-               "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
-        async_start(self.send_msgs([msg]), name="update_mwgg_hint")
+        self.update_mwgg_hints({f"{finding_player}_{location}": int(mwgg_status)})
+
+    def update_mwgg_hints(self, statuses: typing.Dict[str, int]) -> None:
+        """Merge ``{"{finding_player}_{location}": MWGGUIHintStatus value}`` entries into
+        this slot's hints_*_mwgg key; "update" leaves every other hint's flags alone."""
+        msg = {"cmd": "Set",
+               "key": f"hints_{self.team}_{self.slot}_mwgg",
+               "want_reply": False,
+               "default": {},
+               "operations": [{"operation": "update", "value": statuses}]}
+        async_start(self.send_msgs([msg]), name="update_mwgg_hints")
 
     @property
     def shared_activity_time(self) -> float | None:

@@ -238,3 +238,25 @@ class TestServerLoopReconnect(unittest.TestCase):
         self.assertEqual(ctx.closed, 1)
         self.assertIsNone(ctx.autoreconnect_task)
 
+
+class TestUpdateMwggHints(unittest.TestCase):
+    def test_update_merges_instead_of_replacing(self):
+        sent = []
+
+        async def send_msgs(msgs):
+            sent.extend(msgs)
+
+        ctx = SimpleNamespace(team=0, slot=3, send_msgs=send_msgs)
+        ctx.update_mwgg_hints = lambda statuses: CommonClient.CommonContext.update_mwgg_hints(ctx, statuses)
+
+        async def run():
+            CommonClient.CommonContext.update_mwgg_hints(ctx, {"2_10": 9})
+            CommonClient.CommonContext.update_mwgg_hint(ctx, 11, 2, CommonClient.MWGGUIHintStatus.HINT_GOAL)
+            await asyncio.sleep(0)
+
+        asyncio.run(run())
+        self.assertEqual([msg["key"] for msg in sent], ["hints_0_3_mwgg"] * 2)
+        self.assertEqual([msg["operations"] for msg in sent],
+                         [[{"operation": "update", "value": {"2_10": 9}}],
+                          [{"operation": "update", "value": {"2_11": 2}}]])
+

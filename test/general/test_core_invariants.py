@@ -479,6 +479,15 @@ class TestToggleMwggFlag(unittest.TestCase):
         hint.mwgg_hint_status = status
         return hint
 
+    def test_hidden_bit_drives_hide(self) -> None:
+        hint = self._hint_with_status(MWGGUIHintStatus.HINT_SHOP)
+        hint.toggle_mwgg_flag(MWGGUIHintStatus.HINT_HIDDEN, True)
+        self.assertTrue(hint.hide)
+        self.assertTrue(hint.from_shop)
+        hint.set_status_from_mwgg(MWGGUIHintStatus.HINT_GOAL)
+        self.assertFalse(hint.hide)
+        self.assertTrue(hint.for_goal)
+
     def test_toggle_mwgg_flag_set_preserves_existing(self) -> None:
         hint = self._hint_with_status(
             MWGGUIHintStatus.HINT_SHOP | MWGGUIHintStatus.HINT_GOAL

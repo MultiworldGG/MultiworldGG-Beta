@@ -271,9 +271,15 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
             else:
                 logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
         elif "universal_tracker" in client_types:
-            route_module = ""
+            # Standalone tracker. With --game the world module routes as well, so it is
+            # imported before the tracker connects and can rebuild that game's logic.
+            from Utils import get_available_worlds
+            game = args.game if args and args.game and args.game in get_available_worlds() else ""
+            if args and args.game and not game:
+                logger.error(f"Game {args.game} not found in available worlds; tracker starts without it")
+            route_module = game
             route_kwargs = {"server_address": composed_address,
-                            "client_type": "universal_tracker",
+                            "client_type": "standalone_tracker" if game else "universal_tracker",
                             # _client_launch_argv forwards slot_name (--name) for the tracker only
                             "slot_name": args.slot_name}
         elif "manual" in client_types:

@@ -663,6 +663,14 @@ def _perform_module_launch(module_id: str, **kwargs):
                 _restart_client_with_args()
                 return None
 
+            if client_type == "standalone_tracker":
+                # --game with universal_tracker alone: the world is imported for its
+                # logic, its own client is not launched.
+                from worlds.tracker.TrackerClient import launch as _tracker_launch
+                _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted,
+                                  slot_name=slot_name)
+                return None
+
             # Client launch fn comes from entry_points (group="mwgg.client", pip-installed wheels)
             # or LauncherComponents.components (zipimported apworlds lack dist-info; match by func.__module__).
             launch_function = None
@@ -739,7 +747,7 @@ def _perform_module_launch(module_id: str, **kwargs):
             from worlds._manual.ManualClient import launch as _manual_launch
             _defer_cli_launch(_manual_launch, "manual", server_address, already_restarted)
             return None
-        elif client_type == "universal_tracker":
+        elif client_type in ("universal_tracker", "standalone_tracker"):
             from worlds.tracker.TrackerClient import launch as _tracker_launch
             _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted, slot_name=slot_name)
             return None
