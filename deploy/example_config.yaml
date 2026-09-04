@@ -14,6 +14,15 @@ HOST_ADDRESS: localhost
 #ASSET_RIGHTS: false
 
 # ---------------------------------------------------------------------------
+# Database
+# ---------------------------------------------------------------------------
+# The compose stack bind-mounts /var/lib/mwgg-db from the host at /app/db, so
+# the database is a plain host file for backup/restore. Absolute path required.
+PONY:
+  provider: "sqlite"
+  filename: "/app/db/ap.db3"
+
+# ---------------------------------------------------------------------------
 # Secret keys
 # ---------------------------------------------------------------------------
 # SECRET_KEY signs session cookies. The webhost refuses to start if this is
