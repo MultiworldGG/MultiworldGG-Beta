@@ -138,3 +138,196 @@
     .mw-hub h1 { font-size: 33.5px; }
     .mw-hub-grid { grid-template-columns: 1fr; }
 }
+
+/* ===========================================================
+   Play setup checklist - pop-out on /play
+   =========================================================== */
+
+.mw-checklist-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9000;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--mw-sys-color-primary);
+    color: var(--mw-sys-color-white);
+    border: none;
+    border-radius: var(--mw-radius-full);
+    padding: 12px 20px;
+    font-family: var(--mw-font-sans);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 20px var(--mw-sys-color-shadow-soft);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.mw-checklist-fab:hover {
+    background: var(--mw-sys-color-primary-container);
+    transform: translateY(-2px);
+}
+
+.mw-checklist-fab .mdi {
+    font-size: 24px;
+}
+
+.mw-checklist {
+    position: fixed;
+    right: 20px;
+    bottom: 76px;
+    z-index: 9000;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    background: var(--mw-sys-color-surface-container-low);
+    border: 1px solid var(--mw-sys-color-outline);
+    border-radius: var(--mw-radius-lg);
+    padding: 18px 20px 14px;
+    font-family: var(--mw-font-sans);
+    color: var(--mw-sys-color-on-background);
+    box-shadow: 0 12px 40px var(--mw-sys-color-scrim-medium);
+}
+
+.mw-checklist[hidden] {
+    display: none;
+}
+
+.mw-checklist:focus {
+    outline: none;
+}
+
+.mw-checklist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mw-checklist-head h2 {
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--mw-sys-color-on-surface);
+}
+
+.mw-checklist-close {
+    background: transparent;
+    border: none;
+    color: var(--mw-sys-color-on-surface-variant);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--mw-radius-sm);
+}
+
+.mw-checklist-close:hover {
+    color: var(--mw-sys-color-on-surface);
+    background: var(--mw-sys-color-surface-container);
+}
+
+.mw-checklist-close .mdi {
+    font-size: 25px;
+}
+
+.mw-checklist-lead {
+    font-size: 15px;
+    color: var(--mw-sys-color-on-surface-variant);
+    margin: 4px 0 12px;
+}
+
+.mw-checklist-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mw-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 6px;
+    border-radius: var(--mw-radius-md);
+    font-size: 19px;
+    color: var(--mw-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.mw-checklist-item:hover {
+    background: var(--mw-sys-color-surface-container);
+}
+
+.mw-checklist-item input {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--mw-sys-color-primary);
+    cursor: pointer;
+}
+
+.mw-checklist-item span {
+    flex: 1;
+}
+
+.mw-checklist-item input:checked + span {
+    text-decoration: line-through;
+    color: var(--mw-sys-color-on-surface-variant);
+}
+
+.mw-checklist-item .mdi-help-circle {
+    font-size: 20px;
+    color: var(--mw-sys-color-on-surface-muted);
+}
+
+/* Site tooltips centre on the anchor and are hover-only; anchor these to the
+   left edge of the row so they stay inside the panel, and show on keyboard focus. */
+.mw-checklist-item[data-tooltip]:after {
+    left: 0;
+    margin-left: 0;
+}
+
+.mw-checklist-item:focus-within:before,
+.mw-checklist-item:focus-within:after {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(-12px);
+}
+
+.mw-checklist-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--mw-sys-color-outline-variant);
+    font-size: 15px;
+    color: var(--mw-sys-color-on-surface-variant);
+}
+
+.mw-checklist-reset {
+    background: transparent;
+    border: 1px solid var(--mw-sys-color-outline);
+    color: var(--mw-sys-color-on-surface-variant);
+    border-radius: var(--mw-radius-full);
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mw-checklist-reset:hover {
+    color: var(--mw-sys-color-on-surface);
+    border-color: var(--mw-sys-color-primary);
+}
+
+@media (max-height: 600px) {
+    .mw-checklist {
+        top: 12px;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .mw-checklist-fab { right: 12px; bottom: 12px; }
+    .mw-checklist { right: 12px; left: 12px; bottom: 68px; width: auto; max-width: none; }
+}
