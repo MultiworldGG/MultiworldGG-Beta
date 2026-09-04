@@ -125,7 +125,7 @@ def make_arg_parser() -> ArgumentParser:
                              "module's default client")
     parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
     parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
-    parser.add_argument("--loglevel", default="debug",
+    parser.add_argument("--loglevel", default="info",
                         choices=['debug', 'info', 'warning', 'error', 'critical'],
                         help="Set the logging level")
     parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
