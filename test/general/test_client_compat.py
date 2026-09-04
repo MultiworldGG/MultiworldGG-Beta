@@ -1,10 +1,14 @@
 """Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins); add new client-compat tests here."""
 
+import asyncio
 import os
 import subprocess
 import sys
 import unittest
 from types import SimpleNamespace
+from unittest import mock
+
+import websockets
 
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.connection import Connection
@@ -176,3 +180,61 @@ class TestKvuiTuiStandins(unittest.TestCase):
             "    raised = True\n"
             "assert raised, 'catch-all manufactured a dunder'\n"
         )
+
+
+# --------------------------------------------------------------------------- #
+# server_loop retries ws:// as wss:// by recursing, so two finally blocks run
+# per connection attempt; only the innermost may close the connection and
+# schedule the auto-reconnect. Nothing is scheduled once the exit event is
+# set: asyncio.run cancels the loop during shutdown before ctx.shutdown()
+# has cleared server_address.
+# --------------------------------------------------------------------------- #
+def _loop_ctx(exit_set: bool = False) -> SimpleNamespace:
+    ctx = SimpleNamespace(
+        takeover_complete=asyncio.Event(), exit_event=asyncio.Event(), server=None,
+        server_address="ws://localhost:38281", username="Player1", max_size=None,
+        disconnected_intentionally=False, autoreconnect_task=None, current_reconnect_delay=5,
+        _messagebox_connection_loss=None, ui=None, closed=0, losses=[],
+        cancel_autoreconnect=lambda: False,
+    )
+    ctx.takeover_complete.set()
+    if exit_set:
+        ctx.exit_event.set()
+
+    async def connection_closed():
+        ctx.closed += 1
+
+    ctx.connection_closed = connection_closed
+    ctx.handle_connection_loss = lambda msg: ctx.losses.append(msg)
+    return ctx
+
+
+class TestServerLoopReconnect(unittest.TestCase):
+    def _run(self, ctx) -> list:
+        attempts = []
+
+        async def connect(address, **kwargs):
+            attempts.append(address)
+            if address.startswith("ws://"):
+                raise websockets.InvalidMessage("not a websocket upgrade")
+            raise ConnectionRefusedError()
+
+        with mock.patch.object(CommonClient.websockets, "connect", connect):
+            asyncio.run(CommonClient.server_loop(ctx, ctx.server_address))
+        return attempts
+
+    def test_wss_retry_schedules_one_reconnect(self):
+        ctx = _loop_ctx()
+        attempts = self._run(ctx)
+        self.assertEqual(attempts, ["ws://localhost:38281", "wss://localhost:38281"])
+        self.assertEqual(ctx.closed, 1)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+        self.assertEqual(ctx.current_reconnect_delay, 10)
+
+    def test_no_reconnect_after_exit_event(self):
+        ctx = _loop_ctx(exit_set=True)
+        self._run(ctx)
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+
