@@ -216,6 +216,12 @@ def play_hub():
     return render_template("play_hub.html")
 
 
+@app.route('/static/generated/<path:filename>')
+def generated_static(filename: str):
+    """Serves GENERATED_FOLDER at its static URL when nginx is not in front."""
+    return send_from_directory(app.config["GENERATED_FOLDER"], filename)
+
+
 @app.route('/games/<string:game>')
 @cache.cached()
 def game_info(game):
@@ -224,7 +230,7 @@ def game_info(game):
         theme = get_world_theme(game)
         secure_game_name = secure_filename(game)
         lang = "en"
-        file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
+        file_dir = os.path.join(app.config["GENERATED_FOLDER"], "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
         document = render_markdown(os.path.join(file_dir, f"{lang}_{secure_game_name}.md"), file_dir_url)
         return render_template(
@@ -338,7 +344,7 @@ def tutorial(lang: str, game: str, file: str):
         secure_game_name = secure_filename(game)
         secure_file = secure_filename(file)
         secure_lang = secure_filename(lang)
-        file_dir = os.path.join(app.static_folder, "generated", "docs", secure_game_name)
+        file_dir = os.path.join(app.config["GENERATED_FOLDER"], "docs", secure_game_name)
         file_dir_url = url_for("static", filename=f"generated/docs/{secure_game_name}")
         document = render_markdown(os.path.join(file_dir, f"{secure_file}_{secure_lang}.md"), file_dir_url)
         return render_template(

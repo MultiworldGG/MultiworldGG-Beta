@@ -58,7 +58,7 @@ def _pony_config_to_sqlalchemy_uri(pony_config: dict) -> str:
 
 def get_app() -> "Flask":
 
-    from WebHostLib import register, cache, app as raw_app
+    from WebHostLib import register, cache, resolve_paths, app as raw_app
     from WebHostLib.models import db, Base
 
     app = raw_app
@@ -92,7 +92,7 @@ def get_app() -> "Flask":
             "in config.yaml to a random ≥32-byte value (try `openssl rand -hex 32`)."
         )
 
-    os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
+    resolve_paths(app)
     register()
     cache.init_app(app)
 
@@ -118,13 +118,15 @@ def copy_tutorials_files_to_static(app=None) -> None:
 
     zfile: zipfile.ZipInfo
 
+    if app is None:
+        from WebHostLib import app
     from worlds import AutoWorldRegister
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):
             worlds[game] = world
 
-    base_target_path = Utils.local_path("WebHostLib", "static", "generated", "docs")
+    base_target_path = os.path.join(app.config["GENERATED_FOLDER"], "docs")
     shutil.rmtree(base_target_path, ignore_errors=True)
     for game, world in worlds.items():
         # copy files from world's docs folder to the generated folder
@@ -200,12 +202,13 @@ if __name__ == "__main__":
     from WebHostLib.autolauncher import autohost, autogen, stop
     from WebHostLib.options import create as create_options_files
 
+    app = get_app()
+
     try:
         from WebHostLib.lttpsprites import update_sprites_lttp
-        update_sprites_lttp()
+        update_sprites_lttp(output_dir=app.config["GENERATED_FOLDER"])
     except Exception as e:
         logging.warning("Could not update LttP sprites: %s", e)
-    app = get_app()
 
     from worlds import AutoWorldRegister, network_data_package
 

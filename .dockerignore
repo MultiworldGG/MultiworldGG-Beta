@@ -54,6 +54,7 @@ README.html
 /config.yaml
 /logs/
 /uploads/
+/roms/
 _persistent_storage.yaml
 mystery_result_*.yaml
 *-errors.txt

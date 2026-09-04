@@ -24,7 +24,8 @@ def update_sprites_lttp(
     parallel: bool = True,
     max_workers: int = None,
     skip_remote_update: bool = False,
-    remote_timeout: int = 8
+    remote_timeout: int = 8,
+    output_dir: str | None = None,
 ):
     from worlds.alttp.Rom import Sprite
     from worlds.alttp.Adjuster import get_image_for_sprite, update_sprites
@@ -41,7 +42,7 @@ def update_sprites_lttp(
             print("✅ Sprite‐list update finished.")
 
     input_dir   = user_path("data", "sprites", "alttp", "remote")
-    base_out    = local_path("WebHostLib", "static", "generated")
+    base_out    = output_dir or local_path("WebHostLib", "static", "generated")
     sprites_out = os.path.join(base_out, "sprites")
     os.makedirs(sprites_out, exist_ok=True)
 

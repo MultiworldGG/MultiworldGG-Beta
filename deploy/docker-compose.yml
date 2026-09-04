@@ -49,16 +49,18 @@ services:
       # Pure consumer of the venv: never installs, just reads.
       - SKIP_ALL_INSTALLS=1
     volumes:
-      # Database on a host bind mount: a plain file to back up/restore.
-      # PONY.filename in config.yaml points at /app/db/ap.db3.
-      - /var/lib/mwgg-db:/app/db
-
-      # Uploads and per-room logs stay in Docker-managed volumes.
-      - app_uploads:/app/uploads
-      - app_logs:/app/logs
-
-      # Static tree shared with web + nginx; this service writes generated/.
-      - app_static:/app/WebHostLib/static
+      # Runtime data at the image's MWGG_* paths (Dockerfile ENV); nothing is
+      # mounted over /app. Database: host bind mount, a plain file to back up.
+      - /var/lib/mwgg-db:/db
+      # Uploads and per-room logs: Docker-managed volumes.
+      - app_uploads:/uploads
+      - app_logs:/logs
+      # nginx static root; this service writes generated/ into it.
+      - app_static:/static
+      # Optional ROM-based generation: read-only ROM dir plus a host.yaml whose
+      # <world>_options.rom_file entries are roms/<file> or /roms/<file>.
+      # - /var/lib/mwgg-roms:/roms:ro
+      # - ./host.yaml:/app/host.yaml:ro
 
       # Mount configs
       - ./example_config.yaml:/app/config.yaml
@@ -95,12 +97,11 @@ services:
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
       # Same database, uploads and room logs as multiworld.
-      - /var/lib/mwgg-db:/app/db
-      - app_uploads:/app/uploads
-      - app_logs:/app/logs
-
-      # Static tree: reads generated/docs written by multiworld.
-      - app_static:/app/WebHostLib/static
+      - /var/lib/mwgg-db:/db
+      - app_uploads:/uploads
+      - app_logs:/logs
+      # Reads generated/docs that multiworld writes.
+      - app_static:/static
 
       # Mount configs
       - ./example_config.yaml:/app/config.yaml
@@ -172,8 +173,8 @@ services:
     mem_limit: 96m
     volumes:
       # Read-only views of what nginx serves itself: /static/ and /avatar/.
-      - app_static:/app/WebHostLib/static:ro
-      - app_uploads:/app/uploads:ro
+      - app_static:/static:ro
+      - app_uploads:/uploads:ro
 
       # Mount config
       - ./example_nginx.conf:/etc/nginx/nginx.conf
@@ -353,8 +354,9 @@ volumes:
   # web (nginx reads uploads for /avatar/). Kept across down/pull/rebuild.
   app_uploads:
   app_logs:
-  # WebHostLib/static, re-seeded from the image by static_sync on every `up`.
-  # Derived only. The database is a host bind mount (see the app services).
+  # nginx static root (/static): image assets re-seeded by static_sync on every
+  # `up` plus generated/ written by multiworld. Derived only; the database is
+  # a host bind mount (see the app services).
   app_static:
   # GitHub-bot's events.jsonl log
   github_bots_state:

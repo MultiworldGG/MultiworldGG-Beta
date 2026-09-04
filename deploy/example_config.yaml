@@ -14,13 +14,17 @@ HOST_ADDRESS: localhost
 #ASSET_RIGHTS: false
 
 # ---------------------------------------------------------------------------
-# Database
+# Data folders
 # ---------------------------------------------------------------------------
-# The compose stack bind-mounts /var/lib/mwgg-db from the host at /app/db, so
-# the database is a plain host file for backup/restore. Absolute path required.
-PONY:
-  provider: "sqlite"
-  filename: "/app/db/ap.db3"
+# The image fixes these through env (Dockerfile): database /db/ap.db3, uploads
+# /uploads, logs /logs, generated static /static/generated, and compose mounts
+# them. Only override here to move something, e.g. to a PostgreSQL database:
+#PONY:
+#  provider: "postgresql"
+#  host: "db"
+#  user: "mwgg"
+#  password: ""
+#  database: "mwgg"
 
 # ---------------------------------------------------------------------------
 # Secret keys

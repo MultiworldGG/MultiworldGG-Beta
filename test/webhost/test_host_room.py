@@ -9,10 +9,10 @@ from . import TestBase
 
 
 def _cleanup_logger(room_id: UUID) -> None:
-    from Utils import user_path
+    from WebHostLib import app
     tear_down_logging(room_id)
     try:
-        os.unlink(user_path("logs", f"{room_id}.txt"))
+        os.unlink(os.path.join(app.config["LOGS_FOLDER"], f"{room_id}.txt"))
     except OSError:
         pass
 
@@ -23,7 +23,6 @@ class TestHostFakeRoom(TestBase):
     log_filename: str
 
     def setUp(self) -> None:
-        from Utils import user_path
         from WebHostLib.models import db, commit, Room, Seed
 
         super().setUp()
@@ -39,7 +38,7 @@ class TestHostFakeRoom(TestBase):
                 self.room_id = room.id
                 self.seed_id = seed.id
                 commit()
-                self.log_filename = user_path("logs", f"{self.room_id}.txt")
+                self.log_filename = os.path.join(self.app.config["LOGS_FOLDER"], f"{self.room_id}.txt")
 
     def tearDown(self) -> None:
         from sqlalchemy import select

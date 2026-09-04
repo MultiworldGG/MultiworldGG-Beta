@@ -23,15 +23,41 @@ if multiprocessing.current_process().name == "MainProcess":
 from APContainer import is_ap_player_container
 from .cli import CLI
 
-UPLOAD_FOLDER = os.path.relpath('uploads')
-LOGS_FOLDER = os.path.relpath('logs')
-os.makedirs(LOGS_FOLDER, exist_ok=True)
-LOBBY_APWORLD_FOLDER = os.path.join(UPLOAD_FOLDER, "lobby_apworlds")
-os.makedirs(LOBBY_APWORLD_FOLDER, exist_ok=True)
-AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "avatars")
-os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
+
+
+def _env_path(var: str, default: str) -> str:
+    return os.path.abspath(os.environ.get(var) or default)
+
+
+# Runtime data folders. The env vars give the Docker image its layout
+# (Dockerfile ENV), config.yaml may override any key, and resolve_paths()
+# derives the upload subfolders and creates everything once config is loaded.
+UPLOAD_FOLDER = _env_path("MWGG_UPLOAD_FOLDER", "uploads")
+LOGS_FOLDER = _env_path("MWGG_LOGS_FOLDER", "logs")
+GENERATED_FOLDER = _env_path("MWGG_GENERATED_FOLDER",
+                             os.path.join(os.path.dirname(__file__), "static", "generated"))
+DB_FILE = _env_path("MWGG_DB_FILE", "ap.db3")
+_UPLOAD_SUBFOLDERS = {"LOBBY_APWORLD_PATH": "lobby_apworlds", "AVATAR_UPLOAD_FOLDER": "avatars"}
+DATA_FOLDER_KEYS = ("UPLOAD_FOLDER", "LOGS_FOLDER", "GENERATED_FOLDER", *_UPLOAD_SUBFOLDERS)
 
 app = Flask(__name__)
+
+
+def resolve_paths(flask_app: Flask) -> None:
+    """Absolutize the data folders once config.yaml is applied and create them.
+
+    Upload subfolders still carrying their import-time derivation follow a
+    reconfigured UPLOAD_FOLDER; ones set explicitly in config are kept.
+    """
+    upload = os.path.abspath(flask_app.config["UPLOAD_FOLDER"])
+    for key, sub in _UPLOAD_SUBFOLDERS.items():
+        if flask_app.config[key] == os.path.join(UPLOAD_FOLDER, sub):
+            flask_app.config[key] = os.path.join(upload, sub)
+    flask_app.config["UPLOAD_FOLDER"] = upload
+    for key in DATA_FOLDER_KEYS:
+        flask_app.config[key] = os.path.abspath(flask_app.config[key])
+        os.makedirs(flask_app.config[key], exist_ok=True)
+
 
 _dynamic_tracker_lock = threading.Lock()
 _dynamic_tracker_registered = False
@@ -45,7 +71,10 @@ app.jinja_env.filters['is_applayercontainer'] = is_ap_player_container
 app.config["DEBUG"] = False
 app.config["PORT"] = 80
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["LOBBY_APWORLD_PATH"] = os.path.abspath(LOBBY_APWORLD_FOLDER)
+app.config["LOGS_FOLDER"] = LOGS_FOLDER
+app.config["GENERATED_FOLDER"] = GENERATED_FOLDER
+for _key, _sub in _UPLOAD_SUBFOLDERS.items():
+    app.config[_key] = os.path.join(UPLOAD_FOLDER, _sub)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
 # SECRET_KEY signs session cookies: $MWGG_SECRET_KEY, else config.yaml
 # SECRET_KEY, else the hostname fallback (dev only; get_app() refuses it in prod).
@@ -88,11 +117,11 @@ app.config["WAITRESS_THREADS"] = 10
 # get_app() in WebHost.py converts it to SQLALCHEMY_DATABASE_URI.
 app.config["PONY"] = {
     'provider': 'sqlite',
-    'filename': os.path.abspath('ap.db3'),
+    'filename': DB_FILE,
     'create_db': True
 }
 # flask-sqlalchemy configuration; populated by get_app() from the PONY dict
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.abspath('ap.db3')}"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_FILE}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_ROLL"] = 20
 app.config["CACHE_TYPE"] = "SimpleCache"
@@ -107,7 +136,6 @@ app.config["SHARE_BASE_HOST"] = ""
 
 # Profile-picture uploader (see WebHostLib/api/avatar.py); public URL origin
 # comes from SHARE_BASE_HOST above.
-app.config["AVATAR_UPLOAD_FOLDER"] = os.path.abspath(AVATAR_UPLOAD_FOLDER)
 app.config["AVATAR_MAX_UPLOAD_BYTES"] = 5 * 1024 * 1024
 app.config["AVATAR_MAX_PIXELS"] = 4_000_000
 app.config["AVATAR_OUTPUT_DIM"] = 100

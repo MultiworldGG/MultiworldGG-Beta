@@ -241,10 +241,12 @@ def init_generator(config: dict[str, Any]) -> None:
 
     # Spawned worker: get_app() never ran, so register Flask-SQLAlchemy's db
     # with the worker's app for gen_game/upload_to_db's db.engine use.
-    from . import app as flask_app
+    from . import app as flask_app, DATA_FOLDER_KEYS
     from .models import db
     flask_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     flask_app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    for key in DATA_FOLDER_KEYS:
+        flask_app.config[key] = config[key]
     if "sqlalchemy" not in flask_app.extensions:
         db.init_app(flask_app)
 
@@ -503,6 +505,7 @@ class MultiworldInstance():
         self.key = config["SELFLAUNCHKEY"]
         self.host = config["HOST_ADDRESS"]
         self.game_ports = config["GAME_PORTS"]
+        self.logs_folder = config["LOGS_FOLDER"]
         self.rooms_to_start = multiprocessing.Queue()
         self.rooms_shutting_down = multiprocessing.Queue()
         self.name = f"MultiHoster{id}"
@@ -516,7 +519,8 @@ class MultiworldInstance():
         process = multiprocessing.Process(group=None, target=run_server_process,
                                           args=(self.name, self.ponyconfig, get_static_server_data(),
                                                 self.cert, self.key, self.host, self.game_ports,
-                                                self.rooms_to_start, self.rooms_shutting_down),
+                                                self.rooms_to_start, self.rooms_shutting_down,
+                                                self.logs_folder),
                                           name=self.name)
         process.start()
         self.process = process

@@ -449,7 +449,7 @@ def get_static_server_data() -> dict:
     return data
 
 
-def set_up_logging(room_id) -> logging.Logger:
+def set_up_logging(room_id, logs_folder: typing.Optional[str] = None) -> logging.Logger:
     import os
     # logger setup
     logger = logging.getLogger(f"RoomLogger {room_id}")
@@ -459,8 +459,12 @@ def set_up_logging(room_id) -> logging.Logger:
         logger.removeHandler(handler)
         handler.close()
 
+    if logs_folder is None:
+        from . import app
+        logs_folder = app.config["LOGS_FOLDER"]
+    os.makedirs(logs_folder, exist_ok=True)
     file_handler = logging.FileHandler(
-        os.path.join(Utils.user_path("logs"), f"{room_id}.txt"),
+        os.path.join(logs_folder, f"{room_id}.txt"),
         "a",
         encoding="utf-8-sig")
     file_handler.setFormatter(logging.Formatter("[%(asctime)s]: %(message)s"))
@@ -483,7 +487,8 @@ def tear_down_logging(room_id):
 def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
                        cert_file: typing.Optional[str], cert_key_file: typing.Optional[str],
                        host: str, game_ports: Iterable[str | int],
-                       rooms_to_run: multiprocessing.Queue, rooms_shutting_down: multiprocessing.Queue):
+                       rooms_to_run: multiprocessing.Queue, rooms_shutting_down: multiprocessing.Queue,
+                       logs_folder: typing.Optional[str] = None):
     from setproctitle import setproctitle
 
     setproctitle(name)
@@ -541,7 +546,7 @@ def run_server_process(name: str, ponyconfig: dict, static_server_data: dict,
         with Locker(f"RoomLocker {room_id}"):
             logger = logging.getLogger()  # init logger separately to assure error logs
             try:
-                logger = set_up_logging(room_id)
+                logger = set_up_logging(room_id, logs_folder)
                 ctx = WebHostContext(static_server_data, logger)
                 ctx.load(room_id)
                 ctx.init_save()
