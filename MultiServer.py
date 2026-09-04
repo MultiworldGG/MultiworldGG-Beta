@@ -293,6 +293,7 @@ class Context:
     endpoints: list[Client]
     locations: LocationStore  # typing.Dict[int, typing.Dict[int, typing.Tuple[int, int, int]]]
     location_checks: typing.Dict[typing.Tuple[int, int], typing.Set[int]]
+    location_check_times: typing.Dict[typing.Tuple[int, int], typing.Dict[int, int]]  # unix seconds per check
     hints_used: typing.Dict[typing.Tuple[int, int], int]
     groups: typing.Dict[int, typing.Set[int]]
     save_version = 2
@@ -347,6 +348,7 @@ class Context:
         self.start_inventory = {}
         self.name_aliases: typing.Dict[team_slot, str] = {}
         self.location_checks = collections.defaultdict(set)
+        self.location_check_times = collections.defaultdict(dict)
         self.hint_cost = hint_cost
         self.location_check_points = location_check_points
         self.hints_used = collections.defaultdict(int)
@@ -745,6 +747,7 @@ class Context:
             "hints_used": dict(self.hints_used),
             "hints": dict(self.hints),
             "location_checks": dict(self.location_checks),
+            "location_check_times": dict(self.location_check_times),
             "name_aliases": self.name_aliases,
             "client_game_state": dict(self.client_game_state),
             "client_activity_timers": tuple(
@@ -787,6 +790,7 @@ class Context:
             {tuple(key): datetime.datetime.fromtimestamp(value, datetime.timezone.utc) for key, value
              in savedata["client_activity_timers"]})
         self.location_checks.update(savedata["location_checks"])
+        self.location_check_times.update(savedata.get("location_check_times", {}))
         self.random.setstate(savedata["random_state"])
 
         if "game_options" in savedata:
@@ -1372,6 +1376,7 @@ def register_location_checks(ctx: Context, team: int, slot: int, locations: typi
         del sortable
 
         ctx.location_checks[team, slot] |= new_locations
+        ctx.location_check_times[team, slot].update(dict.fromkeys(new_locations, int(time.time())))
         send_new_items(ctx)
         ctx.broadcast(ctx.clients[team][slot], [{
             "cmd": "RoomUpdate",
