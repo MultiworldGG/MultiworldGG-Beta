@@ -10,9 +10,23 @@ services:
     # Run-once populate/refresh job, not a long-running service.
     restart: "no"
     volumes:
-      - app_volume:/app
       # The ONLY service that mounts the worlds venv read-write.
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/
+
+  # Copies WebHostLib/static out of the image into the app_static volume on
+  # every `up`, then exits 0. Nothing may mount a volume over /app: Docker seeds
+  # a named volume from the image only while it is empty, so it would shadow
+  # every later pull/rebuild. generated/ is kept -- multiworld rebuilds docs
+  # and options at boot, but LttP sprites come from the network.
+  static_sync:
+    image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
+    entrypoint:
+      - sh
+      - -c
+      - "find /static -mindepth 1 -maxdepth 1 ! -name generated -exec rm -rf {} + && cp -a /app/WebHostLib/static/. /static/"
+    restart: "no"
+    volumes:
+      - app_static:/static
 
   multiworld:
     # Default: pull the published image from GHCR. Operator can override the
@@ -35,8 +49,16 @@ services:
       # Pure consumer of the venv: never installs, just reads.
       - SKIP_ALL_INSTALLS=1
     volumes:
-      # Mount application volume
-      - app_volume:/app
+      # Database on a host bind mount: a plain file to back up/restore.
+      # PONY.filename in config.yaml points at /app/db/ap.db3.
+      - /var/lib/mwgg-db:/app/db
+
+      # Uploads and per-room logs stay in Docker-managed volumes.
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+
+      # Static tree shared with web + nginx; this service writes generated/.
+      - app_static:/app/WebHostLib/static
 
       # Mount configs
       - ./example_config.yaml:/app/config.yaml
@@ -45,9 +67,11 @@ services:
       # Worlds venv: read-only; mwgg_upgrader is the sole writer.
       - /var/lib/mwgg:/root/.local/share/MultiworldGG/:ro
 
-    # Don't host until the worlds venv is fully populated.
+    # Don't host until the worlds venv and static tree are populated.
     depends_on:
       mwgg_upgrader:
+        condition: service_completed_successfully
+      static_sync:
         condition: service_completed_successfully
 
     # Expose on host network for access to dynamically mapped ports
@@ -63,13 +87,20 @@ services:
     depends_on:
       mwgg_upgrader:
         condition: service_completed_successfully
+      static_sync:
+        condition: service_completed_successfully
       nudenet:
         condition: service_healthy
     # Launch gunicorn targeting WebHost application
     entrypoint: gunicorn -c gunicorn.conf.py
     volumes:
-      # Mount application volume
-      - app_volume:/app
+      # Same database, uploads and room logs as multiworld.
+      - /var/lib/mwgg-db:/app/db
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+
+      # Static tree: reads generated/docs written by multiworld.
+      - app_static:/app/WebHostLib/static
 
       # Mount configs
       - ./example_config.yaml:/app/config.yaml
@@ -140,8 +171,9 @@ services:
     image: nginx:stable-alpine
     mem_limit: 96m
     volumes:
-      # Mount application volume
-      - app_volume:/app
+      # Read-only views of what nginx serves itself: /static/ and /avatar/.
+      - app_static:/app/WebHostLib/static:ro
+      - app_uploads:/app/uploads:ro
 
       # Mount config
       - ./example_nginx.conf:/etc/nginx/nginx.conf
@@ -317,8 +349,12 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
 volumes:
-  # Share application directory amongst multiworld and web services
-  # (for access to log files and the like), and nginx (for static files)
-  app_volume:
+  # Avatar + lobby-apworld uploads and per-room logs, shared by multiworld and
+  # web (nginx reads uploads for /avatar/). Kept across down/pull/rebuild.
+  app_uploads:
+  app_logs:
+  # WebHostLib/static, re-seeded from the image by static_sync on every `up`.
+  # Derived only. The database is a host bind mount (see the app services).
+  app_static:
   # GitHub-bot's events.jsonl log
   github_bots_state:

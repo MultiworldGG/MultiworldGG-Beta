@@ -54,6 +54,7 @@ EnemizerCLI/
 /options.yaml
 /config.yaml
 /logs/
+/uploads/
 _persistent_storage.yaml
 mystery_result_*.yaml
 *-errors.txt

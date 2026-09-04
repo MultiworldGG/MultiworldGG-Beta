@@ -8,6 +8,9 @@ services:
   `mwgg_igdb` "ao" index + every world + the worlds' requirements), then
   exits. It is the *only* writer of the venv; every other service mounts it
   read-only and waits for this job to finish.
+- **static_sync** - run-once job that copies `WebHostLib/static` out of the
+  image into the `app_static` volume nginx serves, then exits. It re-runs on
+  every `up`, so a pulled or rebuilt image is what nginx serves.
 - **multiworld** - game-hosting process (`python WebHost.py
   --config_override selflaunch.yaml`). Uses host networking for the dynamic
   port range games bind to.
@@ -22,6 +25,11 @@ services:
 All app services share the same image (built once by the `multiworld`
 service's `build:` block, or pulled from GHCR). `multiworld` and `web` run as
 pure venv consumers with `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` installs.
+
+Code always runs from the image; no service mounts a volume over `/app`.
+Uploads and room logs live in named volumes, the worlds venv and the database
+are host bind mounts, and `WebHostLib/static` is re-copied from the image on
+every `up`.
 
 ## Host-side prerequisites
 
@@ -54,7 +62,31 @@ sudo tar -czf "mwgg-worlds-$(date +%F).tgz" -C /var/lib/mwgg mwgg_venv
 `docker compose up -d`. The webhost will discover the installed worlds and
 skip the cold install pass.
 
-### 2. Config files
+### 2. Database directory
+
+The SQLite database (rooms, seeds, sessions, passkeys) is bind-mounted from
+the host so it is a plain file you can back up and restore without Docker:
+
+```bash
+sudo mkdir -p /var/lib/mwgg-db
+sudo chown root:root /var/lib/mwgg-db   # container user is root
+```
+
+The app services see it at `/app/db/ap.db3` (`PONY.filename` in
+`config.yaml`). Uploads (`avatars/`, `lobby_apworlds/`) and per-room logs stay
+in the named volumes `app_uploads` and `app_logs`.
+
+**Backup** while the stack runs, via SQLite's own snapshot API:
+```bash
+sudo sqlite3 /var/lib/mwgg-db/ap.db3 ".backup '/var/backups/mwgg-ap-$(date +%F).db3'"
+```
+Without `sqlite3` on the host, `docker compose stop web multiworld`, copy the
+file, then `docker compose start web multiworld`.
+
+**Restore:** stop `web` and `multiworld`, replace `/var/lib/mwgg-db/ap.db3`,
+start them again.
+
+### 3. Config files
 
 Copy each `example_*` file to its production name and edit:
 
@@ -67,7 +99,7 @@ Copy each `example_*` file to its production name and edit:
 | `example_github-bot.env` | `github-bot.env` | GitHub App IDs, webhook secret paths, etc. `chmod 0600`. |
 | `example_github-bot_nginx.conf` | (host nginx) | Snippet for the *host's* nginx (not this stack) - terminates TLS for `oliver.multiworld.gg` and proxies to `127.0.0.1:3000`. |
 
-### 3. GitHub bot secrets directory
+### 4. GitHub bot secrets directory
 
 Create the secrets directory on the host (bind-mounted read-only into the bot
 container at `/run/secrets`):
@@ -89,7 +121,7 @@ Place these files under it, then point the `*_FILE` env vars in
 | `karen_private_key.pem` | Full PEM private key for the Karen App. |
 | `karen_webhook_secret` | One-line hex string - HMAC secret for Karen's `/karen` webhook (`openssl rand -hex 32`). |
 
-### 4. Karen fuzz sandbox (optional, for the Index PR fuzzer)
+### 5. Karen fuzz sandbox (optional, for the Index PR fuzzer)
 
 The Karen App's `/karen` webhook receives `repository_dispatch` (`karen-fuzz`)
 events from the Index PR workflow and, per proposed world, spawns a short-lived
@@ -157,8 +189,9 @@ Expected log signature for a healthy cold start:
 - `mwgg_upgrader-1`: `Installing mwgg_igdb (ao)`, then ~200
   `Installing world: worlds.<slug>` lines as the venv is populated, then
   `mwgg_venv ready` and the container exits 0.
-- `multiworld-1` / `web-1`: held until `mwgg_upgrader` exits successfully
-  (`service_completed_successfully`). Neither installs anything
+- `static_sync-1`: no output, exits 0 within a second or two.
+- `multiworld-1` / `web-1`: held until `mwgg_upgrader` and `static_sync` exit
+  successfully (`service_completed_successfully`). Neither installs anything
   (`SKIP_ALL_INSTALLS=1`) - they import worlds from the read-only venv.
   `web-1` boots the `gunicorn` master then two workers (`preload_app = True`);
   `multiworld-1` begins hosting.
@@ -181,9 +214,15 @@ For routine updates (new world releases, mwgg_igdb refresh, code changes):
 cd /opt/mwgg
 git pull
 docker compose build         # builds multiworld + github-bots + fuzz-image
-docker compose up -d
+docker compose up -d         # re-runs static_sync + mwgg_upgrader, recreates the rest
 docker image prune -f        # reclaim the images this rebuild just orphaned
 ```
+
+Running the published image instead of building? `docker compose pull` in
+place of `build`. Either way `up -d` is enough for new code, templates and
+static files to go live: services run code from the image and `static_sync`
+refreshes nginx's copy of `WebHostLib/static` each time. No volume needs
+removing.
 
 `docker compose build` with no service rebuilds every service that has a build
 context - `multiworld`, `github-bots`, and `fuzz-image`; name one to rebuild just
@@ -231,19 +270,37 @@ bind mounts they can't reach. See what's reclaimable any time with
 `docker system df`. If you ran fuzz with `FUZZ_DEBUG=1`, also clear the kept
 per-job dirs once inspected: `rm -rf /var/lib/mwgg-fuzz/*/`.
 
-A full `docker compose down` (no `-v`) keeps named volumes - the `app_volume`
-shared between multiworld/web/nginx for logs/seeds/static assets stays.
+`docker compose down` (no `-v`) keeps every named volume, and nothing in the
+upgrade flow needs `-v`: new content comes from the image. `down -v` would
+remove `app_uploads`, `app_logs`, `app_static` (rebuilt on the next `up`) and
+`github_bots_state`; it cannot touch the database or the worlds venv, which
+are host bind mounts.
 
-If you need to nuke `app_volume` (rare - e.g., to reset all log history),
-add `-v`:
+### Migrating from the `app_volume` layout
+
+Earlier revisions of this stack mounted a single named volume, `app_volume`,
+over `/app` in every service. Docker seeds a named volume from the image only
+while it is empty, so that volume shadowed every later pull or rebuild
+(content changes needed `down -v`) while also holding the database. Move the
+state out before switching:
 
 ```bash
-docker compose down -v
+docker compose down                  # stops the old stack; volumes are kept
+sudo mkdir -p /var/lib/mwgg-db
+docker compose create                # creates app_uploads/app_logs, starts nothing
+docker run --rm -v deploy_app_volume:/old -v /var/lib/mwgg-db:/db \
+  -v deploy_app_uploads:/uploads -v deploy_app_logs:/logs alpine sh -c \
+  'cp -a /old/ap.db3 /db/; for d in uploads logs; do if [ -d /old/$d ]; then cp -a /old/$d/. /$d/; fi; done'
+docker compose up -d
+docker volume rm deploy_app_volume   # once the new stack checks out
 ```
 
-This is **destructive to `app_volume`** but **not to
-`/var/lib/mwgg/mwgg_venv`** - the latter is a host bind mount, not a managed
-volume. Worlds installed there survive every compose command.
+Volumes are named `<compose project>_<name>` (`deploy_...` when run from this
+directory); confirm with `docker volume ls`. If you maintain your own
+`config.yaml` rather than the example, add the `PONY` block from
+`example_config.yaml` so the database is found at `/app/db/ap.db3`. A
+`host.yaml` edited inside the old volume (ROM paths for generation) is not
+carried over; bind-mount one at `/app/host.yaml` the same way `config.yaml` is.
 
 ### Refreshing only the worlds venv
 
