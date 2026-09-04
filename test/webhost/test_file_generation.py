@@ -11,14 +11,14 @@ class TestFileGeneration(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.correct_path = os.path.join(os.path.dirname(WebHost.__file__), "WebHostLib")
         # should not create the folder *here*
         cls.incorrect_path = os.path.join(os.path.split(os.path.dirname(__file__))[0], "WebHostLib")
 
     def test_options(self):
         from WebHostLib.options import create as create_options_files
         create_options_files()
-        target = os.path.join(self.correct_path, "static", "generated", "configs")
+        from WebHostLib import app
+        target = os.path.join(app.config["GENERATED_FOLDER"], "configs")
         self.assertTrue(os.path.exists(target))
         self.assertFalse(os.path.exists(os.path.join(self.incorrect_path, "static", "generated", "configs")))
 

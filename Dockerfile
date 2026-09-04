@@ -81,7 +81,14 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
-RUN mkdir -p custom_worlds
+# Runtime data lives outside /app so nothing is ever mounted over the code
+# tree; deploy/docker-compose.yml mounts these paths. /app/roms -> /roms lets a
+# host.yaml use roms/<file> entries, the convention the fuzz image shares.
+ENV MWGG_DB_FILE=/db/ap.db3 \
+    MWGG_UPLOAD_FOLDER=/uploads \
+    MWGG_LOGS_FOLDER=/logs \
+    MWGG_GENERATED_FOLDER=/static/generated
+RUN mkdir -p custom_worlds /db /uploads /logs /static/generated /roms && ln -s /roms roms
 
 COPY --from=cython-builder /build/*.so ./
 

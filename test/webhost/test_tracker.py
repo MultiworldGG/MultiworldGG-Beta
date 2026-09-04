@@ -23,7 +23,6 @@ class TestTracker(TestBase):
 
     def setUp(self) -> None:
         from MultiServer import Context as MultiServerContext
-        from Utils import user_path
         from WebHostLib.models import db, commit, GameDataPackage, Room, Seed
 
         super().setUp()
@@ -46,7 +45,7 @@ class TestTracker(TestBase):
                 db.session.flush()
                 self.room_id = room.id
                 commit()
-                self.log_filename = user_path("logs", f"{self.room_id}.txt")
+                self.log_filename = os.path.join(self.app.config["LOGS_FOLDER"], f"{self.room_id}.txt")
 
     def tearDown(self) -> None:
         from sqlalchemy import select

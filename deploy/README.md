@@ -26,10 +26,19 @@ All app services share the same image (built once by the `multiworld`
 service's `build:` block, or pulled from GHCR). `multiworld` and `web` run as
 pure venv consumers with `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` installs.
 
-Code always runs from the image; no service mounts a volume over `/app`.
-Uploads and room logs live in named volumes, the worlds venv and the database
-are host bind mounts, and `WebHostLib/static` is re-copied from the image on
-every `up`.
+Code always runs from the image; no service mounts a volume over `/app`. The
+image fixes where runtime data lives (Dockerfile `ENV MWGG_*`, overridable in
+`config.yaml`) and compose mounts those paths:
+
+| Container path | What | Backed by |
+| --- | --- | --- |
+| `/app` | code, templates, image static assets | the image |
+| `/db/ap.db3` | SQLite database | host bind mount `/var/lib/mwgg-db` |
+| `/uploads` | `avatars/`, `lobby_apworlds/` | named volume `app_uploads` |
+| `/logs` | `<room_id>.txt` room logs | named volume `app_logs` |
+| `/static` | nginx root: image assets re-copied on every `up`, plus `generated/` (docs, option templates, sprites) | named volume `app_static` |
+| `/roms` | optional base ROMs for ROM-based generation | host bind mount, read-only |
+| `/root/.local/share/MultiworldGG` | worlds venv | host bind mount `/var/lib/mwgg` |
 
 ## Host-side prerequisites
 
@@ -72,9 +81,10 @@ sudo mkdir -p /var/lib/mwgg-db
 sudo chown root:root /var/lib/mwgg-db   # container user is root
 ```
 
-The app services see it at `/app/db/ap.db3` (`PONY.filename` in
-`config.yaml`). Uploads (`avatars/`, `lobby_apworlds/`) and per-room logs stay
-in the named volumes `app_uploads` and `app_logs`.
+The app services see it at `/db/ap.db3` (`MWGG_DB_FILE` in the image; a
+`PONY` block in `config.yaml` overrides it, e.g. for PostgreSQL). Uploads
+(`avatars/`, `lobby_apworlds/`) and per-room logs stay in the named volumes
+`app_uploads` and `app_logs`.
 
 **Backup** while the stack runs, via SQLite's own snapshot API:
 ```bash
@@ -86,7 +96,22 @@ file, then `docker compose start web multiworld`.
 **Restore:** stop `web` and `multiworld`, replace `/var/lib/mwgg-db/ap.db3`,
 start them again.
 
-### 3. Config files
+### 3. ROMs (optional)
+
+ROM-based worlds only generate when their base ROM is present. Put the ROMs in
+a host directory, point a `host.yaml` at them, and uncomment the two mounts on
+the `multiworld` service in `docker-compose.yml`:
+
+```bash
+sudo mkdir -p /var/lib/mwgg-roms    # read-only in the container at /roms
+```
+
+`host.yaml` is the same file a desktop install writes; only the
+`<world>_options.rom_file` entries matter here, and they may be `/roms/<file>`
+or `roms/<file>` (`/app/roms` links to `/roms`, as in the fuzz image). Never
+bake ROMs into the image: `/roms/` is dockerignored.
+
+### 4. Config files
 
 Copy each `example_*` file to its production name and edit:
 
@@ -99,7 +124,7 @@ Copy each `example_*` file to its production name and edit:
 | `example_github-bot.env` | `github-bot.env` | GitHub App IDs, webhook secret paths, etc. `chmod 0600`. |
 | `example_github-bot_nginx.conf` | (host nginx) | Snippet for the *host's* nginx (not this stack) - terminates TLS for `oliver.multiworld.gg` and proxies to `127.0.0.1:3000`. |
 
-### 4. GitHub bot secrets directory
+### 5. GitHub bot secrets directory
 
 Create the secrets directory on the host (bind-mounted read-only into the bot
 container at `/run/secrets`):
@@ -121,7 +146,7 @@ Place these files under it, then point the `*_FILE` env vars in
 | `karen_private_key.pem` | Full PEM private key for the Karen App. |
 | `karen_webhook_secret` | One-line hex string - HMAC secret for Karen's `/karen` webhook (`openssl rand -hex 32`). |
 
-### 5. Karen fuzz sandbox (optional, for the Index PR fuzzer)
+### 6. Karen fuzz sandbox (optional, for the Index PR fuzzer)
 
 The Karen App's `/karen` webhook receives `repository_dispatch` (`karen-fuzz`)
 events from the Index PR workflow and, per proposed world, spawns a short-lived
@@ -302,10 +327,10 @@ container lists the old volume, stops if `ap.db3` is not in it, copies it to
 It needs only `docker compose`, no `docker run`. The old volume is no longer
 declared in the stack, so nothing reads or removes it; an admin can drop it
 later with `docker volume rm "${P}_app_volume"`. If you maintain your own
-`config.yaml` rather than the example, add the `PONY` block from
-`example_config.yaml` so the database is found at `/app/db/ap.db3`. A
-`host.yaml` edited inside the old volume (ROM paths for generation) is not
-carried over; bind-mount one at `/app/host.yaml` the same way `config.yaml` is.
+`config.yaml` rather than the example, drop any `PONY` block that still points
+at the old location; the image default is `/db/ap.db3`. A `host.yaml` edited
+inside the old volume (ROM paths for generation) is not carried over; see
+"ROMs (optional)" above for the supported way to mount one.
 
 ### Refreshing only the worlds venv
 

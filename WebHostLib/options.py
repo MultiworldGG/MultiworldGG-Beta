@@ -12,7 +12,7 @@ from urllib.parse import quote
 from sqlalchemy import select
 
 import Options
-from Utils import local_path, utcnow
+from Utils import utcnow
 from . import app, cache, limiter
 from .generate import get_meta
 from .misc import get_world_theme
@@ -20,9 +20,8 @@ from .models import db, commit
 
 
 def create() -> None:
-    target_folder = local_path("WebHostLib", "static", "generated")
-    yaml_folder = os.path.join(target_folder, "configs")
-
+    yaml_folder = os.path.join(app.config["GENERATED_FOLDER"], "configs")
+    os.makedirs(yaml_folder, exist_ok=True)
     Options.generate_yaml_templates(yaml_folder)
 
 
