@@ -311,7 +311,11 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
     Beta clients take over the launcher UI rather than running standalone: wait
     for the frontend, then route through Utils.discover_and_launch_module, which
     installs the world on demand and forwards `launch_kwargs` to the resolved
-    client. The screen-flip hooks are feature-detected so the TUI skips them."""
+    client. The screen-flip hooks are feature-detected so the TUI skips them.
+
+    Without a launch-supplied server address the client must not connect on
+    its own (a saved port is stale by the next room): once the client is up,
+    the frontend's connect dialog opens and the connect waits for its OK."""
     from frontend_protocol import resolve_frontend_class
 
     logger = logging.getLogger("MultiWorld")
@@ -335,6 +339,8 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
         except Exception:
             logger.exception("client_console_init failed; continuing module launch")
 
+    prompt_for_server = not launch_kwargs.get("server_address")
+
     def ready_callback(*_cb_args):
         try:
             console_init = getattr(app, "console_init", None)
@@ -348,6 +354,15 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
                 hide_loading()
         except Exception:
             logger.exception("Could not switch to the console screen after module launch")
+        # app.ctx is the game context here (swapped in before the ready callback);
+        # a client that seeded its own address (patch metadata, --connect) keeps it.
+        if prompt_for_server and not getattr(app.ctx, "server_address", None):
+            open_connect_dialog = getattr(app, "open_connect_dialog", None)
+            if callable(open_connect_dialog):
+                try:
+                    open_connect_dialog()
+                except Exception:
+                    logger.exception("Could not open the connect dialog after module launch")
 
     def error_callback(*_cb_args):
         logger.error(f"Failed to launch a client for module {module_name}")

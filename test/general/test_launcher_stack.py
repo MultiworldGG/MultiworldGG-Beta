@@ -414,6 +414,79 @@ def test_empty_module_text_route_reaches_text_client(monkeypatch):
     assert calls == ["P1@localhost:38281"]
 
 
+# --- _route_module_when_ui_ready: connect prompt when no address was supplied ---
+
+def _fake_frontend(ctx_server_address=None, with_dialog=True):
+    """Live-frontend stand-in: `root` set so the routing poll returns at once,
+    `ctx` standing in for the game context the takeover swaps in."""
+    class Frontend:
+        _active_instance = None
+
+        def __init__(self):
+            self.root = object()
+            self.ctx = types.SimpleNamespace(server_address=ctx_server_address)
+            self.calls = []
+            type(self)._active_instance = self
+
+        def client_console_init(self):
+            self.calls.append("client_console_init")
+
+        def console_init(self):
+            self.calls.append("console_init")
+
+        def change_screen(self, name):
+            self.calls.append(f"change_screen:{name}")
+
+        def hide_loading(self):
+            self.calls.append("hide_loading")
+
+    if with_dialog:
+        Frontend.open_connect_dialog = lambda self: self.calls.append("open_connect_dialog")
+    return Frontend()
+
+
+def _routed_ready_callback(monkeypatch, app, **launch_kwargs):
+    """Route against `app` and return the ready_callback handed to
+    discover_and_launch_module."""
+    import asyncio
+    import frontend_protocol
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+    asyncio.run(MultiWorld._route_module_when_ui_ready("albw", **launch_kwargs))
+    return captured["ready_callback"]
+
+
+def test_route_ready_opens_connect_dialog_without_address(monkeypatch):
+    """A direct client launch carries no server address; the client must not
+    connect on a saved one -- the dialog opens after the console is up."""
+    app = _fake_frontend()
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert app.calls == ["client_console_init", "console_init", "change_screen:console",
+                         "hide_loading", "open_connect_dialog"]
+
+
+def test_route_ready_skips_connect_dialog_with_launch_address(monkeypatch):
+    app = _fake_frontend()
+    _routed_ready_callback(monkeypatch, app, server_address="P1@localhost:38281", client_type="game")()
+    assert "open_connect_dialog" not in app.calls
+
+
+def test_route_ready_skips_connect_dialog_when_client_seeded_address(monkeypatch):
+    """Patch metadata / --connect set the address on the game context before
+    the ready callback; that address wins over the prompt."""
+    app = _fake_frontend(ctx_server_address="ws://localhost:38281")
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert "open_connect_dialog" not in app.calls
+
+
+def test_route_ready_tolerates_frontend_without_dialog_hook(monkeypatch):
+    """The TUI has no connect dialog; the hook is feature-detected."""
+    app = _fake_frontend(with_dialog=False)
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert app.calls[-1] == "hide_loading"
+
+
 # --- client-type combo validation ---
 
 @pytest.mark.parametrize("argv, message", [

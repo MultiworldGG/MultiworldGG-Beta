@@ -139,22 +139,30 @@ class TestKvuiTuiStandins(unittest.TestCase):
         )
 
     def test_game_manager_is_real_takeover_class(self) -> None:
-        """GameManager must stay a real class whose async_run drives the takeover;
-        its inert __getattr__ must not shadow that, and __init__ accepts extra args."""
+        """GameManager must stay a real class whose async_run drives the takeover
+        and then hands its declared base_title to the live app (worlds building the
+        manager in run_gui skip build_for_live_app); its inert __getattr__ must not
+        shadow that, and __init__ accepts extra args."""
         self._assert_ok(
             "import asyncio\n"
             "from kvui import GameManager\n"
             "class M(GameManager):\n"
+            "    base_title = 'M Client'\n"
             "    def __init__(self, ctx): super().__init__(ctx, app=None)\n"
+            "class LiveApp:\n"
+            "    base_title = 'MultiworldGG'\n"
             "class Ctx:\n"
             "    took_over = False\n"
             "    def _can_takeover_existing_ui(self): return True\n"
-            "    async def _takeover_existing_ui(self): self.took_over = True\n"
+            "    async def _takeover_existing_ui(self):\n"
+            "        self.took_over = True\n"
+            "        self.ui = LiveApp()\n"
             "ctx = Ctx()\n"
             "m = M(ctx)\n"
             "assert m.run() is None\n"
             "asyncio.run(m.async_run())\n"
             "assert ctx.took_over, 'async_run did not reach the takeover handshake'\n"
+            "assert ctx.ui.base_title == 'M Client', 'manager base_title not applied to the live app'\n"
         )
 
     def test_tracker_hint_patch_import_and_classic_screen(self) -> None:

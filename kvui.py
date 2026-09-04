@@ -72,6 +72,9 @@ if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
         async def async_run(self):
             if self.ctx._can_takeover_existing_ui():
                 await self.ctx._takeover_existing_ui()
+                # Managers built in a world's run_gui never pass build_for_live_app.
+                if self.base_title:
+                    self.ctx.ui.base_title = self.base_title
             else:
                 logging.critical("Client did not launch properly, exiting.")
                 error_callback = getattr(self.ctx, "_error_callback", None)
@@ -278,6 +281,9 @@ else:
             ''' Changing this 'run' to instead do the client takeover loop '''
             if self.ctx._can_takeover_existing_ui():
                 await self.ctx._takeover_existing_ui()
+                # Managers built in a world's run_gui never pass build_for_live_app.
+                if self.base_title:
+                    self.ctx.ui.base_title = self.base_title
             else:
                 logging.critical("Client did not launch properly, exiting.")
                 error_callback = getattr(self.ctx, "_error_callback", None)

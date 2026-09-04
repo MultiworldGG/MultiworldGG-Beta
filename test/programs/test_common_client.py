@@ -6,6 +6,7 @@ from contextlib import ExitStack
 from unittest import mock
 
 import NetUtils
+import Utils
 from CommonClient import CommonContext, process_server_cmd
 
 
@@ -316,3 +317,19 @@ class TestAdminCommandResultHook(unittest.IsolatedAsyncioTestCase):
         ctx.ui = types.SimpleNamespace(print_json=lambda data: None, on_admin_command_result=received.append)
         await process_server_cmd(ctx, {"cmd": "PrintJSON", "type": "CommandResult", "data": [{"text": "x"}]})
         self.assertEqual(received, [])
+
+
+class TestShutdownKeepsSavedUsername(unittest.IsolatedAsyncioTestCase):
+    """shutdown() clears the in-memory credentials without touching persistent
+    storage: the username setter persists, and storing None deletes last_username."""
+
+    async def test_shutdown_does_not_persist(self):
+        ctx = CommonContext()
+        ctx._username = "Player1"
+        ctx._password = "hunter2"
+        stored = []
+        with mock.patch.object(Utils, "persistent_store", lambda *args: stored.append(args)):
+            await ctx.shutdown()
+        self.assertEqual(stored, [])
+        self.assertIsNone(ctx._username)
+        self.assertIsNone(ctx._password)

@@ -78,6 +78,9 @@ services:
 
     # Expose on host network for access to dynamically mapped ports
     network_mode: host
+    # We need the env file here, too, for wss:// connections to work correctly.
+    env_file:
+      - web.env
 
   web:
     # Same image as multiworld service: both pull from GHCR by default, both

@@ -237,6 +237,8 @@ def _ensure_widgets():
         def __init__(self, **kwargs):
             super().__init__(**kwargs)
             self.data = []
+            self.theme_bg_color = "Custom"
+            self.mw_bg_color = self.theme_cls.surfaceContainerLowestColor
             self.data.append({"text": f"Tracker {UT_VERSION} Initializing for {apname} version {__version__}"})
 
         def resetData(self):

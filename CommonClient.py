@@ -1057,8 +1057,9 @@ class CommonContext(InitContext):
 
     async def shutdown(self):
         self.server_address = ""
-        self.username = None
-        self.password = None
+        # Plain attributes: the username setter persists, and None would delete last_username.
+        self._username = None
+        self._password = None
         self.cancel_autoreconnect()
         if self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.server.socket.close()
