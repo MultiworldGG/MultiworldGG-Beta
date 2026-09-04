@@ -406,6 +406,7 @@ class RawJSONtoTextParser(JSONtoTextParser):
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
     color_codes: typing.ClassVar[typing.Optional[dict]] = None
+    ref_count: int = 0
 
     def __init__(self, ctx):
         super().__init__(ctx)
@@ -444,10 +445,10 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
         player = int(node["text"])
         slot_info = self.ctx.slot_info.get(player, None)
         if slot_info:
-            text = f"Game: {slot_info.game}\n" \
-                   f"Type: {SlotType(slot_info.type).name}" #aaaaaaaaaaa must be a better way
+            text = f"Game: {slot_info.game}<br>" \
+                   f"Type: {SlotType(slot_info.type).name}"
             if slot_info.group_members:
-                text += f"\nMembers:\n " + "\n ".join(
+                text += "<br>Members:<br> " + "<br> ".join(
                     escape_markup(self.ctx.player_names[member])
                     for member in slot_info.group_members
                 )
@@ -464,10 +465,10 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
                 break
 
         if color_hex:
-            # Get the plain text without wrapping it in default color
+            # player_id, player_name and raw color nodes arrive unescaped here: brackets in names render as markup.
             text = node.get("text", "")
             for ref in node.get("refs", []):
-                ret_text = f"\n[ref={self.ref_count}|{ref}][color={color_hex}]{text}[/color][/ref]"
+                ret_text = f"[ref={self.ref_count}|{ref}][color={color_hex}]{text}[/color][/ref]"
                 self.ref_count += 1
                 return ret_text # Return without 'handling' the text again, as it's already formatted with color and ref
             return f'[color={color_hex}]{text}[/color]'
