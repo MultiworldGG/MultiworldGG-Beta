@@ -893,8 +893,30 @@ class CommonContext(InitContext):
             self.ui.ui_player_data = {slot: {} for team, slot, alias, name in package if self.team == team}
 
     def event_invalid_game(self):
-        self.gui_error('Invalid Game', 'Please verify that you connected with the right game to the correct world.')
         logger.error('Invalid Game; please verify that you connected with the right game to the correct world.')
+
+    async def recover_refused_slot(self) -> None:
+        """Ask for another slot name after an InvalidGame/InvalidSlot refusal.
+
+        A frontend with a connect dialog gets it prefilled from this context; the
+        refused server stays because `hostname`/`port` derive from `server_address`.
+        Otherwise the console prompt asks for the name and the login is redone on
+        the socket, which the server keeps open after a refusal.
+        """
+        self.auth = None
+        # Not the setter: the refused name must not be written back to last_username.
+        self._username = None
+        open_connect_dialog = getattr(self.ui, "open_connect_dialog", None)
+        if callable(open_connect_dialog):
+            # Blocks auto-reconnect with the refused name; server_loop clears it once
+            # the dialog's connect opens a socket.
+            self.disconnected_intentionally = True
+            self.ui.hide_loading()
+            open_connect_dialog()
+            return
+        logger.info('Enter player name:')
+        self.auth = await self.console_input()
+        await self.server_auth()
 
     async def client_get_password(self, password_requested: bool = False) -> str:
         if password_requested and not self.password:
@@ -1761,8 +1783,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     elif cmd == 'ConnectionRefused':
         errors = args["errors"]
         if 'InvalidGame' in errors:
-            ctx.disconnected_intentionally = True
             ctx.event_invalid_game()
+            await ctx.recover_refused_slot()
         elif 'IncompatibleVersion' in errors:
             ctx.disconnected_intentionally = True
             raise Exception('Server reported your client version as incompatible. '
@@ -1772,9 +1794,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         # last to check, recoverable problem
         elif 'InvalidSlot' in errors:
             logger.error('Player name is incorrect, please verify that you have entered your player name exactly as it appears in your YAML file.')
-            ctx.auth = None
-            ctx.username = None
-            await ctx.client_get_username()
+            await ctx.recover_refused_slot()
         elif 'InvalidPassword' in errors:
             logger.error('Invalid password')
             ctx.password = None

@@ -80,6 +80,15 @@ class FrontendProtocol(Protocol):
         """
         ...
 
+    def open_connect_dialog(self) -> None:
+        """Open the connect dialog prefilled from `ctx` (hostname, port, username,
+        password); confirming sets `ctx.username` and calls `ctx.connect`. Used after
+        a module launch without a server address and after an InvalidGame/InvalidSlot
+        refusal. Feature-detected with getattr: the TUI has none and those callers
+        fall back to the console prompt.
+        """
+        ...
+
     def on_admin_command_result(self, args: dict) -> None:
         """Receive the full PrintJSON packet of a remote-admin reply (`type == "AdminCommandResult"`).
 
