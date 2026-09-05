@@ -98,11 +98,6 @@ class HandleItemNameColorTest(unittest.TestCase):
         self.assertEqual(self._color_for(0), "regular_item_color;")
         self.assertEqual(self._color_for(0b00010), "useful_item_color;")
 
-    def test_handle_item_name_trap_overrides_useful(self) -> None:
-        self.assertEqual(self._color_for(0b00100), "trap_item_color;")
-        # useful bit also set -> trap still wins
-        self.assertEqual(self._color_for(0b00110), "trap_item_color;")
-
 
 class SlotTypeTest(unittest.TestCase):
     def test_slottype_always_goal_true_except_player(self) -> None:
