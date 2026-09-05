@@ -3,16 +3,21 @@
 ``/api/sphere_tracker/<tracker>`` is the all-at-once view consumed by third-party tools.
 ``/api/sphere_tracker/<tracker>/rows`` backs the sphere tracker page: one flat row per checked
 location, filtered, sorted and paged server-side from a per-room table cached in the worker.
-``/api/sphere_tracker/<tracker>/rows.csv`` streams the same rows unpaged.
+``/api/sphere_tracker/<tracker>/rows.csv`` streams every row of the room and ignores the query.
 
-Query parameters shared by ``rows`` and ``rows.csv``:
+Query parameters of ``rows``:
     q                       case-insensitive substring over finder, receiver, item, location, game
+    exact                   truthy: ``q`` must equal one of those fields instead of appearing in it
     team, finder, receiver  repeatable slot numbers (comma lists accepted)
     game                    repeatable game names
     classification          repeatable: progression, useful, trap, filler
     sphere_min, sphere_max  inclusive sphere range
     sort, dir               a SORT_KEYS name and ``asc`` or ``desc``
-``rows`` only: ``offset``, ``limit`` (capped at MAX_LIMIT) and ``draw`` (echoed for DataTables).
+    offset, limit, draw     paging (``limit`` capped at MAX_LIMIT); ``draw`` is echoed for DataTables
+
+``rows.csv`` guards: at most CSV_MAX_CONCURRENT exports per worker process (503 with Retry-After
+beyond that), and an export ends with a ``# truncated`` line once CSV_MAX_ROWS rows are written or
+CSV_TIME_BUDGET_SECONDS have gone into serialising.
 """
 from __future__ import annotations
 
@@ -28,6 +33,7 @@ from uuid import UUID
 
 from flask import Response, abort, jsonify, request
 from werkzeug.datastructures import MultiDict
+from werkzeug.exceptions import ServiceUnavailable
 
 from NetUtils import get_item_classification_label
 from .. import cache
@@ -43,6 +49,10 @@ TABLE_IDLE_SECONDS = 300
 CLASSIFICATIONS = ("progression", "useful", "trap", "filler")
 CSV_COLUMNS = ("team", "sphere", "finder_slot", "finder", "receiver_slot", "receiver", "item_id", "item",
                "classification", "location_id", "location", "game", "checked_at")
+CSV_CHUNK_ROWS = 5000
+CSV_MAX_ROWS = 1_000_000
+CSV_TIME_BUDGET_SECONDS = 20.0
+CSV_MAX_CONCURRENT = 1
 
 
 class SphereRow(NamedTuple):
@@ -98,6 +108,7 @@ SORT_KEYS: dict[str, Callable[[SphereRow], Any]] = {
 @dataclass(frozen=True)
 class RowQuery:
     q: str = ""
+    exact: bool = False
     teams: frozenset[int] = frozenset()
     finders: frozenset[int] = frozenset()
     receivers: frozenset[int] = frozenset()
@@ -121,6 +132,7 @@ class RowQuery:
             abort(400, "dir must be asc or desc")
         return cls(
             q=args.get("q", "").strip(),
+            exact=_bool_arg(args, "exact"),
             teams=_int_set(args.getlist("team")),
             finders=_int_set(args.getlist("finder")),
             receivers=_int_set(args.getlist("receiver")),
@@ -156,6 +168,10 @@ def _int_arg(args: MultiDict, name: str, default: int | None = None) -> int | No
         return int(value)
     except ValueError:
         abort(400, f"{name} must be an integer")
+
+
+def _bool_arg(args: MultiDict, name: str) -> bool:
+    return args.get(name, "").strip().lower() not in ("", "0", "false", "no", "off")
 
 
 @dataclass
@@ -279,8 +295,12 @@ def _filter_rows(table: SphereTable, query: RowQuery) -> list[SphereRow]:
                 lowercase[text] = lowered = text.lower()
                 return lowered
 
-        rows = (row for row in rows if needle in low(row.finder) or needle in low(row.receiver)
-                or needle in low(row.item) or needle in low(row.location) or needle in low(row.game))
+        if query.exact:
+            rows = (row for row in rows if needle in (low(row.finder), low(row.receiver), low(row.item),
+                                                       low(row.location), low(row.game)))
+        else:
+            rows = (row for row in rows if needle in low(row.finder) or needle in low(row.receiver)
+                    or needle in low(row.item) or needle in low(row.location) or needle in low(row.game))
     return rows if isinstance(rows, list) else list(rows)
 
 
@@ -334,10 +354,46 @@ def sphere_tracker_rows(tracker: UUID) -> Response:
     return jsonify(payload)
 
 
+_csv_exports = threading.BoundedSemaphore(CSV_MAX_CONCURRENT)
+
+
 def _csv_timestamp(checked_at: int | None) -> str:
     if checked_at is None:
         return ""
     return datetime.datetime.fromtimestamp(checked_at, datetime.timezone.utc).isoformat()
+
+
+def _csv_chunks(rows: list[SphereRow]) -> Iterator[str]:
+    """Header, then CSV_CHUNK_ROWS rows per chunk; cut at CSV_MAX_ROWS or once serialising alone
+    (time blocked on the client does not count) has used CSV_TIME_BUDGET_SECONDS, ending with a note."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(CSV_COLUMNS)
+    yield buffer.getvalue()
+    limit = min(len(rows), CSV_MAX_ROWS)
+    written = 0
+    spent = 0.0
+    while written < limit:
+        started = time.monotonic()
+        buffer.seek(0)
+        buffer.truncate()
+        chunk = rows[written:min(written + CSV_CHUNK_ROWS, limit)]
+        for row in chunk:
+            writer.writerow((
+                row.team, row.sphere, row.finder_slot, row.finder, row.receiver_slot, row.receiver,
+                row.item_id, row.item, get_item_classification_label(row.flags),
+                row.location_id, row.location, row.game, _csv_timestamp(row.checked_at),
+            ))
+        written += len(chunk)
+        spent += time.monotonic() - started
+        yield buffer.getvalue()
+        if spent >= CSV_TIME_BUDGET_SECONDS:
+            break
+    if written < len(rows):
+        buffer.seek(0)
+        buffer.truncate()
+        writer.writerow((f"# truncated: {written} of {len(rows)} rows",))
+        yield buffer.getvalue()
 
 
 @api_endpoints.route("/sphere_tracker/<suuid:tracker>/rows.csv")
@@ -345,28 +401,16 @@ def sphere_tracker_rows_csv(tracker: UUID) -> Response:
     room = Room.get(tracker=tracker)
     if not room:
         abort(404)
-    query = RowQuery.from_args(request.args)
-    table = get_table(room)
-    rows = select_rows(table, query)
-
-    def generate() -> Iterator[str]:
-        buffer = io.StringIO()
-        writer = csv.writer(buffer)
-        writer.writerow(CSV_COLUMNS)
-        yield buffer.getvalue()
-        for start in range(0, len(rows), 5000):
-            buffer.seek(0)
-            buffer.truncate()
-            for row in rows[start:start + 5000]:
-                writer.writerow((
-                    row.team, row.sphere, row.finder_slot, row.finder, row.receiver_slot, row.receiver,
-                    row.item_id, row.item, get_item_classification_label(row.flags),
-                    row.location_id, row.location, row.game, _csv_timestamp(row.checked_at),
-                ))
-            yield buffer.getvalue()
-
+    if not _csv_exports.acquire(blocking=False):
+        raise ServiceUnavailable("Another sphere tracker export is running, retry in a moment.", retry_after=10)
+    try:
+        table = get_table(room)
+    except BaseException:
+        _csv_exports.release()
+        raise
+    response = Response(_csv_chunks(table.rows), mimetype="text/csv")
+    response.call_on_close(_csv_exports.release)
     filename = re.sub(r"[^A-Za-z0-9_-]+", "_", table.seed_name) or "room"
-    response = Response(generate(), mimetype="text/csv")
     response.headers["Content-Disposition"] = f'attachment; filename="sphere_tracker_{filename}.csv"'
     return response
 

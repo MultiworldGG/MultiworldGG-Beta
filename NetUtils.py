@@ -314,23 +314,24 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_item_name(self, node: JSONMessagePart):
         flags = node.get("flags", 0)
+        node["color"] = ""
         if flags == 0:
-            node["color"] = 'regular_item_color' # filler
+            node["color"] += 'regular_item_color;' # filler
         elif flags & 0b00010:  # useful
-            node["color"] = 'useful_item_color'  # lime for useful items
+            node["color"] += 'useful_item_color;'  # lime for useful items
         if flags & 0b00100:  # "useful trap" gets marked trap
-            node["color"] = 'trap_item_color'  # salmon for traps
+            node["color"] += 'trap_item_color;'  # salmon for traps
         elif flags & 0b00001:  # progression is the third flag checked, so it can overwrite. 
             # "useful progression" gets marked progression
-            node["color"] = 'progression_item_color'  # "dulled" gold for regular progression
+            node["color"] += 'progression_item_color;'  # "dulled" gold for regular progression
             if flags & 0b10000:  # deprioritized, but still progression (skulls etc)
-                node["color"] = 'progression_deprioritized_item_color'  # Citron for progression deprioritized
+                node["color"] += 'progression_deprioritized_item_color;'  # Citron for progression deprioritized
             else:
                 if flags & 0b01000:  # skip_balancing bit set
-                    node["color"] = 'progression_goal_item_color'  # Gold for progression skip items/macguffins
+                    node["color"] += 'progression_goal_item_color;'  # Gold for progression skip items/macguffins
         if not node["color"]:
             # if we can't find the flag set, use the command echo color to indicate it doesn't know what kind of item it is
-            node["color"] = 'command_echo_color'
+            node["color"] = 'command_echo_color;'
         node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
@@ -459,27 +460,58 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
 
     def _handle_color(self, node: JSONMessagePart):
         codes = node["color"].split(";")
-        # Find the first valid color code
-        color_hex = None
+        color_hex = []
         for code in codes:
             if code in self.color_codes:
-                color_hex = self.color_codes[code]
-                break
+                color_hex.append(self.color_codes[code])
 
         if color_hex:
             # player_id, player_name and raw color nodes arrive unescaped here: brackets in names render as markup.
             text = node.get("text", "")
+            if len(color_hex) == 1:
+                color_output = f"[color={color_hex[0]}]{text}[/color]"
+            else:
+                # This is a silly thing but I like it. Go backwards so it's "progression" first
+                color_output = bbcode_gradient(color_hex[-1], color_hex[0], text)
             for ref in node.get("refs", []):
-                ret_text = f"[ref={self.ref_count}|{ref}][color={color_hex}]{text}[/color][/ref]"
+                ret_text = f"[ref={self.ref_count}|{ref}]{color_output}[/ref]"
                 self.ref_count += 1
                 return ret_text # Return without 'handling' the text again, as it's already formatted with color and ref
-            return f'[color={color_hex}]{text}[/color]'
+            return color_output
         else:
             return self._handle_text(node)
 
     def _handle_text(self, node: JSONMessagePart):
         '''This returns only the text, without any color formatting for the plaintext map'''
         return node.get("text", "")
+
+def bbcode_gradient(start_color: str, end_color: str, text: str) -> str:
+    """Wrap each character of `text` in BBCode [color] tags, blending from start_color to end_color.
+
+    Whitespace is passed through untouched since it has nothing visible to color.
+    """
+    def parse(color: str) -> tuple[int, int, int]:
+        return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4))
+
+    r1, g1, b1 = parse(start_color)
+    r2, g2, b2 = parse(end_color)
+
+    visible = sum(1 for ch in text if not ch.isspace())
+    steps = max(visible - 1, 1)
+
+    out = []
+    i = 0
+    for ch in text:
+        if ch.isspace():
+            out.append(ch)
+            continue
+        t = i / steps
+        r = round(r1 + (r2 - r1) * t)
+        g = round(g1 + (g2 - g1) * t)
+        b = round(b1 + (b2 - b1) * t)
+        out.append(f"[color={r:02x}{g:02x}{b:02x}]{ch}[/color]")
+        i += 1
+    return "".join(out)
 
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,

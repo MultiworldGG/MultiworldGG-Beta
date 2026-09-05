@@ -487,6 +487,10 @@ def render_generic_multiworld_tracker(tracker_data: TrackerData, enabled_tracker
     )
 
 
+# past this many entries a sphere tracker filter renders as an autocomplete input instead of a dropdown
+FILTER_AUTOCOMPLETE_THRESHOLD = 20
+
+
 def render_generic_multiworld_sphere_tracker(tracker_data: TrackerData) -> str:
     """Renders the sphere tracker shell; rows are paged in by the client from api.sphere_tracker_rows."""
     slots = [
@@ -497,8 +501,9 @@ def render_generic_multiworld_sphere_tracker(tracker_data: TrackerData) -> str:
         "multispheretracker.html",
         room=tracker_data.room,
         has_spheres=bool(tracker_data.get_spheres()),
-        slots=slots,
-        games=sorted({game for _, _, game in slots}),
+        players=[(slot, name) for slot, name, _ in slots],
+        games=[(game, game) for game in sorted({game for _, _, game in slots})],
+        autocomplete_above=FILTER_AUTOCOMPLETE_THRESHOLD,
         saving_second=tracker_data.get_room_saving_second(),
     )
 

@@ -45,15 +45,15 @@
     --mw-sys-color-on-secondary-container:     #5a3a0f;
 
     /* Tertiary - purple branding (gradient buttons, tracker tables) */
-    --mw-sys-color-tertiary:                   #652895;
+    --mw-sys-color-tertiary:                   #742895;
     --mw-sys-color-on-tertiary:                #ffffff;
-    --mw-sys-color-tertiary-container:         #4a2272;
-    --mw-sys-color-on-tertiary-container:      #d780ff;
-    --mw-sys-color-tertiary-bright:            #b44ad9;
-    --mw-sys-color-tertiary-hover:             #7d35b5;
-    --mw-sys-color-tertiary-surface-low:       #1e1438;
-    --mw-sys-color-tertiary-surface:           #2d1b4e;
-    --mw-sys-color-tertiary-outline:           #5a3080;
+    --mw-sys-color-tertiary-container:         #532272;
+    --mw-sys-color-on-tertiary-container:      #cfa7ff;
+    --mw-sys-color-tertiary-bright:            #a864d8;
+    --mw-sys-color-tertiary-hover:             #8a35b5;
+    --mw-sys-color-tertiary-surface-low:       #251438;
+    --mw-sys-color-tertiary-surface:           #3c1b4e;
+    --mw-sys-color-tertiary-outline:           #673080;
 
     /* Error - Bootstrap danger red */
     --mw-sys-color-error:                      #dc3545;
@@ -65,7 +65,7 @@
 
     /* Warning - Bootstrap warning yellow */
     --mw-sys-color-warning:                    #ffc107;
-    --mw-sys-color-on-warning:                 #2a1232;
+    --mw-sys-color-on-warning:                 #290036;
     --mw-sys-color-warning-container:          #3a2c07;
     --mw-sys-color-on-warning-container:       #fff3cd;
     --mw-sys-color-warning-outline:            #65500f;
@@ -150,9 +150,6 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Base body defaults - picked up from the design tokens. Per-theme CSS
-   shadows the token values on `body { … }` (see Phase 12), which is why
-   these `var()` reads resolve to the theme-tinted surface and text. */
 body {
     background: var(--mw-sys-color-background);
     color: var(--mw-sys-color-on-background);
@@ -161,7 +158,7 @@ body {
 }
 
 /* ===========================================================
-   Top navigation - redesigned for Phase 4
+   Top navigation
    =========================================================== */
 
 #base-header {
@@ -324,6 +321,7 @@ body {
         var(--mw-sys-color-primary-fixed) 14px,
         var(--mw-sys-color-primary-fixed) 28px
     );
+    margin: 0 0 20px 0;
 }
 
 /* Mobile menu trigger (hamburger) - hidden by default */
@@ -379,7 +377,7 @@ body {
 }
 
 /* ===========================================================
-   Breadcrumb bar - Phase 5
+   Breadcrumb bar
    =========================================================== */
 
 .mw-breadcrumb {
@@ -644,6 +642,7 @@ body {
 .mdi-information                { --mdi-dx: -0.106em; }
 /* /play and /learn hub */
 .mdi-account-group              { --mdi-dx: -0.19em; }
+.mdi-sprout                     { --mdi-dx: -0.106em; }
 .mdi-plus-circle                { --mdi-dx: -0.106em; }
 .mdi-check-all                  { --mdi-dx: -0.1745em; }
 .mdi-school                     { --mdi-dx: -0.149em; }

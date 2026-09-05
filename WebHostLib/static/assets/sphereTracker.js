@@ -22,11 +22,39 @@ const renderTimestamp = (seconds) => {
 const checkedClassifications = (form) =>
     Array.from(form.querySelectorAll('input[name="classification"]:checked')).map((box) => box.value);
 
+const datalistOption = (element, matches) => Array.from(element.list?.options ?? []).find(matches);
+
+// Autocomplete filters show names; the query value is the matching datalist option's data-value.
+const fieldValue = (element) => {
+    const value = element.value.trim();
+    if (!value || !element.list)
+        return value;
+    const typed = value.toLowerCase();
+    const option = datalistOption(element, (option) => option.value.toLowerCase() === typed);
+    return option ? option.dataset.value : '';
+};
+
+const setFieldValue = (element, value) => {
+    const option = element.list && datalistOption(element, (option) => option.dataset.value === value);
+    element.value = option ? option.value : value;
+};
+
+const clearChoiceErrors = (form) =>
+    form.querySelectorAll('input[list]').forEach((element) => element.setCustomValidity(''));
+
+const validateChoices = (form) => {
+    for (const element of form.querySelectorAll('input[list]')) {
+        const value = element.value.trim();
+        element.setCustomValidity(value && !fieldValue(element) ? `No entry named "${value}"` : '');
+    }
+    return form.reportValidity();
+};
+
 // Filter params from the form; all-or-none classifications mean "no type filter".
 const filterParams = (form) => {
     const params = new URLSearchParams();
     for (const name of SPHERE_FILTER_FIELDS) {
-        const value = form.elements[name].value.trim();
+        const value = fieldValue(form.elements[name]);
         if (value)
             params.append(name, value);
     }
@@ -40,7 +68,7 @@ const filterParams = (form) => {
 const applyUrlToForm = (form, params) => {
     for (const name of SPHERE_FILTER_FIELDS) {
         if (params.has(name))
-            form.elements[name].value = params.get(name);
+            setFieldValue(form.elements[name], params.get(name));
     }
     const classifications = params.getAll('classification');
     if (classifications.length) {
@@ -63,13 +91,13 @@ window.addEventListener('load', () => {
     const wrapper = document.getElementById('tracker-wrapper');
     const form = document.getElementById('sphere-filters');
     const searchBox = document.getElementById('search');
-    const csvLink = document.getElementById('csv-link');
+    const exactBox = document.getElementById('search-exact');
     const rowsUrl = wrapper.dataset.rowsUrl;
-    const csvUrl = wrapper.dataset.csvUrl;
 
     const initial = new URLSearchParams(location.search);
     applyUrlToForm(form, initial);
     searchBox.value = initial.get('q') || '';
+    exactBox.checked = initial.get('exact') === '1';
     const initialSort = Math.max(SPHERE_COLUMNS.indexOf(initial.get('sort')), 0);
     const initialDir = initial.get('dir') === 'desc' ? 'desc' : 'asc';
     const initialLimit = parseInt(initial.get('limit'));
@@ -99,9 +127,10 @@ window.addEventListener('load', () => {
                 const params = filterParams(form);
                 if (request.search.value)
                     params.set('q', request.search.value);
+                if (exactBox.checked)
+                    params.set('exact', '1');
                 params.set('sort', SPHERE_COLUMNS[order.column]);
                 params.set('dir', order.dir);
-                csvLink.href = `${csvUrl}?${params}`;
 
                 params.set('limit', request.length);
                 const url = new URL(location.href);
@@ -137,12 +166,18 @@ window.addEventListener('load', () => {
             event.preventDefault();
         }
     });
+    exactBox.addEventListener('change', () => table.draw());
     form.addEventListener('submit', (event) => {
         event.preventDefault();
-        table.draw();
+        if (validateChoices(form))
+            table.draw();
     });
+    form.addEventListener('input', () => clearChoiceErrors(form));
     // reset restores the controls after the event fires, so redraw on the next tick
-    form.addEventListener('reset', () => setTimeout(() => table.draw(), 0));
+    form.addEventListener('reset', () => setTimeout(() => {
+        clearChoiceErrors(form);
+        table.draw();
+    }, 0));
 
     const targetSecond = (parseInt(wrapper.dataset.second) || 0) + 3;
     const getSleepTimeSeconds = () => ((((targetSecond - new Date().getSeconds()) % 60) + 60) % 60) || 60;

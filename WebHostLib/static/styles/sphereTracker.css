@@ -14,8 +14,19 @@
     gap: 0.25rem;
 }
 
+.search-exact {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--mw-sys-color-white);
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
 .sphere-filters select,
 .sphere-filters input[type="number"],
+.sphere-filters input[type="text"],
 .dataTables_wrapper .dataTables_length select {
     border: 1px solid var(--mw-sys-color-tertiary-outline);
     border-radius: 3px;
@@ -25,9 +36,14 @@
     font: inherit;
 }
 
-.sphere-filters select {
+.sphere-filters select,
+.sphere-filters input[type="text"] {
     min-width: 9rem;
     max-width: 16rem;
+}
+
+.sphere-filters input[type="text"]:invalid {
+    border-color: var(--mw-sys-color-error);
 }
 
 .sphere-range {

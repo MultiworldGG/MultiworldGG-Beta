@@ -86,13 +86,14 @@ h6 {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  color: var(--mw-sys-color-black);
+  color: var(--mw-sys-color-on-warning);
   border-radius: 4px;
   margin-bottom: 20px;
-  background-color: #ffff00;
+  background-color: var(--mw-sys-color-warning);
 }
 .user-message a {
-  color: #ff7700;
+  color: var(--mw-sys-color-on-warning);
+  text-decoration: underline;
 }
 
 .interactive {

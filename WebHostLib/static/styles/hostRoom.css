@@ -66,14 +66,16 @@
 }
 
 #host-room #logger{
+    font-family: monospace;
     margin-top: 0;
     padding: 0.5rem 0.25rem;
-    background-color: lightblue;
-    border: 1px solid #2a6c2f;
+    background-color: var(--mw-sys-color-on-info-container);
+    border: 1px solid var(--mw-sys-color-accent-orange);
     border-radius: 6px;
-    color: var(--mw-sys-color-black);
+    color: var(--mw-sys-color-info-container);
     overflow-y: auto;
     max-height: 400px;
+    scrollbar-color: var(--mw-sys-color-info-outline) var(--mw-sys-color-on-info-container);
 }
 
 .loader{
