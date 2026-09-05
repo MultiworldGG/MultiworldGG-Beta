@@ -1,6 +1,7 @@
-"""Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins); add new client-compat tests here."""
+"""Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins, legacy make_gui() resolution); add new client-compat tests here."""
 
 import asyncio
+import contextlib
 import os
 import subprocess
 import sys
@@ -14,6 +15,7 @@ from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.connection import Connection
 from websockets.protocol import State
 
+import ClientBuilder
 import CommonClient  # noqa: F401  importing it installs the compat properties
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -75,7 +77,9 @@ class TestWebsocketsLegacyCompat(unittest.TestCase):
         records = [r for r in logs.output if "socket.closed" in r]
         self.assertEqual(len(records), 1)
         self.assertIn("Deprecated websockets API", records[0])
-        self.assertIn(__file__, records[0])  # points at the offending call site
+        # Windows drive-letter casing can differ between __file__ and the frame
+        # filename inspect/traceback report, so compare case-insensitively.
+        self.assertIn(__file__.lower(), records[0].lower())  # points at the offending call site
 
 
 # --------------------------------------------------------------------------- #
@@ -188,6 +192,86 @@ class TestKvuiTuiStandins(unittest.TestCase):
             "    raised = True\n"
             "assert raised, 'catch-all manufactured a dunder'\n"
         )
+
+
+# --------------------------------------------------------------------------- #
+# Takeover path: LegacyKvuiClientBuilder resolves the per-world UI class from
+# ctx.make_gui(). Upstream world clients (e.g. SMS) return a subclass of the
+# frontend App class with a build() override; that shape must reach the live
+# app via build_legacy_kvui, while the bare frontend class and unrelated
+# classes must not.
+# --------------------------------------------------------------------------- #
+
+class _Frontend:
+    """Stand-in for the running frontend App class (mwgg_gui.app.MultiMDApp)."""
+
+    def __init__(self):
+        self.built = []
+
+    def build_legacy_kvui(self, ctx, manager_cls):
+        self.built.append(manager_cls)
+        return manager_cls
+
+
+class _GameManager:
+    """kvui.GameManager stand-in; importing the real one takes the Kivy branch."""
+
+
+class _Ctx:
+    def __init__(self, manager_cls):
+        self.make_gui = lambda: manager_cls
+
+
+def _patched_frontend() -> contextlib.ExitStack:
+    """Pin the frontend class, keep the kvui import Kivy-free, force the GUI branch."""
+    stack = contextlib.ExitStack()
+    stack.enter_context(mock.patch.object(ClientBuilder, "resolve_frontend_class", lambda: _Frontend))
+    stack.enter_context(mock.patch.dict(sys.modules, {"kvui": SimpleNamespace(GameManager=_GameManager)}))
+    stack.enter_context(mock.patch.dict(os.environ, {"MWGG_FRONTEND": "gui"}))
+    return stack
+
+
+class TestLegacyManagerClassResolution(unittest.TestCase):
+    def _resolve(self, manager_cls):
+        ctx = _Ctx(manager_cls)  # the builder only weak-refs it
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx)
+        with _patched_frontend():
+            return builder._legacy_manager_class(_Frontend())
+
+    def test_frontend_class_itself_is_ignored(self) -> None:
+        self.assertIsNone(self._resolve(_Frontend))
+
+    def test_frontend_subclass_is_returned(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        self.assertIs(self._resolve(Wrapper), Wrapper)
+
+    def test_game_manager_subclass_is_returned(self) -> None:
+        class Manager(_GameManager):
+            pass
+
+        self.assertIs(self._resolve(Manager), Manager)
+
+    def test_unrelated_class_is_ignored(self) -> None:
+        class Unrelated:
+            pass
+
+        self.assertIsNone(self._resolve(Unrelated))
+
+    def test_build_hands_frontend_subclass_to_live_app(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builder": "legacy_kvui", "manager": Wrapper})
 
 
 # --------------------------------------------------------------------------- #

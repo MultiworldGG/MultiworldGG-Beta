@@ -18,10 +18,10 @@ DATAPACKAGE = {
 CSV_HEADER = ("team,sphere,finder_slot,finder,receiver_slot,receiver,item_id,item,"
               "classification,location_id,location,game,checked_at")
 CSV_ROWS = [
-    f"0,1,1,Alice,1,Alice,100,Sword,progression,10,Chest A,{GAME},1970-01-01T00:16:40+00:00",
-    f"0,1,1,Alice,2,Bob,101,Shield,useful,11,Chest B,{GAME},1970-01-01T00:33:20+00:00",
-    f"0,1,2,Bob,1,Alice,102,Bow,trap,20,Cave <Deep>,{GAME},",
-    f"0,2,2,Bob,1,Alice,103,Bomb,progression,21,Cave Exit,{GAME},1970-01-01T00:25:00+00:00",
+    f"0,1,1,Alice,1,Alice,100,Sword,Progression,10,Chest A,{GAME},1970-01-01T00:16:40+00:00",
+    f"0,1,1,Alice,2,Bob,101,Shield,Useful,11,Chest B,{GAME},1970-01-01T00:33:20+00:00",
+    f"0,1,2,Bob,1,Alice,102,Bow,Trap,20,Cave <Deep>,{GAME},",
+    f"0,2,2,Bob,1,Alice,103,Bomb,Progression,21,Cave Exit,{GAME},1970-01-01T00:25:00+00:00",
 ]
 
 
@@ -146,11 +146,11 @@ class TestSphereTracker(TestBase):
                          ["Chest A", "Chest B", "Cave <Deep>", "Cave Exit"])
         self.assertEqual(data["data"][0], {
             "team": 0, "sphere": 1, "finder_slot": 1, "finder": "Alice", "receiver_slot": 1, "receiver": "Alice",
-            "item_id": 100, "item": "Sword", "flags": 1, "classification": "progression",
+            "item_id": 100, "item": "Sword", "flags": 1, "classification": "Progression",
             "location_id": 10, "location": "Chest A", "game": GAME, "checked_at": 1000,
         })
         self.assertEqual([row["classification"] for row in data["data"]],
-                         ["progression", "useful", "trap", "progression"])
+                         ["Progression", "Useful", "Trap", "Progression"])
         self.assertIsNone(data["data"][2]["checked_at"])
 
     def test_rows_paging_echoes_draw(self) -> None:
@@ -166,9 +166,9 @@ class TestSphereTracker(TestBase):
         locations = lambda **query: [row["location"] for row in self.rows(**query)["data"]]
         self.assertEqual(locations(finder=2), ["Cave <Deep>", "Cave Exit"])
         self.assertEqual(locations(receiver=1), ["Chest A", "Cave <Deep>", "Cave Exit"])
-        self.assertEqual(locations(classification="progression"), ["Chest A", "Cave Exit"])
-        self.assertEqual(locations(classification="trap,useful"), ["Chest B", "Cave <Deep>"])
-        self.assertEqual(locations(classification=["filler", "trap"]), ["Cave <Deep>"])
+        self.assertEqual(locations(classification="Progression"), ["Chest A", "Cave Exit"])
+        self.assertEqual(locations(classification="Trap,Useful"), ["Chest B", "Cave <Deep>"])
+        self.assertEqual(locations(classification=["Filler", "Trap"]), ["Cave <Deep>"])
         self.assertEqual(locations(sphere_min=2), ["Cave Exit"])
         self.assertEqual(locations(sphere_max=1, finder=1), ["Chest A", "Chest B"])
         self.assertEqual(locations(q="CAVE"), ["Cave <Deep>", "Cave Exit"])
@@ -197,7 +197,7 @@ class TestSphereTracker(TestBase):
         spheres = [row["sphere"] for row in self.rows(sort="sphere", dir="desc")["data"]]
         self.assertEqual(spheres, [2, 1, 1, 1])
         classes = [row["classification"] for row in self.rows(sort="classification")["data"]]
-        self.assertEqual(classes, ["progression", "progression", "useful", "trap"])
+        self.assertEqual(classes, ["Progression", "Progression", "Useful", "Trap"])
 
     def test_rows_rejects_bad_parameters(self) -> None:
         for query in ({"sort": "bogus"}, {"dir": "sideways"}, {"finder": "alice"}, {"classification": "junk"},

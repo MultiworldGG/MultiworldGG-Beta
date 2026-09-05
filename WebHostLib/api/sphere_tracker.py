@@ -121,7 +121,7 @@ class RowQuery:
 
     @classmethod
     def from_args(cls, args: MultiDict) -> "RowQuery":
-        classifications = frozenset(_split(args.getlist("classification")))
+        classifications = frozenset(value.lower() for value in _split(args.getlist("classification")))
         if not classifications <= set(CLASSIFICATIONS):
             abort(400, f"classification must be one of {', '.join(CLASSIFICATIONS)}")
         sort = args.get("sort", "sphere")

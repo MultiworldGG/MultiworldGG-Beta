@@ -584,10 +584,13 @@ def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Opti
 def get_item_classification_label(item_flags: int) -> str:
     """Return a player-facing label for the classification bits sent over the network."""
     labels = [
-        label for flag, label in ((0b001, "progression"), (0b010, "useful"), (0b100, "trap"))
+        label for flag, label in (
+            (0b00001, "Progression"), (0b00010, "Useful"), (0b00100, "Trap"),
+            (0b01000, "End Game"), (0b10000, "Soft Logic"),
+        )
         if item_flags & flag
     ]
-    return ", ".join(labels) if labels else "filler"
+    return ", ".join(labels) if labels else "Filler"
 
 
 class Hint(typing.NamedTuple):
