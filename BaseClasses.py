@@ -1730,7 +1730,7 @@ class ItemClassification(IntFlag):
 
     def as_flag(self) -> int:
         """As Network API flag int."""
-        return int(self & 0b00111)
+        return int(self & 0b11111)
 
 
 class Item:
