@@ -215,7 +215,8 @@ class LegacyKvuiClientBuilder(ClientBuilder):
         if manager_cls is frontend_cls or manager_cls is type(app):
             return None
 
-        if hasattr(manager_cls, "build_for_live_app"):
+        # upstream make_gui()/build() shape: a subclass of the live frontend class
+        if issubclass(manager_cls, frontend_cls) or hasattr(manager_cls, "build_for_live_app"):
             return manager_cls
 
         try:
