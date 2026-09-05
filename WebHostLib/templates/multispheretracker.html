@@ -10,13 +10,37 @@
 {% block body %}
     {% include 'header/baseHeader.html' %}
 
+    {#- Past autocomplete_above entries a filter is a text input backed by a datalist; data-value carries
+        the query value so a player name still maps to its slot number. #}
+    {% macro choice(name, label, options) -%}
+            <label>{{ label }}
+                {%- if options|length > autocomplete_above %}
+                <input type="text" name="{{ name }}" list="{{ name }}-options" placeholder="Any" />
+                <datalist id="{{ name }}-options">
+                    {%- for value, text in options %}
+                    <option value="{{ text }}" data-value="{{ value }}"></option>
+                    {%- endfor %}
+                </datalist>
+                {%- else %}
+                <select name="{{ name }}">
+                    <option value="">Any</option>
+                    {%- for value, text in options %}
+                    <option value="{{ value }}">{{ text }}</option>
+                    {%- endfor %}
+                </select>
+                {%- endif %}
+            </label>
+    {%- endmacro %}
+
     <div id="tracker-wrapper"
          data-tracker="{{ room.tracker | suuid }}"
          data-second="{{ saving_second }}"
-         data-rows-url="{{ url_for("api.sphere_tracker_rows", tracker=room.tracker) }}"
-         data-csv-url="{{ url_for("api.sphere_tracker_rows_csv", tracker=room.tracker) }}">
+         data-rows-url="{{ url_for("api.sphere_tracker_rows", tracker=room.tracker) }}">
         <div id="tracker-header-bar">
             <input placeholder="Search" id="search" />
+            <label class="search-exact" title="Whole names only: Player1 no longer matches Player11">
+                <input type="checkbox" id="search-exact" /> Exact
+            </label>
 
             <div class="info">
                 {% if has_spheres %}
@@ -24,7 +48,7 @@
                 It ignores items that cannot be sent
                 and will therefore differ from the sphere numbers in the spoiler playthrough.
                 Rows load one page at a time and refresh periodically;
-                the CSV download contains every row matching the current filters.
+                the CSV download contains every check in the room regardless of the filters.
                 {% else %}
                 This Multiworld has no Sphere data, likely due to being too old, cannot display data.
                 {% endif %}
@@ -32,30 +56,9 @@
         </div>
 
         <form id="sphere-filters" class="sphere-filters" autocomplete="off">
-            <label>Finder
-                <select name="finder">
-                    <option value="">Any</option>
-                    {%- for slot, name, game in slots %}
-                    <option value="{{ slot }}">{{ name }}</option>
-                    {%- endfor %}
-                </select>
-            </label>
-            <label>Receiver
-                <select name="receiver">
-                    <option value="">Any</option>
-                    {%- for slot, name, game in slots %}
-                    <option value="{{ slot }}">{{ name }}</option>
-                    {%- endfor %}
-                </select>
-            </label>
-            <label>Game
-                <select name="game">
-                    <option value="">Any</option>
-                    {%- for game in games %}
-                    <option value="{{ game }}">{{ game }}</option>
-                    {%- endfor %}
-                </select>
-            </label>
+            {{ choice("finder", "Finder", players) }}
+            {{ choice("receiver", "Receiver", players) }}
+            {{ choice("game", "Game", games) }}
             <label>Sphere
                 <span class="sphere-range">
                     <input type="number" name="sphere_min" min="1" placeholder="from" />

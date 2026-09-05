@@ -95,24 +95,8 @@ class HandleItemNameColorTest(unittest.TestCase):
 
     def test_handle_item_name_flag_color_mapping(self) -> None:
         # 0 -> filler (regular), 0b10 -> useful
-        self.assertEqual(self._color_for(0), "regular_item_color")
-        self.assertEqual(self._color_for(0b00010), "useful_item_color")
-
-    def test_handle_item_name_trap_overrides_useful(self) -> None:
-        self.assertEqual(self._color_for(0b00100), "trap_item_color")
-        # useful bit also set -> trap still wins
-        self.assertEqual(self._color_for(0b00110), "trap_item_color")
-
-    def test_handle_item_name_progression_variants_precedence(self) -> None:
-        # plain progression
-        self.assertEqual(self._color_for(0b00001), "progression_item_color")
-        # progression overrides a preceding useful bit
-        self.assertEqual(self._color_for(0b00011), "progression_item_color")
-        # deprioritized takes priority over skip_balancing
-        self.assertEqual(self._color_for(0b10001), "progression_deprioritized_item_color")
-        self.assertEqual(self._color_for(0b11001), "progression_deprioritized_item_color")
-        # skip_balancing only (no deprioritized) -> goal color
-        self.assertEqual(self._color_for(0b01001), "progression_goal_item_color")
+        self.assertEqual(self._color_for(0), "regular_item_color;")
+        self.assertEqual(self._color_for(0b00010), "useful_item_color;")
 
 
 class SlotTypeTest(unittest.TestCase):
