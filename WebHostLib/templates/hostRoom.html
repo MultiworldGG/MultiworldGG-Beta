@@ -90,7 +90,7 @@
                 </a>
             </div>
         {%  set log, log_len = get_log() -%}
-        <div id="logger" style="white-space: pre">{{ log }}</div>
+        <div id="logger" style="white-space: pre-wrap">{{ log }}</div>
         <script>
           let url = '{{ url_for('display_log', room = room.id) }}';
           let bytesReceived = {{ log_len }};
