@@ -77,7 +77,9 @@ class TestWebsocketsLegacyCompat(unittest.TestCase):
         records = [r for r in logs.output if "socket.closed" in r]
         self.assertEqual(len(records), 1)
         self.assertIn("Deprecated websockets API", records[0])
-        self.assertIn(__file__, records[0])  # points at the offending call site
+        # Windows drive-letter casing can differ between __file__ and the frame
+        # filename inspect/traceback report, so compare case-insensitively.
+        self.assertIn(__file__.lower(), records[0].lower())  # points at the offending call site
 
 
 # --------------------------------------------------------------------------- #
