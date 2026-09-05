@@ -218,8 +218,11 @@ class _GameManager:
 
 
 class _Ctx:
-    def __init__(self, manager_cls):
+    def __init__(self, manager_cls, explicit_gui: bool = False):
         self.make_gui = lambda: manager_cls
+        self.explicit_built = []
+        if explicit_gui:
+            self.build_gui = self.explicit_built.append
 
 
 def _patched_frontend() -> contextlib.ExitStack:
@@ -271,7 +274,50 @@ class TestLegacyManagerClassResolution(unittest.TestCase):
         with _patched_frontend():
             result = asyncio.run(builder.build())
         self.assertEqual(app.built, [Wrapper])
-        self.assertEqual(result, {"builder": "legacy_kvui", "manager": Wrapper})
+        self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": Wrapper})
+
+    def test_build_runs_explicit_hook_and_frontend_subclass(self) -> None:
+        """TrackerGameContext worlds (e.g. SMS) declare build_gui via the tracker
+        and still return their own make_gui() subclass; both must build."""
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper, explicit_gui=True)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(ctx.explicit_built, [app])
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builders": ["build_gui", "legacy_kvui"], "manager": Wrapper})
+
+    def test_build_explicit_hook_only_when_make_gui_is_frontend(self) -> None:
+        app = _Frontend()
+        ctx = _Ctx(_Frontend, explicit_gui=True)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(ctx.explicit_built, [app])
+        self.assertEqual(app.built, [])
+        self.assertEqual(result, {"builders": ["build_gui"]})
+
+    def test_failing_explicit_hook_does_not_skip_frontend_subclass(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        def broken(app):
+            raise RuntimeError("tracker view failed")
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper)
+        ctx.build_gui = broken
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend(), self.assertLogs("Client", level="ERROR"):
+            result = asyncio.run(builder.build())
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": Wrapper})
 
 
 # --------------------------------------------------------------------------- #
