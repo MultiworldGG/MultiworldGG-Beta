@@ -145,7 +145,9 @@ class LegacyKvuiClientBuilder(ClientBuilder):
 
     This builder coordinates the legacy UI phase. It keeps CommonClient
     from needing to know whether a world uses an explicit build_gui hook or
-    the old make_gui()/build() compatibility shape.
+    the old make_gui()/build() compatibility shape. Both run when both are
+    present: a context inheriting TrackerGameContext gets build_gui from the
+    tracker while its own make_gui() subclass still owns the game tab.
     """
 
     def __init__(self, ctx: 'CommonContext', app: Optional['FrontendProtocol'] = None):
@@ -162,14 +164,18 @@ class LegacyKvuiClientBuilder(ClientBuilder):
             return {}
 
         self._is_running = True
+        result: Dict[str, Any] = {"builders": []}
 
         try:
             if self._build_explicit_gui(app):
-                return {"builder": "build_gui"}
+                result["builders"].append("build_gui")
+        except Exception:
+            logger.exception("Post-takeover build_gui hook failed")
 
+        try:
             manager_cls = self._legacy_manager_class(app)
             if manager_cls is None:
-                return {}
+                return result
 
             build_legacy_kvui = getattr(app, "build_legacy_kvui", None)
             if build_legacy_kvui is not None:
@@ -182,10 +188,12 @@ class LegacyKvuiClientBuilder(ClientBuilder):
                     self.manager = manager_cls(self.ctx)
                     self.manager.build()
 
-            return {"builder": "legacy_kvui", "manager": self.manager}
+            result["builders"].append("legacy_kvui")
+            result["manager"] = self.manager
+            return result
         except Exception:
             logger.exception("Post-takeover per-game UI setup failed")
-            return {}
+            return result
 
     def _build_explicit_gui(self, app: 'FrontendProtocol') -> bool:
         build_gui = getattr(self.ctx, "build_gui", None)
