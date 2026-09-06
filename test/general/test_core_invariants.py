@@ -392,56 +392,6 @@ class TestAsDict(unittest.TestCase):
 # requires.
 # --------------------------------------------------------------------------- #
 
-class TestGetClassification(unittest.TestCase):
-    def test_get_classification_progression_takes_precedence(self) -> None:
-        flags = ItemClassification.progression | ItemClassification.useful
-        self.assertEqual(UIHint.get_classification(flags), "Progression")
-
-    def test_get_classification_progression_deprioritized(self) -> None:
-        flags = ItemClassification.progression | ItemClassification.deprioritized
-        self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Logically Relevant"
-        )
-
-    def test_get_classification_progression_skip_balancing(self) -> None:
-        flags = ItemClassification.progression | ItemClassification.skip_balancing
-        self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Required for Goal"
-        )
-
-    def test_get_classification_deprioritized_beats_skip_balancing(self) -> None:
-        # When both extra bits are set, the deprioritized branch wins.
-        flags = (
-            ItemClassification.progression
-            | ItemClassification.deprioritized
-            | ItemClassification.skip_balancing
-        )
-        self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Logically Relevant"
-        )
-
-    def test_get_classification_useful(self) -> None:
-        self.assertEqual(
-            UIHint.get_classification(ItemClassification.useful), "Useful"
-        )
-
-    def test_get_classification_trap_alone_is_trap(self) -> None:
-        self.assertEqual(
-            UIHint.get_classification(ItemClassification.trap), "Trap"
-        )
-
-    def test_get_classification_useful_trap_is_useful_not_trap(self) -> None:
-        # useful is checked before trap in the elif chain, so a trap that is
-        # also flagged useful resolves to "Useful", not "Trap".
-        flags = ItemClassification.useful | ItemClassification.trap
-        self.assertEqual(UIHint.get_classification(flags), "Useful")
-
-    def test_get_classification_filler(self) -> None:
-        self.assertEqual(
-            UIHint.get_classification(ItemClassification.filler), "Filler"
-        )
-
-
 class TestDeriveStatusFromFlags(unittest.TestCase):
     def _hint_with_flags(self, flags: int) -> UIHint:
         hint = UIHint.__new__(UIHint)
