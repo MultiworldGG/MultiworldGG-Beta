@@ -83,6 +83,8 @@ def test_upload_sets_session_avatar(client, app):
 
     body = client.get("/me/avatar").get_data(as_text=True)
     assert f"/avatar/{hex_id}.png" in body
+    # A 404 on the avatar URL swaps in the controller icon client-side.
+    assert "onerror=" in body and "controller-icon.png" in body
 
 
 def test_nav_avatar_uses_session_avatar(client, app):
@@ -112,7 +114,8 @@ def test_upload_replaces_previous(client, app):
     assert second != first
     avatars_dir = app.config["AVATAR_UPLOAD_FOLDER"]
     assert os.path.isfile(os.path.join(avatars_dir, f"{second}.png"))
-    assert not os.path.isfile(os.path.join(avatars_dir, f"{first}.png"))  # old file removed
+    # The old file stays: its URL may be pinned to a slot or persisted by a client.
+    assert os.path.isfile(os.path.join(avatars_dir, f"{first}.png"))
 
     with app.app_context():
         count = db.session.scalar(
@@ -130,8 +133,10 @@ def test_remove_clears_avatar(client, app):
     resp = client.post("/me/avatar/remove")
     assert resp.status_code == 302
     assert _session_avatar_hex(app, sid) is None
-    assert not os.path.isfile(os.path.join(avatars_dir, f"{hex_id}.png"))
-    assert "controller-icon.png" in client.get("/me/avatar").get_data(as_text=True)
+    assert os.path.isfile(os.path.join(avatars_dir, f"{hex_id}.png"))
+    body = client.get("/me/avatar").get_data(as_text=True)
+    assert f"/avatar/{hex_id}.png" not in body
+    assert "controller-icon.png" in body
 
 
 # ---------------------------------------------------------------------------
@@ -380,3 +385,67 @@ def test_apply_skips_rows_without_url(app, room_factory):
     with app.app_context():
         apply_slot_avatars_to_stored_data(db.session, room.id, stored)
     assert stored == {}  # nothing seeded without a URL
+
+
+# ---------------------------------------------------------------------------
+# Retention sweep (autohost prune_avatars)
+# ---------------------------------------------------------------------------
+
+def _token(app, note=None):
+    from WebHostLib.models import AvatarToken, commit, db
+    with app.app_context():
+        token = AvatarToken(note=note)
+        db.session.flush()
+        token_id = token.token
+        commit()
+    return token_id
+
+
+def _aged_avatar(app, token_id, days: int):
+    """Avatar row plus file, owned by ``token_id`` and created ``days`` ago."""
+    from datetime import timedelta
+    from Utils import utcnow
+    from WebHostLib.models import Avatar, commit
+    avatar_id = uuid4()
+    with app.app_context():
+        Avatar(id=avatar_id, owner_token_id=token_id, mime_type="image/png", file_size=1,
+               original_sha256="0" * 64, created_at=utcnow() - timedelta(days=days))
+        commit()
+    with open(os.path.join(app.config["AVATAR_UPLOAD_FOLDER"], f"{avatar_id.hex}.png"), "wb") as f:
+        f.write(b"png")
+    return avatar_id
+
+
+def test_prune_removes_only_old_unreferenced_avatars(app, room_factory, monkeypatch):
+    from sqlalchemy import select
+    from WebHostLib import autolauncher
+    from WebHostLib.models import Avatar, SessionAvatar, SlotAvatar, commit, db
+    avatars_dir = app.config["AVATAR_UPLOAD_FOLDER"]
+
+    client_token = _token(app)
+    session_token = _token(app, note="session-avatar:test")
+    old_client = _aged_avatar(app, client_token, 400)
+    newest_client = _aged_avatar(app, client_token, 300)  # the client's live avatar
+    recent_client = _aged_avatar(app, _token(app), 10)
+    session_current = _aged_avatar(app, session_token, 400)
+    slot_pinned = _aged_avatar(app, session_token, 400)
+    session_stale = _aged_avatar(app, session_token, 200)  # newest, but session tokens keep none
+    room = room_factory()
+    with app.app_context():
+        SessionAvatar(session_id=uuid4(), avatar_id=session_current)
+        SlotAvatar(room_id=room.id, team=0, slot=1, avatar_id=slot_pinned, set_by_session=uuid4())
+        commit()
+
+    with app.app_context():
+        monkeypatch.setattr(autolauncher, "_engine", db.engine)
+        assert autolauncher.prune_avatars({"AVATAR_RETENTION_DAYS": 0, "AVATAR_UPLOAD_FOLDER": avatars_dir}) == 0
+        removed = autolauncher.prune_avatars({"AVATAR_RETENTION_DAYS": 180, "AVATAR_UPLOAD_FOLDER": avatars_dir})
+        remaining = set(db.session.scalars(select(Avatar.id)).all())
+    assert removed == 2
+
+    for kept in (newest_client, recent_client, session_current, slot_pinned):
+        assert kept in remaining
+        assert os.path.isfile(os.path.join(avatars_dir, f"{kept.hex}.png"))
+    for gone in (old_client, session_stale):
+        assert gone not in remaining
+        assert not os.path.isfile(os.path.join(avatars_dir, f"{gone.hex}.png"))

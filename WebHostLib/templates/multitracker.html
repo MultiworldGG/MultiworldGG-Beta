@@ -1,4 +1,5 @@
 {% extends "tablepage.html" %}
+{% from "macros.html" import avatar_img %}
 {% block head %}
     {{ super() }}
     <title>Multiworld Tracker</title>
@@ -68,7 +69,7 @@
                                 </td>
                                 <td>
                                     {%- if player_avatars is defined and player_avatars.get((team, player)) -%}
-                                        <img class="slot-avatar" src="{{ player_avatars[(team, player)] }}" alt="" width="24" height="24" />
+                                        {{ avatar_img(player_avatars[(team, player)], css_class="slot-avatar", size=24) }}
                                     {%- endif -%}
                                     {{ player_names_with_alias[(team, player)] | e }}
                                 </td>

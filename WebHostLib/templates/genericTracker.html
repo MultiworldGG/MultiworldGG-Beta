@@ -1,4 +1,5 @@
 {% extends "tablepage.html" %}
+{% from "macros.html" import avatar_img %}
 {% block head %}
     {{ super() }}
     <title>{{ player_name }}&apos;s Tracker</title>
@@ -12,9 +13,7 @@
 
     <div id="tracker-navigation">
         <div class="tracker-slot-avatar">
-            <img class="slot-avatar-large"
-                 src="{{ avatar_url or url_for('static', filename='static/branding/controller-icon.png') }}"
-                 alt="{{ player_name }}&apos;s avatar" width="32" height="32" />
+            {{ avatar_img(avatar_url, alt=player_name ~ "'s avatar", css_class="slot-avatar-large", size=32) }}
             <details class="avatar-setter">
                 <summary class="avatar-setter-toggle">Set avatar</summary>
                 <form class="avatar-setter-panel"
