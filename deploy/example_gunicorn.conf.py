@@ -1,8 +1,18 @@
 workers = 2
 threads = 2
 wsgi_app = "WebHost:get_app()"
-# Import WSGI app once in the master before forking workers to download worlds.
+# Import the app (and every installed world) once in the master so workers
+# fork from it copy-on-write instead of each importing ~235 worlds.
 preload_app = True
+
+
+def when_ready(server):
+    # Move the preloaded heap to the permanent generation before forking: a
+    # gen-2 collection in a worker rewrites every tracked object's GC header
+    # and would otherwise make the whole shared heap private to that worker.
+    import gc
+    gc.collect()
+    gc.freeze()
 
 # Recycle each worker after this many requests to bound slow memory growth from
 # any per-request leak (app code or a C-extension). With preload_app=True the

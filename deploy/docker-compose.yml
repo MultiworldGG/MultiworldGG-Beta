@@ -87,7 +87,7 @@ services:
     # honor $MULTIWORLD_IMAGE override. Only the multiworld service has the
     # `build:` block so `docker compose build` only rebuilds once.
     image: ${MULTIWORLD_IMAGE:-ghcr.io/multiworldgg/multiworldgg:latest}
-    mem_limit: 1g
+    mem_limit: 2g
     # Wait for the worlds venv to be fully populated before serving.
     depends_on:
       mwgg_upgrader:
@@ -127,6 +127,10 @@ services:
       - SKIP_ALL_INSTALLS=1
       # Screen avatar uploads against the nudenet sidecar before storage.
       - AVATAR_NSFW_ENDPOINT=http://nudenet:8080/infer
+      # Cap glibc malloc arenas (gthread workers spawn several). Without this,
+      # freed memory is retained per-arena and RSS climbs/fragments; 2 arenas
+      # keeps the web worker returning memory to the OS.
+      - MALLOC_ARENA_MAX=2
 
   # NudeNet content-moderation sidecar. Screens avatar uploads for exposed
   # nudity (see WebHostLib/api/avatar.py). Internal-only: the web service reaches
@@ -154,9 +158,7 @@ services:
         soft: 1048576
         hard: 1048576
     environment:
-      # Cap glibc malloc arenas (gthread workers spawn several). Without this,
-      # freed memory is retained per-arena and RSS climbs/fragments; 2 arenas
-      # keeps the web worker returning memory to the OS.
+      # Multi-threaded ONNX runtime: cap per-thread glibc arenas.
       - MALLOC_ARENA_MAX=2
     # fastDeploy binds :8080 only after the loop worker finishes warmup / its
     # batch-size search; the REST app blocks on import until then (see
