@@ -400,13 +400,13 @@ class TestGetClassification(unittest.TestCase):
     def test_get_classification_progression_deprioritized(self) -> None:
         flags = ItemClassification.progression | ItemClassification.deprioritized
         self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Logically Relevant"
+            UIHint.get_classification(flags), "Not Priority"
         )
 
     def test_get_classification_progression_skip_balancing(self) -> None:
         flags = ItemClassification.progression | ItemClassification.skip_balancing
         self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Required for Goal"
+            UIHint.get_classification(flags), "Required for Goal"
         )
 
     def test_get_classification_deprioritized_beats_skip_balancing(self) -> None:
@@ -417,7 +417,7 @@ class TestGetClassification(unittest.TestCase):
             | ItemClassification.skip_balancing
         )
         self.assertEqual(
-            UIHint.get_classification(flags), "Progression - Logically Relevant"
+            UIHint.get_classification(flags), "Not Priority"
         )
 
     def test_get_classification_useful(self) -> None:
