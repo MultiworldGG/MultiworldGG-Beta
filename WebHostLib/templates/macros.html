@@ -100,3 +100,9 @@
         </table>
     {% endif %}
 {%- endmacro -%}
+
+{#- Avatar <img> that falls back to the controller icon when the URL is empty or 404s. #}
+{% macro avatar_img(url, alt="", css_class=none, size=none) -%}
+    {%- set fallback = url_for('static', filename='static/branding/controller-icon.png') -%}
+    <img{% if css_class %} class="{{ css_class }}"{% endif %} src="{{ url or fallback }}" alt="{{ alt }}"{% if size %} width="{{ size }}" height="{{ size }}"{% endif %} onerror="this.onerror=null;this.src='{{ fallback }}'" />
+{%- endmacro %}

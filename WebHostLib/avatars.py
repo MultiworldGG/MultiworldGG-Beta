@@ -17,11 +17,12 @@ from urllib.parse import urlparse
 
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_limiter.util import get_remote_address
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
 from Utils import utcnow
 from WebHostLib import app, limiter
 from WebHostLib.api.avatar import (
+    PNG_EXTENSION,
     AvatarUploadError,
     avatar_public_url,
     read_avatar_upload,
@@ -55,17 +56,6 @@ def _session_token(session_id) -> AvatarToken:
     if token is None:
         token = AvatarToken(note=note)
     return token
-
-
-def _delete_avatar(avatar: Avatar) -> None:
-    """Delete an Avatar row and its on-disk PNG (best effort on the file)."""
-    upload_dir = os.path.abspath(app.config["AVATAR_UPLOAD_FOLDER"])
-    path = os.path.join(upload_dir, f"{avatar.id.hex}.png")
-    try:
-        os.remove(path)
-    except OSError:
-        pass
-    avatar.delete()
 
 
 def session_avatar_url(session_id) -> "str | None":
@@ -129,20 +119,15 @@ def me_avatar_upload():
         flash(exc.message)
         return redirect(url_for("me_avatar"))
 
-    # Repoint this session at the new avatar before deleting the old one, so the
-    # SessionAvatar FK never dangles.
+    # The previous avatar's file stays: its URL may already be pinned to a slot,
+    # persisted by a desktop client, or saved in a room's profile_data.
     record = SessionAvatar.get(session_id=session["_id"])
-    previous_avatar = record.avatar if record is not None else None
     if record is None:
         SessionAvatar(session_id=session["_id"], avatar=avatar)
     else:
         record.avatar = avatar
         record.updated_at = utcnow()
     commit()
-
-    if previous_avatar is not None:
-        _delete_avatar(previous_avatar)
-        commit()
 
     flash("Avatar updated.")
     return redirect(url_for("me_avatar"))
@@ -152,10 +137,7 @@ def me_avatar_upload():
 def me_avatar_remove():
     record = SessionAvatar.get(session_id=session["_id"])
     if record is not None:
-        previous_avatar = record.avatar
         record.delete()
-        commit()
-        _delete_avatar(previous_avatar)
         commit()
         flash("Avatar removed.")
     return redirect(url_for("me_avatar"))
@@ -323,3 +305,36 @@ def apply_slot_avatars_to_stored_data(session, room_id, stored_data: dict) -> No
         profile = profile if isinstance(profile, dict) else {}
         profile["avatar"] = row.avatar_url
         stored_data[key] = profile
+
+
+def prune_unreferenced_avatars(session, cutoff, upload_dir: str) -> int:
+    """Delete avatars created before ``cutoff`` that nothing uses; returns the count.
+
+    Kept: every SessionAvatar/SlotAvatar target, and a client token's newest
+    upload (the desktop client persists only its latest URL). Takes an explicit
+    session because the autohost runs outside a request context.
+    """
+    newest = (
+        select(Avatar.owner_token_id, func.max(Avatar.created_at).label("created_at"))
+        .group_by(Avatar.owner_token_id)
+        .subquery()
+    )
+    stale = session.scalars(
+        select(Avatar)
+        .join(Avatar.owner_token)
+        .join(newest, Avatar.owner_token_id == newest.c.owner_token_id)
+        .where(
+            Avatar.created_at < cutoff,
+            or_(AvatarToken.note.is_not(None), Avatar.created_at < newest.c.created_at),
+            Avatar.id.not_in(select(SessionAvatar.avatar_id)),
+            Avatar.id.not_in(select(SlotAvatar.avatar_id)),
+        )
+    ).all()
+    for avatar in stale:
+        try:
+            os.remove(os.path.join(upload_dir, f"{avatar.id.hex}{PNG_EXTENSION}"))
+        except FileNotFoundError:
+            pass
+        session.delete(avatar)
+    session.commit()
+    return len(stale)

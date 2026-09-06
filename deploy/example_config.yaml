@@ -63,3 +63,14 @@ HOST_ADDRESS: localhost
 # if you run the webhost outside compose and point it at your own NudeNet
 # `/infer` endpoint. Leave unset to disable screening.
 #AVATAR_NSFW_ENDPOINT: "http://nudenet:8080/infer"
+
+# ---------------------------------------------------------------------------
+# Avatar retention
+# ---------------------------------------------------------------------------
+# Replacing or removing an avatar never deletes its file: the old URL may be
+# pinned to a room slot or persisted by a desktop client. Instead the autohost
+# deletes avatars older than this many days that no session, slot pin, or
+# client token still uses (a client token always keeps its newest upload).
+# 0 disables the sweep. nginx `expires` on /avatar/ only sets browser-cache
+# headers and never removes files.
+#AVATAR_RETENTION_DAYS: 180

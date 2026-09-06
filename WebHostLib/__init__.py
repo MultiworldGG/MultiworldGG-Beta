@@ -142,6 +142,9 @@ app.config["AVATAR_OUTPUT_DIM"] = 100
 # NudeNet moderation sidecar (deploy/docker-compose.yml `nudenet` service);
 # empty disables screening (local dev without the sidecar).
 app.config["AVATAR_NSFW_ENDPOINT"] = os.environ.get("AVATAR_NSFW_ENDPOINT", "")
+# Replaced avatars are never deleted (their URLs stay pinned to slots and in
+# clients); the autohost prunes ones this old that nothing uses. 0 disables.
+app.config["AVATAR_RETENTION_DAYS"] = 180
 # Hosts whose avatar URLs we render (HTTPS only); mirrors the desktop client's
 # safe_avatar_source allowlist. SHARE_BASE_HOST is trusted implicitly.
 app.config["AVATAR_TRUSTED_HOSTS"] = ("multiworld.gg", "mw.prismativerse.com")

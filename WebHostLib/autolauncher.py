@@ -335,6 +335,22 @@ def cleanup(config: dict[str, Any] | None = None):
             logging.info(f"{len(stale_lobbies)} stale lobbies cleaned up.")
 
     _cleanup_stale_preview_files()
+    prune_avatars(config)
+
+
+def prune_avatars(config: dict[str, Any] | None = None) -> int:
+    """Remove avatars past AVATAR_RETENTION_DAYS that no session, slot or client token uses."""
+    config = config or {}
+    retention = int(config.get("AVATAR_RETENTION_DAYS") or 0)
+    upload_dir = config.get("AVATAR_UPLOAD_FOLDER")
+    if retention <= 0 or not upload_dir:
+        return 0
+    from .avatars import prune_unreferenced_avatars
+    with Session(_get_engine()) as session:
+        removed = prune_unreferenced_avatars(session, utcnow() - timedelta(days=retention), upload_dir)
+    if removed:
+        logging.info(f"Removed {removed} avatar(s) unused for {retention}+ days.")
+    return removed
 
 
 def expire_lobbies():
@@ -376,6 +392,7 @@ def autohost(config: dict):
                     hoster.start()
 
                 last_lobby_check = utcnow()
+                last_avatar_prune = utcnow()
 
                 while not stop_event.wait(0.1):
                     # Clear finished-shutdown rooms for every hoster and restart
@@ -402,6 +419,12 @@ def autohost(config: dict):
                         last_lobby_check = now
                         try:
                             expire_lobbies()
+                        except Exception as e:
+                            logging.exception(e)
+                    if now - last_avatar_prune > timedelta(days=1):
+                        last_avatar_prune = now
+                        try:
+                            prune_avatars(config)
                         except Exception as e:
                             logging.exception(e)
 
