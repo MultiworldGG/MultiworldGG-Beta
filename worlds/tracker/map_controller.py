@@ -277,7 +277,7 @@ class UTMapController:
                     ctx.tracker_world = None
                     return
             except Exception:
-                logger.error("Selected poptracker pack was invalid")
+                logger.exception("Selected poptracker pack was invalid")
                 current_world.settings[ctx.tracker_world.external_pack_key] = ""
                 current_world.settings._changed = True
                 ctx.tracker_world = None

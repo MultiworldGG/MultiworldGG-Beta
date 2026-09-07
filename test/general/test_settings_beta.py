@@ -183,6 +183,17 @@ class _Tup(Tuple[int, ...]):
     """Bare tuple subclass so the annotation resolves to a real ``type``."""
 
 
+class TestFilePathDefaultAccess(unittest.TestCase):
+    def test_unset_file_path_resolves_to_directory_without_validation(self) -> None:
+        class G(Group):
+            pack: settings.FilePath = settings.FilePath()
+
+        g = G()
+        # the default resolves to an existing directory; validate() must not open it
+        self.assertTrue(Path(str(g.pack)).is_dir())
+        self.assertEqual(str(g["pack"]), str(g.pack))
+
+
 class TestGroupUpdateCoercion(unittest.TestCase):
     def test_update_preserves_bool_for_bool_field(self) -> None:
         class G(Group):
