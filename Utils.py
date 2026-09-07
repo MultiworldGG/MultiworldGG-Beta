@@ -726,6 +726,8 @@ def _perform_module_launch(module_id: str, **kwargs):
                     if AutoSNIClientRegister.is_sni_world(module_name=game_name):
                         logging.info(f"Detected SNI client for {game_name}")
                         from worlds._sni.context import launch as _sni_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
                         return _sni_launch(server_address=server_address, diff_file=patch_file)
                 except ImportError:
                     logging.debug("SNI client not available")
@@ -735,6 +737,8 @@ def _perform_module_launch(module_id: str, **kwargs):
                     if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
                         logging.info(f"Detected BizHawk client for {game_name}")
                         from worlds._bizhawk.context import launch as _bizhawk_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
                         _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted,
                                           patch_file=patch_file)
                         return None

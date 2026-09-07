@@ -1865,3 +1865,28 @@ def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatc
                                  patch_file="game.apmanual")
 
     assert deferred == [("manual", "game.apmanual")]
+
+
+def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):
+    import CommonClient
+    monkeypatch.setitem(sys.modules, "worlds.fake_bizhawk_world", types.ModuleType("worlds.fake_bizhawk_world"))
+    sni_client = types.ModuleType("worlds._sni.client")
+    sni_client.AutoSNIClientRegister = types.SimpleNamespace(is_sni_world=lambda module_name: False)
+    monkeypatch.setitem(sys.modules, "worlds._sni.client", sni_client)
+    bizhawk_client = types.ModuleType("worlds._bizhawk.client")
+    bizhawk_client.AutoBizHawkClientRegister = types.SimpleNamespace(is_bizhawk_world=lambda module_name: True)
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.client", bizhawk_client)
+    bizhawk_context = types.ModuleType("worlds._bizhawk.context")
+    bizhawk_context.launch = lambda *args: None
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.context", bizhawk_context)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: "Fake BizHawk Game")
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+    CommonClient._consume_pending_tracker_attach()
+
+    Utils._perform_module_launch("worlds.fake_bizhawk_world", client_type="universal_tracker",
+                                 patch_file="game.apfake")
+
+    assert deferred == [("bizhawk", "game.apfake")]
+    assert CommonClient._consume_pending_tracker_attach() is True
