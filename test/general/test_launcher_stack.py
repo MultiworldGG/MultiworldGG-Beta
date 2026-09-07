@@ -1829,3 +1829,39 @@ def test_predownload_reports_failed_worlds(monkeypatch, _predownload_stub, capsy
 
     assert "Unable to fully predownload" in capsys.readouterr().out
     assert "worlds.hk" in _predownload_stub.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# Specialized-client gate: the index is keyed by the bare slug, and a module
+# the index does not know must fall through to client_type dispatch.
+# --------------------------------------------------------------------------- #
+
+def test_indexed_game_name_strips_only_the_worlds_prefix(monkeypatch):
+    import mwgg_igdb
+    seen = []
+
+    def _lookup(module_name):
+        seen.append(module_name)
+        return {"papermario": "Paper Mario"}.get(module_name)
+
+    monkeypatch.setattr(mwgg_igdb.GameIndex, "get_game_name_for_module", _lookup)
+
+    assert Utils._indexed_game_name("worlds.papermario") == "Paper Mario"
+    assert Utils._indexed_game_name("papermario") == "Paper Mario"
+    assert seen == ["papermario", "papermario"]
+
+
+def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatch):
+    monkeypatch.setitem(sys.modules, "worlds.fake_manual_world", types.ModuleType("worlds.fake_manual_world"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+
+    Utils._perform_module_launch("worlds.fake_manual_world", client_type="manual",
+                                 patch_file="game.apmanual")
+
+    assert deferred == [("manual", "game.apmanual")]
