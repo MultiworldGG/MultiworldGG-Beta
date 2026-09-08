@@ -27,9 +27,6 @@ pip>=25.0.1
 # world specific dependencies
 # these are included by default because they're small and common
 
-# needed for alttp
-xxtea>=3.0.0
-
 # needed for celeste
 openpyxl>=3.1.2
 
