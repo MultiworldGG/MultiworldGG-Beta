@@ -353,7 +353,7 @@ class WinFileUtils(_DesktopFileUtils):
             
             if pidl:
                 # Convert PIDL to path
-                dirname = shell.SHGetPathFromIDList(pidl)
+                dirname = shell.SHGetPathFromIDListW(pidl)
                 print(f"Selected directory: {dirname}")
                 return dirname
             else:

@@ -251,3 +251,37 @@ class TestGroupUpdateChanged(unittest.TestCase):
         g = G()
         g.update({"a": 5, "b": 6})
         self.assertFalse(g.changed)
+
+
+class TestFolderPathBrowseWindows(unittest.TestCase):
+    """The Windows folder picker must hand FolderPath.browse a str: the ANSI
+    SHGetPathFromIDList returns bytes, which os.path.relpath rejects with a
+    TypeError that browse does not catch."""
+
+    def test_browse_returns_path_subclass(self) -> None:
+        import types
+        from unittest import mock
+        import FileUtils
+        import Utils
+
+        shell = types.SimpleNamespace(
+            SHBrowseForFolder=lambda *args: (object(), "SNI", None),
+            SHGetPathFromIDList=lambda pidl: Utils.local_path("SNI").encode(),
+            SHGetPathFromIDListW=lambda pidl: Utils.local_path("SNI"),
+        )
+        win32com_shell = types.ModuleType("win32com.shell")
+        win32com_shell.shell = shell
+        win32com_shell.shellcon = types.SimpleNamespace(BIF_RETURNONLYFSDIRS=1)
+        win32com = types.ModuleType("win32com")
+        win32com.shell = win32com_shell
+        modules = {
+            "win32com": win32com,
+            "win32com.shell": win32com_shell,
+            "win32gui": types.SimpleNamespace(GetDesktopWindow=lambda: 0),
+        }
+        with mock.patch.dict(sys.modules, modules), \
+                mock.patch.object(FileUtils.FileUtils, "_instance", FileUtils.WinFileUtils()):
+            res = settings.SNIOptions.SNIPath("SNI").browse()
+
+        self.assertIsInstance(res, settings.SNIOptions.SNIPath)
+        self.assertEqual(res, "SNI")
