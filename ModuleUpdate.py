@@ -24,6 +24,7 @@ import zipfile
 import tarfile
 import logging
 import tempfile
+import configparser
 import contextlib
 import errno
 import importlib.metadata
@@ -41,7 +42,7 @@ from collections.abc import Iterable
 from typing import Any, List, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
-from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
+from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, write_path
 
 
 # ── Platform & paths ─────────────────────────────────────────────────────────
@@ -582,6 +583,40 @@ def _install_wheel_cache_wheels(wheel_paths: list[str]) -> None:
     invalidate_caches()
 
 
+# Small installer selections double as the launcher's initial favorites bar.
+_FAVORITES_MAX_SELECTION = 10
+
+
+def _wheel_cache_slugs(wheel_paths: Iterable[str]) -> list[str]:
+    """World slugs from staged wheel filenames (worlds_<slug>-<version>-...whl)."""
+    slugs = []
+    for wheel in wheel_paths:
+        dist = Path(wheel).name.split("-", 1)[0]
+        slug = dist.removeprefix("worlds_").removeprefix("worlds.")
+        if slug and slug not in slugs:
+            slugs.append(slug)
+    return slugs
+
+
+def _add_favorite_games(slugs: list[str]) -> None:
+    """Append slugs to [game_settings] favorite_games in the GUI's client.ini,
+    keeping existing entries and every other section intact."""
+    if not slugs:
+        return
+    ini_path = Path(write_path("data", "client.ini"))
+    config = configparser.ConfigParser(interpolation=None)
+    config.read(ini_path, encoding="utf-8")
+    if not config.has_section("game_settings"):
+        config.add_section("game_settings")
+    current = [s for s in config.get("game_settings", "favorite_games", fallback="").split(",") if s]
+    merged = current + [s for s in slugs if s not in current]
+    config.set("game_settings", "favorite_games", ",".join(merged))
+    ini_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(ini_path, "w", encoding="utf-8") as f:
+        config.write(f)
+    logger.info(f"Added installer selection to favorite games: {', '.join(merged)}")
+
+
 def _consume_wheel_cache() -> None:
     """Claim wheel_cache/ via atomic rename (loser gets OSError, skips) and install
     it into the worlds venv; best effort, failures degrade to on-demand install."""
@@ -606,6 +641,8 @@ def _consume_wheel_cache() -> None:
         wheels = sorted(str(p) for p in consuming_dir.glob("*.whl"))
         if wheels:
             _install_wheel_cache_wheels(wheels)
+            if len(wheels) < _FAVORITES_MAX_SELECTION:
+                _add_favorite_games(_wheel_cache_slugs(wheels))
     except Exception as e:
         # Never crash module import; worlds are installed on demand instead.
         logger.warning(f"wheel_cache processing failed: {e!r}")
