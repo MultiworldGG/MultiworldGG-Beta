@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from BaseUtils import *
-from BaseUtils import use_worlds_venv, reload_application_options
+from BaseUtils import use_worlds_venv, reload_application_options, mwgg_venv_site_packages
 
 import asyncio
 import concurrent.futures
@@ -297,10 +297,12 @@ def get_available_worlds() -> typing.List[str]:
 
 
 def get_installed_worlds() -> typing.List[str]:
-    """Worlds present in the venv (worlds.<slug> dists) plus custom_worlds
-    entries; one importlib.metadata pass, never the uv shell-out."""
+    """Worlds installed into the per-user worlds venv (worlds.<slug> dists)
+    plus custom_worlds entries. Reads that venv's site-packages directly: a
+    dev checkout's own environment carries every world for the test suite and
+    must not count."""
     installed = set(register_custom_worlds())
-    for dist in importlib.metadata.distributions():
+    for dist in importlib.metadata.distributions(path=[mwgg_venv_site_packages()]):
         name = dist.metadata["Name"] or ""
         slug = name.removeprefix("worlds.")
         if slug != name and slug and not slug.startswith("_"):

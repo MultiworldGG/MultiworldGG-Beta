@@ -580,10 +580,17 @@ def _fake_dist(name):
     return types.SimpleNamespace(metadata={"Name": name})
 
 
-def test_get_installed_worlds_lists_venv_dists_and_custom_worlds(monkeypatch):
+def test_get_installed_worlds_reads_worlds_venv_dists_and_custom_worlds(monkeypatch):
     dists = [_fake_dist("worlds.oot"), _fake_dist("worlds.sms"), _fake_dist("worlds._sni"),
              _fake_dist("worldsmith"), _fake_dist("kivy"), _fake_dist(None)]
-    monkeypatch.setattr(importlib.metadata, "distributions", lambda: dists)
+    monkeypatch.setattr(Utils, "mwgg_venv_site_packages", lambda: "/worlds-venv/site-packages")
+
+    def _distributions(path=None):
+        # Scoped to the worlds venv: the dev checkout's own env has every world.
+        assert path == ["/worlds-venv/site-packages"]
+        return dists
+
+    monkeypatch.setattr(importlib.metadata, "distributions", _distributions)
     monkeypatch.setattr(Utils, "register_custom_worlds", lambda: ["my_custom", "oot"])
 
     assert Utils.get_installed_worlds() == ["my_custom", "oot", "sms"]
