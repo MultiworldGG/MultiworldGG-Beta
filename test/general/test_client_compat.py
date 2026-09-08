@@ -398,3 +398,31 @@ class TestUpdateMwggHints(unittest.TestCase):
                          [[{"operation": "update", "value": {"2_10": 9}}],
                           [{"operation": "update", "value": {"2_11": 2}}]])
 
+
+
+# --------------------------------------------------------------------------- #
+# Upstream SNES worlds lazily `from SNIClient import snes_read, ...` inside
+# their validate_rom/game_watcher bodies. The top-level module went away with
+# the worlds/_sni split, so a re-export shim must hand them the very same
+# objects worlds._sni binds to the live SNIContext, and the frozen build must
+# bundle it explicitly: world wheels install at runtime, so cx_Freeze never
+# sees their imports.
+# --------------------------------------------------------------------------- #
+
+class TestSNIClientShim(unittest.TestCase):
+    def test_shim_shares_objects_with_worlds_sni(self) -> None:
+        import SNIClient
+        from worlds import _sni
+        from worlds._sni import context
+
+        for name in ("snes_read", "snes_write", "snes_buffered_write", "snes_flush_writes"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(_sni, name))
+        for name in ("DeathState", "SNIContext", "SNIClientCommandProcessor"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(context, name))
+
+    def test_frozen_build_bundles_shim(self) -> None:
+        with open(os.path.join(REPO_ROOT, "setup.py"), encoding="utf-8") as f:
+            includes = f.read().split('"includes"', 1)[1].split("]", 1)[0]
+        self.assertIn('"SNIClient"', includes)

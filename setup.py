@@ -100,6 +100,7 @@ build_exe_options = {
         "packaging",
         "BaseUtils",
         "LauncherComponents",
+        "SNIClient",
         "CommonClient",
         "ClientBuilder",
         "BaseClasses",
