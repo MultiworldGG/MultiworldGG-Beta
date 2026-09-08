@@ -398,3 +398,26 @@ class TestUpdateMwggHints(unittest.TestCase):
                          [[{"operation": "update", "value": {"2_10": 9}}],
                           [{"operation": "update", "value": {"2_11": 2}}]])
 
+
+
+# --------------------------------------------------------------------------- #
+# Upstream SNES worlds lazily `from SNIClient import snes_read, ...` inside
+# their validate_rom/game_watcher bodies. worlds._sni.context is upstream's
+# SNIClient.py, so it registers itself under that name in sys.modules; the
+# game loop that calls those bodies lives in context, so the alias always
+# exists before a world needs it.
+# --------------------------------------------------------------------------- #
+
+class TestSNIClientAlias(unittest.TestCase):
+    def test_context_registers_itself_as_sniclient(self) -> None:
+        from worlds import _sni
+        from worlds._sni import context
+        import SNIClient
+
+        self.assertIs(SNIClient, context)
+        for name in ("snes_read", "snes_write", "snes_buffered_write", "snes_flush_writes"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(_sni, name))
+        for name in ("DeathState", "SNIContext", "SNIClientCommandProcessor"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(context, name))
