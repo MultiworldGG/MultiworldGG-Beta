@@ -576,6 +576,19 @@ def test_register_custom_worlds_tolerates_missing_dir(tmp_path, monkeypatch):
     assert Utils.register_custom_worlds() == []
 
 
+def _fake_dist(name):
+    return types.SimpleNamespace(metadata={"Name": name})
+
+
+def test_get_installed_worlds_lists_venv_dists_and_custom_worlds(monkeypatch):
+    dists = [_fake_dist("worlds.oot"), _fake_dist("worlds.sms"), _fake_dist("worlds._sni"),
+             _fake_dist("worldsmith"), _fake_dist("kivy"), _fake_dist(None)]
+    monkeypatch.setattr(importlib.metadata, "distributions", lambda: dists)
+    monkeypatch.setattr(Utils, "register_custom_worlds", lambda: ["my_custom", "oot"])
+
+    assert Utils.get_installed_worlds() == ["my_custom", "oot", "sms"]
+
+
 def test_custom_apworld_scanned_indexed_and_searchable(tmp_path, monkeypatch):
     """End-to-end launch contract: an apworld in custom_worlds/ is scanned, added
     to the index (searchable by name, resolvable both ways), stays after a rescan,

@@ -18,6 +18,7 @@ import io
 import collections
 import importlib
 import importlib.machinery
+import importlib.metadata
 import importlib.util
 import logging
 import warnings
@@ -293,6 +294,18 @@ def get_available_worlds() -> typing.List[str]:
     # non-world files and never lets one bad file abort the scan.
     available_worlds.update(register_custom_worlds())
     return list(sorted(available_worlds))
+
+
+def get_installed_worlds() -> typing.List[str]:
+    """Worlds present in the venv (worlds.<slug> dists) plus custom_worlds
+    entries; one importlib.metadata pass, never the uv shell-out."""
+    installed = set(register_custom_worlds())
+    for dist in importlib.metadata.distributions():
+        name = dist.metadata["Name"] or ""
+        slug = name.removeprefix("worlds.")
+        if slug != name and slug and not slug.startswith("_"):
+            installed.add(slug)
+    return list(sorted(installed))
 
 
 def register_custom_worlds() -> typing.List[str]:
