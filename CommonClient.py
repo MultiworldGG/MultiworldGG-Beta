@@ -1805,7 +1805,6 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             raise Exception('Connection refused by the multiworld host, no reason provided')
 
     elif cmd == 'Connected':
-        ctx.username = ctx.auth
         ctx.team = args["team"]
         ctx.slot = args["slot"]
         # on a switch to a different session, clear session state before stale checks/goal are replayed below
@@ -1816,6 +1815,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         # int keys get lost in JSON transfer
         ctx.slot_info = {0: NetworkSlot("Archipelago", "Archipelago", SlotType.player)}
         ctx.slot_info.update({int(pid): data for pid, data in args["slot_info"].items()})
+        # Not ctx.auth: ROM clients log in with a ROM-derived alias, and the setter persists this.
+        ctx.username = ctx.slot_info[ctx.slot].name
         ctx.hint_points = args.get("hint_points", 0)
         ctx.players = args["players"]
         ctx.consume_players_package(args["players"])
