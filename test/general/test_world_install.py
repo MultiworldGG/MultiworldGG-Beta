@@ -18,7 +18,6 @@ import zipfile
 from pathlib import Path
 from unittest import mock
 
-import configparser
 import pytest
 
 import LauncherComponents as lc
@@ -1765,20 +1764,6 @@ def test_consume_wheel_cache_empty_dir_marker_only_skips_uv_call(wheel_cache_exe
     assert not (wheel_cache_exe / "wheel_cache").exists()
 
 
-@pytest.fixture
-def client_ini(tmp_path, monkeypatch):
-    """Redirect ModuleUpdate's client.ini to tmp_path; returns its path."""
-    ini = tmp_path / "data" / "client.ini"
-    monkeypatch.setattr(ModuleUpdate, "write_path", lambda *parts: str(tmp_path.joinpath(*parts)))
-    return ini
-
-
-def _favorites(ini):
-    config = configparser.ConfigParser(interpolation=None)
-    config.read(ini, encoding="utf-8")
-    return config.get("game_settings", "favorite_games", fallback=None)
-
-
 def test_wheel_cache_slugs_strip_dist_prefix_and_version():
     wheels = [
         "C:/app/wheel_cache/worlds_alttpr-1.3.2-py3-none-any.whl",
@@ -1789,44 +1774,16 @@ def test_wheel_cache_slugs_strip_dist_prefix_and_version():
     assert ModuleUpdate._wheel_cache_slugs(wheels) == ["alttpr", "against_the_storm", "2048"]
 
 
-def test_add_favorite_games_creates_client_ini(client_ini):
-    ModuleUpdate._add_favorite_games(["sms", "oot"])
-    assert _favorites(client_ini) == "sms,oot"
-
-
-def test_add_favorite_games_merges_into_existing_ini(client_ini):
-    client_ini.parent.mkdir()
-    client_ini.write_text(
-        "[client]\nprimary_palette = Purple\n\n[game_settings]\nfavorite_games = oot,tunic\n",
-        encoding="utf-8",
-    )
-    ModuleUpdate._add_favorite_games(["tunic", "alttpr"])
-    assert _favorites(client_ini) == "oot,tunic,alttpr"
-    config = configparser.ConfigParser(interpolation=None)
-    config.read(client_ini, encoding="utf-8")
-    assert config.get("client", "primary_palette") == "Purple"
-
-
-def test_consume_wheel_cache_records_small_selection_as_favorites(wheel_cache_exe, client_ini, monkeypatch):
+def test_consume_wheel_cache_publishes_selected_slugs_in_env(wheel_cache_exe, monkeypatch):
     _make_wheel_cache(wheel_cache_exe, wheels=["worlds_sms-1.0-py3-none-any.whl", "worlds_oot-1.0-py3-none-any.whl"])
     monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
     monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
     monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: None)
+    monkeypatch.delenv(ModuleUpdate.INSTALLER_WORLDS_ENV, raising=False)
 
     ModuleUpdate._consume_wheel_cache()
 
-    assert _favorites(client_ini) == "oot,sms"
-
-
-def test_consume_wheel_cache_skips_favorites_for_large_selection(wheel_cache_exe, client_ini, monkeypatch):
-    _make_wheel_cache(wheel_cache_exe, wheels=[f"worlds_w{i:02d}-1.0-py3-none-any.whl" for i in range(10)])
-    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
-    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
-    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: None)
-
-    ModuleUpdate._consume_wheel_cache()
-
-    assert not client_ini.exists()
+    assert os.environ[ModuleUpdate.INSTALLER_WORLDS_ENV] == "oot,sms"
 
 
 def test_consume_wheel_cache_cleans_stale_consuming_dir_from_crash(wheel_cache_exe, monkeypatch):
