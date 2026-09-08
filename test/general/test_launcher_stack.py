@@ -1878,7 +1878,14 @@ def test_indexed_game_name_strips_only_the_worlds_prefix(monkeypatch):
     assert seen == ["papermario", "papermario"]
 
 
+def _stub_nest_asyncio(monkeypatch):
+    """_perform_module_launch applies nest_asyncio process-wide; that leaks into
+    later async tests (MultiServer packet ordering), so stub it."""
+    monkeypatch.setitem(sys.modules, "nest_asyncio", types.SimpleNamespace(apply=lambda *a, **kw: None))
+
+
 def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatch):
+    _stub_nest_asyncio(monkeypatch)
     monkeypatch.setitem(sys.modules, "worlds.fake_manual_world", types.ModuleType("worlds.fake_manual_world"))
     manual_stub = types.ModuleType("worlds._manual.ManualClient")
     manual_stub.launch = lambda: None
@@ -1896,6 +1903,7 @@ def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatc
 
 def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):
     import CommonClient
+    _stub_nest_asyncio(monkeypatch)
     monkeypatch.setitem(sys.modules, "worlds.fake_bizhawk_world", types.ModuleType("worlds.fake_bizhawk_world"))
     sni_client = types.ModuleType("worlds._sni.client")
     sni_client.AutoSNIClientRegister = types.SimpleNamespace(is_sni_world=lambda module_name: False)
