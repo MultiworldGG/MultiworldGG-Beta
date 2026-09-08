@@ -487,6 +487,33 @@ def test_route_ready_tolerates_frontend_without_dialog_hook(monkeypatch):
     assert app.calls[-1] == "hide_loading"
 
 
+def test_route_awaits_launch_notice_and_reports_failure(monkeypatch):
+    """The frontend's launch notice (an awaitable) runs before the launch and
+    the launch-failure hook fires from the error callback; both are
+    feature-detected, so the dialog-less frontend above still routes."""
+    import asyncio
+    import frontend_protocol
+    app = _fake_frontend()
+    seen = {}
+
+    async def before_module_launch(self, module_name, **launch_kwargs):
+        await asyncio.sleep(0)
+        seen["notice"] = (module_name, launch_kwargs)
+        self.calls.append("before_module_launch")
+
+    type(app).before_module_launch = before_module_launch
+    type(app).on_module_launch_failed = lambda self, module_name: self.calls.append(f"failed:{module_name}")
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+
+    asyncio.run(MultiWorld._route_module_when_ui_ready("papermario", patch_file="game.appm64"))
+    captured["error_callback"]()
+
+    assert seen["notice"] == ("papermario", {"patch_file": "game.appm64"})
+    assert app.calls == ["client_console_init", "before_module_launch", "failed:papermario"]
+
+
 # --- client-type combo validation ---
 
 @pytest.mark.parametrize("argv, message", [

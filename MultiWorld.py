@@ -1,6 +1,7 @@
 from multiprocessing import freeze_support, Process, Queue, set_start_method
 import argparse
 import asyncio
+import inspect
 import sys
 import logging
 import os
@@ -339,6 +340,17 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
         except Exception:
             logger.exception("client_console_init failed; continuing module launch")
 
+    # Launch notice for the frontend (patch status on its loading overlay). Awaited
+    # so a frame can draw before a synchronous patch blocks the loop.
+    notice = getattr(app, "before_module_launch", None)
+    if callable(notice):
+        try:
+            pending = notice(module_name, **launch_kwargs)
+            if inspect.isawaitable(pending):
+                await pending
+        except Exception:
+            logger.exception("before_module_launch failed; continuing module launch")
+
     prompt_for_server = not launch_kwargs.get("server_address")
 
     def ready_callback(*_cb_args):
@@ -366,6 +378,12 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
 
     def error_callback(*_cb_args):
         logger.error(f"Failed to launch a client for module {module_name}")
+        on_failed = getattr(app, "on_module_launch_failed", None)
+        if callable(on_failed):
+            try:
+                on_failed(module_name)
+            except Exception:
+                logger.exception("on_module_launch_failed failed; the frontend may still show its loading overlay")
 
     from Utils import discover_and_launch_module
     try:
