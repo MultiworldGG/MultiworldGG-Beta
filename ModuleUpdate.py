@@ -589,7 +589,7 @@ _FAVORITES_MAX_SELECTION = 10
 
 def _wheel_cache_slugs(wheel_paths: Iterable[str]) -> list[str]:
     """World slugs from staged wheel filenames (worlds_<slug>-<version>-...whl)."""
-    slugs = []
+    slugs: list[str] = []
     for wheel in wheel_paths:
         dist = Path(wheel).name.split("-", 1)[0]
         slug = dist.removeprefix("worlds_").removeprefix("worlds.")
