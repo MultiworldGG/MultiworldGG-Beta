@@ -576,6 +576,26 @@ def test_register_custom_worlds_tolerates_missing_dir(tmp_path, monkeypatch):
     assert Utils.register_custom_worlds() == []
 
 
+def _fake_dist(name):
+    return types.SimpleNamespace(metadata={"Name": name})
+
+
+def test_get_installed_worlds_reads_worlds_venv_dists_and_custom_worlds(monkeypatch):
+    dists = [_fake_dist("worlds.oot"), _fake_dist("worlds.sms"), _fake_dist("worlds._sni"),
+             _fake_dist("worldsmith"), _fake_dist("kivy"), _fake_dist(None)]
+    monkeypatch.setattr(Utils, "mwgg_venv_site_packages", lambda: "/worlds-venv/site-packages")
+
+    def _distributions(path=None):
+        # Scoped to the worlds venv: the dev checkout's own env has every world.
+        assert path == ["/worlds-venv/site-packages"]
+        return dists
+
+    monkeypatch.setattr(importlib.metadata, "distributions", _distributions)
+    monkeypatch.setattr(Utils, "register_custom_worlds", lambda: ["my_custom", "oot"])
+
+    assert Utils.get_installed_worlds() == ["my_custom", "oot", "sms"]
+
+
 def test_custom_apworld_scanned_indexed_and_searchable(tmp_path, monkeypatch):
     """End-to-end launch contract: an apworld in custom_worlds/ is scanned, added
     to the index (searchable by name, resolvable both ways), stays after a rescan,
@@ -1762,6 +1782,28 @@ def test_consume_wheel_cache_empty_dir_marker_only_skips_uv_call(wheel_cache_exe
 
     assert ModuleUpdate.MWGG_IGDB_VARIANT == "sixteen"
     assert not (wheel_cache_exe / "wheel_cache").exists()
+
+
+def test_wheel_cache_slugs_strip_dist_prefix_and_version():
+    wheels = [
+        "C:/app/wheel_cache/worlds_alttpr-1.3.2-py3-none-any.whl",
+        "/app/wheel_cache/worlds_against_the_storm-1.2.1-py3-none-any.whl",
+        "worlds_2048-1.1.2-py3-none-any.whl",
+        "worlds_alttpr-1.3.2-py3-none-any.whl",
+    ]
+    assert ModuleUpdate._wheel_cache_slugs(wheels) == ["alttpr", "against_the_storm", "2048"]
+
+
+def test_consume_wheel_cache_publishes_selected_slugs_in_env(wheel_cache_exe, monkeypatch):
+    _make_wheel_cache(wheel_cache_exe, wheels=["worlds_sms-1.0-py3-none-any.whl", "worlds_oot-1.0-py3-none-any.whl"])
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_install_wheel_cache_wheels", lambda paths: None)
+    monkeypatch.delenv(ModuleUpdate.INSTALLER_WORLDS_ENV, raising=False)
+
+    ModuleUpdate._consume_wheel_cache()
+
+    assert os.environ[ModuleUpdate.INSTALLER_WORLDS_ENV] == "oot,sms"
 
 
 def test_consume_wheel_cache_cleans_stale_consuming_dir_from_crash(wheel_cache_exe, monkeypatch):

@@ -582,6 +582,23 @@ def _install_wheel_cache_wheels(wheel_paths: list[str]) -> None:
     invalidate_caches()
 
 
+# Handed to the GUI launcher, which seeds its favorites bar from it; env rather
+# than a module global so an update restart (exit_restart_for_update) still
+# delivers it to the launcher process that finally builds the UI.
+INSTALLER_WORLDS_ENV = "MWGG_INSTALLER_WORLDS"
+
+
+def _wheel_cache_slugs(wheel_paths: Iterable[str]) -> list[str]:
+    """World slugs from staged wheel filenames (worlds_<slug>-<version>-...whl)."""
+    slugs: list[str] = []
+    for wheel in wheel_paths:
+        dist = Path(wheel).name.split("-", 1)[0]
+        slug = dist.removeprefix("worlds_").removeprefix("worlds.")
+        if slug and slug not in slugs:
+            slugs.append(slug)
+    return slugs
+
+
 def _consume_wheel_cache() -> None:
     """Claim wheel_cache/ via atomic rename (loser gets OSError, skips) and install
     it into the worlds venv; best effort, failures degrade to on-demand install."""
@@ -606,6 +623,7 @@ def _consume_wheel_cache() -> None:
         wheels = sorted(str(p) for p in consuming_dir.glob("*.whl"))
         if wheels:
             _install_wheel_cache_wheels(wheels)
+            os.environ[INSTALLER_WORLDS_ENV] = ",".join(_wheel_cache_slugs(wheels))
     except Exception as e:
         # Never crash module import; worlds are installed on demand instead.
         logger.warning(f"wheel_cache processing failed: {e!r}")
