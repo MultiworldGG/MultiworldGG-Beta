@@ -231,6 +231,9 @@ def register_tracker_page_tab(ctx, app) -> None:
         tracker_core.set_set_page(_set_page)
         tracker_core.set_log_to_tab(_log_to_tab)
         tracker_core.set_clear_page(_clear_page)
+        # Replace wrap's headless placeholder with the Tracker.kv palette.
+        from .TrackerClient import get_ut_color
+        tracker_core.set_get_ut_color(get_ut_color)
 
     try:
         handle = app.add_client_tab("tracker", tracker)

@@ -333,3 +333,28 @@ class TestShutdownKeepsSavedUsername(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stored, [])
         self.assertIsNone(ctx._username)
         self.assertIsNone(ctx._password)
+
+
+class TestConnectedPersistsSlotName(unittest.IsolatedAsyncioTestCase):
+    """ROM clients log in with a ROM-derived alias in ctx.auth; the name persisted as
+    last_username must be the slot name from slot_info, whose keys arrive as strings."""
+
+    async def test_connected_stores_slot_name_not_auth(self):
+        ctx = CommonContext()
+        ctx.server_address = "ws://room.example:38281"
+        ctx.auth = "QVAxMjM0NTY3ODkwMTIzNA=="
+        packet = {
+            "cmd": "Connected", "team": 0, "slot": 2,
+            "players": [NetUtils.NetworkPlayer(0, 1, "Player 1", "Player 1"),
+                        NetUtils.NetworkPlayer(0, 2, "Player 2", "Player 2")],
+            "missing_locations": [], "checked_locations": [],
+            "slot_info": {"1": NetUtils.NetworkSlot("Player 1", "__TestGame1", NetUtils.SlotType.player),
+                          "2": NetUtils.NetworkSlot("Player 2", "__TestGame1", NetUtils.SlotType.player)},
+        }
+        stored = []
+        with mock.patch.object(Utils, "persistent_store", lambda *args: stored.append(args)):
+            await process_server_cmd(ctx, packet)
+        self.assertEqual(ctx.username, "Player 2")
+        self.assertEqual(ctx.auth, "QVAxMjM0NTY3ODkwMTIzNA==")
+        self.assertIn(("client", "last_username", "Player 2"), stored)
+        self.assertNotIn(("client", "last_username", ctx.auth), stored)

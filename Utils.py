@@ -628,6 +628,12 @@ def _defer_cli_launch(launch_function, label: str, server_address,
     logging.info(f"Scheduled deferred launch for {label} on next asyncio iteration")
 
 
+def _indexed_game_name(module_id: str) -> typing.Optional[str]:
+    """Game name the index records for a world module id ("worlds.<slug>" or "<slug>")."""
+    from mwgg_igdb import GameIndex
+    return GameIndex.get_game_name_for_module(module_name=module_id.removeprefix("worlds."))
+
+
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
@@ -711,33 +717,38 @@ def _perform_module_launch(module_id: str, **kwargs):
                 )
                 return None
 
-            # Check SNI registry
-            from mwgg_igdb import GameIndex
-            game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
-            try:
-                from worlds._sni.client import AutoSNIClientRegister
-                if AutoSNIClientRegister.is_sni_world(module_name=game_name):
-                    logging.info(f"Detected SNI client for {game_name}")
-                    from worlds._sni.context import launch as _sni_launch
-                    return _sni_launch(server_address=server_address, diff_file=patch_file)
-            except ImportError:
-                logging.debug("SNI client not available")
+            # SNI/BizHawk registries key on the game name; a module the index
+            # does not know (custom manual worlds) has none and skips both.
+            game_name = _indexed_game_name(module_id)
+            if game_name:
+                try:
+                    from worlds._sni.client import AutoSNIClientRegister
+                    if AutoSNIClientRegister.is_sni_world(module_name=game_name):
+                        logging.info(f"Detected SNI client for {game_name}")
+                        from worlds._sni.context import launch as _sni_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
+                        return _sni_launch(server_address=server_address, diff_file=patch_file)
+                except ImportError:
+                    logging.debug("SNI client not available")
 
-            # Check BizHawk registry
-            try:
-                from worlds._bizhawk.client import AutoBizHawkClientRegister
-                if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
-                    logging.info(f"Detected BizHawk client for {game_name}")
-                    from worlds._bizhawk.context import launch as _bizhawk_launch
-                    _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted,
-                                      patch_file=patch_file)
-                    return None
-            except ImportError:
-                logging.debug("BizHawk client not available")
+                try:
+                    from worlds._bizhawk.client import AutoBizHawkClientRegister
+                    if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
+                        logging.info(f"Detected BizHawk client for {game_name}")
+                        from worlds._bizhawk.context import launch as _bizhawk_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
+                        _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted,
+                                          patch_file=patch_file)
+                        return None
+                except ImportError:
+                    logging.debug("BizHawk client not available")
 
         if client_type == "manual":
             from worlds._manual.ManualClient import launch as _manual_launch
-            _defer_cli_launch(_manual_launch, "manual", server_address, already_restarted)
+            _defer_cli_launch(_manual_launch, "manual", server_address, already_restarted,
+                              patch_file=patch_file)
             return None
         elif client_type == "universal_tracker":
             from worlds.tracker.TrackerClient import launch as _tracker_launch

@@ -487,6 +487,33 @@ def test_route_ready_tolerates_frontend_without_dialog_hook(monkeypatch):
     assert app.calls[-1] == "hide_loading"
 
 
+def test_route_awaits_launch_notice_and_reports_failure(monkeypatch):
+    """The frontend's launch notice (an awaitable) runs before the launch and
+    the launch-failure hook fires from the error callback; both are
+    feature-detected, so the dialog-less frontend above still routes."""
+    import asyncio
+    import frontend_protocol
+    app = _fake_frontend()
+    seen = {}
+
+    async def before_module_launch(self, module_name, **launch_kwargs):
+        await asyncio.sleep(0)
+        seen["notice"] = (module_name, launch_kwargs)
+        self.calls.append("before_module_launch")
+
+    type(app).before_module_launch = before_module_launch
+    type(app).on_module_launch_failed = lambda self, module_name: self.calls.append(f"failed:{module_name}")
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+
+    asyncio.run(MultiWorld._route_module_when_ui_ready("papermario", patch_file="game.appm64"))
+    captured["error_callback"]()
+
+    assert seen["notice"] == ("papermario", {"patch_file": "game.appm64"})
+    assert app.calls == ["client_console_init", "before_module_launch", "failed:papermario"]
+
+
 # --- client-type combo validation ---
 
 @pytest.mark.parametrize("argv, message", [
@@ -1829,3 +1856,72 @@ def test_predownload_reports_failed_worlds(monkeypatch, _predownload_stub, capsy
 
     assert "Unable to fully predownload" in capsys.readouterr().out
     assert "worlds.hk" in _predownload_stub.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# Specialized-client gate: the index is keyed by the bare slug, and a module
+# the index does not know must fall through to client_type dispatch.
+# --------------------------------------------------------------------------- #
+
+def test_indexed_game_name_strips_only_the_worlds_prefix(monkeypatch):
+    import mwgg_igdb
+    seen = []
+
+    def _lookup(module_name):
+        seen.append(module_name)
+        return {"papermario": "Paper Mario"}.get(module_name)
+
+    monkeypatch.setattr(mwgg_igdb.GameIndex, "get_game_name_for_module", _lookup)
+
+    assert Utils._indexed_game_name("worlds.papermario") == "Paper Mario"
+    assert Utils._indexed_game_name("papermario") == "Paper Mario"
+    assert seen == ["papermario", "papermario"]
+
+
+def _stub_nest_asyncio(monkeypatch):
+    """_perform_module_launch applies nest_asyncio process-wide; that leaks into
+    later async tests (MultiServer packet ordering), so stub it."""
+    monkeypatch.setitem(sys.modules, "nest_asyncio", types.SimpleNamespace(apply=lambda *a, **kw: None))
+
+
+def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatch):
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.fake_manual_world", types.ModuleType("worlds.fake_manual_world"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+
+    Utils._perform_module_launch("worlds.fake_manual_world", client_type="manual",
+                                 patch_file="game.apmanual")
+
+    assert deferred == [("manual", "game.apmanual")]
+
+
+def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):
+    import CommonClient
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.fake_bizhawk_world", types.ModuleType("worlds.fake_bizhawk_world"))
+    sni_client = types.ModuleType("worlds._sni.client")
+    sni_client.AutoSNIClientRegister = types.SimpleNamespace(is_sni_world=lambda module_name: False)
+    monkeypatch.setitem(sys.modules, "worlds._sni.client", sni_client)
+    bizhawk_client = types.ModuleType("worlds._bizhawk.client")
+    bizhawk_client.AutoBizHawkClientRegister = types.SimpleNamespace(is_bizhawk_world=lambda module_name: True)
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.client", bizhawk_client)
+    bizhawk_context = types.ModuleType("worlds._bizhawk.context")
+    bizhawk_context.launch = lambda *args: None
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.context", bizhawk_context)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: "Fake BizHawk Game")
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+    CommonClient._consume_pending_tracker_attach()
+
+    Utils._perform_module_launch("worlds.fake_bizhawk_world", client_type="universal_tracker",
+                                 patch_file="game.apfake")
+
+    assert deferred == [("bizhawk", "game.apfake")]
+    assert CommonClient._consume_pending_tracker_attach() is True

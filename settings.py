@@ -103,8 +103,9 @@ class Group:
                     self._changed = True
                     attr = new
                     resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
-            # validate the file's hash hasn't been tampered with (per upstream #5854)
-            if resolved.exists():
+            # validate the file's hash hasn't been tampered with (per upstream #5854);
+            # an unset FilePath resolves to a directory, which is not a file to open
+            if resolved.is_file():
                 attr.__class__.validate(str(resolved))
             # return as the original APPathLib subclass (string) for backward compat with
             # downstream code that may pass it to APIs expecting str

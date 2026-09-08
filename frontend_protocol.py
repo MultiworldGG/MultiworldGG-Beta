@@ -89,6 +89,22 @@ class FrontendProtocol(Protocol):
         """
         ...
 
+    def before_module_launch(self, module_name: str, **launch_kwargs) -> Any:
+        """Notice that `module_name`'s client is about to launch with `launch_kwargs`
+        (`patch_file`, `server_address`, ...). May return an awaitable, which
+        `MultiWorld._route_module_when_ui_ready` awaits before launching so the
+        frontend can put status on screen first. Feature-detected with getattr,
+        so frontends may omit it.
+        """
+        ...
+
+    def on_module_launch_failed(self, module_name: str) -> None:
+        """The routed client launch for `module_name` failed after the frontend came
+        up. Dismiss any loading state and give the user a way out. Feature-detected
+        with getattr, so frontends may omit it.
+        """
+        ...
+
     def on_admin_command_result(self, args: dict) -> None:
         """Receive the full PrintJSON packet of a remote-admin reply (`type == "AdminCommandResult"`).
 

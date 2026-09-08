@@ -40,6 +40,9 @@ from . import (
     snes_buffered_write, snes_flush_writes
 )
 
+# Upstream SNES worlds lazily `from SNIClient import ...`; this module is upstream's SNIClient.py.
+sys.modules.setdefault("SNIClient", sys.modules[__name__])
+
 
 class DeathState(enum.IntEnum):
     killing_player = 1

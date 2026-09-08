@@ -245,6 +245,7 @@ def _uv_run(args: list[str], timeout: float = 120, check: bool = False) -> subpr
 
     for cand in candidates:
         cmd = [cand] + args
+        logger.info(f"Executing subprocess command: {[str(c) for c in cmd]}")
         try:
             result = subprocess.run(
                 cmd,
@@ -753,7 +754,6 @@ def find_world_modules() -> set[str]:
 
     try:
         executable_args = _uv_pip("list", "--format", "json")
-        logger.debug(f"Executing subprocess command to find installed worlds: {executable_args}")
         response = _uv_run(executable_args, timeout=45)
         if response.returncode == 0:
             for package in json.loads(response.stdout):
@@ -965,7 +965,6 @@ def check_for_updates(worlds_only: bool = False) -> List[str]:
     # specifiers at install time, so we don't need to pre-filter here.
     try:
         executable_args = _uv_pip("list", "--outdated", "--format", "json")
-        logger.info(f"Executing subprocess command: {executable_args}")
         response = _uv_run(executable_args, timeout=45)
         if response.returncode != 0:
             logger.warning(f"Could not check for updates: {response.stderr}")
@@ -1100,7 +1099,6 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
             install_args.append("--no-deps")
         install_args += [module_location, "--upgrade", "--no-cache"]
         executable_args = _uv_pip(*install_args)
-        logger.info(f"Executing subprocess command: {executable_args}")
         try:
             result = _uv_run(executable_args, timeout=300)
         except subprocess.TimeoutExpired:

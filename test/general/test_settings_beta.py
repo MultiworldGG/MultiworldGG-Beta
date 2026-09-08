@@ -183,6 +183,17 @@ class _Tup(Tuple[int, ...]):
     """Bare tuple subclass so the annotation resolves to a real ``type``."""
 
 
+class TestFilePathDefaultAccess(unittest.TestCase):
+    def test_unset_file_path_resolves_to_directory_without_validation(self) -> None:
+        class G(Group):
+            pack: settings.FilePath = settings.FilePath()
+
+        g = G()
+        # the default resolves to an existing directory; validate() must not open it
+        self.assertTrue(Path(str(g.pack)).is_dir())
+        self.assertEqual(str(g["pack"]), str(g.pack))
+
+
 class TestGroupUpdateCoercion(unittest.TestCase):
     def test_update_preserves_bool_for_bool_field(self) -> None:
         class G(Group):
@@ -240,3 +251,37 @@ class TestGroupUpdateChanged(unittest.TestCase):
         g = G()
         g.update({"a": 5, "b": 6})
         self.assertFalse(g.changed)
+
+
+class TestFolderPathBrowseWindows(unittest.TestCase):
+    """The Windows folder picker must hand FolderPath.browse a str: the ANSI
+    SHGetPathFromIDList returns bytes, which os.path.relpath rejects with a
+    TypeError that browse does not catch."""
+
+    def test_browse_returns_path_subclass(self) -> None:
+        import types
+        from unittest import mock
+        import FileUtils
+        import Utils
+
+        shell = types.SimpleNamespace(
+            SHBrowseForFolder=lambda *args: (object(), "SNI", None),
+            SHGetPathFromIDList=lambda pidl: Utils.local_path("SNI").encode(),
+            SHGetPathFromIDListW=lambda pidl: Utils.local_path("SNI"),
+        )
+        win32com_shell = types.ModuleType("win32com.shell")
+        win32com_shell.shell = shell
+        win32com_shell.shellcon = types.SimpleNamespace(BIF_RETURNONLYFSDIRS=1)
+        win32com = types.ModuleType("win32com")
+        win32com.shell = win32com_shell
+        modules = {
+            "win32com": win32com,
+            "win32com.shell": win32com_shell,
+            "win32gui": types.SimpleNamespace(GetDesktopWindow=lambda: 0),
+        }
+        with mock.patch.dict(sys.modules, modules), \
+                mock.patch.object(FileUtils.FileUtils, "_instance", FileUtils.WinFileUtils()):
+            res = settings.SNIOptions.SNIPath("SNI").browse()
+
+        self.assertIsInstance(res, settings.SNIOptions.SNIPath)
+        self.assertEqual(res, "SNI")

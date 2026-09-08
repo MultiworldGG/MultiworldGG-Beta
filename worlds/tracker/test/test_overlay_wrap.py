@@ -149,6 +149,26 @@ class TestWrappedOnPackage(unittest.TestCase):
         self.assertEqual(len(pokes), 2)
 
 
+class TestRegisterTrackerPageTab(unittest.TestCase):
+    def test_page_tab_wires_real_palette(self):
+        from worlds.tracker import overlay_features
+        from worlds.tracker.TrackerClient import get_ut_color
+
+        ctx = _ctx(tracker_core=None, feature_registry=None, on_package=lambda cmd, args: None)
+        wrap.attach_tracker_overlay(ctx)
+        self.assertEqual(ctx.tracker_core.get_ut_color("in_logic"), "DD00FF")
+
+        def fake_build(c):
+            c.tracker_page = SimpleNamespace(data=[], addLine=lambda *a: None, resetData=lambda: None)
+            return object()
+
+        app = SimpleNamespace(add_client_tab=lambda name, widget: object())
+        with mock.patch.object(gui, "build_tracker_view", fake_build), \
+                mock.patch.object(gui, "install_app_surface", lambda c, a: None):
+            overlay_features.register_tracker_page_tab(ctx, app)
+        self.assertIs(ctx.tracker_core._get_ut_color, get_ut_color)
+
+
 class TestClearStrayTooltips(unittest.TestCase):
     def test_sweep_keeps_live_hover_removes_orphans(self):
         class FakePlain:
