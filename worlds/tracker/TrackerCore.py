@@ -24,6 +24,12 @@ from NetUtils import NetworkItem, HintStatus
     
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
 
+
+def world_needs_yaml(world_cls: type) -> bool:
+    """False when the world regenerates from slot_data on Connected or has UT disabled."""
+    return not (getattr(world_cls, "disable_ut", False) or getattr(world_cls, "ut_can_gen_without_yaml", False))
+
+
 class TrackerLogLineGroup(StrEnum):
     UT_ERROR = "error"
     DEFAULT = "default"
@@ -324,7 +330,7 @@ class TrackerCore():
             elif self.player_folder_override:
                 args.player_files_path = self.player_folder_override
             else:
-                # No explicit YAML path supplied. Prompt the user to pick 
+                # No explicit YAML path supplied. Prompt the user to pick
                 picked = open_filename(
                     "Select your YAML for tracking",
                     [("YAML", ["*.yaml", "*.yml"])],

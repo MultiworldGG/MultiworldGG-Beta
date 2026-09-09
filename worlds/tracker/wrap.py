@@ -20,8 +20,8 @@ logger = logging.getLogger("Client")
 def attach_tracker_overlay(ctx) -> None:
     """Install ``tracker_core`` and patch ``on_package``; runs before
     ``server_task`` is scheduled so no packet can beat the patch."""
-    if getattr(ctx, "tracker_core", None) is not None:
-        # Standalone TrackerGameContext already owns its tracker_core.
+    if getattr(ctx, "tracker_core", None) is not None or getattr(type(ctx), "owns_tracker_core", False):
+        # A TrackerGameContext (or a world client subclassing it) builds its own core.
         return
 
     from .TrackerCore import TrackerCore
@@ -106,9 +106,8 @@ def _handle_connected(ctx, args: dict) -> None:
 
     # Worlds that can't rebuild from slot_data need a real generation against the
     # user's YAML; deferred to Connected so the picker only fires for tracked games.
-    if (not getattr(connected_cls, "disable_ut", False)
-            and not getattr(connected_cls, "ut_can_gen_without_yaml", False)
-            and ctx.tracker_core.launch_multiworld is None):
+    from .TrackerCore import world_needs_yaml
+    if world_needs_yaml(connected_cls) and ctx.tracker_core.launch_multiworld is None:
         ctx.tracker_core.run_generator(None, None)
 
     ctx.tracker_core.initalize_tracker_core(connected_cls, raw_slot_data)

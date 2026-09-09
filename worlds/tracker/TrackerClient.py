@@ -13,7 +13,7 @@ from Utils import __version__, async_start, persistent_load, persistent_store, i
 apname = instance_name if instance_name else "AP"
 from worlds import AutoWorld
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION
-from .TrackerCore import TrackerCore
+from .TrackerCore import TrackerCore, world_needs_yaml
 from .map_controller import UTMapController, UT_MAP_TAB_KEY, cmd_load_map, cmd_list_maps, load_json, load_json_zip
 from collections import Counter, defaultdict
 from MultiServer import mark_raw
@@ -339,6 +339,8 @@ class TrackerCommandProcessor(ClientCommandProcessor):
 class TrackerGameContext(CommonContext):
     game = ""
     tags = CommonContext.tags | {"Tracker"}
+    # wrap.attach_tracker_overlay reads this off the class: tracker_core is only set after super().__init__.
+    owns_tracker_core = True
     command_processor = TrackerCommandProcessor
     tracker_page = None
     map_page = None
@@ -594,6 +596,11 @@ class TrackerGameContext(CommonContext):
             await self.send_connect()
 
     def run_generator(self):
+        # World clients call this at startup; without a yaml the core prompts for one,
+        # pointless for a world that regenerates from slot_data on Connected.
+        world_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
+        if world_cls is not None and not world_needs_yaml(world_cls):
+            return
         self.tracker_core.run_generator(None, None)
         self.use_split = self.tracker_core.use_split #fancy hack
 
@@ -620,6 +627,7 @@ class TrackerGameContext(CommonContext):
                     logger.error("Internal generation failed, something has gone wrong")
                     logger.error("Run the /faris_asked command and post the results in the discord")
                     return #if this has failed we don't want to even try anything else
+                self.use_split = self.tracker_core.use_split
                 self.load_seed_data()
                 self._map_controller.build_tracker_world(connected_cls)
                 if self.tracker_world:
