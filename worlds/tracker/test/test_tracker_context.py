@@ -42,5 +42,29 @@ class TestStartupGeneration(unittest.TestCase):
         self.assertEqual(calls, [(None, None)])
 
 
+class TestPlayersFolderScan(unittest.TestCase):
+    """run_generator takes host.yaml's Players folder before prompting for a YAML."""
+
+    def setUp(self):
+        import tempfile
+        from worlds.tracker.TrackerCore import folder_has_yamls
+        self.folder_has_yamls = folder_has_yamls
+        self.folder = tempfile.mkdtemp()
+        self.addCleanup(__import__("shutil").rmtree, self.folder, ignore_errors=True)
+
+    def test_folder_with_a_yaml_is_used(self):
+        import os
+        open(os.path.join(self.folder, "Player1.YML"), "w").close()
+        self.assertTrue(self.folder_has_yamls(self.folder))
+
+    def test_empty_missing_or_unset_folder_falls_through_to_the_prompt(self):
+        import os
+        open(os.path.join(self.folder, "notes.txt"), "w").close()
+        self.assertFalse(self.folder_has_yamls(self.folder))
+        self.assertFalse(self.folder_has_yamls(os.path.join(self.folder, "missing")))
+        self.assertFalse(self.folder_has_yamls(""))
+        self.assertFalse(self.folder_has_yamls(None))
+
+
 if __name__ == "__main__":
     unittest.main()
