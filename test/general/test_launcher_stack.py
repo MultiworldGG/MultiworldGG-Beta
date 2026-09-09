@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import shlex
 import subprocess
 import sys
 import types
@@ -695,6 +696,18 @@ def test_unwrap_unrecognized_wrapper_returns_none():
     assert Utils._resolve_launch_from_custom_world(_opaque_wrapper, "worlds.x") is None
 
 
+def _guarded_launch_wrapper(*args):
+    if args:
+        launch_subprocess(_inner_launch, name="TestClient", args=args)
+    else:
+        _inner_launch()
+
+
+def test_unwrap_wrapper_guarded_by_if():
+    """Manual's launch_client keeps its launch call under `if gui_enabled:`."""
+    assert Utils._resolve_launch_from_custom_world(_guarded_launch_wrapper, "worlds.x") is _inner_launch
+
+
 # --- Launcher.py dispatcher ---
 
 def test_launcher_version_prints_and_returns_zero(capsys):
@@ -979,6 +992,182 @@ def test_spawn_client_launch_file_is_positional_before_flags(monkeypatch):
     argv = captured["argv"]
     launch_index = argv.index("C:/seed.apkh3")
     assert argv[launch_index + 1] == "--client-type"
+
+
+# --- launch_exe: terminal detection, window-then-tab bucketing, env forwarding ---
+
+TERMINAL_EXE = ["/opt/mwgg/MultiworldGG", "--game", "A Game"]
+
+
+def _which_from(available):
+    return lambda name, *args, **kwargs: available.get(name)
+
+
+@pytest.fixture
+def plain_environ(monkeypatch):
+    """No launcher-owned variables, so _env_prefixed leaves the argv alone."""
+    monkeypatch.setattr(os, "environ", {"HOME": "/home/x", "LANG": "C"})
+
+
+def test_env_prefixed_forwards_launcher_owned_variables(monkeypatch):
+    monkeypatch.setattr(os, "environ", {
+        "MWGG_ROLE": "launcher", "KIVY_HOME": "/k", "PATH": "/a:/b", "SSL_CERT_FILE": "/c.pem",
+        "REQUESTS_CA_BUNDLE": "/c.pem", "HOME": "/h", "GITHUB_TOKEN": "secret"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._env_prefixed(TERMINAL_EXE) == [
+        "/usr/bin/env", "KIVY_HOME=/k", "MWGG_ROLE=launcher", "PATH=/a:/b", "REQUESTS_CA_BUNDLE=/c.pem",
+        "SSL_CERT_FILE=/c.pem", *TERMINAL_EXE]
+
+
+def test_env_prefixed_without_launcher_variables_is_identity(plain_environ):
+    assert BaseUtils._env_prefixed(TERMINAL_EXE) == TERMINAL_EXE
+
+
+def test_linux_terminal_prefers_xdg_terminal_exec(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from(
+        {"xdg-terminal-exec": "/usr/bin/xdg-terminal-exec", "ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/xdg-terminal-exec", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_ptyxis_window_then_tab(plain_environ, monkeypatch):
+    """Bazzite ships Ptyxis and none of the legacy emulators."""
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/ptyxis", "--new-window", "-T", "Host", "--", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/ptyxis", "--tab", "-T", "Host", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_forwards_launcher_env_into_the_tab(monkeypatch):
+    monkeypatch.setattr(os, "environ", {"MWGG_ROLE": "launcher", "HOME": "/h"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/ptyxis", "--tab", "-T", "Host", "--", "/usr/bin/env", "MWGG_ROLE=launcher", *TERMINAL_EXE]
+
+
+def test_linux_terminal_tab_capable_outranks_legacy(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({
+        "xterm": "/usr/bin/xterm", "x-terminal-emulator": "/usr/bin/x-terminal-emulator", "kgx": "/usr/bin/kgx"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/kgx", "-T", "Host", "--", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/kgx", "--tab", "-T", "Host", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_konsole_new_tab(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"konsole": "/usr/bin/konsole"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/konsole", "-e", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/konsole", "--new-tab", "-e", *TERMINAL_EXE]
+
+
+def test_linux_terminal_none_installed(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) is None
+
+
+@pytest.mark.parametrize("new_window", [True, False], ids=["window", "tab"])
+@pytest.mark.parametrize("spec", BaseUtils._LINUX_TERMINALS, ids=lambda spec: spec.name)
+def test_linux_terminal_specs_end_with_the_command(spec, new_window, plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({spec.name: f"/usr/bin/{spec.name}"}))
+    command = BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", new_window)
+    assert command[0] == f"/usr/bin/{spec.name}"
+    assert command[-len(TERMINAL_EXE):] == TERMINAL_EXE
+    assert "{title}" not in " ".join(command)
+
+
+def test_windows_terminal_buckets_into_named_window(monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"wt": "C:/WindowsApps/wt.exe"}))
+    monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
+    exe = ["C:/mwgg/MultiworldGG.exe", "--game", "A;B"]
+    assert BaseUtils._windows_terminal_command(exe, "Host") == [
+        "C:/WindowsApps/wt.exe", "-w", "MultiworldGG-Test", "new-tab", "--title", "Host", "-d", os.getcwd(),
+        "C:/mwgg/MultiworldGG.exe", "--game", "A\\;B"]
+
+
+def test_windows_terminal_without_wt(monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._windows_terminal_command(TERMINAL_EXE, "Host") is None
+
+
+def test_macos_terminal_iterm_window_then_tab(plain_environ, monkeypatch, tmp_path):
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", True)
+    assert command[0] == "osascript"
+    assert 'tell application "iTerm2"' in command
+    assert "tell current window to create tab with default profile" in command
+    assert command[-3:] == [f"cd {shlex.quote(os.getcwd())} && {shlex.join(TERMINAL_EXE)}", "Host", "window"]
+    assert BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", False)[-1] == "tab"
+
+
+def test_macos_terminal_forwards_launcher_env(monkeypatch, tmp_path):
+    monkeypatch.setattr(os, "environ", {"MWGG_ROLE": "launcher", "HOME": "/h"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", False)
+    assert command[-3].endswith(f"&& /usr/bin/env MWGG_ROLE=launcher {shlex.join(TERMINAL_EXE)}")
+
+
+def test_macos_terminal_app_fallback(plain_environ, monkeypatch, tmp_path):
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path / "missing"),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", True)
+    assert 'tell application "Terminal"' in command
+    assert command[-1].endswith(shlex.join(TERMINAL_EXE))
+
+
+def test_launch_exe_opens_window_then_tabs(monkeypatch):
+    calls = []
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command",
+                        lambda exe, title, new_window: ["term", title, str(new_window), *exe])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Generate") is True
+    assert calls == [(["term", "Host", "True", *TERMINAL_EXE], {}),
+                     (["term", "Generate", "False", *TERMINAL_EXE], {})]
+
+
+def test_launch_exe_title_defaults_to_instance_name(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: ["term", title])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv))
+    BaseUtils.launch_exe(TERMINAL_EXE, True)
+    assert captured["argv"] == ["term", "MultiworldGG-Test"]
+
+
+def test_launch_exe_windows_start_fallback(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(BaseUtils, "is_windows", True)
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: None)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv, kw=kw))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
+    assert captured == {"argv": ["start", "Running Host", *TERMINAL_EXE], "kw": {"shell": True}}
+    assert BaseUtils._terminal_window_opened is False
+
+
+def test_launch_exe_without_terminal_runs_plain(monkeypatch):
+    calls = []
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: None)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True) is False
+    assert BaseUtils.launch_exe(TERMINAL_EXE) is False
+    assert calls == [(TERMINAL_EXE, {}), (TERMINAL_EXE, {})]
+
+
+def test_run_component_titles_terminal_with_display_name(monkeypatch):
+    captured = {}
+    component = lc.Component("Host Test", script_name="MultiServer", cli=True)
+    monkeypatch.setattr(lc, "get_exe", lambda c: ["/opt/mwgg/MultiServer"])
+    monkeypatch.setattr(lc, "launch_exe",
+                        lambda exe, in_terminal, **kw: captured.update(exe=exe, in_terminal=in_terminal, **kw))
+    lc.run_component(component, "--foo")
+    assert captured == {"exe": ["/opt/mwgg/MultiServer", "--foo"], "in_terminal": True, "title": "Host Test"}
 
 
 # --- origin classification / builtin_components / find_component ---
@@ -1899,6 +2088,46 @@ def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatc
                                  patch_file="game.apmanual")
 
     assert deferred == [("manual", "game.apmanual")]
+
+
+def test_perform_module_launch_manual_module_seeds_the_game_selector(monkeypatch):
+    """The manual client defaults its Manual Game ID selector from the persisted
+    last_manual_game; a routed manual module must win over the previous pick."""
+    from worlds.AutoWorld import AutoWorldRegister
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.manual_x_y", types.ModuleType("worlds.manual_x_y"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {
+        "Manual_X_Y": type("XY", (), {"__module__": "worlds.manual_x_y"}),
+        "Manual_Other_Z": type("OZ", (), {"__module__": "worlds.manual_other_z"}),
+    })
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    monkeypatch.setattr(Utils, "_defer_cli_launch", lambda *a, **kw: None)
+    stored = []
+    monkeypatch.setattr(Utils, "persistent_store", lambda *entry: stored.append(entry))
+
+    Utils._perform_module_launch("worlds.manual_x_y", client_type="manual")
+
+    assert stored == [("client", "last_manual_game", "Manual_X_Y")]
+
+
+def test_local_data_package_refresh_reaches_the_worlds_module_object(monkeypatch):
+    """Per-world clients read worlds.network_data_package at module level (Manual's
+    server_auth); a world imported after the package loaded must show up there."""
+    import worlds
+    from worlds.AutoWorld import AutoWorldRegister
+    import CommonClient
+    package = {"item_name_to_id": {}, "location_name_to_id": {}, "checksum": "late"}
+    late = type("LateWorld", (), {"get_data_package_data": classmethod(lambda cls: package)})
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {"Late Game": late})
+    try:
+        local, _ = CommonClient.set_local_network_data_package()
+        assert local["games"]["Late Game"] is package
+        assert worlds.network_data_package["games"]["Late Game"] is package
+    finally:
+        worlds.network_data_package["games"].pop("Late Game", None)
 
 
 def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):

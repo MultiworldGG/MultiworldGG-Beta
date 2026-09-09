@@ -77,6 +77,12 @@ def strip_articles(title: str) -> str:
         title = title[3:]
     return title
 
+def manual_games() -> list[str]:
+    """Registered Manual worlds; the shared _manual template's sample world is not a pick."""
+    return sorted(game for game, world in AutoWorldRegister.world_types.items()
+                  if "Manual_" in game and not world.__module__.startswith("worlds._manual"))
+
+
 class ManualClientCommandProcessor(ClientCommandProcessor):
     def _cmd_resync(self) -> bool:
         """Manually trigger a resync."""
@@ -196,8 +202,12 @@ class ManualContext(SuperContext):
     def suggested_game(self) -> str:
         if self.game:
             return self.game
-        from .Game import game_name  # This will at least give us the name of a manual they've installed
-        return Utils.persistent_load().get("client", {}).get("last_manual_game", game_name)
+        manuals = manual_games()
+        last_game = Utils.persistent_load().get("client", {}).get("last_manual_game")
+        if last_game in manuals:
+            return last_game
+        from .Game import game_name
+        return game_name if game_name in manuals or not manuals else manuals[0]
 
     def get_location_by_name(self, name) -> dict[str, Any]:
         location = self.location_table.get(name)
@@ -419,8 +429,7 @@ class ManualContext(SuperContext):
                 self.manual_game_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(30))
 
                 game_bar_label = Label(text="Manual Game ID", size=(dp(150), dp(30)), size_hint_y=None, size_hint_x=None)
-                manuals = [w for w in AutoWorldRegister.world_types.keys() if "Manual_" in w]
-                manuals.sort()  # Sort by alphabetical order, not load order
+                manuals = manual_games()
                 self.manual_game_layout.add_widget(game_bar_label)
                 self.game_bar_text = Spinner(text=self.ctx.suggested_game, size_hint_y=None, height=dp(30), sync_height=True,
                                              values=manuals, option_cls=GameSelectOption, dropdown_cls=GameSelectDropDown)

@@ -204,5 +204,49 @@ class TestClearStrayTooltips(unittest.TestCase):
         self.assertEqual(removed, [orphan, detached, unhovered])
 
 
+class TestAttachGuard(unittest.TestCase):
+    def test_context_owning_its_core_is_left_alone(self):
+        class OwnsCore:
+            owns_tracker_core = True
+
+            def on_package(self, cmd, args):
+                pass
+
+        ctx = OwnsCore()
+        wrap.attach_tracker_overlay(ctx)
+        self.assertFalse(hasattr(ctx, "tracker_core"))
+        self.assertIs(ctx.on_package.__func__, OwnsCore.on_package)
+
+
+class TestConnectedGeneration(unittest.TestCase):
+    def _connect(self, world_cls) -> list:
+        calls = []
+        core = SimpleNamespace(
+            launch_multiworld=None,
+            tracker_disabled=True,
+            set_slot_params=lambda *a: None,
+            run_generator=lambda *a: calls.append("run_generator"),
+            initalize_tracker_core=lambda *a: calls.append("initalize_tracker_core"),
+        )
+        ctx = _ctx(team=0, tracker_core=core)
+        args = {"slot": 3, "slot_info": {"3": ("me", "FakeGame")}, "slot_data": {}}
+        from worlds import AutoWorld
+        with mock.patch.dict(AutoWorld.AutoWorldRegister.world_types, {"FakeGame": world_cls}):
+            wrap._handle_connected(ctx, args)
+        return calls
+
+    def test_yamlless_world_skips_the_yaml_generation(self):
+        class YamlLess:
+            ut_can_gen_without_yaml = True
+
+        self.assertEqual(self._connect(YamlLess), ["initalize_tracker_core"])
+
+    def test_world_needing_a_yaml_generates_first(self):
+        class NeedsYaml:
+            pass
+
+        self.assertEqual(self._connect(NeedsYaml), ["run_generator", "initalize_tracker_core"])
+
+
 if __name__ == "__main__":
     unittest.main()

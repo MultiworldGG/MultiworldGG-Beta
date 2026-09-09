@@ -48,18 +48,25 @@ class _ParserTestBase(unittest.TestCase):
 class RefEmissionTest(_ParserTestBase):
     def test_item_ref_categories_from_flags(self) -> None:
         cases = {
-            0: ("normal", TEXT_COLORS["regular_item_color"]),
-            0b00001: ("progression", TEXT_COLORS["progression_item_color"]),
-            0b01001: ("progression, skip_balancing", TEXT_COLORS["progression_goal_item_color"]),
-            0b10001: ("progression, deprioritized", TEXT_COLORS["progression_deprioritized_item_color"]),
-            0b00110: ("useful, trap", TEXT_COLORS["trap_item_color"]),
+            0: "normal",
+            0b00001: "progression",
+            0b01001: "progression, skip_balancing",
+            0b10001: "progression, deprioritized",
+            0b00110: "useful, trap",
         }
-        for flags, (categories, color) in cases.items():
+        for flags, categories in cases.items():
             with self.subTest(flags=bin(flags)):
-                self.assertEqual(
-                    self.parser([{"type": "item_name", "text": "Sword", "flags": flags}]),
-                    f"[ref=0|Item Class: {categories}][color={color}]Sword[/color][/ref]",
-                )
+                out = self.parser([{"type": "item_name", "text": "Sword", "flags": flags}])
+                self.assertTrue(out.startswith(f"[ref=0|Item Class: {categories}]"), out)
+                self.assertTrue(out.endswith("[/ref]"), out)
+
+    def test_every_flag_combination_renders(self) -> None:
+        # Multi-flag items go through the per-character gradient, which special-cases whitespace.
+        for flags in range(32):
+            with self.subTest(flags=bin(flags)):
+                out = self.parser([{"type": "item_name", "text": "Master Sword", "flags": flags}])
+                self.assertIn("[ref=0|Item Class: ", out)
+                self.assertNotIn("\n", out)
 
     def test_player_id_ref_carries_game_type_and_escaped_members(self) -> None:
         out = self.parser([{"type": "player_id", "text": "2"}])

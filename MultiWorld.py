@@ -693,7 +693,7 @@ def main(argv: "list[str] | None" = None) -> None:
                         sys.exit(0)
                     exe = get_exe(component)
                     if exe:
-                        launch_exe([*exe, args.launch_file], component.cli)
+                        launch_exe([*exe, args.launch_file], component.cli, title=component.display_name)
                         sys.exit(0)
                     logger.warning(f"Component {component.display_name} is not executable; opening launcher.")
                 else:

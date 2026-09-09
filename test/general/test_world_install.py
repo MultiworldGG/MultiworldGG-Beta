@@ -571,6 +571,29 @@ def test_discover_returns_none_for_stray_file(tmp_path):
     assert Utils.discover_custom_world_module(readme) is None
 
 
+def test_manual_apworld_without_manifest_gets_its_manual_game_id(tmp_path, monkeypatch):
+    """Manual apworlds ship no archipelago.json; the launcher still has to show
+    the Manual_<game>_<creator> id the client connects with."""
+    slug = "manual_autonauts_hopop"
+    with zipfile.ZipFile(tmp_path / f"{slug}.apworld", "w") as zf:
+        zf.writestr(f"{slug}/data/game.json", json.dumps({"game": "Autonauts", "creator": "Hopop"}))
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    assert Utils.register_custom_worlds() == [slug]
+    assert GameIndex.get_game_name_for_module(slug) == "Manual_Autonauts_Hopop"
+
+
+def test_apworld_manifest_game_outranks_manual_game_json(tmp_path, monkeypatch):
+    slug = "manual_autonauts_hopop"
+    _make_apworld(tmp_path / f"{slug}.apworld", "Manual_Autonauts_Hopop2",
+                  extra_members={"data/game.json": b'{"game": "Autonauts", "creator": "Hopop"}'})
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    Utils.register_custom_worlds()
+
+    assert GameIndex.get_game_name_for_module(slug) == "Manual_Autonauts_Hopop2"
+
+
 def test_register_custom_worlds_tolerates_missing_dir(tmp_path, monkeypatch):
     monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path / "does_not_exist")
     assert Utils.register_custom_worlds() == []

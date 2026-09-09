@@ -5,6 +5,8 @@ import logging
 import io
 import warnings
 import json
+import shlex
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -645,30 +647,155 @@ def get_client_exe() -> list[str]:
     return [sys.executable, local_path("MultiWorld.py")]
 
 
-def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False) -> bool:
+class _Terminal(typing.NamedTuple):
+    """Argv shape for one Linux terminal emulator: `window` flags open the
+    launcher's own window on its first launch and `tab` flags add to it
+    afterwards (where supported), `title` parts are formatted with {title},
+    and `command` precedes the argv (empty = positional)."""
+    name: str
+    window: tuple[str, ...] = ()
+    tab: tuple[str, ...] = ()
+    title: tuple[str, ...] = ()
+    command: tuple[str, ...] = ()
+
+
+# Preference order: tab-capable desktop terminals first so launches bucket into
+# one window, then the Debian alternative, then single-window emulators.
+_LINUX_TERMINALS = (
+    _Terminal("ptyxis", window=("--new-window",), tab=("--tab",), title=("-T", "{title}"), command=("--",)),
+    # kgx positionals are directories to open, so the command needs "--"
+    _Terminal("kgx", tab=("--tab",), title=("-T", "{title}"), command=("--",)),
+    _Terminal("gnome-terminal", window=("--window",), tab=("--tab",), title=("--title", "{title}"),
+              command=("--",)),
+    _Terminal("konsole", tab=("--new-tab",), command=("-e",)),
+    _Terminal("xfce4-terminal", window=("--window",), tab=("--tab",), title=("-T", "{title}"), command=("-x",)),
+    _Terminal("mate-terminal", window=("--window",), tab=("--tab",), title=("-t", "{title}"), command=("-x",)),
+    _Terminal("terminator", tab=("--new-tab",), title=("-T", "{title}"), command=("-x",)),
+    _Terminal("x-terminal-emulator", command=("-e",)),
+    _Terminal("ghostty", title=("--title={title}",), command=("-e",)),
+    _Terminal("kitty", title=("-T", "{title}")),
+    _Terminal("wezterm", command=("start", "--")),
+    _Terminal("alacritty", title=("-T", "{title}"), command=("-e",)),
+    _Terminal("foot", title=("-T", "{title}")),
+    _Terminal("urxvt", title=("-title", "{title}"), command=("-e",)),
+    _Terminal("xterm", title=("-T", "{title}"), command=("-e",)),
+)
+
+_ITERM_APP_PATHS = ("/Applications/iTerm.app", "~/Applications/iTerm.app")
+_ITERM_SCRIPT = (
+    "on run argv",
+    'tell application "iTerm2"',
+    'if (item 3 of argv) is "window" or (count of windows) is 0 then',
+    "create window with default profile",
+    "else",
+    "tell current window to create tab with default profile",
+    "end if",
+    "tell current session of current window",
+    "write text (item 1 of argv)",
+    "set name to (item 2 of argv)",
+    "end tell",
+    "activate",
+    "end tell",
+    "end run",
+)
+_TERMINAL_APP_SCRIPT = (
+    "on run argv",
+    'tell application "Terminal"',
+    "do script (item 1 of argv)",
+    "activate",
+    "end tell",
+    "end run",
+)
+
+
+# Launcher-owned variables that a terminal server's own environment lacks; a
+# tab request lands in that already-running process, so they travel explicitly.
+_FORWARDED_ENV_PREFIXES = ("MWGG_", "KIVY_")
+_FORWARDED_ENV_NAMES = frozenset({"PATH", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE"})
+
+_terminal_window_opened = False
+
+
+def _env_prefixed(exe: list[str]) -> list[str]:
+    forwarded = [f"{name}={value}" for name, value in sorted(os.environ.items())
+                 if name.startswith(_FORWARDED_ENV_PREFIXES) or name in _FORWARDED_ENV_NAMES]
+    if not forwarded:
+        return exe
+    return [shutil.which("env") or "/usr/bin/env", *forwarded, *exe]
+
+
+def _linux_terminal_command(exe: list[str], title: str, new_window: bool) -> typing.Optional[list[str]]:
+    exe = _env_prefixed(exe)
+    xdg = shutil.which("xdg-terminal-exec")
+    if xdg:
+        return [xdg, "--", *exe]
+    for spec in _LINUX_TERMINALS:
+        path = shutil.which(spec.name)
+        if path:
+            flags = spec.window if new_window else spec.tab
+            return [path, *flags, *(part.format(title=title) for part in spec.title), *spec.command, *exe]
+    return None
+
+
+def _windows_terminal_command(exe: list[str], title: str) -> typing.Optional[list[str]]:
+    wt = shutil.which("wt")
+    if not wt:
+        return None
+    # wt hands this process's environment to the new tab along with the commandline;
+    # it splits its command line on ";" between subcommands, "\;" is a literal one
+    return [wt, "-w", instance_name, "new-tab", "--title", title, "-d", os.getcwd(),
+            *(arg.replace(";", "\\;") for arg in exe)]
+
+
+def _osascript(lines: typing.Iterable[str], *args: str) -> list[str]:
+    command = ["osascript"]
+    for line in lines:
+        command += ["-e", line]
+    return [*command, *args]
+
+
+def _macos_terminal_command(exe: list[str], title: str, new_window: bool) -> list[str]:
+    # A shell parses the command, so relative paths need the launcher's cwd
+    command = f"cd {shlex.quote(os.getcwd())} && {shlex.join(_env_prefixed(exe))}"
+    if any(os.path.isdir(os.path.expanduser(path)) for path in _ITERM_APP_PATHS):
+        return _osascript(_ITERM_SCRIPT, command, title, "window" if new_window else "tab")
+    return _osascript(_TERMINAL_APP_SCRIPT, command)
+
+
+def _terminal_command(exe: list[str], title: str, new_window: bool) -> typing.Optional[list[str]]:
+    """Argv that runs `exe` in a terminal on this platform, or None when no
+    known terminal is installed. `new_window` asks for the launcher's own
+    window rather than a tab in it; Windows Terminal always targets the window
+    named after the instance."""
+    if is_windows:
+        return _windows_terminal_command(exe, title)
+    if is_linux:
+        return _linux_terminal_command(exe, title, new_window)
+    if is_macos:
+        return _macos_terminal_command(exe, title, new_window)
+    return None
+
+
+def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False, *,
+               title: typing.Optional[str] = None) -> bool:
     """Run the command line `exe` in a new process. With `in_terminal`, try to
-    run it in a terminal window; the return value reports whether one was used.
-    Beta equivalent of upstream Launcher.launch (which the monorepo lacks)."""
+    run it in a terminal; the return value reports whether one was used.
+    The first terminal launch of this process opens a new window and later
+    ones add tabs titled `title` to it where the terminal supports that, so
+    repeated launches stay grouped. Beta equivalent of upstream Launcher.launch
+    (which the monorepo lacks)."""
+    global _terminal_window_opened
     exe = list(exe)
     if in_terminal:
-        if is_windows:
-            # intentionally using a window title with a space so it gets quoted and treated as a title
-            subprocess.Popen(["start", f"Running {instance_name}", *exe], shell=True)
+        title = title or instance_name
+        command = _terminal_command(exe, title, new_window=not _terminal_window_opened)
+        if command:
+            subprocess.Popen(command)
+            _terminal_window_opened = True
             return True
-        elif sys.platform.startswith("linux"):
-            from shutil import which
-            xdg = which("xdg-terminal-exec")
-            if xdg:
-                subprocess.Popen([xdg, "--", *exe])
-                return True
-            terminal = which("x-terminal-emulator") or which("konsole") or which("gnome-terminal") or which("xterm")
-            if terminal:
-                import shlex
-                subprocess.Popen([terminal, "-e", shlex.join(exe)])
-                return True
-        elif sys.platform == "darwin":
-            from shutil import which
-            subprocess.Popen([which("open"), "-W", "-a", "Terminal.app", *exe])
+        if is_windows:
+            # "Running " keeps a space in the title so start treats the quoted arg as a title
+            subprocess.Popen(["start", f"Running {title}", *exe], shell=True)
             return True
     subprocess.Popen(exe)
     return False
