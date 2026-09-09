@@ -1923,7 +1923,7 @@ def test_regen_from_json_never_touches_network(tmp_path, monkeypatch):
 
 # --------------------------------------------------------------------------- #
 # tools/regen_inno_components.py vs the live index schema: game_name rename,
-# flags/disk_space_kb gone (disk_space_mb is the stamped successor).
+# flags gone, disk_space_kb stamped (disk_space_mb is its retired predecessor).
 # --------------------------------------------------------------------------- #
 
 def test_regen_in_client_preserved_when_index_has_no_flags(tmp_path, capsys):
@@ -1961,28 +1961,28 @@ def test_regen_in_client_rendered_from_flags_when_present(tmp_path):
     assert "Kingdom Hearts" not in text.split("[Components]")[0]
 
 
-def test_regen_components_prefers_disk_space_mb_as_bytes(tmp_path):
+def test_regen_components_prefers_disk_space_kb_as_kib(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II", "disk_space_kb": 81, "disk_space_mb": 1},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert ('Name: "kh2"; Description: "Kingdom Hearts II"; '
+            'ExtraDiskSpaceRequired: 82_944') in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_retired_disk_space_mb_as_mib(tmp_path):
     iss = _minimal_iss(tmp_path)
     games_json = _write_games_json(tmp_path, {
         "kh2": {"game_name": "Kingdom Hearts II", "disk_space_mb": 2},
     })
     assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
-    assert ('Name: "kh2"; Description: "Kingdom Hearts II"; '
-            'ExtraDiskSpaceRequired: 2_097_152') in iss.read_text(encoding="utf-8")
-
-
-def test_regen_components_legacy_disk_space_kb_used_verbatim(tmp_path):
-    iss = _minimal_iss(tmp_path)
-    games_json = _write_games_json(tmp_path, {
-        "kh2": {"game": "Kingdom Hearts II", "disk_space_kb": 82953},
-    })
-    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
-    assert "ExtraDiskSpaceRequired: 82_953" in iss.read_text(encoding="utf-8")
+    assert "ExtraDiskSpaceRequired: 2_097_152" in iss.read_text(encoding="utf-8")
 
 
 def test_regen_components_size_falls_back_to_existing_iss(tmp_path, capsys):
-    """Worlds not yet re-released with disk_space_mb keep their old iss value;
-    worlds with no value anywhere warn and get 0."""
+    """Worlds with neither disk_space_kb nor disk_space_mb keep their old iss
+    value; worlds with no value anywhere warn and get 0."""
     iss = tmp_path / "test.iss"
     iss.write_text(
         '; BEGIN AUTOGEN: in_client\n'

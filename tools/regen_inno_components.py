@@ -15,12 +15,12 @@ Each region is delimited by `BEGIN AUTOGEN: <name>` / `END AUTOGEN: <name>`
 markers; everything outside the markers is left untouched.
 
 Disk-size policy (ExtraDiskSpaceRequired is bytes):
-  - Prefer `disk_space_mb` from the manifest (ceil-MB of the wheel, stamped by
-    gen-pymod-release per-world CI), converted to bytes. Legacy `disk_space_kb`
-    inputs are consumed verbatim as bytes, matching the values they seeded.
-  - Fall back to the value parsed out of the existing iss file for worlds that
-    haven't yet rolled out the gen-pymod-release size step.
-  - If both are missing, emit a warning and use 0.
+  - Prefer `disk_space_kb` from the manifest (ceil-KiB of the wheel asset,
+    stamped by the Index bot on every release), converted to bytes.
+  - Else `disk_space_mb` (the retired ceil-MiB predecessor, still present on
+    manifests that have not been re-released), converted to bytes.
+  - Fall back to the value parsed out of the existing iss file.
+  - If all are missing, emit a warning and use 0.
 
 In-client policy:
   - Worlds flagged `in_client` (manifest `flags`) are rendered into the
@@ -65,7 +65,7 @@ REGION_PATTERN = re.compile(
     re.DOTALL | re.MULTILINE,
 )
 
-# Matches: Name: "<slug>"; Description: "<game>"; ExtraDiskSpaceRequired: <kb>
+# Matches: Name: "<slug>"; Description: "<game>"; ExtraDiskSpaceRequired: <bytes>
 COMPONENT_LINE = re.compile(
     r'^\s*Name:\s*"(?P<slug>[^"]+)";\s*Description:\s*"(?P<desc>[^"]+)";'
     r'\s*ExtraDiskSpaceRequired:\s*(?P<size>[\d_]+)\s*$',
@@ -87,7 +87,7 @@ def parse_existing_components(iss_text: str) -> dict[str, dict[str, Any]]:
     look up by slug regardless of whether the existing iss line was emitted
     with the mangled `_2048` form or the raw form.
 
-    Returns: { slug: { "description": ..., "disk_space_kb": int } }
+    Returns: { slug: { "description": ..., "disk_space_bytes": int } }
     """
     out: dict[str, dict[str, Any]] = {}
     region = _find_region(iss_text, "components")
@@ -97,7 +97,7 @@ def parse_existing_components(iss_text: str) -> dict[str, dict[str, Any]]:
         slug = _slug_from_component_name(m["slug"])
         out[slug] = {
             "description": m["desc"],
-            "disk_space_kb": int(m["size"].replace("_", "")),
+            "disk_space_bytes": int(m["size"].replace("_", "")),
         }
     return out
 
@@ -162,20 +162,15 @@ def _manifest_game(manifest: dict[str, Any]) -> str | None:
 
 
 def _manifest_disk_space(manifest: dict[str, Any]) -> int | None:
-    """ExtraDiskSpaceRequired bytes from the manifest, or None.
-
-    The live index stamps `disk_space_mb` (ceil-MB of the wheel); the original
-    `disk_space_kb` key never made it into any live manifest but is kept for
-    fixtures, consumed verbatim as bytes like the iss values it mirrors.
-    """
+    """ExtraDiskSpaceRequired bytes from the manifest, or None."""
+    if "disk_space_kb" in manifest:
+        return int(manifest["disk_space_kb"]) * 1024
     if "disk_space_mb" in manifest:
         return int(manifest["disk_space_mb"]) * 1024 * 1024
-    if "disk_space_kb" in manifest:
-        return int(manifest["disk_space_kb"])
     return None
 
 
-def _format_kb(value: int) -> str:
+def _format_bytes(value: int) -> str:
     """Render an int as Inno Setup's underscore-separated thousands grouping."""
     s = str(value)
     out = []
@@ -210,16 +205,16 @@ def render_components(
         size = _manifest_disk_space(manifest)
         if size is None:
             fb = fallback.get(slug, {})
-            if "disk_space_kb" in fb:
-                size = fb["disk_space_kb"]
+            if "disk_space_bytes" in fb:
+                size = fb["disk_space_bytes"]
             else:
                 print(
                     f"[regen] warning: no disk-space value for '{slug}' (manifest "
-                    f"missing disk_space_mb, no fallback in current iss); using 0",
+                    f"missing disk_space_kb/disk_space_mb, no fallback in current iss); using 0",
                     file=sys.stderr,
                 )
                 size = 0
-        size_text = _format_kb(int(size))
+        size_text = _format_bytes(int(size))
         # Escape any embedded quotes in the description, defensively.
         desc = description.replace('"', '""')
         lines.append(
@@ -368,8 +363,8 @@ def diff_summary(
         new_desc = _manifest_game(new) or slug
         new_size = _manifest_disk_space(new)
         if new_size is None:
-            new_size = old["disk_space_kb"]
-        if old["description"] != new_desc or old["disk_space_kb"] != new_size:
+            new_size = old["disk_space_bytes"]
+        if old["description"] != new_desc or old["disk_space_bytes"] != new_size:
             changed.append(slug)
     parts = []
     if added:
@@ -400,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
         help="Read the games dict from a JSON file instead of mwgg_igdb, and skip all "
              "network calls (wheel sizes come from 'wheel_size' or the iss fallback). "
              "Schema: { '<slug>': { 'game_name': str (or legacy 'game'), 'flags': [..], "
-             "'disk_space_mb': int (or legacy 'disk_space_kb' bytes), "
+             "'disk_space_kb': int (or retired 'disk_space_mb'), "
              "'module_location': str, 'wheel_size': int } }",
     )
     p.add_argument(

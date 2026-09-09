@@ -825,7 +825,7 @@ describe("openOrUpdateBundleIndexPR", () => {
 
     const dk = manifestWrite(state, "worlds/dk64.json");
     // Wheel is canonical (world_version 2.0.0, not the Index's 1.5.7); module_location
-    // + disk_space_mb stamped; igdb_id preserved from the existing Index manifest.
+    // + disk_space_kb stamped; igdb_id preserved from the existing Index manifest.
     expect(dk).toMatchObject({
       game: "Donkey Kong 64",
       world_version: "2.0.0",
@@ -833,7 +833,7 @@ describe("openOrUpdateBundleIndexPR", () => {
       igdb_id: 1096,
     });
     expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
-    expect(dk.disk_space_mb).toBe(1);
+    expect(dk.disk_space_kb).toBe(155);
 
     expect(state.writes.filter((w) => w.kind === "branch")).toHaveLength(1);
     expect(state.writes.filter((w) => w.kind === "pulls.create")).toHaveLength(1);
@@ -983,12 +983,18 @@ describe("openOrUpdateBundleIndexPR", () => {
 });
 
 describe("mergeWorldManifest", () => {
-  it("stamps module_location and disk_space_mb and keeps author fields", () => {
+  it("stamps module_location and disk_space_kb and keeps author fields", () => {
     const m = mergeWorldManifest({ game: "G", flags: ["ROM"] }, {}, "url#sha256=x", 2 * 1024 * 1024);
     expect(m.module_location).toBe("url#sha256=x");
-    expect(m.disk_space_mb).toBe(2);
+    expect(m.disk_space_kb).toBe(2048);
     expect(m.game).toBe("G");
     expect(m.flags).toEqual(["ROM"]);
+  });
+
+  it("rounds a partial KiB up and drops a stale disk_space_mb copied from the Index", () => {
+    const m = mergeWorldManifest({ game: "G", disk_space_mb: 1 }, { disk_space_mb: 1 }, "u", 1025);
+    expect(m.disk_space_kb).toBe(2);
+    expect(m).not.toHaveProperty("disk_space_mb");
   });
 
   it("preserves igdb_id from the current Index manifest when the author omits it", () => {
