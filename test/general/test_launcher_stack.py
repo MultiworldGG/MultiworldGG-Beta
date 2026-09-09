@@ -1023,6 +1023,19 @@ def test_env_prefixed_without_launcher_variables_is_identity(plain_environ):
     assert BaseUtils._env_prefixed(TERMINAL_EXE) == TERMINAL_EXE
 
 
+def test_env_prefixed_adds_the_child_only_variables(plain_environ, monkeypatch):
+    """SKIP_REQUIREMENTS_UPDATE is not the launcher's own, so only the argv carries it."""
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._env_prefixed(TERMINAL_EXE, {"SKIP_REQUIREMENTS_UPDATE": "1"}) == [
+        "/usr/bin/env", "SKIP_REQUIREMENTS_UPDATE=1", *TERMINAL_EXE]
+
+
+def test_linux_terminal_passes_extra_env_to_the_command(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"konsole": "/usr/bin/konsole"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False, {"SKIP": "1"}) == [
+        "/usr/bin/konsole", "--new-tab", "-e", "/usr/bin/env", "SKIP=1", *TERMINAL_EXE]
+
+
 def test_linux_terminal_prefers_xdg_terminal_exec(plain_environ, monkeypatch):
     monkeypatch.setattr(BaseUtils.shutil, "which", _which_from(
         {"xdg-terminal-exec": "/usr/bin/xdg-terminal-exec", "ptyxis": "/usr/bin/ptyxis"}))
@@ -1121,7 +1134,7 @@ def test_launch_exe_opens_window_then_tabs(monkeypatch):
     calls = []
     monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
     monkeypatch.setattr(BaseUtils, "_terminal_command",
-                        lambda exe, title, new_window: ["term", title, str(new_window), *exe])
+                        lambda exe, title, new_window, extra_env: ["term", title, str(new_window), *exe])
     monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
     assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
     assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Generate") is True
@@ -1129,11 +1142,24 @@ def test_launch_exe_opens_window_then_tabs(monkeypatch):
                      (["term", "Generate", "False", *TERMINAL_EXE], {})]
 
 
+def test_launch_exe_extra_env_reaches_the_spawned_terminal(monkeypatch):
+    """Windows Terminal hands its own environment to the tab, so the extras go on the Popen."""
+    captured = {}
+    monkeypatch.setattr(os, "environ", {"HOME": "/h"})
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command",
+                        lambda exe, title, new_window, extra_env: ["term", *sorted(extra_env)])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv, kw=kw))
+    BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host", extra_env={"SKIP_REQUIREMENTS_UPDATE": "1"})
+    assert captured == {"argv": ["term", "SKIP_REQUIREMENTS_UPDATE"],
+                        "kw": {"env": {"HOME": "/h", "SKIP_REQUIREMENTS_UPDATE": "1"}}}
+
+
 def test_launch_exe_title_defaults_to_instance_name(monkeypatch):
     captured = {}
     monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
     monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
-    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: ["term", title])
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: ["term", title])
     monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv))
     BaseUtils.launch_exe(TERMINAL_EXE, True)
     assert captured["argv"] == ["term", "MultiworldGG-Test"]
@@ -1143,7 +1169,7 @@ def test_launch_exe_windows_start_fallback(monkeypatch):
     captured = {}
     monkeypatch.setattr(BaseUtils, "is_windows", True)
     monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
-    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: None)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: None)
     monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv, kw=kw))
     assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
     assert captured == {"argv": ["start", "Running Host", *TERMINAL_EXE], "kw": {"shell": True}}
@@ -1153,7 +1179,7 @@ def test_launch_exe_windows_start_fallback(monkeypatch):
 def test_launch_exe_without_terminal_runs_plain(monkeypatch):
     calls = []
     monkeypatch.setattr(BaseUtils, "is_windows", False)
-    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window: None)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: None)
     monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
     assert BaseUtils.launch_exe(TERMINAL_EXE, True) is False
     assert BaseUtils.launch_exe(TERMINAL_EXE) is False

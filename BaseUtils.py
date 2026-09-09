@@ -716,16 +716,19 @@ _FORWARDED_ENV_NAMES = frozenset({"PATH", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE"}
 _terminal_window_opened = False
 
 
-def _env_prefixed(exe: list[str]) -> list[str]:
-    forwarded = [f"{name}={value}" for name, value in sorted(os.environ.items())
-                 if name.startswith(_FORWARDED_ENV_PREFIXES) or name in _FORWARDED_ENV_NAMES]
+def _env_prefixed(exe: list[str], extra_env: typing.Mapping[str, str] = {}) -> list[str]:
+    forwarded = {name: value for name, value in os.environ.items()
+                 if name.startswith(_FORWARDED_ENV_PREFIXES) or name in _FORWARDED_ENV_NAMES}
+    forwarded.update(extra_env)
     if not forwarded:
         return exe
-    return [shutil.which("env") or "/usr/bin/env", *forwarded, *exe]
+    return [shutil.which("env") or "/usr/bin/env",
+            *(f"{name}={value}" for name, value in sorted(forwarded.items())), *exe]
 
 
-def _linux_terminal_command(exe: list[str], title: str, new_window: bool) -> typing.Optional[list[str]]:
-    exe = _env_prefixed(exe)
+def _linux_terminal_command(exe: list[str], title: str, new_window: bool,
+                            extra_env: typing.Mapping[str, str] = {}) -> typing.Optional[list[str]]:
+    exe = _env_prefixed(exe, extra_env)
     xdg = shutil.which("xdg-terminal-exec")
     if xdg:
         return [xdg, "--", *exe]
@@ -754,50 +757,58 @@ def _osascript(lines: typing.Iterable[str], *args: str) -> list[str]:
     return [*command, *args]
 
 
-def _macos_terminal_command(exe: list[str], title: str, new_window: bool) -> list[str]:
+def _macos_terminal_command(exe: list[str], title: str, new_window: bool,
+                            extra_env: typing.Mapping[str, str] = {}) -> list[str]:
     # A shell parses the command, so relative paths need the launcher's cwd
-    command = f"cd {shlex.quote(os.getcwd())} && {shlex.join(_env_prefixed(exe))}"
+    command = f"cd {shlex.quote(os.getcwd())} && {shlex.join(_env_prefixed(exe, extra_env))}"
     if any(os.path.isdir(os.path.expanduser(path)) for path in _ITERM_APP_PATHS):
         return _osascript(_ITERM_SCRIPT, command, title, "window" if new_window else "tab")
     return _osascript(_TERMINAL_APP_SCRIPT, command)
 
 
-def _terminal_command(exe: list[str], title: str, new_window: bool) -> typing.Optional[list[str]]:
+def _terminal_command(exe: list[str], title: str, new_window: bool,
+                      extra_env: typing.Mapping[str, str] = {}) -> typing.Optional[list[str]]:
     """Argv that runs `exe` in a terminal on this platform, or None when no
     known terminal is installed. `new_window` asks for the launcher's own
     window rather than a tab in it; Windows Terminal always targets the window
-    named after the instance."""
+    named after the instance. Windows Terminal takes `extra_env` from the
+    spawning process instead, so only the argv-wrapping platforms need it."""
     if is_windows:
         return _windows_terminal_command(exe, title)
     if is_linux:
-        return _linux_terminal_command(exe, title, new_window)
+        return _linux_terminal_command(exe, title, new_window, extra_env)
     if is_macos:
-        return _macos_terminal_command(exe, title, new_window)
+        return _macos_terminal_command(exe, title, new_window, extra_env)
     return None
 
 
 def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False, *,
-               title: typing.Optional[str] = None) -> bool:
+               title: typing.Optional[str] = None,
+               extra_env: typing.Optional[typing.Mapping[str, str]] = None) -> bool:
     """Run the command line `exe` in a new process. With `in_terminal`, try to
     run it in a terminal; the return value reports whether one was used.
     The first terminal launch of this process opens a new window and later
     ones add tabs titled `title` to it where the terminal supports that, so
-    repeated launches stay grouped. Beta equivalent of upstream Launcher.launch
-    (which the monorepo lacks)."""
+    repeated launches stay grouped. `extra_env` names variables the child needs
+    on top of the launcher's own environment. Beta equivalent of upstream
+    Launcher.launch (which the monorepo lacks)."""
     global _terminal_window_opened
     exe = list(exe)
+    # the spawned process is the terminal, which hands its own environment on
+    env = {"env": {**os.environ, **extra_env}} if extra_env else {}
     if in_terminal:
         title = title or instance_name
-        command = _terminal_command(exe, title, new_window=not _terminal_window_opened)
+        command = _terminal_command(exe, title, new_window=not _terminal_window_opened,
+                                    extra_env=extra_env or {})
         if command:
-            subprocess.Popen(command)
+            subprocess.Popen(command, **env)
             _terminal_window_opened = True
             return True
         if is_windows:
             # "Running " keeps a space in the title so start treats the quoted arg as a title
-            subprocess.Popen(["start", f"Running {title}", *exe], shell=True)
+            subprocess.Popen(["start", f"Running {title}", *exe], shell=True, **env)
             return True
-    subprocess.Popen(exe)
+    subprocess.Popen(exe, **env)
     return False
 
 
