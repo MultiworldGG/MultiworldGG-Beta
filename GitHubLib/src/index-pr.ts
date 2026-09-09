@@ -537,8 +537,8 @@ async function readJsonOnBranch(
 
 // Merge order: the author's archipelago.json is canonical for every field it
 // declares (removed fields disappear from the Index too); Oliver overrides
-// module_location and disk_space_mb (ceil of wheel bytes / 1MiB); igdb_id is
-// preserved from the existing manifest only when the author didn't set one.
+// module_location and disk_space_kb (ceil of wheel asset bytes / 1 KiB); igdb_id
+// is preserved from the existing manifest only when the author didn't set one.
 export function mergeWorldManifest(
   sourceManifest: Record<string, unknown>,
   currentJson: Record<string, unknown>,
@@ -548,8 +548,10 @@ export function mergeWorldManifest(
   const updated: Record<string, unknown> = {
     ...sourceManifest,
     module_location: moduleLocation,
-    disk_space_mb: Math.ceil(wheelAssetSize / (1024 * 1024)),
+    disk_space_kb: Math.ceil(wheelAssetSize / 1024),
   };
+  // Retired MiB field; authors who copy an Index manifest back may still carry it.
+  delete updated.disk_space_mb;
   if (!("igdb_id" in sourceManifest) && "igdb_id" in currentJson) {
     updated.igdb_id = currentJson.igdb_id;
   }
