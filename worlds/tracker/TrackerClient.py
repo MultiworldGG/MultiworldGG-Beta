@@ -598,7 +598,9 @@ class TrackerGameContext(CommonContext):
     def run_generator(self):
         # World clients call this at startup; without a yaml the core prompts for one,
         # pointless for a world that regenerates from slot_data on Connected.
-        world_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
+        # Manual clients only pick their game at connect; suggested_game is that default.
+        game = self.game or getattr(self, "suggested_game", None)
+        world_cls = AutoWorld.AutoWorldRegister.world_types.get(game)
         if world_cls is not None and not world_needs_yaml(world_cls):
             return
         self.tracker_core.run_generator(None, None)

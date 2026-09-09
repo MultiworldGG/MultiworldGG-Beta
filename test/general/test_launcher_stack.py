@@ -696,6 +696,18 @@ def test_unwrap_unrecognized_wrapper_returns_none():
     assert Utils._resolve_launch_from_custom_world(_opaque_wrapper, "worlds.x") is None
 
 
+def _guarded_launch_wrapper(*args):
+    if args:
+        launch_subprocess(_inner_launch, name="TestClient", args=args)
+    else:
+        _inner_launch()
+
+
+def test_unwrap_wrapper_guarded_by_if():
+    """Manual's launch_client keeps its launch call under `if gui_enabled:`."""
+    assert Utils._resolve_launch_from_custom_world(_guarded_launch_wrapper, "worlds.x") is _inner_launch
+
+
 # --- Launcher.py dispatcher ---
 
 def test_launcher_version_prints_and_returns_zero(capsys):
@@ -2076,6 +2088,46 @@ def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatc
                                  patch_file="game.apmanual")
 
     assert deferred == [("manual", "game.apmanual")]
+
+
+def test_perform_module_launch_manual_module_seeds_the_game_selector(monkeypatch):
+    """The manual client defaults its Manual Game ID selector from the persisted
+    last_manual_game; a routed manual module must win over the previous pick."""
+    from worlds.AutoWorld import AutoWorldRegister
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.manual_x_y", types.ModuleType("worlds.manual_x_y"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {
+        "Manual_X_Y": type("XY", (), {"__module__": "worlds.manual_x_y"}),
+        "Manual_Other_Z": type("OZ", (), {"__module__": "worlds.manual_other_z"}),
+    })
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    monkeypatch.setattr(Utils, "_defer_cli_launch", lambda *a, **kw: None)
+    stored = []
+    monkeypatch.setattr(Utils, "persistent_store", lambda *entry: stored.append(entry))
+
+    Utils._perform_module_launch("worlds.manual_x_y", client_type="manual")
+
+    assert stored == [("client", "last_manual_game", "Manual_X_Y")]
+
+
+def test_local_data_package_refresh_reaches_the_worlds_module_object(monkeypatch):
+    """Per-world clients read worlds.network_data_package at module level (Manual's
+    server_auth); a world imported after the package loaded must show up there."""
+    import worlds
+    from worlds.AutoWorld import AutoWorldRegister
+    import CommonClient
+    package = {"item_name_to_id": {}, "location_name_to_id": {}, "checksum": "late"}
+    late = type("LateWorld", (), {"get_data_package_data": classmethod(lambda cls: package)})
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {"Late Game": late})
+    try:
+        local, _ = CommonClient.set_local_network_data_package()
+        assert local["games"]["Late Game"] is package
+        assert worlds.network_data_package["games"]["Late Game"] is package
+    finally:
+        worlds.network_data_package["games"].pop("Late Game", None)
 
 
 def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):

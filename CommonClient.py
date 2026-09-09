@@ -152,10 +152,12 @@ def get_ssl_context():
     return ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
 
 def set_local_network_data_package() -> typing.Tuple[typing.Dict[str, typing.Any], typing.Dict[str, typing.Any]]:
-    from worlds import DataPackage, AutoWorldRegister
-    local_network_data_package: DataPackage = {
-        "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},
-    }
+    from worlds import DataPackage, AutoWorldRegister, network_data_package
+    games = {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()}
+    # Worlds imported after the package loaded (on-demand client loads) must also reach
+    # per-world clients that read worlds.network_data_package directly (Manual's server_auth).
+    network_data_package["games"].update(games)
+    local_network_data_package: DataPackage = {"games": games}
     local_network_data_package_single_game: typing.Dict[str, DataPackage] = {
         game_name: {"games": {game_name: pkg_data}}
         for game_name, pkg_data in local_network_data_package["games"].items()

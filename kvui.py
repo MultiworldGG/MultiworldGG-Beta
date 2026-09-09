@@ -255,6 +255,11 @@ else:
                 manager.container = root_layout
                 manager.root_layout = root_layout
                 manager.grid = app.main_layout
+                # Upstream connect bar and tab strip have no live-app home; detached
+                # zero-size stand-ins keep legacy add_widget/collide_point calls harmless.
+                manager.connect_layout = MDBoxLayout(size_hint=(None, None), size=(0, 0))
+                manager.tabs = MDBoxLayout(size_hint=(None, None), size=(0, 0))
+                manager._load_legacy_config()
 
                 manager.build()
                 app._legacy_kvui_manager = manager
@@ -265,6 +270,28 @@ else:
             finally:
                 if previous_state is not None:
                     ctx._state = previous_state
+
+        def _load_legacy_config(self) -> None:
+            """kivy App.load_config for a world's build_config/get_application_config
+            overrides. Without one, `config` forwards to the live app's Kivy Config."""
+            from kivy.config import ConfigParser
+            cls = type(self)
+            build_config = getattr(cls, "build_config", None)
+            if build_config is None:
+                return
+            config = ConfigParser()
+            try:
+                build_config(self, config)
+                get_filename = getattr(cls, "get_application_config", None)
+                filename = get_filename(self) if get_filename is not None else None
+                if filename and os.path.exists(filename):
+                    config.read(filename)
+                elif filename:
+                    config.filename = filename
+                    config.write()
+            except Exception:
+                logging.getLogger("kvui").exception("Legacy client config failed; using its defaults")
+            self.config = config
 
         def _get_running_app(self):
             if self._running_app is None:

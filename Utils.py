@@ -338,6 +338,15 @@ def register_custom_worlds() -> typing.List[str]:
             found.append(module_name)
     return found
 
+def _manual_apworld_game(zipf: zipfile.ZipFile, stem: str) -> Optional[str]:
+    """Manual apworlds ship no archipelago.json; their game id is Manual_<game>_<creator>."""
+    try:
+        game = json.loads(zipf.read(f"{stem}/data/game.json"))
+        return f"Manual_{game['game']}_{game['creator']}"
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     """Register a single custom world's manifest in the in-memory GameIndex and
     return its module name. Returns None for anything that isn't a recognized
@@ -372,7 +381,14 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
             module_name = custom_world.stem
-            manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
+            try:
+                manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
+            except KeyError:
+                # No archipelago.json: only Manual apworlds are accepted without one.
+                manual_game = _manual_apworld_game(custom_apworld, module_name)
+                if manual_game is None:
+                    raise
+                manifest = {"game": manual_game}
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
@@ -422,21 +438,20 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
 
     local_imports: dict[str, tuple[str, str]] = {}
     launch_arg: Optional[str] = None
-    for stmt in tree.body[0].body:
-        if isinstance(stmt, ast.ImportFrom):
-            for alias in stmt.names:
-                local_imports[alias.asname or alias.name] = (stmt.module or "", alias.name)
-        elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
-            call = stmt.value
+    # Nested blocks included: Manual guards its call with `if gui_enabled:`.
+    for node in ast.walk(tree.body[0]):
+        if isinstance(node, ast.ImportFrom):
+            for alias in node.names:
+                local_imports[alias.asname or alias.name] = (node.module or "", alias.name)
+        elif isinstance(node, ast.Call) and launch_arg is None:
             callee_name = (
-                call.func.id if isinstance(call.func, ast.Name)
-                else call.func.attr if isinstance(call.func, ast.Attribute)
+                node.func.id if isinstance(node.func, ast.Name)
+                else node.func.attr if isinstance(node.func, ast.Attribute)
                 else None
             )
-            if callee_name in ("launch_component", "launch", "launch_subprocess") and call.args:
-                if isinstance(call.args[0], ast.Name):
-                    launch_arg = call.args[0].id
-                    break
+            if callee_name in ("launch_component", "launch", "launch_subprocess") and node.args:
+                if isinstance(node.args[0], ast.Name):
+                    launch_arg = node.args[0].id
 
     if launch_arg is None:
         return None
@@ -649,6 +664,19 @@ def _indexed_game_name(module_id: str) -> typing.Optional[str]:
     return GameIndex.get_game_name_for_module(module_name=module_id.removeprefix("worlds."))
 
 
+def _seed_manual_game(module_id: str) -> None:
+    """Point the manual client's game selector at the routed module's world.
+
+    The client (upstream Manual's copy included) defaults that selector from the
+    persisted last_manual_game, which would otherwise be whatever was played last."""
+    from worlds.AutoWorld import AutoWorldRegister
+    for game, world in AutoWorldRegister.world_types.items():
+        module = getattr(world, "__module__", "")
+        if "Manual_" in game and (module == module_id or module.startswith(module_id + ".")):
+            persistent_store("client", "last_manual_game", game)
+            return
+
+
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
@@ -683,6 +711,9 @@ def _perform_module_launch(module_id: str, **kwargs):
                 ModuleUpdate.install_worlds([module_id], with_deps=True)
                 _restart_client_with_args()
                 return None
+
+            if client_type == "manual":
+                _seed_manual_game(module_id)
 
             # Client launch fn comes from entry_points (group="mwgg.client", pip-installed wheels)
             # or LauncherComponents.components (zipimported apworlds lack dist-info; match by func.__module__).
