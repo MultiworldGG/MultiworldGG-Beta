@@ -643,5 +643,60 @@ def _base_ctx_slot_info() -> dict:
     }
 
 
+class _RecordingProcessor(MultiServer.CommandProcessor):
+    def __init__(self) -> None:
+        self.lines: list = []
+
+    def output(self, text: str) -> None:
+        self.lines.append(text)
+
+    def _cmd_boom(self, value: str = "") -> int:
+        """Parses its argument."""
+        return int(value)
+
+    def _cmd_fixed(self) -> bool:
+        """Takes no arguments."""
+        return True
+
+    @MultiServer.mark_raw
+    def _cmd_raw(self, text: str = "") -> str:
+        """Keeps the raw text."""
+        return text
+
+
+class TestCommandDispatchErrors(unittest.TestCase):
+    """A failing or misused command yields one line, never a traceback in the console."""
+
+    def test_body_exception_is_one_line_with_location(self) -> None:
+        processor = _RecordingProcessor()
+        with self.assertLogs(level="DEBUG") as logs:
+            self.assertIsNone(processor("/boom nope"))
+        self.assertEqual(len(processor.lines), 1)
+        self.assertNotIn("Traceback", processor.lines[0])
+        self.assertTrue(processor.lines[0].startswith("/boom failed: ValueError: invalid literal"))
+        self.assertIn("in _cmd_boom)", processor.lines[0])
+        self.assertIsNotNone(logs.records[0].exc_info)
+
+    def test_wrong_argument_count_prints_usage(self) -> None:
+        processor = _RecordingProcessor()
+        self.assertIsNone(processor("/fixed extra"))
+        self.assertEqual(processor.lines, ["Wrong arguments for /fixed. Usage: /fixed"])
+        self.assertIsNone(processor("/boom one two"))
+        self.assertEqual(processor.lines[-1], "Wrong arguments for /boom. Usage: /boom [value]")
+
+    def test_valid_forms_still_dispatch(self) -> None:
+        processor = _RecordingProcessor()
+        self.assertEqual(processor("/boom 7"), 7)
+        self.assertTrue(processor("/fixed"))
+        self.assertEqual(processor("/raw one two  three"), "one two  three")
+        self.assertIsNone(processor("   "))
+        self.assertEqual(processor.lines, [])
+
+    def test_help_text_keeps_its_shape(self) -> None:
+        help_text = _RecordingProcessor().get_help_text()
+        self.assertIn("/boom [value] \n    Parses its argument.\n", help_text)
+        self.assertIn("/fixed \n    Takes no arguments.\n", help_text)
+
+
 if __name__ == "__main__":
     unittest.main()
