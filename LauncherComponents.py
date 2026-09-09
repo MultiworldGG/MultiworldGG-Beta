@@ -215,7 +215,7 @@ def run_component(component: Component, *args: str) -> None:
         if not exe:
             logging.warning(f"Unable to resolve executable for launcher component {component.display_name}.")
             return
-        launch_exe([*exe, *args], component.cli)
+        launch_exe([*exe, *args], component.cli, title=component.display_name)
         return
 
     logging.warning(f"Component {component.display_name} does not appear to be executable.")
