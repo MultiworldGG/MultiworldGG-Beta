@@ -421,3 +421,101 @@ class TestSNIClientAlias(unittest.TestCase):
         for name in ("DeathState", "SNIContext", "SNIClientCommandProcessor"):
             with self.subTest(name=name):
                 self.assertIs(getattr(SNIClient, name), getattr(context, name))
+
+
+def _snes_ctx(**overrides):
+    from worlds._sni import SNESState
+    fields = dict(snes_address="localhost:23074", snes_state=SNESState.SNES_DISCONNECTED,
+                  snes_reconnect_address=None, snes_connect_task=None)
+    fields.update(overrides)
+    return SimpleNamespace(**fields)
+
+
+class TestSnesCommandArguments(unittest.TestCase):
+    def test_parse_accepts_every_documented_form(self) -> None:
+        from worlds._sni.context import parse_snes_options
+        cases = {
+            "": ("localhost:23074", -1),
+            "1": ("localhost:23074", 1),
+            "127.0.0.1:23074": ("127.0.0.1:23074", -1),
+            "ws://sni.local:23074": ("ws://sni.local:23074", -1),
+            "127.0.0.1:8080 2": ("127.0.0.1:8080", 2),
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(parse_snes_options(text, "localhost:23074"), expected)
+
+    def test_parse_rejects_garbage_with_usage(self) -> None:
+        from worlds._sni.context import parse_snes_options
+        for text in ("close", "sni 1", "localhost:23074 two", "localhost:23074 1 extra"):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(ValueError, "Usage: /snes"):
+                    parse_snes_options(text, "localhost:23074")
+
+    def test_cmd_snes_reports_bad_arguments_instead_of_raising(self) -> None:
+        from worlds._sni import SNESState
+        from worlds._sni.context import SNIClientCommandProcessor
+        ctx = _snes_ctx(snes_state=SNESState.SNES_CONNECTED)
+        processor = SNIClientCommandProcessor(ctx)
+        outputs: list = []
+        processor.output = outputs.append
+        with mock.patch.object(processor, "_cmd_snes_close") as close:
+            self.assertFalse(processor("/snes close"))
+        self.assertIn("Usage: /snes", outputs[-1])
+        close.assert_not_called()
+        self.assertIsNone(ctx.snes_connect_task)
+
+    def test_cmd_snes_accepts_a_bare_address(self) -> None:
+        from worlds._sni import context
+        calls = []
+
+        async def fake_snes_connect(ctx, address, device_index=-1):
+            calls.append((address, device_index))
+
+        ctx = _snes_ctx()
+
+        async def run():
+            processor = context.SNIClientCommandProcessor(ctx)
+            with mock.patch.object(context, "snes_connect", fake_snes_connect):
+                self.assertTrue(processor("/snes 127.0.0.1:23074"))
+                await ctx.snes_connect_task
+
+        asyncio.run(run())
+        self.assertEqual(calls, [("127.0.0.1:23074", -1)])
+
+
+class TestNoDeviceHint(unittest.TestCase):
+    def test_hint_logged_once_after_delay(self) -> None:
+        from worlds import _sni
+        ctx = SimpleNamespace(snes_address="localhost:23074", exit_event=None)
+
+        class FakeSocket:
+            polls = 0
+
+            async def send(self, _request) -> None:
+                pass
+
+            async def recv(self) -> str:
+                self.polls += 1
+                if self.polls >= 4:
+                    ctx.exit_event.set()
+                return '{"Results": []}'
+
+            async def close(self) -> None:
+                pass
+
+        async def fake_connect(_ctx, _address):
+            return FakeSocket()
+
+        async def run():
+            ctx.exit_event = asyncio.Event()
+            with mock.patch.object(_sni, "_snes_connect", fake_connect), \
+                    mock.patch.object(_sni, "_NO_DEVICE_HINT_DELAY", 0), \
+                    self.assertLogs("SNES", level="ERROR") as logs:
+                devices = await _sni.get_snes_devices(ctx)
+            return devices, logs.output
+
+        devices, output = asyncio.run(run())
+        self.assertEqual(devices, [])
+        self.assertEqual(len(output), 1)
+        self.assertIn("correct emulator", output[0])

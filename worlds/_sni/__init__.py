@@ -27,6 +27,7 @@ if typing.TYPE_CHECKING:
 snes_logger = logging.getLogger("SNES")
 
 _global_snes_reconnect_delay = 5
+_NO_DEVICE_HINT_DELAY = 30
 
 
 class SNESState(enum.IntEnum):
@@ -117,11 +118,16 @@ async def get_snes_devices(ctx: "SNIContext") -> typing.List[str]:
 
     if not devices:
         snes_logger.info('No SNES device found. Please connect a SNES device to SNI.')
+        hint_due: typing.Optional[float] = time.monotonic() + _NO_DEVICE_HINT_DELAY
         while not devices and not ctx.exit_event.is_set():
             await asyncio.sleep(0.1)
             await socket.send(dumps(DeviceList_Request))
             reply = loads(await socket.recv())
             devices = reply['Results'] if 'Results' in reply and len(reply['Results']) > 0 else []
+            if not devices and hint_due is not None and time.monotonic() >= hint_due:
+                snes_logger.error(f"Still no SNES device after {_NO_DEVICE_HINT_DELAY} seconds. Double check you're "
+                                  "running the correct emulator; only one works properly with this SNI setup.")
+                hint_due = None
     if devices:
         await verify_snes_app(socket)
     await socket.close()
@@ -177,7 +183,7 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
                 for idx, availableDevice in enumerate(devices):
                     snes_logger.info(str(idx + 1) + ": " + availableDevice)
 
-            elif (deviceIndex < 0) or (deviceIndex - 1) > device_count:
+            elif deviceIndex < 1 or deviceIndex > device_count:
                 snes_logger.warning("SNES device number out of range")
 
             else:
