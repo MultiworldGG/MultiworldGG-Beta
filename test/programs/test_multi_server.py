@@ -1,5 +1,27 @@
 import unittest
-from MultiServer import Context, ServerCommandProcessor
+from MultiServer import Context, ServerCommandProcessor, raw_argument, split_command
+
+
+class TestCommandSplitting(unittest.TestCase):
+    def test_split_command(self) -> None:
+        self.assertEqual(split_command('/send "My Name" Bow'), ["/send", "My Name", "Bow"])
+        self.assertEqual(split_command("/send \u201cMy Name\u201d Bow"), ["/send", "My Name", "Bow"])
+        self.assertEqual(split_command("/send \"My Name\" Link's Bow"), ["/send", "My Name", "Link's", "Bow"])
+        self.assertEqual(split_command("/send 'My Name' Bow"), ["/send", "'My", "Name'", "Bow"])
+        self.assertEqual(split_command(r"/send C:\path Bow"), ["/send", r"C:\path", "Bow"])
+        self.assertEqual(split_command('/send "My Name Bow'), ["/send", '"My', "Name", "Bow"])
+        self.assertEqual(split_command("/players   "), ["/players"])
+
+    def test_raw_argument(self) -> None:
+        self.assertIsNone(raw_argument("/release"))
+        self.assertIsNone(raw_argument("/release   "))
+        self.assertEqual(raw_argument("/release My Name"), "My Name")
+        self.assertEqual(raw_argument("/release My Name  "), "My Name")
+        self.assertEqual(raw_argument('/release "My Name"'), "My Name")
+        self.assertEqual(raw_argument("/release \u201cMy Name\u201d"), "My Name")
+        self.assertEqual(raw_argument('!admin /release "My Name"'), '/release "My Name"')
+        self.assertEqual(raw_argument("/release Link's"), "Link's")
+        self.assertEqual(raw_argument('/release "'), '"')
 
 
 class TestResolvePlayerName(unittest.TestCase):

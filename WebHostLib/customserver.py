@@ -61,7 +61,8 @@ del MultiServer
 
 
 class DBCommandProcessor(ServerCommandProcessor):
-    def output(self, text: str):
+    def output(self, text: str, **extra):
+        # extra is the remote-admin payload; the room log only carries the text
         self.ctx.logger.info(text)
 
 
