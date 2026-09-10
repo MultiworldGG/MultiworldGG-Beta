@@ -1,5 +1,5 @@
 from worlds.LauncherComponents import Component, components, Type, launch_subprocess, icon_paths
-from settings import Group, Bool, UserFolderPath
+from settings import Group, Bool, OptionalUserFolderPath
 from typing import Any, ClassVar, NamedTuple, Callable,Optional
 from worlds.AutoWorld import World
 from BaseClasses import CollectionState,Entrance
@@ -62,9 +62,9 @@ class TrackerException(Exception):
         super().__init__(*args)
 
 class TrackerSettings(Group):
-    class TrackerPlayersPath(UserFolderPath):
-        """Players folder UT scans for YAMLs first; the client prompts for a
-        single YAML only when this folder holds none."""
+    class TrackerPlayersPath(OptionalUserFolderPath):
+        """Players folder UT scans for the YAML named after the connected slot; the client
+        prompts for a single YAML file when the folder is missing or holds no match."""
 
     class RegionNameBool(Bool):
         """Show Region names in the UT tab"""

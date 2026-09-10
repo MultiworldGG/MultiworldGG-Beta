@@ -13,6 +13,7 @@ import itertools
 import logging
 import math
 import operator
+import os
 import pickle
 import random
 import shlex
@@ -20,6 +21,7 @@ import signal
 import sys
 import threading
 import time
+import traceback
 import typing
 import weakref
 import zlib
@@ -1557,6 +1559,33 @@ def mark_raw(function: typing.Callable[[typing.Any], _Return]) -> typing.Callabl
     return function
 
 
+_SMART_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"'})
+
+
+def split_command(raw: str) -> typing.List[str]:
+    """Whitespace-split with double-quote grouping; apostrophes and backslashes stay literal."""
+    lexer = shlex.shlex(raw.translate(_SMART_QUOTES), posix=True)
+    lexer.whitespace_split = True
+    lexer.quotes = '"'
+    lexer.escape = ""
+    lexer.commenters = ""
+    try:
+        return list(lexer)
+    except ValueError:  # unbalanced quote
+        return raw.split()
+
+
+def raw_argument(raw: str) -> typing.Optional[str]:
+    """Text after the command word, minus surrounding whitespace and one pair of double quotes."""
+    words = raw.translate(_SMART_QUOTES).split(maxsplit=1)
+    if len(words) < 2:
+        return None
+    text = words[1].strip()
+    if len(text) > 1 and text[0] == text[-1] == '"':
+        return text[1:-1]
+    return text
+
+
 class CommandProcessor(metaclass=CommandMeta):
     commands: typing.Dict[str, typing.Callable]
     client = None
@@ -1568,51 +1597,57 @@ class CommandProcessor(metaclass=CommandMeta):
     def __call__(self, raw: str) -> typing.Optional[bool]:
         if not raw:
             return
+        name = ""
         try:
-            try:
-                command = shlex.split(raw, comments=False)
-            except ValueError:  # most likely: "ValueError: No closing quotation"
-                command = raw.split()
+            command = split_command(raw)
+            if not command:
+                return
             basecommand = command[0]
-            if basecommand[0] == self.marker:
-                method = self.commands.get(basecommand[1:].lower(), None)
-                if not method:
-                    self._error_unknown_command(basecommand[1:])
-                else:
-                    if getattr(method, "raw_text", False):  # method is requesting unprocessed text data
-                        arg = raw.split(maxsplit=1)
-                        if len(arg) > 1:
-                            return method(self, arg[1])  # argument text was found, so pass it along
-                        else:
-                            return method(self)  # argument may be optional, try running without args
-                    else:
-                        return method(self, *command[1:])  # pass each word as argument
-            else:
+            if basecommand[0] != self.marker:
                 self.default(raw)
+                return
+            name = basecommand[1:].lower()
+            method = self.commands.get(name, None)
+            if not method:
+                self._error_unknown_command(basecommand[1:])
+                return
+            if getattr(method, "raw_text", False):
+                arg = raw_argument(raw)
+                args = [] if arg is None else [arg]
+            else:
+                args = command[1:]
+            try:
+                inspect.signature(method).bind(self, *args)
+            except TypeError:
+                self._error_usage(name)
+                return
+            return method(self, *args)
         except Exception as e:
-            self._error_parsing_command(e)
+            self._error_parsing_command(e, name)
+
+    def _usage(self, command: str) -> str:
+        argtext = ""
+        for argname, parameter in inspect.signature(self.commands[command]).parameters.items():
+            if argname == "self":
+                continue
+
+            if isinstance(parameter.default, str):
+                if not parameter.default:
+                    argname = f"[{argname}]"
+                else:
+                    argname += "=" + parameter.default
+            argtext += argname
+            argtext += " "
+        return f"{self.marker}{command} {argtext}"
 
     def get_help_text(self) -> str:
         s = ""
         for command, method in self.commands.items():
-            spec = inspect.signature(method).parameters
-            argtext = ""
-            for argname, parameter in spec.items():
-                if argname == "self":
-                    continue
-
-                if isinstance(parameter.default, str):
-                    if not parameter.default:
-                        argname = f"[{argname}]"
-                    else:
-                        argname += "=" + parameter.default
-                argtext += argname
-                argtext += " "
             method_doc = inspect.getdoc(method)
             if method_doc is None:
                 method_doc = "(missing help text)"
             doctext = "\n    ".join(method_doc.split("\n"))
-            s += f"{self.marker}{command} {argtext}\n    {doctext}\n"
+            s += f"{self._usage(command)}\n    {doctext}\n"
         return s
 
     def _cmd_help(self):
@@ -1633,9 +1668,18 @@ class CommandProcessor(metaclass=CommandMeta):
     def _error_unknown_command(self, raw: str):
         self.output(f"Could not find command {raw}. Known commands: {', '.join(self.commands)}")
 
-    def _error_parsing_command(self, exception: Exception):
-        import traceback
-        self.output(traceback.format_exc())
+    def _error_usage(self, command: str):
+        self.output(f"Wrong arguments for {self.marker}{command}. Usage: {self._usage(command).rstrip()}")
+
+    def _error_parsing_command(self, exception: Exception, command: str = ""):
+        """One line to the user; the traceback only reaches the log at debug level."""
+        label = f"{self.marker}{command}" if command else "Command"
+        where = ""
+        if exception.__traceback__ is not None:
+            frame = traceback.extract_tb(exception.__traceback__)[-1]
+            where = f" ({os.path.basename(frame.filename)}:{frame.lineno} in {frame.name})"
+        self.output(f"{label} failed: {type(exception).__name__}: {exception}{where}")
+        logging.getLogger().debug("%s failed", label, exc_info=exception)
 
 
 class CommonCommandProcessor(CommandProcessor):
@@ -2618,16 +2662,15 @@ class ServerCommandProcessor(CommonCommandProcessor):
             self.ctx.exit_event.set()
         return True
 
-    @mark_raw
-    def _cmd_alias(self, player_name_then_alias_name):
+    def _cmd_alias(self, player_name: str, *alias_name: str):
         """Set a player's alias, by listing their base name and then their intended alias."""
-        player_name, _, alias_name = player_name_then_alias_name.partition(" ")
+        alias_name = " ".join(alias_name)
         player_name, usable, response = get_intended_text(player_name, self.ctx.player_names.values())
         if usable:
             for (team, slot), name in self.ctx.player_names.items():
                 if name == player_name:
                     if alias_name:
-                        alias_name = alias_name.strip()[:15]
+                        alias_name = alias_name[:15]
                         self.ctx.name_aliases[team, slot] = alias_name
                         self.output(f"Named {player_name} as {alias_name}")
                         update_aliases(self.ctx, team)

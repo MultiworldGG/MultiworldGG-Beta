@@ -77,7 +77,7 @@ def _make_base_context() -> Context:
 
     # Register a synthetic game's name<->id tables via the real init path.
     ctx.gamespackage[GAME] = {
-        "item_name_to_id": {"Sword": 100, "Shield": 101, "Bow": 102},
+        "item_name_to_id": {"Sword": 100, "Shield": 101, "Bow": 102, "Link's Bow": 103},
         "location_name_to_id": {"Chest A": 10, "Chest B": 11, "Chest C": 20},
     }
     ctx._init_game_data()
@@ -150,6 +150,8 @@ def build_context() -> Context:
     ctx.group_collected = {}
     ctx.goal_overrides = set()
     ctx.name_aliases = {}
+    ctx.player_names = {(0, 1): "PlayerOne", (0, 2): "PlayerTwo"}
+    ctx.player_name_lookup = {"PlayerOne": (0, 1), "PlayerTwo": (0, 2)}
     ctx.password = None
     ctx.release_mode = "disabled"
     ctx.collect_mode = "disabled"
@@ -521,6 +523,84 @@ class TestServerCommandProcessor(unittest.TestCase):
         self.assertEqual(MultiServer.get_received_items(ctx, 0, 2, False), [])
 
 
+class TestSpacedPlayerNames(unittest.TestCase):
+    """A slot name with spaces reaches every server command intact, quoted or not."""
+
+    def setUp(self) -> None:
+        self.ctx = build_context()
+        self.ctx.player_names[(0, 2)] = "Player Two"
+        self.ctx.player_name_lookup = {"PlayerOne": (0, 1), "Player Two": (0, 2)}
+        self.ctx.release_mode = "enabled"
+        self.out = []
+        self.proc = ServerCommandProcessor(self.ctx)
+        self.proc.output = lambda text, **extra: self.out.append(text)
+
+    def received(self, slot: int):
+        return [i.item for i in MultiServer.get_received_items(self.ctx, 0, slot, False)]
+
+    def test_send_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send "Player Two" Bow')), self.out)
+        self.assertEqual(self.received(2), [102])
+
+    def test_send_smart_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc("/send \u201cPlayer Two\u201d Bow")), self.out)
+        self.assertEqual(self.received(2), [102])
+
+    def test_apostrophe_keeps_quote_grouping(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send "Player Two" Link\'s Bow')), self.out)
+        self.assertEqual(self.received(2), [103])
+
+    def test_send_location_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send_location "Player Two" Chest C')), self.out)
+        self.assertEqual(self.ctx.location_checks[0, 2], {20})
+
+    def test_hint_quoted(self) -> None:
+        # slot 2 receives item 101 (Shield) from slot 1's location 11
+        self.assertTrue(run_sync(lambda: self.proc('/hint "Player Two" Shield')), self.out)
+        self.assertEqual({(h.item, h.location) for h in self.ctx.hints[0, 2]}, {(101, 11)})
+
+    def test_release_unquoted_and_quoted(self) -> None:
+        for line in ("/release Player Two", "/release Player Two  ", '/release "Player Two"',
+                     "/release \u201cPlayer Two\u201d"):
+            with self.subTest(line=line):
+                self.ctx.received_items = {}
+                self.ctx.location_checks.clear()
+                self.assertTrue(run_sync(lambda: self.proc(line)), (line, self.out))
+                self.assertEqual(self.received(1), [102])  # slot 2's Chest C holds slot 1's Bow
+
+    def test_collect_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/collect "Player Two"')), self.out)
+        self.assertEqual(self.received(2), [101])  # slot 1's Chest B holds slot 2's Shield
+
+    def test_goal_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/goal "Player Two"')), self.out)
+        self.assertEqual(self.ctx.client_game_state[0, 2], ClientStatus.CLIENT_GOAL)
+
+    def test_allow_and_forbid_release_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/allow_release "Player Two"')), self.out)
+        self.assertTrue(self.ctx.allow_releases[0, 2])
+        self.assertTrue(run_sync(lambda: self.proc('/forbid_release "Player Two"')), self.out)
+        self.assertFalse(self.ctx.allow_releases[0, 2])
+
+    def test_alias_quoted_set_and_remove(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/alias "Player Two" Deuce Two')), self.out)
+        self.assertEqual(self.ctx.name_aliases[0, 2], "Deuce Two")
+        self.assertTrue(run_sync(lambda: self.proc('/alias "Player Two"')), self.out)
+        self.assertNotIn((0, 2), self.ctx.name_aliases)
+
+    def test_admin_relay_keeps_quotes_for_server_command(self) -> None:
+        # GUI/TUI admin bars send `!admin /<command>` as a Say; the server must unwrap the quotes.
+        self.ctx.admin_password = "pw"
+        self.ctx.commandprocessor = self.proc
+        client = make_client(self.ctx, slot=1)
+        self.proc.client = client
+        self.addCleanup(setattr, self.proc, "client", None)
+        messages = MultiServer.ClientMessageProcessor(self.ctx, client)
+        messages.output = lambda text: self.out.append(text)
+        self.assertTrue(run_sync(lambda: messages('!admin /release "Player Two"')), self.out)
+        self.assertEqual(self.received(1), [102])
+
+
 SLOT_PINS = {
     1: {"version": (1, 2, 3), "custom": False},
     2: {"version": (0, 5, 0), "custom": True},
@@ -641,6 +721,61 @@ def _base_ctx_slot_info() -> dict:
         1: NetworkSlot("PlayerOne", GAME, SlotType.player),
         2: NetworkSlot("PlayerTwo", GAME, SlotType.player),
     }
+
+
+class _RecordingProcessor(MultiServer.CommandProcessor):
+    def __init__(self) -> None:
+        self.lines: list = []
+
+    def output(self, text: str) -> None:
+        self.lines.append(text)
+
+    def _cmd_boom(self, value: str = "") -> int:
+        """Parses its argument."""
+        return int(value)
+
+    def _cmd_fixed(self) -> bool:
+        """Takes no arguments."""
+        return True
+
+    @MultiServer.mark_raw
+    def _cmd_raw(self, text: str = "") -> str:
+        """Keeps the raw text."""
+        return text
+
+
+class TestCommandDispatchErrors(unittest.TestCase):
+    """A failing or misused command yields one line, never a traceback in the console."""
+
+    def test_body_exception_is_one_line_with_location(self) -> None:
+        processor = _RecordingProcessor()
+        with self.assertLogs(level="DEBUG") as logs:
+            self.assertIsNone(processor("/boom nope"))
+        self.assertEqual(len(processor.lines), 1)
+        self.assertNotIn("Traceback", processor.lines[0])
+        self.assertTrue(processor.lines[0].startswith("/boom failed: ValueError: invalid literal"))
+        self.assertIn("in _cmd_boom)", processor.lines[0])
+        self.assertIsNotNone(logs.records[0].exc_info)
+
+    def test_wrong_argument_count_prints_usage(self) -> None:
+        processor = _RecordingProcessor()
+        self.assertIsNone(processor("/fixed extra"))
+        self.assertEqual(processor.lines, ["Wrong arguments for /fixed. Usage: /fixed"])
+        self.assertIsNone(processor("/boom one two"))
+        self.assertEqual(processor.lines[-1], "Wrong arguments for /boom. Usage: /boom [value]")
+
+    def test_valid_forms_still_dispatch(self) -> None:
+        processor = _RecordingProcessor()
+        self.assertEqual(processor("/boom 7"), 7)
+        self.assertTrue(processor("/fixed"))
+        self.assertEqual(processor("/raw one two  three"), "one two  three")
+        self.assertIsNone(processor("   "))
+        self.assertEqual(processor.lines, [])
+
+    def test_help_text_keeps_its_shape(self) -> None:
+        help_text = _RecordingProcessor().get_help_text()
+        self.assertIn("/boom [value] \n    Parses its argument.\n", help_text)
+        self.assertIn("/fixed \n    Takes no arguments.\n", help_text)
 
 
 if __name__ == "__main__":

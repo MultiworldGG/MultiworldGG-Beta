@@ -50,6 +50,27 @@ class DeathState(enum.IntEnum):
     dead = 3
 
 
+SNES_USAGE = 'Usage: /snes [host:port] [device number], e.g. "/snes", "/snes 1", "/snes localhost:23074 1"'
+
+
+def parse_snes_options(snes_options: str, default_address: str) -> typing.Tuple[str, int]:
+    """Split "/snes" arguments into (address, device number); -1 leaves the device to auto-pick."""
+    options = snes_options.split()
+    if len(options) > 2:
+        raise ValueError(f"Too many arguments. {SNES_USAGE}")
+    address, device = default_address, -1
+    if len(options) == 2 or (options and ":" in options[0]):
+        address = options.pop(0)
+        if ":" not in address:
+            raise ValueError(f"{address!r} is not a host:port address. {SNES_USAGE}")
+    if options:
+        try:
+            device = int(options[0])
+        except ValueError:
+            raise ValueError(f"{options[0]!r} is not a device number. {SNES_USAGE}") from None
+    return address, device
+
+
 class SNIClientCommandProcessor(ClientCommandProcessor):
     ctx: SNIContext
 
@@ -66,24 +87,19 @@ class SNIClientCommandProcessor(ClientCommandProcessor):
     def _cmd_snes(self, snes_options: str = "") -> bool:
         """Connect to a snes. Optionally include network address of a snes to connect to,
         otherwise show available devices; and a SNES device number if more than one SNES is detected.
-        Examples: "/snes", "/snes 1", "/snes localhost:23074 1" """
+        Examples: "/snes", "/snes 1", "/snes localhost:23074", "/snes localhost:23074 1" """
+        try:
+            parse_snes_options(snes_options, self.ctx.snes_address)
+        except ValueError as e:
+            self.output(str(e))
+            return False
         if self.ctx.snes_state in {SNESState.SNES_ATTACHED, SNESState.SNES_CONNECTED, SNESState.SNES_CONNECTING}:
             self.output("Already connected to SNES. Disconnecting first.")
             self._cmd_snes_close()
         return self.connect_to_snes(snes_options)
 
     def connect_to_snes(self, snes_options: str = "") -> bool:
-        snes_address = self.ctx.snes_address
-        snes_device_number = -1
-
-        options = snes_options.split()
-        num_options = len(options)
-
-        if num_options > 1:
-            snes_address = options[0]
-            snes_device_number = int(options[1])
-        elif num_options > 0:
-            snes_device_number = int(options[0])
+        snes_address, snes_device_number = parse_snes_options(snes_options, self.ctx.snes_address)
 
         self.ctx.snes_reconnect_address = None
         if self.ctx.snes_connect_task:

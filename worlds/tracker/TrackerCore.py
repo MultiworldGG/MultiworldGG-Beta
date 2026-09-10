@@ -2,6 +2,7 @@
 import logging
 import inspect
 import pathlib
+import re
 import tempfile
 from typing import Union, Any, TYPE_CHECKING, NamedTuple
 from enum import StrEnum
@@ -13,6 +14,7 @@ from collections import Counter, defaultdict
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode, TrackerException
 import sys
 from Utils import __version__, output_path, open_filename, cache_path
+from yaml import safe_dump
 
 from Generate import main as GMain, mystery_argparse
 from worlds.generic.Rules import exclusion_rules
@@ -30,13 +32,67 @@ def world_needs_yaml(world_cls: type) -> bool:
     return not (getattr(world_cls, "disable_ut", False) or getattr(world_cls, "ut_can_gen_without_yaml", False))
 
 
-def folder_has_yamls(folder: str | None) -> bool:
-    if not folder:
-        return False
+class PlayerYaml(NamedTuple):
+    path: pathlib.Path
+    doc: dict[str, Any]
+
+
+_NAME_PLACEHOLDER = re.compile(r"\{(?:player|PLAYER|number|NUMBER)\}|%(?:player|number)%")
+
+
+def yaml_name_matches(yaml_name: Any, slot_name: str) -> bool:
+    """Mirrors Generate.handle_name: placeholders stand for digits, plain names truncate to 16."""
+    names = yaml_name.keys() if isinstance(yaml_name, dict) else [yaml_name]
+    for name in names:
+        if not isinstance(name, str):
+            continue
+        name = name.strip()
+        if _NAME_PLACEHOLDER.search(name):
+            pattern = r"\d*".join(re.escape(part) for part in _NAME_PLACEHOLDER.split(name))
+            if re.fullmatch(pattern, slot_name, re.IGNORECASE):
+                return True
+        elif name[:16].strip().casefold() == slot_name.casefold():
+            return True
+    return False
+
+
+def yaml_game_matches(yaml_game: Any, game: str | None) -> bool:
+    if game is None:
+        return True
+    return game in yaml_game if isinstance(yaml_game, dict) else yaml_game == game
+
+
+def load_player_yaml_docs(path: pathlib.Path) -> list[dict[str, Any]]:
+    """Safe-loads one player file; an unreadable file is skipped so it cannot abort the scan."""
+    from Utils import parse_yamls
     try:
-        return any(entry.suffix.lower() in (".yaml", ".yml") for entry in pathlib.Path(folder).iterdir())
+        return [doc for doc in parse_yamls(path.read_text(encoding="utf-8-sig")) if isinstance(doc, dict)]
+    except Exception:
+        logging.getLogger("Client").warning("Skipping unreadable player yaml %s", path, exc_info=True)
+        return []
+
+
+def match_player_doc(docs: list[dict[str, Any]], path: pathlib.Path, slot_name: str,
+                     game: str | None) -> PlayerYaml | None:
+    for doc in docs:
+        if yaml_name_matches(doc.get("name", path.stem), slot_name) and yaml_game_matches(doc.get("game"), game):
+            return PlayerYaml(path, doc)
+    return None
+
+
+def find_player_yaml(folder: str | None, slot_name: str, game: str | None = None) -> PlayerYaml | None:
+    """First document in folder whose name (file stem when unnamed) and game match the connected slot."""
+    if not folder:
+        return None
+    try:
+        paths = sorted(p for p in pathlib.Path(folder).iterdir() if p.suffix.lower() in (".yaml", ".yml"))
     except OSError:
-        return False
+        return None
+    for path in paths:
+        found = match_player_doc(load_player_yaml_docs(path), path, slot_name, game)
+        if found is not None:
+            return found
+    return None
 
 class TrackerLogLineGroup(StrEnum):
     UT_ERROR = "error"
@@ -291,6 +347,46 @@ class TrackerCore():
             tracker_settings["use_split_map_icons"], defered_mode, tracker_settings['display_glitched_logic'], \
             sorting_priorities, sorting_method
     
+    def _stage_player_yaml(self, players_folder: str | None) -> str | None:
+        """Picks the connected slot's yaml from host.yaml's Players folder, prompting for a file
+        when the folder is missing or holds no match, and stages that one document for Generate.
+
+        Generate scans a folder, so the document goes alone into one stable cache dir; name and
+        game are pinned to the server's so placeholder names and weighted games resolve to the slot.
+        """
+        found = find_player_yaml(players_folder, self.slot_name, self.game) if self.slot_name else None
+        if found is None:
+            picked = open_filename(f"Select the YAML for {self.slot_name or 'tracking'}", [("YAML", ["*.yaml", "*.yml"])])
+            if not picked:
+                self.add_log_line(TrackerLogLine("No YAML selected; tracking cannot start without one.", "",
+                                                 TrackerLogLineGroup.UT_STATUS))
+                return None
+            path = pathlib.Path(picked)
+            docs = load_player_yaml_docs(path)
+            found = match_player_doc(docs, path, self.slot_name, self.game) if self.slot_name else None
+            if found is None:
+                if len(docs) != 1:
+                    self.add_log_line(TrackerLogLine(f"No document in {path.name} matches slot {self.slot_name!r}.", "",
+                                                     TrackerLogLineGroup.UT_STATUS))
+                    return None
+                found = PlayerYaml(path, docs[0])
+                if not yaml_game_matches(found.doc.get("game"), self.game):
+                    self.logger.warning("%s is not a %s yaml; its options will not apply to slot %s",
+                                        path.name, self.game, self.slot_name)
+        self.logger.info("Tracking %s with %s", self.slot_name, found.path)
+        doc = {key: value for key, value in found.doc.items() if key != "quantity"}
+        if self.slot_name:
+            doc["name"] = self.slot_name
+        if self.game:
+            doc["game"] = self.game
+        staging = pathlib.Path(cache_path("ut_picked_yaml"))
+        staging.mkdir(parents=True, exist_ok=True)
+        for stale in staging.iterdir():
+            stale.unlink()
+        (staging / f"{found.path.stem}.yaml").write_text(safe_dump(doc, allow_unicode=True, sort_keys=False),
+                                                         encoding="utf-8")
+        return str(staging)
+
     def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None, super_override_yaml_path: str|None = None):
         def move_slots(args: "Namespace", slot_name: str):
             """
@@ -337,31 +433,11 @@ class TrackerCore():
                 args.player_files_path = override_yaml_path
             elif self.player_folder_override:
                 args.player_files_path = self.player_folder_override
-            elif folder_has_yamls(yaml_path):
-                # host.yaml tracker.player_files_path, upstream's default source.
-                args.player_files_path = yaml_path
             else:
-                picked = open_filename(
-                    "Select your YAML for tracking",
-                    [("YAML", ["*.yaml", "*.yml"])],
-                )
-                if not picked:
-                    self.add_log_line(TrackerLogLine(
-                        "No YAML selected; tracking cannot start without one.",
-                        "",
-                        TrackerLogLineGroup.UT_STATUS,
-                    ))
+                staged = self._stage_player_yaml(yaml_path)
+                if staged is None:
                     return
-                # Generate scans a folder, not a single file, so copy the picked
-                # yaml into one stable cache dir. Clearing it first keeps re-picks
-                # from accumulating and avoids leaking a fresh temp dir each time.
-                picker_dir = pathlib.Path(cache_path("ut_picked_yaml"))
-                picker_dir.mkdir(parents=True, exist_ok=True)
-                for stale in picker_dir.iterdir():
-                    stale.unlink()
-                src = pathlib.Path(picked)
-                (picker_dir / src.name).write_bytes(src.read_bytes())
-                args.player_files_path = str(picker_dir)
+                args.player_files_path = staged
             self.player_folder_override = args.player_files_path
             args.skip_output = True
             args.multi = 0

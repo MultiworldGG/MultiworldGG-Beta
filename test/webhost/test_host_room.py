@@ -4,6 +4,7 @@ from uuid import UUID, uuid4, uuid5
 
 from flask import url_for
 
+import MultiServer
 from WebHostLib.customserver import set_up_logging, tear_down_logging
 from . import TestBase
 
@@ -204,6 +205,45 @@ class TestHostFakeRoom(TestBase):
                 select(Command).where(Command.room_id == self.room_id)
             ).all()
             self.assertIn("/help", (command.commandtext for command in commands))
+
+    def test_host_room_post_keeps_quoted_names(self) -> None:
+        """A quoted slot name survives both form encodings the room page can send and
+        reaches the room's command processor as one argument."""
+        from sqlalchemy import select
+        from WebHostLib.customserver import DBCommandProcessor
+        from WebHostLib.models import db, Command
+        from test.programs.test_process_client_cmd import build_context, run_sync
+
+        lines = ['/release "Player One"', "/release \u201cPlayer One\u201d", "/send \"Player One\" Link's Bow"]
+        with self.app.app_context(), self.app.test_request_context():
+            url = url_for("host_room", seed=self.seed_id, room=self.room_id)
+            for line in lines:
+                self.assertEqual(self.client.post(url, data={"cmd": line}).status_code, 302)
+                self.assertEqual(self.client.post(url, data={"cmd": line},
+                                                  content_type="multipart/form-data").status_code, 302)
+
+        with self.app.app_context():
+            stored = [command.commandtext for command in db.session.scalars(
+                select(Command).where(Command.room_id == self.room_id)).all()]
+        self.assertEqual(sorted(stored), sorted(lines * 2))
+
+        ctx = build_context()
+        ctx.player_names = {(0, 1): "Player One", (0, 2): "Player Two"}
+        ctx.player_name_lookup = {"Player One": (0, 1), "Player Two": (0, 2)}
+        ctx.release_mode = "enabled"
+        ctx.logger = logging.getLogger("test-host-room")
+        proc = DBCommandProcessor(ctx)
+        for line in stored:
+            ctx.received_items = {}
+            ctx.location_checks.clear()
+            with self.subTest(line=line):
+                self.assertTrue(run_sync(lambda: proc(line)), line)
+                received = {slot: [i.item for i in MultiServer.get_received_items(ctx, 0, slot, False)]
+                            for slot in (1, 2)}
+                if line.startswith("/release"):
+                    self.assertEqual(received, {1: [], 2: [101]})  # slot 2's Shield; own-world finds are not received
+                else:
+                    self.assertEqual(received, {1: [103], 2: []})
 
     def test_host_room_other_post(self) -> None:
         """Verify command from non-owner does not get queued for the server."""
