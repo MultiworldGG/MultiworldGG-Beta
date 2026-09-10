@@ -596,15 +596,8 @@ class TrackerGameContext(CommonContext):
             await self.send_connect()
 
     def run_generator(self):
-        # World clients call this at startup; without a yaml the core prompts for one,
-        # pointless for a world that regenerates from slot_data on Connected.
-        # Manual clients only pick their game at connect; suggested_game is that default.
-        game = self.game or getattr(self, "suggested_game", None)
-        world_cls = AutoWorld.AutoWorldRegister.world_types.get(game)
-        if world_cls is not None and not world_needs_yaml(world_cls):
-            return
-        self.tracker_core.run_generator(None, None)
-        self.use_split = self.tracker_core.use_split #fancy hack
+        """Upstream world clients call this at startup; generation waits for Connected,
+        where the slot name selects its yaml."""
 
     def on_package(self, cmd: str, args: dict):
         try:
@@ -621,6 +614,8 @@ class TrackerGameContext(CommonContext):
                 if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
                     logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
                     logger.error(f"Local checksum = {connected_cls.get_data_package_data()['checksum']} | remote checksum = {self.checksums[self.game]}")
+                if world_needs_yaml(connected_cls) and self.tracker_core.launch_multiworld is None:
+                    self.tracker_core.run_generator(None, None)
                 self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
                 if self.tracker_core.tracker_disabled:
                     logger.error("World Author has requested UT be disabled on this world, please respect their decision")
@@ -1043,8 +1038,6 @@ async def main(args):
     ctx.auth = args.name
     ctx.tracker_core.connect_mode = bool(args.connect)
     ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
-    if not args.connect:
-        ctx.run_generator()
 
     if gui_enabled:
         if ctx._can_takeover_existing_ui():
