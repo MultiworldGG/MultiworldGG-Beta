@@ -77,7 +77,7 @@ def _make_base_context() -> Context:
 
     # Register a synthetic game's name<->id tables via the real init path.
     ctx.gamespackage[GAME] = {
-        "item_name_to_id": {"Sword": 100, "Shield": 101, "Bow": 102},
+        "item_name_to_id": {"Sword": 100, "Shield": 101, "Bow": 102, "Link's Bow": 103},
         "location_name_to_id": {"Chest A": 10, "Chest B": 11, "Chest C": 20},
     }
     ctx._init_game_data()
@@ -150,6 +150,8 @@ def build_context() -> Context:
     ctx.group_collected = {}
     ctx.goal_overrides = set()
     ctx.name_aliases = {}
+    ctx.player_names = {(0, 1): "PlayerOne", (0, 2): "PlayerTwo"}
+    ctx.player_name_lookup = {"PlayerOne": (0, 1), "PlayerTwo": (0, 2)}
     ctx.password = None
     ctx.release_mode = "disabled"
     ctx.collect_mode = "disabled"
@@ -519,6 +521,84 @@ class TestServerCommandProcessor(unittest.TestCase):
         # no items routed to anyone
         self.assertEqual(MultiServer.get_received_items(ctx, 0, 1, False), [])
         self.assertEqual(MultiServer.get_received_items(ctx, 0, 2, False), [])
+
+
+class TestSpacedPlayerNames(unittest.TestCase):
+    """A slot name with spaces reaches every server command intact, quoted or not."""
+
+    def setUp(self) -> None:
+        self.ctx = build_context()
+        self.ctx.player_names[(0, 2)] = "Player Two"
+        self.ctx.player_name_lookup = {"PlayerOne": (0, 1), "Player Two": (0, 2)}
+        self.ctx.release_mode = "enabled"
+        self.out = []
+        self.proc = ServerCommandProcessor(self.ctx)
+        self.proc.output = lambda text, **extra: self.out.append(text)
+
+    def received(self, slot: int):
+        return [i.item for i in MultiServer.get_received_items(self.ctx, 0, slot, False)]
+
+    def test_send_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send "Player Two" Bow')), self.out)
+        self.assertEqual(self.received(2), [102])
+
+    def test_send_smart_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc("/send \u201cPlayer Two\u201d Bow")), self.out)
+        self.assertEqual(self.received(2), [102])
+
+    def test_apostrophe_keeps_quote_grouping(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send "Player Two" Link\'s Bow')), self.out)
+        self.assertEqual(self.received(2), [103])
+
+    def test_send_location_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/send_location "Player Two" Chest C')), self.out)
+        self.assertEqual(self.ctx.location_checks[0, 2], {20})
+
+    def test_hint_quoted(self) -> None:
+        # slot 2 receives item 101 (Shield) from slot 1's location 11
+        self.assertTrue(run_sync(lambda: self.proc('/hint "Player Two" Shield')), self.out)
+        self.assertEqual({(h.item, h.location) for h in self.ctx.hints[0, 2]}, {(101, 11)})
+
+    def test_release_unquoted_and_quoted(self) -> None:
+        for line in ("/release Player Two", "/release Player Two  ", '/release "Player Two"',
+                     "/release \u201cPlayer Two\u201d"):
+            with self.subTest(line=line):
+                self.ctx.received_items = {}
+                self.ctx.location_checks.clear()
+                self.assertTrue(run_sync(lambda: self.proc(line)), (line, self.out))
+                self.assertEqual(self.received(1), [102])  # slot 2's Chest C holds slot 1's Bow
+
+    def test_collect_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/collect "Player Two"')), self.out)
+        self.assertEqual(self.received(2), [101])  # slot 1's Chest B holds slot 2's Shield
+
+    def test_goal_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/goal "Player Two"')), self.out)
+        self.assertEqual(self.ctx.client_game_state[0, 2], ClientStatus.CLIENT_GOAL)
+
+    def test_allow_and_forbid_release_quoted(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/allow_release "Player Two"')), self.out)
+        self.assertTrue(self.ctx.allow_releases[0, 2])
+        self.assertTrue(run_sync(lambda: self.proc('/forbid_release "Player Two"')), self.out)
+        self.assertFalse(self.ctx.allow_releases[0, 2])
+
+    def test_alias_quoted_set_and_remove(self) -> None:
+        self.assertTrue(run_sync(lambda: self.proc('/alias "Player Two" Deuce Two')), self.out)
+        self.assertEqual(self.ctx.name_aliases[0, 2], "Deuce Two")
+        self.assertTrue(run_sync(lambda: self.proc('/alias "Player Two"')), self.out)
+        self.assertNotIn((0, 2), self.ctx.name_aliases)
+
+    def test_admin_relay_keeps_quotes_for_server_command(self) -> None:
+        # GUI/TUI admin bars send `!admin /<command>` as a Say; the server must unwrap the quotes.
+        self.ctx.admin_password = "pw"
+        self.ctx.commandprocessor = self.proc
+        client = make_client(self.ctx, slot=1)
+        self.proc.client = client
+        self.addCleanup(setattr, self.proc, "client", None)
+        messages = MultiServer.ClientMessageProcessor(self.ctx, client)
+        messages.output = lambda text: self.out.append(text)
+        self.assertTrue(run_sync(lambda: messages('!admin /release "Player Two"')), self.out)
+        self.assertEqual(self.received(1), [102])
 
 
 SLOT_PINS = {

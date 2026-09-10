@@ -1559,6 +1559,33 @@ def mark_raw(function: typing.Callable[[typing.Any], _Return]) -> typing.Callabl
     return function
 
 
+_SMART_QUOTES = str.maketrans({"\u201c": '"', "\u201d": '"'})
+
+
+def split_command(raw: str) -> typing.List[str]:
+    """Whitespace-split with double-quote grouping; apostrophes and backslashes stay literal."""
+    lexer = shlex.shlex(raw.translate(_SMART_QUOTES), posix=True)
+    lexer.whitespace_split = True
+    lexer.quotes = '"'
+    lexer.escape = ""
+    lexer.commenters = ""
+    try:
+        return list(lexer)
+    except ValueError:  # unbalanced quote
+        return raw.split()
+
+
+def raw_argument(raw: str) -> typing.Optional[str]:
+    """Text after the command word, minus surrounding whitespace and one pair of double quotes."""
+    words = raw.translate(_SMART_QUOTES).split(maxsplit=1)
+    if len(words) < 2:
+        return None
+    text = words[1].strip()
+    if len(text) > 1 and text[0] == text[-1] == '"':
+        return text[1:-1]
+    return text
+
+
 class CommandProcessor(metaclass=CommandMeta):
     commands: typing.Dict[str, typing.Callable]
     client = None
@@ -1572,10 +1599,7 @@ class CommandProcessor(metaclass=CommandMeta):
             return
         name = ""
         try:
-            try:
-                command = shlex.split(raw, comments=False)
-            except ValueError:  # most likely: "ValueError: No closing quotation"
-                command = raw.split()
+            command = split_command(raw)
             if not command:
                 return
             basecommand = command[0]
@@ -1587,8 +1611,9 @@ class CommandProcessor(metaclass=CommandMeta):
             if not method:
                 self._error_unknown_command(basecommand[1:])
                 return
-            if getattr(method, "raw_text", False):  # method is requesting unprocessed text data
-                args = raw.split(maxsplit=1)[1:]
+            if getattr(method, "raw_text", False):
+                arg = raw_argument(raw)
+                args = [] if arg is None else [arg]
             else:
                 args = command[1:]
             try:
@@ -2637,16 +2662,15 @@ class ServerCommandProcessor(CommonCommandProcessor):
             self.ctx.exit_event.set()
         return True
 
-    @mark_raw
-    def _cmd_alias(self, player_name_then_alias_name):
+    def _cmd_alias(self, player_name: str, *alias_name: str):
         """Set a player's alias, by listing their base name and then their intended alias."""
-        player_name, _, alias_name = player_name_then_alias_name.partition(" ")
+        alias_name = " ".join(alias_name)
         player_name, usable, response = get_intended_text(player_name, self.ctx.player_names.values())
         if usable:
             for (team, slot), name in self.ctx.player_names.items():
                 if name == player_name:
                     if alias_name:
-                        alias_name = alias_name.strip()[:15]
+                        alias_name = alias_name[:15]
                         self.ctx.name_aliases[team, slot] = alias_name
                         self.output(f"Named {player_name} as {alias_name}")
                         update_aliases(self.ctx, team)

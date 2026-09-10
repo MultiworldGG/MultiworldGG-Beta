@@ -171,7 +171,8 @@ class ClientCommandProcessor(CommandProcessor):
 
     The decorator @mark_raw can be imported from MultiServer and tells the parser to only split on the first
     space after the command i.e. "/exit one two three" will be passed in as method("one two three") with mark_raw
-    and method("one", "two", "three") without.
+    and method("one", "two", "three") without. Double quotes group words into one argument either way:
+    '/exit "one two" three' gives method("one two", "three"), and a raw argument loses its surrounding quotes.
 
     In addition all docstrings for command methods will be displayed to the user on launch and when using "/help"
     """
