@@ -556,6 +556,7 @@ class CommonContext(InitContext):
     server: typing.Optional[Endpoint] = None
     server_version: Version = Version(0, 0, 0)
     generator_version: Version = Version(0, 0, 0)
+    server_tags: list[str] = []
     current_energy_link_value: typing.Optional[int] = None  # to display in UI, gets set by server
     max_size: int = 16*1024*1024  # 16 MB of max incoming packet size
 
@@ -844,6 +845,7 @@ class CommonContext(InitContext):
         self.server_seed_name = None
         self.server_version = Version(0, 0, 0)
         self.generator_version = Version(0, 0, 0)
+        self.server_tags = []
         self.server = None
         self.server_task = None
         self.hint_cost = None
@@ -1512,7 +1514,11 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
         except websockets.ConnectionClosed as e:
             if e.rcvd is not None and e.rcvd.code == CloseCode.GOING_AWAY:
                 retry = False
-                logger.info(f"Server shut down: {e.rcvd.reason or 'no reason given'}")
+                shutdown = f"Server shut down: {e.rcvd.reason or 'no reason given'}"
+                if "WebHost" in ctx.server_tags:
+                    shutdown += (f". Please resume the multiworld room at https://{ctx.hostname}/me/rooms"
+                                 " before typing /connect to reconnect")
+                logger.info(shutdown)
             else:
                 # Server dropped mid-session. Not a bug - no traceback.
                 logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
@@ -1755,6 +1761,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             else:
                 logger.info(f'Server protocol version: {ctx.server_version.as_simple_string()}, '
                             f'tags: {", ".join(args["tags"])}')
+            ctx.server_tags = list(args.get("tags", ()))
             if args['password']:
                 logger.info('Password required')
             ctx.update_permissions(args.get("permissions", {}))

@@ -333,7 +333,7 @@ def _loop_ctx(exit_set: bool = False) -> SimpleNamespace:
         takeover_complete=asyncio.Event(), exit_event=asyncio.Event(), server=None,
         server_address="ws://localhost:38281", username="Player1", max_size=None,
         disconnected_intentionally=False, autoreconnect_task=None, server_task=None,
-        starting_reconnect_delay=5, current_reconnect_delay=5,
+        starting_reconnect_delay=5, current_reconnect_delay=5, server_tags=[], hostname="localhost",
         _messagebox_connection_loss=None, ui=None, closed=0, losses=[],
         cancel_autoreconnect=lambda: False,
     )
@@ -423,6 +423,19 @@ class TestServerLoopReconnect(unittest.TestCase):
         self.assertEqual(ctx.closed, 1)
         self.assertIsNone(ctx.autoreconnect_task)
         self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
+        self.assertFalse(any("/me/rooms" in line for line in logs.output), logs.output)
+
+    def test_webhost_going_away_points_at_the_rooms_page(self):
+        close = Close(1001, "Shutting down due to inactivity")
+        ctx = _loop_ctx()
+        ctx.server_tags = ["AP", "WebHost"]
+        ctx.hostname = "mw.example.com"
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_by(websockets.ConnectionClosedOK(close, close, True)))
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any(
+            "Please resume the multiworld room at https://mw.example.com/me/rooms before typing /connect to reconnect"
+            in line for line in logs.output), logs.output)
 
     def test_autoreconnect_doubles_delay_after_sleep(self):
         ctx = _loop_ctx()
