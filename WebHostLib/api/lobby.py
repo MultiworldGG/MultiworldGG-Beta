@@ -1068,6 +1068,7 @@ def lobby_status(lobby: UUID):
         "max_players": lobby.max_players,
         "timeout_minutes": lobby.timeout_minutes,
         "allow_custom_apworlds": lobby.allow_custom_apworlds,
+        "unlisted": bool(meta.get("unlisted")),
         "has_custom": has_custom,
         "force_local_generation": has_custom or total_yamls > LOBBY_LOCAL_GENERATION_YAML_LIMIT,
         "race": lobby.race,
@@ -1822,6 +1823,9 @@ def lobby_update_settings(lobby: UUID):
     meta = json.loads(lobby.meta)
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
+
+    if "unlisted" in data:
+        meta["unlisted"] = bool(data["unlisted"])
 
     _release  = {"auto", "goal", "auto-enabled", "enabled", "disabled"}
     _collect  = {"auto", "goal", "auto-enabled", "enabled", "disabled"}

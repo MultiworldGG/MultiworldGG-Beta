@@ -53,9 +53,10 @@ def _is_lobby_viewer(lobby_id) -> bool:
 
 @app.route('/play/lobbies')
 def lobby_list():
+    # Unlisted lives in the meta JSON, so the public cap is applied after filtering.
     lobbies = db.session.scalars(
         select(Lobby).where(Lobby.state == LOBBY_OPEN)
-        .order_by(desc(Lobby.last_activity)).limit(50)
+        .order_by(desc(Lobby.last_activity))
     ).all()
 
     any_expired = False
@@ -87,7 +88,9 @@ def lobby_list():
     if any_expired:
         commit()
 
-    active_lobbies = [l for l in lobbies if l.state != LOBBY_CLOSED]
+    active_lobbies = [
+        l for l in lobbies if l.state != LOBBY_CLOSED and not json.loads(l.meta).get("unlisted")
+    ][:50]
 
     lobby_ids = [l.id for l in active_lobbies]
     player_counts = {}
@@ -216,6 +219,7 @@ def lobby_create():
 
         meta = get_meta(request.form, race)
         meta["host_display_name"] = creator_name
+        meta["unlisted"] = bool(request.form.get('unlisted'))
 
         lobby = Lobby(
             title=title,
@@ -322,6 +326,7 @@ def lobby_view(lobby: UUID):
         is_full=is_full,
         server_opts=server_opts,
         gen_opts=gen_opts,
+        unlisted=bool(meta.get("unlisted")),
         owner_name=owner_name,
         instance_name= instance_name or "Archipelago",
     )

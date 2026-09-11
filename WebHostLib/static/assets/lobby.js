@@ -596,7 +596,8 @@
         if (metaMain && data.max_yamls_per_player != null) {
             const race = data.race ? "Race Mode | " : "";
             const customAP = data.allow_custom_apworlds ? "Custom APWorlds: enabled" : "Custom APWorlds: disabled";
-            metaMain.textContent = `Max YAMLs: ${data.max_yamls_per_player} | Timeout: ${formatTimeout(data.timeout_minutes)} | ${race}${customAP}`;
+            const unlisted = data.unlisted ? " | Unlisted" : "";
+            metaMain.textContent = `Max YAMLs: ${data.max_yamls_per_player} | Timeout: ${formatTimeout(data.timeout_minutes)} | ${race}${customAP}${unlisted}`;
         }
 
         const playerBadge = document.getElementById("player-count-badge");
@@ -1651,6 +1652,7 @@
             }
 
             const allowCustomEl = document.getElementById("edit-allow-custom-apworlds");
+            const unlistedEl = document.getElementById("edit-unlisted");
             const payload = {
                 title: document.getElementById("edit-title").value.trim(),
                 max_yamls_per_player: newMaxYamls,
@@ -1676,6 +1678,7 @@
                     Math.min(parseInt(document.getElementById("edit-progression-equalization").value, 10) || 0, 100)
                 ),
                 allow_custom_apworlds: allowCustomEl ? allowCustomEl.checked : undefined,
+                unlisted: unlistedEl ? unlistedEl.checked : undefined,
             };
 
             settingsSaveBtn.disabled = true;
