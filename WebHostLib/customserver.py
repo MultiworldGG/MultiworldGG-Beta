@@ -87,9 +87,9 @@ class DualStackServer:
             result.extend(srv.sockets)
         return tuple(result)
 
-    def close(self) -> None:
+    def close(self, reason: str = "") -> None:
         for srv in self._servers:
-            srv.close()
+            srv.close(reason=reason)
 
     async def wait_closed(self) -> None:
         for srv in self._servers:

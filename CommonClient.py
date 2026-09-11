@@ -12,6 +12,7 @@ import time
 import functools
 
 import websockets
+from websockets.frames import CloseCode
 from websockets.protocol import State
 from websockets.asyncio.connection import Connection
 
@@ -1394,12 +1395,6 @@ class CommonContext(InitContext):
         if self.ui:
             self.ui.hide_loading()
      
-        error_msg = ""
-        if self.server_address:
-            error_msg = f"To retry the connection, use: /connect {self.server_address}"
-        else:
-            error_msg = "To retry the connection, use: /connect <server_address:port>"
-        
         if self.ui:
             error_text = str(exc_info[1]) if exc_info[1] else msg
             self._messagebox_connection_loss = self.gui_error("Connection Error", error_text + "\n" + msg)
@@ -1455,7 +1450,8 @@ async def keep_alive(ctx: CommonContext, seconds_between_checks=100):
                 seconds_elapsed = 0
 
 
-async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) -> None:
+async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, *,
+                      reconnect_attempt: bool = False) -> None:
     await ctx.takeover_complete.wait()
     if ctx.server and ctx.server.socket:
         logger.error('Already connected')
@@ -1491,6 +1487,11 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     # The ws:// -> wss:// retry below recurses; only the innermost frame may close
     # the connection and schedule a reconnect, or the outer finally double-schedules.
     delegated = False
+    # Auto-reconnect only chases a server that went away unexpectedly: a fresh connect that
+    # fails is a wrong address until the user says otherwise, and a server that sent
+    # GOING_AWAY shut down on purpose and will not come back on its own.
+    connected = False
+    retry = reconnect_attempt
     try:
         socket = await websockets.connect(address, ping_timeout=None, ping_interval=None,
                                           ssl=get_ssl_context() if address.startswith("wss://") else None,
@@ -1500,6 +1501,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         ctx.server_address = address
         ctx.current_reconnect_delay = ctx.starting_reconnect_delay
         ctx.disconnected_intentionally = False
+        connected = retry = True
         try:
             async for data in ctx.server.socket:
                 for msg in decode(data):
@@ -1508,8 +1510,12 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
             logger.info("Server loop cancelled during shutdown")
             raise
         except websockets.ConnectionClosed as e:
-            # Server went away mid-session (closed cleanly or dropped). Not a bug - no traceback.
-            logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
+            if e.rcvd is not None and e.rcvd.code == CloseCode.GOING_AWAY:
+                retry = False
+                logger.info(f"Server shut down: {e.rcvd.reason or 'no reason given'}")
+            else:
+                # Server dropped mid-session. Not a bug - no traceback.
+                logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
         except (ConnectionResetError, ConnectionAbortedError, asyncio.TimeoutError, OSError) as e:
             # Transport-level disconnects. Not a bug - no traceback.
             logger.info(f"Connection lost to multiworld server: {e.__class__.__name__}: {e}")
@@ -1523,7 +1529,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         if address.startswith("ws://"):
             # try wss
             delegated = True
-            await server_loop(ctx, "ws" + address[1:])
+            await server_loop(ctx, "ws" + address[1:], reconnect_attempt=reconnect_attempt)
         else:
             ctx.handle_connection_loss(f"Lost connection to the multiworld server due to InvalidMessage"
                                        f"{reconnect_hint()}")
@@ -1541,20 +1547,23 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     finally:
         if not delegated:
             await ctx.connection_closed()
-            if (ctx.server_address and ctx.username and not ctx.disconnected_intentionally
-                    and not ctx.exit_event.is_set()):
+            if ctx.exit_event.is_set() or ctx.disconnected_intentionally:
+                pass
+            elif retry and ctx.server_address and ctx.username:
                 logger.info(f"... automatically reconnecting in {ctx.current_reconnect_delay} seconds")
                 assert ctx.autoreconnect_task is None
                 ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
-            ctx.current_reconnect_delay *= 2
+            elif not connected:
+                logger.info("Check the address and use /connect to try again.")
 
 
 async def server_autoreconnect(ctx: CommonContext):
     if ctx.exit_event.is_set():
         return
     await asyncio.sleep(ctx.current_reconnect_delay)
+    ctx.current_reconnect_delay *= 2
     if ctx.server_address and ctx.server_task is None:
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        ctx.server_task = asyncio.create_task(server_loop(ctx, reconnect_attempt=True), name="server loop")
 
 
 def _perform_pinned_install(game: str, slug: str, tag: str, want_str: str) -> bool:
@@ -1793,6 +1802,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             raise Exception('Server reported your client version as incompatible. '
                             'This probably means you have to update.')
         elif 'InvalidItemsHandling' in errors:
+            ctx.disconnected_intentionally = True
             raise Exception('The item handling flags requested by the client are not supported')
         # last to check, recoverable problem
         elif 'InvalidSlot' in errors:
@@ -1803,8 +1813,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.password = None
             await ctx.client_get_password(True)
         elif errors:
+            ctx.disconnected_intentionally = True
             raise Exception("Unknown connection errors: " + str(errors))
         else:
+            ctx.disconnected_intentionally = True
             raise Exception('Connection refused by the multiworld host, no reason provided')
 
     elif cmd == 'Connected':
