@@ -630,9 +630,12 @@ def host_room(seed: UUID, room: UUID):
         except FileNotFoundError:
             return "", 0
 
+    from .dashboard import record_room_visit
     from .ownership import is_authorized, is_primary_owner
     is_authorized_room = is_authorized(room, session["_id"])
     is_primary_owner_room = is_primary_owner(room, session["_id"])
+    if not is_authorized_room and not automated:
+        record_room_visit(room, session["_id"])
     return render_template(
         "hostRoom.html",
         room=room,

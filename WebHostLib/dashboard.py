@@ -9,13 +9,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import timedelta
-from typing import Optional
+from typing import Iterable, Optional
 from uuid import UUID
 
 from sqlalchemy import select
 
 from Utils import utcnow
-from .models import Lobby, Room, Seed, db
+from .models import Lobby, Room, RoomVisit, Seed, commit, db
 
 
 # Matches the filter the legacy /me handler used.
@@ -80,6 +80,31 @@ def _seed_has_spoiler(seed: Seed) -> bool:
     return seed.spoiler is not None
 
 
+def record_room_visit(room: Room, session_id: UUID) -> None:
+    """Remember that session_id opened the room page so it shows under /me; owners are not tracked."""
+    now = utcnow()
+    visit = db.session.get(RoomVisit, (room.id, session_id))
+    if visit is None:
+        RoomVisit(room_id=room.id, session_id=session_id, last_visit=now)
+    elif now - visit.last_visit < timedelta(minutes=1):
+        return  # page polling; skip the write
+    else:
+        visit.last_visit = now
+    commit()
+
+
+def list_visited_rooms(session_id: UUID, exclude: Iterable[UUID] = ()) -> list[Room]:
+    """Rooms session_id joined as a non-owner, newest activity first."""
+    skip = set(exclude)
+    rows = db.session.scalars(
+        select(Room)
+        .join(RoomVisit, RoomVisit.room_id == Room.id)
+        .where(RoomVisit.session_id == session_id)
+        .order_by(Room.last_activity.desc())
+    ).all()
+    return [room for room in rows if room.id not in skip]
+
+
 def get_dashboard_data(session_key: UUID, *, max_per_section: int = 3) -> DashboardData:
     """Aggregate all data for the /me dashboard for one browser session.
 
@@ -94,9 +119,10 @@ def get_dashboard_data(session_key: UUID, *, max_per_section: int = 3) -> Dashbo
         DashboardData with stats and item lists populated. If the browser has
         no data, returns an empty dataclass with ``is_empty=True``.
     """
-    # Rooms / lobbies include co-owned entries; seeds remain primary-owner-only.
+    # Rooms include co-owned and joined entries, lobbies co-owned; seeds remain primary-owner-only.
     from .ownership import list_authorized_rooms, list_authorized_lobbies
-    owned_rooms = list_authorized_rooms(session_key)
+    rooms = list_authorized_rooms(session_key)
+    rooms += list_visited_rooms(session_key, exclude={room.id for room in rooms})
     owned_lobbies = [
         l for l in list_authorized_lobbies(session_key)
         if l.state in _ACTIVE_LOBBY_STATES
@@ -105,10 +131,10 @@ def get_dashboard_data(session_key: UUID, *, max_per_section: int = 3) -> Dashbo
         select(Seed).where(Seed.owner == session_key)
     ).all()
 
-    if not owned_rooms and not owned_lobbies and not owned_seeds:
+    if not rooms and not owned_lobbies and not owned_seeds:
         return DashboardData(is_empty=True)
 
-    classified = [(r, classify_room(r)) for r in owned_rooms]
+    classified = [(r, classify_room(r)) for r in rooms]
     running = [r for r, s in classified if s.label == "Running"]
     paused = [r for r, s in classified if s.label == "Paused"]
     active_rooms_sorted = sorted(

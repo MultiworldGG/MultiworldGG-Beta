@@ -11,6 +11,9 @@ from datetime import timedelta
 from types import SimpleNamespace
 from uuid import uuid4
 
+from flask import url_for
+from sqlalchemy import select
+
 from Utils import utcnow
 from WebHostLib.dashboard import (
     _ACTIVE_LOBBY_STATES,
@@ -285,3 +288,60 @@ def test_my_rooms_lists_owned_rooms(client, room_factory):
 
     response = client.get("/me/rooms")
     assert response.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# Joined rooms - a non-owner who opens a room page sees it under /me
+# ---------------------------------------------------------------------------
+
+BROWSER = {"User-Agent": "Mozilla/5.0"}
+
+
+def _visit_room(client, app, snapshot, session_id, headers=BROWSER):
+    with client.session_transaction() as session:
+        session["_id"] = session_id
+    with app.test_request_context():
+        url = url_for("host_room", seed=snapshot.seed_id, room=snapshot.id)
+    assert client.get(url, headers=headers).status_code == 200
+
+
+def _visitors(app, room_id):
+    from WebHostLib.models import RoomVisit, db
+    with app.app_context():
+        return db.session.scalars(
+            select(RoomVisit.session_id).where(RoomVisit.room_id == room_id)
+        ).all()
+
+
+def test_joined_room_shows_under_me_for_non_owner(client, app, room_factory):
+    from WebHostLib.dashboard import list_visited_rooms
+
+    snapshot = room_factory(owner=uuid4())
+    visitor = uuid4()
+    _visit_room(client, app, snapshot, visitor)
+    _visit_room(client, app, snapshot, visitor)  # repeat visits keep one row
+    assert _visitors(app, snapshot.id) == [visitor]
+    with app.app_context():
+        assert [room.id for room in list_visited_rooms(visitor)] == [snapshot.id]
+        assert [room.id for room in list_visited_rooms(visitor, exclude={snapshot.id})] == []
+        data = get_dashboard_data(visitor)
+    assert data.is_empty is False
+    assert data.total_active_rooms == 1
+
+    response = client.get("/me/rooms")
+    assert response.status_code == 200
+    assert b"Joined" in response.data
+
+
+def test_owner_and_bot_visits_are_not_recorded(client, app, room_factory):
+    owner = uuid4()
+    snapshot = room_factory(owner=owner)
+    _visit_room(client, app, snapshot, owner)
+    _visit_room(client, app, snapshot, uuid4(), headers={"User-Agent": "Discordbot"})
+    assert _visitors(app, snapshot.id) == []
+
+    with client.session_transaction() as session:
+        session["_id"] = owner
+    response = client.get("/me/rooms")
+    assert b"Share access" in response.data
+    assert b"Joined" not in response.data
