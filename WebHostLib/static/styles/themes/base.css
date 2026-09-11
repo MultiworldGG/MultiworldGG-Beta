@@ -39,10 +39,10 @@
     --mw-sys-color-primary-fixed:              #a01049;
 
     /* Secondary - gold accent */
-    --mw-sys-color-secondary:                  #fdb755;
+    --mw-sys-color-secondary:                  #e07b00;
     --mw-sys-color-on-secondary:               #2a1232;
-    --mw-sys-color-secondary-container:        #f9d6a3;
-    --mw-sys-color-on-secondary-container:     #5a3a0f;
+    --mw-sys-color-secondary-container:        #dfcab1;
+    --mw-sys-color-on-secondary-container:     #3d0f5a;
 
     /* Tertiary - purple branding (gradient buttons, tracker tables) */
     --mw-sys-color-tertiary:                   #742895;
