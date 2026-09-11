@@ -1540,8 +1540,8 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
             ctx.handle_connection_loss(f"Lost connection to the multiworld server due to InvalidMessage"
                                        f"{reconnect_hint()}")
     except ConnectionRefusedError:
-        ctx.handle_connection_loss("Connection refused by the server. "
-                                   f"May not be running {apname} on that address or port.")
+        ctx.handle_connection_loss("Server refused the connection. Verify that you have the correct address/port "
+                                   "and that the room has been reopened if previously closed due to inactivity.")
     except websockets.InvalidURI:
         ctx.handle_connection_loss("Failed to connect to the multiworld server (invalid URI)")
     except asyncio.TimeoutError:
@@ -1560,7 +1560,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
                 assert ctx.autoreconnect_task is None
                 ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
             elif not connected:
-                logger.info("Check the address and use /connect to try again.")
+                logger.info("Use /connect to try again.")
 
 
 async def server_autoreconnect(ctx: CommonContext):
