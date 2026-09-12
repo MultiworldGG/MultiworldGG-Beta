@@ -2215,10 +2215,11 @@ class Spoiler:
             outfile.write('\n'.join(
                 ['%s: %s' % (location, item) for location, item in locations]))
 
-            outfile.write('\n\nPlaythrough:\n\n')
-            outfile.write('\n'.join(['%s: {\n%s\n}' % (sphere_nr, '\n'.join(
-                [f"  {location}: {item}" for (location, item) in sphere.items()] if isinstance(sphere, dict) else
-                [f"  {item}" for item in sphere])) for (sphere_nr, sphere) in self.playthrough.items()]))
+            if self.playthrough:
+                outfile.write('\n\nPlaythrough:\n\n')
+                outfile.write('\n'.join(['%s: {\n%s\n}' % (sphere_nr, '\n'.join(
+                    [f"  {location}: {item}" for (location, item) in sphere.items()] if isinstance(sphere, dict) else
+                    [f"  {item}" for item in sphere])) for (sphere_nr, sphere) in self.playthrough.items()]))
             if self.unreachables:
                 outfile.write('\n\nUnreachable Progression Items:\n\n')
                 outfile.write(

@@ -1998,8 +1998,6 @@ def lobby_reopen(lobby: UUID):
     if lobby.state != LOBBY_DONE:
         return jsonify({"error": "Only finished lobbies can be reopened"}), 400
 
-    room = lobby.room
-    seed = lobby.seed
     lobby.room_id = None
     lobby.seed_id = None
     lobby.generation_id = None
@@ -2011,16 +2009,10 @@ def lobby_reopen(lobby: UUID):
     ).all():
         player.is_ready = False
 
-    if room:
-        room.delete()
-    if seed and not seed.rooms and not seed.lobbies:
-        for slot in list(seed.slots):
-            slot.delete()
-        seed.delete()
-
     LobbyMessage(
         lobby_id=lobby.id, player_id=None, sender_name="System",
-        content="The lobby has been reopened by the host. Previous seed and room data were removed.",
+        content="The lobby has been reopened by the host. The previous seed and room stay available "
+                "but are no longer linked to this lobby.",
     )
     commit()
 

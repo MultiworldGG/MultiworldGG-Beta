@@ -529,8 +529,10 @@ class TestLobbyApworldQueue(TestBase):
             self.assertEqual(len(lobby.apworlds), 1)
             self.assertEqual(json.loads(lobby.meta)["server_options"]["hint_cost"], 7)
             self.assertTrue(all(not player.is_ready for player in lobby.players))
-            self.assertIsNone(Seed.get(id=seed_id))
-            self.assertIsNone(Room.get(id=room_id))
+            room = Room.get(id=room_id)
+            self.assertIsNotNone(Seed.get(id=seed_id))
+            self.assertIsNotNone(room)
+            self.assertEqual(room.seed_id, seed_id)
             self.assertIsNotNone(LobbyApworld.get(id=apworld_id))
             self.assertTrue(os.path.exists(apworld_path))
 

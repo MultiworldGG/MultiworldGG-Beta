@@ -558,3 +558,13 @@ def test_tutorial_legacy_redirect_lands_on_tutorial_landing(client):
     response = client.get("/tutorial", follow_redirects=False)
     assert response.status_code == 301
     assert response.headers["Location"].endswith("/learn/en/tutorials")
+
+
+# ---------------------------------------------------------------------------
+# Trailing slashes: optional on every route, served directly (no 308)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("path", ["/play/", "/downloads", "/legal"])
+def test_trailing_slash_is_optional(client, path):
+    response = client.get(path, follow_redirects=False)
+    assert response.status_code == 200

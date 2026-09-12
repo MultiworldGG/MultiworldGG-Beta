@@ -523,3 +523,29 @@ def test_parse_client_function_requires_both_client_type_and_func():
         "func=launch_client, component_type=Type.CLIENT))"
     )
     assert parse_client_function(both) == "launch_client"
+
+
+# --------------------------------------------------------------------------- #
+# BaseClasses.Spoiler.to_file: optional sections write their heading only when
+# they have content, so a level-1 spoiler does not end on a bare heading.
+# --------------------------------------------------------------------------- #
+
+def _spoiler_text(multiworld) -> str:
+    with TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "spoiler.txt")
+        multiworld.spoiler.to_file(path)
+        with open(path, encoding="utf-8-sig") as f:
+            return f.read()
+
+
+def test_spoiler_playthrough_heading_only_with_playthrough():
+    from test.general import setup_solo_multiworld
+    from worlds.AutoWorld import AutoWorldRegister
+
+    multiworld = setup_solo_multiworld(AutoWorldRegister.world_types["debug"])
+    without = _spoiler_text(multiworld)
+    assert "Locations:" in without
+    assert "Playthrough:" not in without
+
+    multiworld.spoiler.playthrough = {"1": ["Test Item"]}
+    assert "Playthrough:\n\n1: {\n  Test Item\n}" in _spoiler_text(multiworld)
