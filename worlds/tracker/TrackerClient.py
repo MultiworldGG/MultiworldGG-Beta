@@ -15,6 +15,7 @@ from worlds import AutoWorld
 from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION
 from .TrackerCore import TrackerCore, world_needs_yaml
 from .map_controller import UTMapController, UT_MAP_TAB_KEY, cmd_load_map, cmd_list_maps, load_json, load_json_zip
+from .loading import status_reporter, finish_loading
 from collections import Counter, defaultdict
 from MultiServer import mark_raw
 from NetUtils import NetworkItem
@@ -599,60 +600,76 @@ class TrackerGameContext(CommonContext):
         """Upstream world clients call this at startup; generation waits for Connected,
         where the slot name selects its yaml."""
 
+    async def before_package(self, cmd: str, args: dict) -> None:
+        """Stage the slot's yaml off the loop thread and announce the generation on the
+        loading overlay before on_package blocks on it."""
+        await super().before_package(cmd, args)
+        if cmd != "Connected":
+            return
+        slot_name, game = args["slot_info"][str(args["slot"])][:2]
+        connected_cls = AutoWorld.AutoWorldRegister.world_types.get(game)
+        if connected_cls is None:
+            return
+        self.tracker_core.set_slot_params(game, self.slot, slot_name, self.team)
+        await self.tracker_core.prepare_generation(connected_cls, status_reporter(self))
+
     def on_package(self, cmd: str, args: dict):
         try:
             if cmd == "RoomInfo":
                 self.seed_name = args["seed_name"]
             elif cmd == "Connected":
-                self.game = args["slot_info"][str(args["slot"])][1]
-                slot_name = args["slot_info"][str(args["slot"])][0]
-                self.tracker_core.set_slot_params(self.game,self.slot,slot_name,self.team)
-                connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
-                if connected_cls is None:
-                    self.log_to_tab(f"Connected to World {self.game} but that world is not installed")
-                    return
-                if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
-                    logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
-                    logger.error(f"Local checksum = {connected_cls.get_data_package_data()['checksum']} | remote checksum = {self.checksums[self.game]}")
-                if world_needs_yaml(connected_cls) and self.tracker_core.launch_multiworld is None:
-                    self.tracker_core.run_generator(None, None)
-                self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
-                if self.tracker_core.tracker_disabled:
-                    logger.error("World Author has requested UT be disabled on this world, please respect their decision")
-                    return
-                if not self.tracker_core.multiworld:
-                    logger.error("Internal generation failed, something has gone wrong")
-                    logger.error("Run the /faris_asked command and post the results in the discord")
-                    return #if this has failed we don't want to even try anything else
-                self.use_split = self.tracker_core.use_split
-                self.load_seed_data()
-                self._map_controller.build_tracker_world(connected_cls)
-                if self.tracker_world:
-                    self._map_controller.activate(self.ui)
-                self.defered_entrance_datastorage_keys = getattr(self.tracker_core.get_current_world(),"found_entrances_datastorage_key",None)
-                from . import DeferredEntranceMode
-                if self.defered_entrance_datastorage_keys and self.tracker_core.enforce_deferred_connections != DeferredEntranceMode.disabled:
-                    if isinstance(self.defered_entrance_datastorage_keys,str):
-                        self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
-                    self.defered_entrance_datastorage_keys = [key.format(player=self.slot, team=self.team) for key in self.defered_entrance_datastorage_keys]
-                    self.defered_entrance_callback = getattr(self.tracker_core.get_current_world(),"reconnect_found_entrances",None)
-                    if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
-                        self.defered_entrance_callback = None
-                        self.defered_entrance_datastorage_keys = []
+                try:
+                    self.game = args["slot_info"][str(args["slot"])][1]
+                    slot_name = args["slot_info"][str(args["slot"])][0]
+                    self.tracker_core.set_slot_params(self.game,self.slot,slot_name,self.team)
+                    connected_cls = AutoWorld.AutoWorldRegister.world_types.get(self.game)
+                    if connected_cls is None:
+                        self.log_to_tab(f"Connected to World {self.game} but that world is not installed")
+                        return
+                    if self.checksums[self.game] != connected_cls.get_data_package_data()["checksum"]:
+                        logger.warning("*****\nWarning: the local datapackage for the connected game does not match the server's datapackage\n*****")
+                        logger.error(f"Local checksum = {connected_cls.get_data_package_data()['checksum']} | remote checksum = {self.checksums[self.game]}")
+                    if world_needs_yaml(connected_cls) and self.tracker_core.launch_multiworld is None:
+                        self.tracker_core.run_generator(None, None)
+                    self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
+                    if self.tracker_core.tracker_disabled:
+                        logger.error("World Author has requested UT be disabled on this world, please respect their decision")
+                        return
+                    if not self.tracker_core.multiworld:
+                        logger.error("Internal generation failed, something has gone wrong")
+                        logger.error("Run the /faris_asked command and post the results in the discord")
+                        return #if this has failed we don't want to even try anything else
+                    self.use_split = self.tracker_core.use_split
+                    self.load_seed_data()
+                    self._map_controller.build_tracker_world(connected_cls)
+                    if self.tracker_world:
+                        self._map_controller.activate(self.ui)
+                    self.defered_entrance_datastorage_keys = getattr(self.tracker_core.get_current_world(),"found_entrances_datastorage_key",None)
+                    from . import DeferredEntranceMode
+                    if self.defered_entrance_datastorage_keys and self.tracker_core.enforce_deferred_connections != DeferredEntranceMode.disabled:
+                        if isinstance(self.defered_entrance_datastorage_keys,str):
+                            self.defered_entrance_datastorage_keys = [self.defered_entrance_datastorage_keys]
+                        self.defered_entrance_datastorage_keys = [key.format(player=self.slot, team=self.team) for key in self.defered_entrance_datastorage_keys]
+                        self.defered_entrance_callback = getattr(self.tracker_core.get_current_world(),"reconnect_found_entrances",None)
+                        if not self.defered_entrance_callback or not callable(self.defered_entrance_callback):
+                            self.defered_entrance_callback = None
+                            self.defered_entrance_datastorage_keys = []
+                        else:
+                            self.set_notify(*self.defered_entrance_datastorage_keys)
+                            self.waiting_on_entrances = True
                     else:
-                        self.set_notify(*self.defered_entrance_datastorage_keys)
-                        self.waiting_on_entrances = True
-                else:
-                    self.defered_entrance_datastorage_keys = []
+                        self.defered_entrance_datastorage_keys = []
 
-                if not (self.items_handling & 0b010):
-                    self.scout_checked_locations()
+                    if not (self.items_handling & 0b010):
+                        self.scout_checked_locations()
 
-                if not self.quit_after_update:
-                    self.updateTracker()
-                else:
-                    asyncio.create_task(wait_for_items(self),name="UT Delay function") #if we don't get new items, delay for a bit first
-                self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher") #This shouldn't be needed, but technically
+                    if not self.quit_after_update:
+                        self.updateTracker()
+                    else:
+                        asyncio.create_task(wait_for_items(self),name="UT Delay function") #if we don't get new items, delay for a bit first
+                    self.watcher_task = asyncio.create_task(game_watcher(self), name="GameWatcher") #This shouldn't be needed, but technically
+                finally:
+                    finish_loading(self)
             elif cmd == 'RoomUpdate':
                 if not (self.items_handling & 0b010):
                     self.scout_checked_locations()

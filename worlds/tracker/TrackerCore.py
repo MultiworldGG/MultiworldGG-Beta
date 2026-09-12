@@ -1,4 +1,5 @@
 
+import asyncio
 import logging
 import inspect
 import pathlib
@@ -19,7 +20,7 @@ from yaml import safe_dump
 from Generate import main as GMain, mystery_argparse
 from worlds.generic.Rules import exclusion_rules
 from argparse import Namespace
-from typing import Optional,Callable
+from typing import Optional, Callable, Awaitable
 from NetUtils import NetworkItem, HintStatus
 
 
@@ -62,14 +63,27 @@ def yaml_game_matches(yaml_game: Any, game: str | None) -> bool:
     return game in yaml_game if isinstance(yaml_game, dict) else yaml_game == game
 
 
-def load_player_yaml_docs(path: pathlib.Path) -> list[dict[str, Any]]:
-    """Safe-loads one player file; an unreadable file is skipped so it cannot abort the scan."""
+def read_player_yaml(path: pathlib.Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        logging.getLogger("Client").warning("Skipping unreadable player yaml %s", path, exc_info=True)
+        return None
+
+
+def parse_player_yaml_docs(path: pathlib.Path, text: str) -> list[dict[str, Any]]:
+    """Safe-loads one player file's text; a malformed file is skipped so it cannot abort the scan."""
     from Utils import parse_yamls
     try:
-        return [doc for doc in parse_yamls(path.read_text(encoding="utf-8-sig")) if isinstance(doc, dict)]
+        return [doc for doc in parse_yamls(text) if isinstance(doc, dict)]
     except Exception:
         logging.getLogger("Client").warning("Skipping unreadable player yaml %s", path, exc_info=True)
         return []
+
+
+def load_player_yaml_docs(path: pathlib.Path) -> list[dict[str, Any]]:
+    text = read_player_yaml(path)
+    return parse_player_yaml_docs(path, text) if text is not None else []
 
 
 def match_player_doc(docs: list[dict[str, Any]], path: pathlib.Path, slot_name: str,
@@ -81,15 +95,24 @@ def match_player_doc(docs: list[dict[str, Any]], path: pathlib.Path, slot_name: 
 
 
 def find_player_yaml(folder: str | None, slot_name: str, game: str | None = None) -> PlayerYaml | None:
-    """First document in folder whose name (file stem when unnamed) and game match the connected slot."""
+    """First document in folder whose name (file stem when unnamed) and game match the connected slot.
+
+    Parsing dominates the scan, so files that mention the slot (at a word start, so "me" does
+    not hit every "game:") are parsed first; the rest only when none of those match, since
+    placeholder names and escaped strings never mention the slot literally.
+    """
     if not folder:
         return None
     try:
         paths = sorted(p for p in pathlib.Path(folder).iterdir() if p.suffix.lower() in (".yaml", ".yml"))
     except OSError:
         return None
-    for path in paths:
-        found = match_player_doc(load_player_yaml_docs(path), path, slot_name, game)
+    mentions = re.compile(r"(?<!\w)" + re.escape(slot_name.casefold()))
+    candidates = [(path, text) for path in paths if (text := read_player_yaml(path)) is not None]
+    candidates.sort(key=lambda candidate: not (mentions.search(candidate[0].stem.casefold())
+                                               or mentions.search(candidate[1].casefold())))
+    for path, text in candidates:
+        found = match_player_doc(parse_player_yaml_docs(path, text), path, slot_name, game)
         if found is not None:
             return found
     return None
@@ -142,6 +165,7 @@ class TrackerCore():
         self.tracker_items_received = []
         self.manual_items: list[str] = []
         self.player_folder_override = None
+        self.player_yaml_declined = False
         self.gen_error:str = ""
         self.connect_mode: bool = False
         self.tracker_disabled = False
@@ -160,6 +184,7 @@ class TrackerCore():
         self.manual_items = []
         self.ignored_locations = set()
         self.player_folder_override = None
+        self.player_yaml_declined = False
         self.location_alias_map = {}
         self.log_lines = {}
 
@@ -347,14 +372,52 @@ class TrackerCore():
             tracker_settings["use_split_map_icons"], defered_mode, tracker_settings['display_glitched_logic'], \
             sorting_priorities, sorting_method
     
+    def _players_folder(self) -> str | None:
+        from . import TrackerWorld
+        return TrackerWorld.settings["player_files_path"]
+
+    async def prepare_generation(self, connected_cls: type,
+                                 report: Callable[[str], Awaitable[None]] | None = None) -> None:
+        """Stages the slot's yaml ahead of run_generator, scanning off the event loop thread, and
+        reports each step so a frontend can narrate it; a world that regenerates from slot_data
+        only gets the generation notice.
+        """
+        if getattr(connected_cls, "disable_ut", False):
+            return
+
+        async def say(message: str) -> None:
+            self.logger.info(message)
+            if report is not None:
+                await report(message)
+
+        if world_needs_yaml(connected_cls) and self.launch_multiworld is None \
+                and not self.player_folder_override and not self.player_yaml_declined:
+            folder = self._players_folder()
+            found = None
+            if folder and self.slot_name:
+                await say(f"Searching {folder} for {self.slot_name}'s yaml...")
+                found = await asyncio.to_thread(find_player_yaml, folder, self.slot_name, self.game)
+            if found is None:
+                await say(f"No yaml for {self.slot_name} in {folder or 'the Players folder'}; "
+                          "choose one in the file dialog...")
+            staged = self.stage_player_yaml(found)
+            if staged is None:
+                self.player_yaml_declined = True
+                return
+            self.player_folder_override = staged
+        await say(f"Generating {self.game} logic...")
+
     def _stage_player_yaml(self, players_folder: str | None) -> str | None:
-        """Picks the connected slot's yaml from host.yaml's Players folder, prompting for a file
-        when the folder is missing or holds no match, and stages that one document for Generate.
+        found = find_player_yaml(players_folder, self.slot_name, self.game) if self.slot_name else None
+        return self.stage_player_yaml(found)
+
+    def stage_player_yaml(self, found: PlayerYaml | None) -> str | None:
+        """Stages the scan's pick (prompting for a file when it found nothing) as the one document
+        Generate will see, and returns the staging folder, or None when no usable yaml was chosen.
 
         Generate scans a folder, so the document goes alone into one stable cache dir; name and
         game are pinned to the server's so placeholder names and weighted games resolve to the slot.
         """
-        found = find_player_yaml(players_folder, self.slot_name, self.game) if self.slot_name else None
         if found is None:
             picked = open_filename(f"Select the YAML for {self.slot_name or 'tracking'}", [("YAML", ["*.yaml", "*.yml"])])
             if not picked:
@@ -433,6 +496,8 @@ class TrackerCore():
                 args.player_files_path = override_yaml_path
             elif self.player_folder_override:
                 args.player_files_path = self.player_folder_override
+            elif self.player_yaml_declined:
+                return
             else:
                 staged = self._stage_player_yaml(yaml_path)
                 if staged is None:

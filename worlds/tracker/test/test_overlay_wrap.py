@@ -248,5 +248,54 @@ class TestConnectedGeneration(unittest.TestCase):
         self.assertEqual(self._connect(NeedsYaml), ["run_generator", "initalize_tracker_core"])
 
 
+class TestBeforePackageHook(unittest.IsolatedAsyncioTestCase):
+    """attach_tracker_overlay chains before_package after the context's own; Connected stages the
+    yaml through tracker_core with the frontend's status hook, other worlds and packets pass."""
+
+    async def test_connected_prepares_after_the_original_hook(self):
+        calls = []
+
+        async def original(cmd, args):
+            calls.append(("original", cmd))
+
+        async def show(message):
+            pass
+
+        ctx = _ctx(team=0, tracker_core=None, feature_registry=None, on_package=lambda cmd, args: None,
+                   before_package=original, ui=SimpleNamespace(show_loading_status=show))
+        wrap.attach_tracker_overlay(ctx)
+        ctx.tracker_core = SimpleNamespace(
+            set_slot_params=lambda *a: calls.append(("slot", a)),
+            prepare_generation=mock.AsyncMock(side_effect=lambda cls, report: calls.append(("prepare", cls, report))))
+
+        class World:
+            pass
+
+        from worlds import AutoWorld
+        with mock.patch.dict(AutoWorld.AutoWorldRegister.world_types, {"FakeGame": World}):
+            await ctx.before_package("Connected", {"slot": 3, "slot_info": {"3": ("me", "FakeGame")}})
+            await ctx.before_package("Connected", {"slot": 3, "slot_info": {"3": ("me", "Nope")}})
+            await ctx.before_package("RoomUpdate", {})
+        self.assertEqual(calls, [("original", "Connected"), ("slot", ("FakeGame", 3, "me", 0)),
+                                 ("prepare", World, show), ("original", "Connected"), ("original", "RoomUpdate")])
+
+    async def test_context_without_a_hook_gets_one(self):
+        ctx = _ctx(tracker_core=None, feature_registry=None, on_package=lambda cmd, args: None)
+        wrap.attach_tracker_overlay(ctx)
+        await ctx.before_package("RoomUpdate", {})
+
+
+class TestConnectedFinishesLoading(unittest.TestCase):
+    def test_overlay_drops_unless_the_map_pack_narrates(self):
+        hidden = []
+        ctx = _ctx(team=0, tracker_core=SimpleNamespace(set_slot_params=lambda *a: None),
+                   ui=SimpleNamespace(hide_loading=lambda: hidden.append(True)))
+        wrap._handle_connected(ctx, {"slot": 3, "slot_info": {}})
+        self.assertEqual(hidden, [True])
+        ctx._map_activation_pending = True
+        wrap._handle_connected(ctx, {"slot": 3, "slot_info": {}})
+        self.assertEqual(hidden, [True])
+
+
 if __name__ == "__main__":
     unittest.main()

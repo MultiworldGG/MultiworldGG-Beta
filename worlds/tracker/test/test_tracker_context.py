@@ -174,5 +174,151 @@ class TestStagePlayerYaml(unittest.TestCase):
         self.assertEqual(self._staged(second)[0], "you.yaml")
 
 
+class TestPlayerYamlScanOrder(unittest.TestCase):
+    """Parsing dominates the scan: files mentioning the slot are parsed first, the rest only
+    when none of them match."""
+
+    def setUp(self):
+        from worlds.tracker import TrackerCore
+        self.mod = TrackerCore
+        self.folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, self.folder, ignore_errors=True)
+        self.parsed = []
+        parse = TrackerCore.parse_player_yaml_docs
+
+        def recording_parse(path, text):
+            self.parsed.append(path.name)
+            return parse(path, text)
+
+        patcher = mock.patch.object(TrackerCore, "parse_player_yaml_docs", recording_parse)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_files_mentioning_the_slot_are_parsed_first(self):
+        _write(self.folder, "a.yaml", "name: a\ngame: G\n")
+        _write(self.folder, "b.yaml", "name: b\ngame: G\n")
+        _write(self.folder, "zed.yaml", "name: Me\ngame: G\n")
+        self.assertEqual(self.mod.find_player_yaml(self.folder, "me", "G").path.name, "zed.yaml")
+        self.assertEqual(self.parsed, ["zed.yaml"])
+
+    def test_every_file_is_parsed_when_no_mention_matches(self):
+        _write(self.folder, "bulk.yaml", "name: Player{number}\ngame: G\n")
+        _write(self.folder, "notes.yaml", "# about Player3\nname: other\ngame: G\n")
+        self.assertEqual(self.mod.find_player_yaml(self.folder, "Player3", "G").path.name, "bulk.yaml")
+        self.assertEqual(self.parsed, ["notes.yaml", "bulk.yaml"])
+
+
+class TestPrepareGeneration(unittest.IsolatedAsyncioTestCase):
+    """The narrated prelude to run_generator: scan off the loop thread, stage, report each step."""
+
+    def setUp(self):
+        import sys
+        from worlds.tracker import TrackerCore
+        self.mod = TrackerCore
+        self.folder = tempfile.mkdtemp()
+        self.cache = tempfile.mkdtemp()
+        for folder in (self.folder, self.cache):
+            self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
+        argv = sys.argv.copy()
+        self.addCleanup(lambda: setattr(sys, "argv", argv))
+        self.core = TrackerCore.TrackerCore(logging.getLogger("test"), False, False)
+        self.core.set_slot_params("G", 1, "me", 0)
+        self.core._players_folder = lambda: self.folder
+        self.statuses = []
+        patcher = mock.patch.object(TrackerCore, "cache_path", lambda *parts: os.path.join(self.cache, *parts))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    async def report(self, message):
+        self.statuses.append(message)
+
+    async def test_folder_match_is_staged_and_each_step_reported(self):
+        _write(self.folder, "me.yaml", "name: me\ngame: G\nG:\n  opt: 1\n")
+        with mock.patch.object(self.mod, "open_filename", side_effect=AssertionError("prompted")):
+            await self.core.prepare_generation(type("NeedsYaml", (), {}), self.report)
+        self.assertEqual(self.statuses, [f"Searching {self.folder} for me's yaml...", "Generating G logic..."])
+        self.assertEqual(os.listdir(self.core.player_folder_override), ["me.yaml"])
+        self.assertFalse(self.core.player_yaml_declined)
+
+    async def test_declined_prompt_stops_generation_without_a_second_prompt(self):
+        with mock.patch.object(self.mod, "open_filename", return_value="") as prompt:
+            await self.core.prepare_generation(type("NeedsYaml", (), {}), self.report)
+        prompt.assert_called_once()
+        self.assertEqual(self.statuses, [f"Searching {self.folder} for me's yaml...",
+                                         f"No yaml for me in {self.folder}; choose one in the file dialog..."])
+        self.assertTrue(self.core.player_yaml_declined)
+        self.assertIsNone(self.core.player_folder_override)
+        with mock.patch.object(self.mod, "open_filename") as prompt, mock.patch.object(self.mod, "GMain") as generate:
+            self.core.run_generator(None, None)
+        prompt.assert_not_called()
+        generate.assert_not_called()
+
+    async def test_yamlless_world_only_announces_generation(self):
+        await self.core.prepare_generation(type("YamlLess", (), {"ut_can_gen_without_yaml": True}), self.report)
+        self.assertEqual(self.statuses, ["Generating G logic..."])
+        self.assertIsNone(self.core.player_folder_override)
+
+    async def test_disabled_world_is_quiet_and_no_frontend_is_fine(self):
+        await self.core.prepare_generation(type("Disabled", (), {"disable_ut": True}), self.report)
+        self.assertEqual(self.statuses, [])
+        _write(self.folder, "me.yaml", "name: me\ngame: G\n")
+        await self.core.prepare_generation(type("NeedsYaml", (), {}))
+        self.assertEqual(os.listdir(self.core.player_folder_override), ["me.yaml"])
+
+
+class TestBeforePackage(unittest.IsolatedAsyncioTestCase):
+    """TrackerGameContext stages and narrates before on_package; other packets and unknown
+    worlds are skipped."""
+
+    def _ctx(self, ui=None):
+        from worlds.tracker.TrackerClient import TrackerGameContext
+        ctx = TrackerGameContext.__new__(TrackerGameContext)
+        ctx.slot, ctx.team, ctx.ui, ctx.calls = 3, 0, ui, []
+        ctx.tracker_core = SimpleNamespace(
+            set_slot_params=lambda *a: ctx.calls.append(("slot", a)),
+            prepare_generation=mock.AsyncMock(side_effect=lambda cls, report: ctx.calls.append(("prepare", cls, report))))
+        return ctx
+
+    async def test_connected_stages_with_the_frontend_status_hook(self):
+        class World:
+            pass
+
+        async def show(message):
+            pass
+
+        ctx = self._ctx(ui=SimpleNamespace(show_loading_status=show))
+        with _world_types(World):
+            await ctx.before_package("Connected", {"slot": 3, "slot_info": {"3": ("me", "FakeGame")}})
+        self.assertEqual(ctx.calls, [("slot", ("FakeGame", 3, "me", 0)), ("prepare", World, show)])
+
+    async def test_other_packets_and_unknown_worlds_are_ignored(self):
+        ctx = self._ctx()
+        await ctx.before_package("RoomUpdate", {})
+        await ctx.before_package("Connected", {"slot": 3, "slot_info": {"3": ("me", "Nope")}})
+        self.assertEqual(ctx.calls, [])
+
+
+class TestConnectedFinishesLoading(unittest.TestCase):
+    def _connect(self, ctx):
+        from worlds.tracker.TrackerClient import TrackerGameContext
+        TrackerGameContext.on_package(ctx, "Connected",
+                                      {"slot": 3, "slot_info": {"3": ("me", "Nope")}, "slot_data": {}})
+
+    def test_overlay_drops_even_when_the_world_is_missing(self):
+        hidden = []
+        ctx = SimpleNamespace(slot=3, team=0, tracker_core=SimpleNamespace(set_slot_params=lambda *a: None),
+                              log_to_tab=lambda *a: None, ui=SimpleNamespace(hide_loading=lambda: hidden.append(True)))
+        self._connect(ctx)
+        self.assertEqual(hidden, [True])
+
+    def test_overlay_stays_while_the_map_pack_narrates(self):
+        hidden = []
+        ctx = SimpleNamespace(slot=3, team=0, tracker_core=SimpleNamespace(set_slot_params=lambda *a: None),
+                              log_to_tab=lambda *a: None, ui=SimpleNamespace(hide_loading=lambda: hidden.append(True)),
+                              _map_activation_pending=True)
+        self._connect(ctx)
+        self.assertEqual(hidden, [])
+
+
 if __name__ == "__main__":
     unittest.main()
