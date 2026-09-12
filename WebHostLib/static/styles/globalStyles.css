@@ -80,6 +80,7 @@ h6 {
 }
 
 .user-message {
+  box-sizing: border-box;
   width: 50%;
   min-width: 500px;
   padding-top: 5px;
@@ -87,14 +88,39 @@ h6 {
   text-align: center;
   margin-left: auto;
   margin-right: auto;
-  color: var(--mw-sys-color-on-warning);
+  color: var(--mw-sys-color-on-warning-container);
+  border: 1px solid var(--mw-sys-color-warning);
   border-radius: 4px;
   margin-bottom: 20px;
-  background-color: var(--mw-sys-color-warning);
+  background-color: var(--mw-sys-color-warning-container);
 }
 .user-message a {
-  color: var(--mw-sys-color-on-warning);
+  color: inherit;
   text-decoration: underline;
+}
+
+.user-message--error {
+  color: var(--mw-sys-color-on-error-container);
+  border-color: var(--mw-sys-color-error);
+  background-color: var(--mw-sys-color-error-container);
+}
+
+.user-message--success {
+  color: var(--mw-sys-color-on-success-container);
+  border-color: var(--mw-sys-color-success);
+  background-color: var(--mw-sys-color-success-container);
+}
+
+.user-message--warning {
+  color: var(--mw-sys-color-on-warning-container);
+  border-color: var(--mw-sys-color-warning);
+  background-color: var(--mw-sys-color-warning-container);
+}
+
+.user-message--info {
+  color: var(--mw-sys-color-on-info-container);
+  border-color: var(--mw-sys-color-info);
+  background-color: var(--mw-sys-color-info-container);
 }
 
 .interactive {

@@ -129,23 +129,23 @@ def api_lobby_invite(lobby: UUID):
 def accept_invite(token: UUID):
     invite = db.session.get(OwnershipInvite, token)
     if invite is None:
-        flash("That invite link is invalid or has been revoked.")
+        flash("That invite link is invalid or has been revoked.", "error")
         return redirect(url_for("me"))
     if invite.consumed_at is not None:
-        flash("That invite link has already been used.")
+        flash("That invite link has already been used.", "error")
         return redirect(url_for("me"))
     if invite.expires_at < utcnow():
-        flash("That invite link has expired.")
+        flash("That invite link has expired.", "error")
         return redirect(url_for("me"))
 
     target = _get_target(invite.target_kind, invite.target_id)
     if target is None:
-        flash("The room or lobby this invite was for no longer exists.")
+        flash("The room or lobby this invite was for no longer exists.", "error")
         return redirect(url_for("me"))
 
     me = session["_id"]
     if me == invite.created_by:
-        flash("You can't accept your own invite.")
+        flash("You can't accept your own invite.", "error")
         return redirect(url_for("me"))
 
     if invite.mode == "transfer":
@@ -156,15 +156,15 @@ def accept_invite(token: UUID):
         existing = _co_owner_row(invite.target_kind, invite.target_id, me)
         if existing is not None:
             db.session.delete(existing)
-        flash(f"You are now the primary owner of this {invite.target_kind}.")
+        flash(f"You are now the primary owner of this {invite.target_kind}.", "success")
     else:  # co_owner
         if target.owner == me:
-            flash("You're already the primary owner.")
+            flash("You're already the primary owner.", "info")
         elif _co_owner_row(invite.target_kind, invite.target_id, me) is not None:
-            flash("You already have access.")
+            flash("You already have access.", "info")
         else:
             _add_co_owner(invite.target_kind, invite.target_id, me, granted_by=invite.created_by)
-            flash(f"You now have shared access to this {invite.target_kind}.")
+            flash(f"You now have shared access to this {invite.target_kind}.", "success")
 
     invite.consumed_at = utcnow()
     invite.consumed_by = me

@@ -101,7 +101,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
     infolist = zfile.infolist()
     if all(allowed_options(file.filename) or file.is_dir() for file in infolist):
         flash(Markup("Error: Your .zip file only contains options files. "
-                     'Did you mean to <a href="/generate">generate a game</a>?'))
+                     'Did you mean to <a href="/generate">generate a game</a>?'), "error")
         return
 
     spoiler = ""
@@ -131,7 +131,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
             try:
                 multidata = zfile.open(file).read()
             except:
-                flash("Could not load multidata. File may be corrupted or incompatible.")
+                flash("Could not load multidata. File may be corrupted or incompatible.", "error")
                 multidata = None
 
         # Factorio
@@ -139,7 +139,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
             try:
                 _, _, slot_id, *_ = file.filename.split('_')[0].split('-', 3)
             except ValueError:
-                flash("Error: Unexpected file found in .zip: " + file.filename)
+                flash("Error: Unexpected file found in .zip: " + file.filename, "error")
                 return
             data = zfile.open(file, "r").read()
             files[int(slot_id[1:])] = data
@@ -149,7 +149,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
             try:
                 _, _, slot_id, *_ = file.filename.split('.')[0].split('_', 3)
             except ValueError:
-                flash("Error: Unexpected file found in .zip: " + file.filename)
+                flash("Error: Unexpected file found in .zip: " + file.filename, "error")
                 return
             data = zfile.open(file, "r").read()
             files[int(slot_id[1:])] = data
@@ -165,7 +165,7 @@ def upload_zip_to_db(zfile: zipfile.ZipFile, owner=None, meta={"race": False}, s
             slot.seed_id = seed.id
         return seed
     else:
-        flash("No multidata was found in the zip file, which is required.")
+        flash("No multidata was found in the zip file, which is required.", "error")
 
 
 @app.route("/play/host", methods=["GET", "POST"])
@@ -173,21 +173,21 @@ def uploads():
     if request.method == "POST":
         # check if the POST request has a file part.
         if "file" not in request.files:
-            flash("No file part in POST request.")
+            flash("No file part in POST request.", "error")
         else:
             uploaded_file = request.files["file"]
             # If the user does not select file, the browser will still submit an empty string without a file name.
             if uploaded_file.filename == "":
-                flash("No selected file.")
+                flash("No selected file.", "error")
             elif uploaded_file and allowed_generation(uploaded_file.filename):
                 if zipfile.is_zipfile(uploaded_file):
                     with zipfile.ZipFile(uploaded_file, "r") as zfile:
                         try:
                             res = upload_zip_to_db(zfile)
                         except VersionException:
-                            flash(f"Could not load multidata. Wrong Version detected.")
+                            flash("Could not load multidata. Wrong Version detected.", "error")
                         except Exception as e:
-                            flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})")
+                            flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})", "error")
                         else:
                             if isinstance(res, str):
                                 return res
@@ -201,7 +201,7 @@ def uploads():
                         multidata = uploaded_file.read()
                         slots, multidata = process_multidata(multidata)
                     except Exception as e:
-                        flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})")
+                        flash(f"Could not load multidata. File may be corrupted or incompatible. ({e})", "error")
                     else:
                         seed = Seed(multidata=multidata, owner=session["_id"])
                         flush()  # place into DB and generate IDs
@@ -210,7 +210,7 @@ def uploads():
                         commit()
                         return redirect(url_for("view_seed", seed=seed.id))
             else:
-                flash("Not recognized file format. Awaiting a .archipelago/.mwgg file or .zip containing one.")
+                flash("Not recognized file format. Awaiting a .archipelago/.mwgg file or .zip containing one.", "error")
     return render_template("hostGame.html", version=__version__)
 
 

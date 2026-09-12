@@ -22,11 +22,11 @@
 </head>
 <body>
     <main>
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div>
-                    {% for message in messages | unique %}
-                        <div class="user-message">{{ message }}</div>
+                    {% for category, message in messages | unique(attribute=1) %}
+                        <div class="user-message user-message--{{ category }}">{{ message }}</div>
                     {% endfor %}
                 </div>
             {% endif %}

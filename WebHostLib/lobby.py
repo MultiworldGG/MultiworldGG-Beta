@@ -171,13 +171,13 @@ def lobby_create():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         if not title:
-            flash('Lobby title is required.')
+            flash('Lobby title is required.', 'error')
             return redirect(url_for('lobby_create'))
         if len(title) > 48:
-            flash('Lobby title must be 48 characters or fewer.')
+            flash('Lobby title must be 48 characters or fewer.', 'error')
             return redirect(url_for('lobby_create'))
         if _is_profane(title):
-            flash('Lobby title contains inappropriate language and cannot be used.')
+            flash('Lobby title contains inappropriate language and cannot be used.', 'error')
             return redirect(url_for('lobby_create'))
 
         password = request.form.get('password', '').strip()
@@ -209,12 +209,12 @@ def lobby_create():
             .where(Lobby.owner == session["_id"], Lobby.state.in_([LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING]))
         ) or 0
         if owned_active >= 3:
-            flash('You can only host up to 3 active lobbies at a time. Close or finish an existing one first.')
+            flash('You can only host up to 3 active lobbies at a time. Close or finish an existing one first.', 'error')
             return redirect(url_for('lobby_create'))
 
         creator_name = request.form.get('player_name', '').strip() or 'Anonymous'
         if _is_profane(creator_name):
-            flash('Player name contains inappropriate language and cannot be used.')
+            flash('Player name contains inappropriate language and cannot be used.', 'error')
             return redirect(url_for('lobby_create'))
 
         meta = get_meta(request.form, race)
@@ -267,7 +267,7 @@ def lobby_view(lobby: UUID):
         commit()
 
     if lobby.state == LOBBY_CLOSED:
-        flash('This lobby has expired.')
+        flash('This lobby has expired.', 'info')
         return redirect(url_for('lobby_list'))
 
     player = _get_player_in_lobby(lobby)
@@ -345,11 +345,11 @@ def lobby_view_auth(lobby: UUID):
         commit()
 
     if lobby.state == LOBBY_CLOSED:
-        flash('This lobby has expired.')
+        flash('This lobby has expired.', 'info')
         return redirect(url_for('lobby_list'))
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
-        flash('This lobby cannot be viewed in its current state.')
+        flash('This lobby cannot be viewed in its current state.', 'warning')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if _get_player_in_lobby(lobby):
@@ -358,7 +358,7 @@ def lobby_view_auth(lobby: UUID):
     if lobby.password_hash:
         password = request.form.get('password', '')
         if not check_password_hash(lobby.password_hash, password):
-            flash('Incorrect lobby password.')
+            flash('Incorrect lobby password.', 'error')
             return redirect(url_for('lobby_view', lobby=lobby.id, view='1'))
 
     session[f"lobby_{lobby.id}_viewer"] = True
@@ -382,7 +382,7 @@ def lobby_join(lobby: UUID):
         commit()
 
     if lobby.state != LOBBY_OPEN:
-        flash('This lobby is no longer accepting new players.')
+        flash('This lobby is no longer accepting new players.', 'warning')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     existing = _get_player_in_lobby(lobby)
@@ -398,7 +398,7 @@ def lobby_join(lobby: UUID):
         )
     ) or 0
     if active_memberships >= 5:
-        flash('You can only be part of up to 5 active lobbies at a time.')
+        flash('You can only be part of up to 5 active lobbies at a time.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if lobby.max_players > 0:
@@ -406,31 +406,31 @@ def lobby_join(lobby: UUID):
             select(func.count()).select_from(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
         ) or 0
         if current_player_count >= lobby.max_players:
-            flash('This lobby is full.')
+            flash('This lobby is full.', 'warning')
             return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if lobby.password_hash and not _is_lobby_viewer(lobby.id):
         password = request.form.get('password', '')
         if not check_password_hash(lobby.password_hash, password):
-            flash('Incorrect lobby password.')
+            flash('Incorrect lobby password.', 'error')
             return redirect(url_for('lobby_view', lobby=lobby.id))
 
     player_name = request.form.get('player_name', '').strip()
     if not player_name:
-        flash('Please provide a display name.')
+        flash('Please provide a display name.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
     if len(player_name) > 32:
-        flash('Display name must be 32 characters or fewer.')
+        flash('Display name must be 32 characters or fewer.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
     if _is_profane(player_name):
-        flash('Player name contains inappropriate language and cannot be used.')
+        flash('Player name contains inappropriate language and cannot be used.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     existing_names = db.session.scalars(
         select(LobbyPlayer.player_name).where(LobbyPlayer.lobby_id == lobby.id)
     ).all()
     if player_name in existing_names:
-        flash('That name is already taken in this lobby.')
+        flash('That name is already taken in this lobby.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     player = LobbyPlayer(
@@ -454,7 +454,7 @@ def lobby_join(lobby: UUID):
         # session - rollback() restores it and expunges the pending player and
         # message.
         rollback()
-        flash('The lobby changed while you were joining. Please try again.')
+        flash('The lobby changed while you were joining. Please try again.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby_id))
 
     session.pop(f"lobby_{lobby.id}_viewer", None)
