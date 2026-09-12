@@ -116,7 +116,7 @@ def me_avatar_upload():
         raw = read_avatar_upload(request)
         avatar = store_avatar(raw, token)
     except AvatarUploadError as exc:
-        flash(exc.message)
+        flash(exc.message, "error")
         return redirect(url_for("me_avatar"))
 
     # The previous avatar's file stays: its URL may already be pinned to a slot,
@@ -129,7 +129,7 @@ def me_avatar_upload():
         record.updated_at = utcnow()
     commit()
 
-    flash("Avatar updated.")
+    flash("Avatar updated.", "success")
     return redirect(url_for("me_avatar"))
 
 
@@ -139,7 +139,7 @@ def me_avatar_remove():
     if record is not None:
         record.delete()
         commit()
-        flash("Avatar removed.")
+        flash("Avatar removed.", "success")
     return redirect(url_for("me_avatar"))
 
 
@@ -263,12 +263,12 @@ def set_slot_avatar(tracker):
             raw = read_avatar_upload(request)
             avatar = store_avatar(raw, _session_token(session["_id"]))
         except AvatarUploadError as exc:
-            flash(exc.message)
+            flash(exc.message, "error")
             return back
     else:
         record = SessionAvatar.get(session_id=session["_id"])
         if record is None:
-            flash("Choose an image, or set your own avatar first to reuse it here.")
+            flash("Choose an image, or set your own avatar first to reuse it here.", "warning")
             return back
         avatar = record.avatar
 
@@ -283,7 +283,7 @@ def set_slot_avatar(tracker):
         existing.set_by_session = session["_id"]
         existing.updated_at = utcnow()
     commit()
-    flash("Avatar set for this slot.")
+    flash("Avatar set for this slot.", "success")
     return back
 
 

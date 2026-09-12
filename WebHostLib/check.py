@@ -17,12 +17,12 @@ def check():
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part', 'error')
         else:
             files = request.files.getlist('file')
             options = get_yaml_data(files)
             if isinstance(options, str):
-                flash(options)
+                flash(options, 'error')
             else:
                 results, _ = roll_options(options)
                 if len(options) > 1:

@@ -72,12 +72,12 @@ def generate(race=False):
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part', 'error')
         else:
             files = request.files.getlist('file')
             options = get_yaml_data(files)
             if isinstance(options, str):
-                flash(options)
+                flash(options, 'error')
             else:
                 meta = get_meta(request.form, race)
                 return start_generation(options, meta)
@@ -94,7 +94,7 @@ def start_generation(options: dict[str, dict | str], meta: dict[str, Any]):
         return render_template("checkResult.html", results=results)
     elif len(gen_options) > app.config["MAX_ROLL"]:
         flash(f"Sorry, generating of multiworlds is limited to {app.config['MAX_ROLL']} players. "
-              f"If you have a larger group, please generate it yourself and upload it.")
+              f"If you have a larger group, please generate it yourself and upload it.", "error")
         return redirect(url_for(request.endpoint, **(request.view_args or {})))
     elif len(gen_options) >= app.config["JOB_THRESHOLD"]:
         try:
