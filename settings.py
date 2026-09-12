@@ -8,7 +8,6 @@ import io
 import os
 import os.path
 import pathlib
-import re
 import shutil
 import sys
 import types
@@ -90,9 +89,7 @@ class Group:
     def __getattribute__(self, item: str) -> Any:
         attr = super().__getattribute__(item)
         if isinstance(attr, APPathLib) and not super().__getattribute__("_dumping"):
-            # normalize once (expandvars + expanduser); the existence check below and
-            # the final return both use this same canonical form.
-            resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
+            resolved = pathlib.Path(attr.resolve())
             if attr.required and not resolved.exists() and not super().__getattribute__("_has_attr"):
                 # if a file is required, and the one from settings does not exist, ask the user to provide it
                 # unless we are dumping the settings, because that would ask for each entry
@@ -104,7 +101,7 @@ class Group:
                     setattr(self, item, new)
                     self._changed = True
                     attr = new
-                    resolved = pathlib.Path(os.path.expandvars(attr.resolve())).expanduser()
+                    resolved = pathlib.Path(attr.resolve())
             # validate the file's hash hasn't been tampered with (per upstream #5854);
             # an unset FilePath resolves to a directory, which is not a file to open
             if resolved.is_file():
@@ -321,12 +318,14 @@ T = TypeVar("T", bound="APPathLib")
 
 
 def _resolve_exe(s: str) -> str:
-    """Append exe file extension if the file is an executable"""
+    """Expand env vars and ~, then append exe file extension if the file is an executable"""
+    # expand before callers test isabs, or "%USERPROFILE%\x" gets rooted under user_path
+    expanded = str(os.path.expanduser(os.path.expandvars(s)))
     if isinstance(s, APPathLib):
         from Utils import is_windows
-        if s.is_exe and is_windows and not s.lower().endswith(".exe"):
-            return str(s + ".exe")
-    return str(s)
+        if s.is_exe and is_windows and not expanded.lower().endswith(".exe"):
+            return expanded + ".exe"
+    return expanded
 
 
 def _to_builtin(o: object) -> Any:
@@ -337,28 +336,6 @@ def _to_builtin(o: object) -> Any:
     while c.__module__ != "builtins":
         c = c.__base__
     return c.__call__(o)
-
-
-_DOUBLE_QUOTED_VALUE = re.compile(
-    r'^(?P<head>[ \t]*(?:- )?[^\s#"\'][^#"\n]*?:[ \t]+)"(?P<body>[^"\n]*)"(?P<tail>[ \t]*(?:#[^\n]*)?)$',
-    re.MULTILINE)
-# Consumes each escape whole so the second backslash of a valid "\\" pair isn't re-read.
-_YAML_ESCAPE = re.compile(
-    r'\\(?:(?P<valid>[0abtnvfre "/\\N_LP \t]|x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})|)')
-
-
-def _repair_unescaped_backslashes(text: str) -> str | None:
-    """Hand-edited Windows paths land as "C:\\Users\\..." where backslashes are
-    YAML escapes. Any double-quoted value holding an invalid escape is re-quoted
-    single-quoted so every backslash reads literally; None when nothing matched."""
-    def requote(match: re.Match[str]) -> str:
-        body = match["body"]
-        if all(escape["valid"] is not None for escape in _YAML_ESCAPE.finditer(body)):
-            return match[0]
-        return f"{match['head']}'{body.replace(chr(39), chr(39) * 2)}'{match['tail']}"
-
-    repaired = _DOUBLE_QUOTED_VALUE.sub(requote, text)
-    return repaired if repaired != text else None
 
 
 class APPathLib(str):
@@ -835,23 +812,13 @@ class BizHawkClientOptions(Group):
     rom_start: RomStart | bool = True
 
 
-def _parse_options(text: str) -> tuple[dict[str, Any] | None, Any]:
-    """Parse host.yaml text, retrying with unescaped backslashes repaired.
+def _parse_options(text: str) -> dict[str, Any] | None:
+    """Parse host.yaml text with every backslash read as a forward slash.
 
-    Returns (options, error): error is the original MarkedYAMLError when only the
-    repaired text parsed, else None. Raises that error when neither parses."""
+    Hand-edited Windows paths in double quotes are invalid YAML escapes, and
+    Windows accepts / wherever \\ works. Line and column marks are unchanged."""
     from Utils import parse_yaml
-    from yaml.error import MarkedYAMLError
-    try:
-        return parse_yaml(text), None
-    except MarkedYAMLError as ex:
-        repaired = _repair_unescaped_backslashes(text)
-        if repaired is not None:
-            try:
-                return parse_yaml(repaired), ex
-            except MarkedYAMLError:
-                pass
-        raise
+    return parse_yaml(text.replace("\\", "/"))
 
 
 _MISSING = object()
@@ -946,7 +913,7 @@ class Settings(Group):
             with open(location, encoding="utf-8-sig") as f:
                 text = f.read()
             try:
-                options, repaired = _parse_options(text)
+                options = _parse_options(text)
             except MarkedYAMLError as ex:
                 # A malformed host.yaml must not take down everything that reads
                 # settings: fall back to defaults and skip _filename so autosave
@@ -963,14 +930,8 @@ class Settings(Group):
                     f"Using default settings; fix the file and restart to restore your configuration."
                 )
             else:
-                if repaired is not None:
-                    mark = repaired.problem_mark
-                    logging.warning(
-                        f"{location}: unescaped backslashes in a double-quoted value (line "
-                        f"{mark.line + 1 if mark else '?'}); read as a literal path. "
-                        f"The file is rewritten with proper quoting on next save."
-                    )
-                    self._changed = True
+                if "\\" in text:
+                    self._changed = True  # autosave rewrites it with forward slashes
                 self.update(options or {})
                 self._filename = location
                 self._baseline = copy.deepcopy(options or {})
@@ -1003,7 +964,7 @@ class Settings(Group):
         current = parse_yaml(buffer.getvalue()) or {}
         try:
             with open(location, encoding="utf-8-sig") as f:
-                on_disk, _ = _parse_options(f.read())
+                on_disk = _parse_options(f.read())
         except FileNotFoundError:
             merged = current
         except MarkedYAMLError:
