@@ -3,6 +3,8 @@ Application settings / host.yaml interface using type hints.
 This is different from player options.
 """
 
+import copy
+import io
 import os
 import os.path
 import pathlib
@@ -690,7 +692,6 @@ class ServerOptions(Group):
     loglevel: str = "info"
     logtime: bool = False
     admin_password: AdminPassword | None = None
-    server_password: AdminPassword | None = None #backwards compatibility
     disable_item_cheat: DisableItemCheat | bool = False
     location_check_points: LocationCheckPoints = LocationCheckPoints(1)
     hint_cost: HintCost = HintCost(10)
@@ -703,6 +704,15 @@ class ServerOptions(Group):
     auto_shutdown: AutoShutdown = AutoShutdown(0)
     compatibility: Compatibility = Compatibility(2)
     log_network: LogNetwork = LogNetwork(0)
+
+    def update(self, dct: dict[str, Any]) -> None:
+        # upstream's server_password became admin_password; old files and multidata still carry it
+        if "server_password" in dct:
+            dct = dict(dct)
+            legacy = dct.pop("server_password")
+            if legacy and not dct.get("admin_password"):
+                dct["admin_password"] = legacy
+        super().update(dct)
 
 
 class GeneratorOptions(Group):
@@ -825,6 +835,43 @@ class BizHawkClientOptions(Group):
     rom_start: RomStart | bool = True
 
 
+def _parse_options(text: str) -> tuple[dict[str, Any] | None, Any]:
+    """Parse host.yaml text, retrying with unescaped backslashes repaired.
+
+    Returns (options, error): error is the original MarkedYAMLError when only the
+    repaired text parsed, else None. Raises that error when neither parses."""
+    from Utils import parse_yaml
+    from yaml.error import MarkedYAMLError
+    try:
+        return parse_yaml(text), None
+    except MarkedYAMLError as ex:
+        repaired = _repair_unescaped_backslashes(text)
+        if repaired is not None:
+            try:
+                return parse_yaml(repaired), ex
+            except MarkedYAMLError:
+                pass
+        raise
+
+
+_MISSING = object()
+
+
+def _merge_changes(on_disk: dict[str, Any], baseline: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    """on_disk with every key that changed between baseline and current applied.
+
+    Keys this process never touched keep their on-disk value, so hand edits and
+    other processes' saves survive; nothing on disk is deleted."""
+    merged = copy.deepcopy(on_disk)
+    for key, value in current.items():
+        old = baseline.get(key, _MISSING)
+        if isinstance(value, dict) and isinstance(merged.get(key), dict) and (old is _MISSING or isinstance(old, dict)):
+            merged[key] = _merge_changes(merged[key], old if isinstance(old, dict) else {}, value)
+        elif old is _MISSING or old != value:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
 # Top-level group with lazy loading of worlds
 
 class Settings(Group):
@@ -890,54 +937,45 @@ class Settings(Group):
 
         return super().__getattribute__(key)
 
-    def __init__(self, location: str | None):  # change to PathLike[str] once we drop 3.8?
+    def __init__(self, location: str | None, *, autosave: bool = True):
         super().__init__()
+        self._baseline: dict[str, Any] = {}  # parsed file content at load; save() diffs against it
         if location:
             import logging
-            from Utils import parse_yaml
             from yaml.error import MarkedYAMLError
             with open(location, encoding="utf-8-sig") as f:
                 text = f.read()
             try:
-                options = parse_yaml(text)
+                options, repaired = _parse_options(text)
             except MarkedYAMLError as ex:
-                options = None
-                repaired = _repair_unescaped_backslashes(text)
+                # A malformed host.yaml must not take down everything that reads
+                # settings: fall back to defaults and skip _filename so autosave
+                # can't clobber the file the user needs to repair by hand.
+                detail = ""
+                if ex.problem_mark:
+                    lines = text.splitlines()
+                    if 0 <= ex.problem_mark.line < len(lines):
+                        problem_line = lines[ex.problem_mark.line]
+                        error_line = " " * ex.problem_mark.column + "^"
+                        detail = f"\n{problem_line}\n{error_line}"
+                logging.error(
+                    f"Could not parse {location}: {ex.context} {ex.problem}{detail}\n"
+                    f"Using default settings; fix the file and restart to restore your configuration."
+                )
+            else:
                 if repaired is not None:
-                    try:
-                        options = parse_yaml(repaired)
-                    except MarkedYAMLError:
-                        pass
-                if options is not None:
+                    mark = repaired.problem_mark
                     logging.warning(
                         f"{location}: unescaped backslashes in a double-quoted value (line "
-                        f"{ex.problem_mark.line + 1 if ex.problem_mark else '?'}); read as a literal path. "
+                        f"{mark.line + 1 if mark else '?'}); read as a literal path. "
                         f"The file is rewritten with proper quoting on next save."
                     )
-                    self.update(options or {})
-                    self._filename = location
                     self._changed = True
-                else:
-                    # A malformed host.yaml must not take down everything that reads
-                    # settings: fall back to defaults and skip _filename so autosave
-                    # can't clobber the file the user needs to repair by hand.
-                    detail = ""
-                    if ex.problem_mark:
-                        lines = text.splitlines()
-                        if 0 <= ex.problem_mark.line < len(lines):
-                            problem_line = lines[ex.problem_mark.line]
-                            error_line = " " * ex.problem_mark.column + "^"
-                            detail = f"\n{problem_line}\n{error_line}"
-                    logging.error(
-                        f"Could not parse {location}: {ex.context} {ex.problem}{detail}\n"
-                        f"Using default settings; fix the file and restart to restore your configuration."
-                    )
-            else:
-                # TODO: detect if upgrade is required
                 self.update(options or {})
                 self._filename = location
+                self._baseline = copy.deepcopy(options or {})
 
-        def autosave() -> None:
+        def flush() -> None:
             if __debug__:
                 import __main__
                 main_file = getattr(__main__, "__file__", "")
@@ -946,16 +984,43 @@ class Settings(Group):
             if self._filename and self.changed and not skip_autosave:
                 self.save()
 
-        if not skip_autosave:
+        if autosave and not skip_autosave:
             import atexit
-            atexit.register(autosave)
+            atexit.register(flush)
 
     def save(self, location: str | None = None) -> None:  # as above
+        """Apply this object's changes since load onto the file's current content and write it.
+
+        Several processes share host.yaml and users edit it by hand, so a save
+        never writes the whole in-memory snapshot: keys this process did not touch
+        keep whatever is on disk now. A file that no longer parses is left alone."""
         from Utils import parse_yaml
+        from yaml.error import MarkedYAMLError
         location = location or self._filename
         assert location, "No file specified"
+        buffer = io.StringIO()
+        self.dump(buffer)
+        current = parse_yaml(buffer.getvalue()) or {}
+        try:
+            with open(location, encoding="utf-8-sig") as f:
+                on_disk, _ = _parse_options(f.read())
+        except FileNotFoundError:
+            merged = current
+        except MarkedYAMLError:
+            import logging
+            logging.error(f"Not saving settings: {location} is not valid yaml, fix it by hand first.")
+            return
+        else:
+            merged = _merge_changes(on_disk or {}, self._baseline, current)
+        target = Settings(None, autosave=False)
+        target.update(merged)
+        target._write(location)
+        self._filename = location
+        self._baseline = current
+
+    def _write(self, location: str) -> None:
+        from Utils import parse_yaml
         temp_location = location + ".tmp"  # not using tempfile to test expected file access
-        # remove old temps
         if os.path.exists(temp_location):
             os.unlink(temp_location)
         # can't use utf-8-sig because it breaks backward compat: pyyaml on Windows with bytes does not strip the BOM
@@ -967,13 +1032,7 @@ class Settings(Group):
         # validate new file is valid yaml
         with open(temp_location, encoding="utf-8") as f:
             parse_yaml(f.read())
-        # replace old with new, try atomic operation first
-        try:
-            os.rename(temp_location, location)
-        except (OSError, FileExistsError):
-            os.unlink(location)
-            os.rename(temp_location, location)
-        self._filename = location
+        os.replace(temp_location, location)
 
     def dump(self, f: TextIO, level: int = 0) -> None:
         # Materialize settings groups of already-loaded worlds; unloaded worlds'

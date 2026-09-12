@@ -5,7 +5,7 @@ window.addEventListener('load', () => {
     const generateButton = document.getElementById('generate-game-button');
     const cookieName = form?.dataset.race === '1' ? 'generate_race_settings' : 'generate_settings';
     const cookieMaxAge = 60 * 60 * 24 * 365;
-    const excludedIds = new Set(['file-input', 'server_password']);
+    const excludedIds = new Set(['file-input', 'admin_password']);
 
     function readCookie(name) {
         const prefix = name + '=';

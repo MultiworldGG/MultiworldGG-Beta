@@ -25,7 +25,7 @@ class TestGenerate(TestBase):
         self.assertIn("generate_race_settings", js_content)
         self.assertIn("readCookie", js_content)
         self.assertIn("saveStoredSettings", js_content)
-        self.assertIn("server_password", js_content)
+        self.assertIn("admin_password", js_content)
         self.assertIn("file-input", js_content)
         self.assertIn("form.submit()", js_content)
 
@@ -34,6 +34,15 @@ class TestGenerate(TestBase):
 
         meta = get_meta({"release_threshold": "37"})
         self.assertEqual(meta["server_options"]["release_threshold"], 37)
+
+    def test_get_meta_admin_password(self) -> None:
+        from WebHostLib.generate import get_meta
+
+        self.assertIsNone(get_meta({})["server_options"]["admin_password"])
+        self.assertIsNone(get_meta({"admin_password": ""})["server_options"]["admin_password"])
+        self.assertEqual(get_meta({"admin_password": "hunter2"})["server_options"]["admin_password"], "hunter2")
+        # pre-rename clients still post server_password
+        self.assertEqual(get_meta({"server_password": "legacy"})["server_options"]["admin_password"], "legacy")
 
     def test_get_meta_release_threshold_clamps_invalid_values(self) -> None:
         from WebHostLib.generate import get_meta

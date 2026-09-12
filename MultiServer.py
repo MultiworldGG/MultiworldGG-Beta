@@ -762,7 +762,7 @@ class Context:
             "stored_data": self.stored_data,
             "game_options": {"hint_cost": self.hint_cost, "location_check_points": self.location_check_points,
                              "admin_password": self.admin_password, "password": self.password,
-                             "server_password": self.admin_password, #backwards compatibility
+                             "server_password": self.admin_password,  # upstream hosts read this key
                              "release_mode": self.release_mode,
                              "remaining_mode": self.remaining_mode, "collect_mode": self.collect_mode,
                              "countdown_mode": self.countdown_mode, "hint_mode": self.hint_mode, 
@@ -798,7 +798,8 @@ class Context:
         if "game_options" in savedata:
             self.hint_cost = savedata["game_options"]["hint_cost"]
             self.location_check_points = savedata["game_options"]["location_check_points"]
-            self.admin_password = savedata["game_options"]["admin_password"]
+            game_options = savedata["game_options"]
+            self.admin_password = game_options.get("admin_password", game_options.get("server_password"))
             self.password = savedata["game_options"]["password"]
             self.release_mode = savedata["game_options"]["release_mode"]
             self.remaining_mode = savedata["game_options"]["remaining_mode"]
@@ -879,6 +880,9 @@ class Context:
         return self.groups.get(slot, {slot})
 
     def _set_options(self, server_options: dict):
+        if server_options.get("server_password") and not server_options.get("admin_password"):
+            # multidata and saves from upstream or pre-rename builds
+            server_options = {**server_options, "admin_password": server_options["server_password"]}
         for key, value in server_options.items():
             data_type = self.simple_options.get(key, None)
             if data_type is not None:
@@ -1735,8 +1739,9 @@ class ClientMessageProcessor(CommonCommandProcessor):
                 # disallow others from knowing what the new remote administration password is.
                 "!admin /option admin_password"):
             output = f"!admin /option admin_password {('*' * random.randint(4, 16))}"
-        self.ctx.broadcast_text_all(self.ctx.get_aliased_name(self.client.team, self.client.slot) + ': ' + output,
-                                    {"type": "Chat", "team": self.client.team, "slot": self.client.slot, "message": output})
+        # echoed to the caller only: the admin screen issues these constantly
+        self.ctx.notify_client(self.client, self.ctx.get_aliased_name(self.client.team, self.client.slot) + ': ' + output,
+                               {"type": "Chat", "team": self.client.team, "slot": self.client.slot, "message": output})
 
         if not self.ctx.admin_password:
             self.output("Sorry, Remote administration is disabled")
@@ -3038,7 +3043,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--host', default=defaults["host"])
     parser.add_argument('--port', default=defaults["port"], type=int)
     parser.add_argument('--admin-password', default=defaults["admin_password"])
-    parser.add_argument('--server-password', default=defaults["server_password"])
+    parser.add_argument('--server-password', dest="admin_password", default=argparse.SUPPRESS,
+                        help=argparse.SUPPRESS)  # pre-rename alias
     parser.add_argument('--password', default=defaults["password"])
     parser.add_argument('--savefile', default=defaults["savefile"])
     parser.add_argument('--disable-save', default=defaults["disable_save"], action='store_true')

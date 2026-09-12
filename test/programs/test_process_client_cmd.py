@@ -600,6 +600,20 @@ class TestSpacedPlayerNames(unittest.TestCase):
         self.assertTrue(run_sync(lambda: messages('!admin /release "Player Two"')), self.out)
         self.assertEqual(self.received(1), [102])
 
+    def test_admin_command_is_echoed_to_the_caller_only(self) -> None:
+        # the admin screen polls /players and friends; nobody else should see those lines
+        self.ctx.admin_password = "pw"
+        self.ctx.commandprocessor = self.proc
+        client = make_client(self.ctx, slot=1)
+        self.proc.client = client
+        self.addCleanup(setattr, self.proc, "client", None)
+        messages = MultiServer.ClientMessageProcessor(self.ctx, client)
+        messages.output = lambda text: self.out.append(text)
+        self.assertTrue(run_sync(lambda: messages("!admin /players")), self.out)
+        self.assertEqual([kind for kind, _ in self.ctx.captured if kind == "broadcast_text_all"], [])
+        echoes = [p["message"] for p in sent_packets(self.ctx) if p.get("type") == "Chat"]
+        self.assertEqual(echoes, ["!admin /players"])
+
 
 SLOT_PINS = {
     1: {"version": (1, 2, 3), "custom": False},
@@ -776,6 +790,56 @@ class TestCommandDispatchErrors(unittest.TestCase):
         help_text = _RecordingProcessor().get_help_text()
         self.assertIn("/boom [value] \n    Parses its argument.\n", help_text)
         self.assertIn("/fixed \n    Takes no arguments.\n", help_text)
+
+
+class TestUpstreamServerOptionsInterop(unittest.TestCase):
+    """Zips and saves cross between this server and upstream Archipelago in both directions:
+    upstream writes and reads only server_password, this server admin_password."""
+
+    def _load_embedded(self, ctx: Context, server_options: dict) -> None:
+        multidata = TestWorldVersionPinFlow._minimal_multidata(with_pins=False)
+        multidata["server_options"] = server_options
+        missing = object()
+        saved = {attr: getattr(ctx, attr, missing) for attr in _LOAD_CLOBBERED + ("admin_password",)}
+        saved["player_names"] = dict(ctx.player_names)
+        saved["player_name_lookup"] = dict(ctx.player_name_lookup)
+        try:
+            ctx._load(multidata, {}, True)
+            self.loaded_admin_password = ctx.admin_password
+        finally:
+            for attr, value in saved.items():
+                if value is missing:
+                    delattr(ctx, attr)
+                else:
+                    setattr(ctx, attr, value)
+
+    def test_upstream_zip_hosted_here_uses_server_password(self) -> None:
+        ctx = build_context()
+        self._load_embedded(ctx, {"hint_cost": 10, "server_password": "from-upstream"})
+        self.assertEqual(self.loaded_admin_password, "from-upstream")
+
+    def test_zip_generated_here_carries_both_keys(self) -> None:
+        from Main import embedded_server_options  # deferred: Main imports worlds
+
+        embedded = embedded_server_options({"hint_cost": 10, "admin_password": "hunter2"})
+        self.assertEqual(embedded["server_password"], "hunter2")
+        self.assertEqual(embedded["admin_password"], "hunter2")
+        self.assertIsNone(embedded_server_options({"admin_password": ""})["server_password"])
+        # and this server reads its own zip back through the same path
+        ctx = build_context()
+        self._load_embedded(ctx, embedded)
+        self.assertEqual(self.loaded_admin_password, "hunter2")
+
+    def test_save_carries_server_password_and_reads_upstream_saves(self) -> None:
+        ctx = build_context()
+        self.addCleanup(setattr, ctx, "admin_password", ctx.admin_password)
+        ctx.admin_password = "hunter2"
+        save = ctx.get_save()
+        self.assertEqual(save["game_options"]["server_password"], "hunter2")
+        del save["game_options"]["admin_password"]
+        save["game_options"]["server_password"] = "from-upstream"
+        ctx.set_save(save)
+        self.assertEqual(ctx.admin_password, "from-upstream")
 
 
 if __name__ == "__main__":

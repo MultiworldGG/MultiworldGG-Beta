@@ -41,6 +41,18 @@ class TestGenerateMain(unittest.TestCase):
         self.fail(f"Expected {output_dir} to contain one zip, but has {len(output_files)}: "
                   f"{list(output_path.glob('*'))}")
 
+    def assertMultidataHostsUpstream(self, output_dir: str):
+        # upstream Archipelago hosts read server_password from the embedded options
+        import zipfile
+        import MultiServer
+        zip_path = next(Path(output_dir).glob("*.zip"))
+        with zipfile.ZipFile(zip_path) as zf:
+            name = next(n for n in zf.namelist() if n.endswith(".archipelago"))
+            multidata = MultiServer.Context.decompress(zf.read(name))
+        server_options = multidata["server_options"]
+        self.assertIn("server_password", server_options)
+        self.assertEqual(server_options["server_password"], server_options["admin_password"])
+
     def setUp(self):
         self.original_argv = sys.argv.copy()
         self.original_cwd = os.getcwd()
@@ -89,6 +101,7 @@ class TestGenerateMain(unittest.TestCase):
         Main.main(*erargs)
 
         self.assertOutput(self.output_tempdir.name)
+        self.assertMultidataHostsUpstream(self.output_tempdir.name)
 
     def test_generate_relative(self):
         sys.argv = [sys.argv[0], '--seed', '0',

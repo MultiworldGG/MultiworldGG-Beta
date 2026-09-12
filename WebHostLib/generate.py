@@ -32,6 +32,8 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         if options_source.get(f"plando_{substr}", substr in GeneratorOptions.plando_options):
             plando_options.add(substr)
 
+    # pre-rename forms and API callers may still send server_password
+    admin_password = options_source.get("admin_password") or options_source.get("server_password") or None
     server_options = {
         "hint_cost": _clamp_int(options_source.get("hint_cost", ServerOptions.hint_cost),
                                 ServerOptions.hint_cost, 0, 100),
@@ -43,8 +45,7 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
         "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
-        "admin_password": str(options_source.get("admin_password", None)) or str(options_source.get("server_password", None)), #backwards compatibility
-
+        "admin_password": str(admin_password) if admin_password else None,
     }
     generator_options = {
         "spoiler": int(options_source.get("spoiler", GeneratorOptions.spoiler)),
