@@ -24,7 +24,7 @@
             <a href="{{ url_for('me_avatar') }}">Avatar</a>
         </nav>
 
-        {% if rooms %}
+        {% if rooms or joined_rooms %}
             <div class="mw-table-stack">
                 {% for room in rooms %}
                     {% set status = classify_room(room) %}
@@ -38,6 +38,13 @@
                         {% else %}
                             <span class="mw-card-secondary mw-card-secondary-muted">Co-owned</span>
                         {% endif %}
+                    </div>
+                {% endfor %}
+                {% for room in joined_rooms %}
+                    {% set status = classify_room(room) %}
+                    <div class="mw-card-cluster">
+                        {% include 'partials/room_card.html' %}
+                        <span class="mw-card-secondary mw-card-secondary-muted">Joined</span>
                     </div>
                 {% endfor %}
             </div>

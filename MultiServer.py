@@ -2657,7 +2657,7 @@ class ServerCommandProcessor(CommonCommandProcessor):
         """Shutdown the server"""
         try:
             if self.ctx.server:
-                self.ctx.server.close()
+                self.ctx.server.close(reason=HOST_SHUTDOWN_REASON)
         finally:
             self.ctx.exit_event.set()
         return True
@@ -3108,13 +3108,19 @@ def parse_args() -> argparse.Namespace:
     return args
 
 
+# Close-frame reasons for deliberate shutdowns; clients read them off the GOING_AWAY frame
+# and skip auto-reconnect (websockets caps a close reason at 123 bytes).
+INACTIVITY_SHUTDOWN_REASON = "Shutting down due to inactivity"
+HOST_SHUTDOWN_REASON = "Server shut down by host"
+
+
 async def auto_shutdown(ctx, to_cancel=None):
     with contextlib.suppress(asyncio.TimeoutError):
         await asyncio.wait_for(ctx.exit_event.wait(), ctx.auto_shutdown)
 
     def inactivity_shutdown():
         if ctx.server:
-            ctx.server.close()
+            ctx.server.close(reason=INACTIVITY_SHUTDOWN_REASON)
         ctx.exit_event.set()
         if to_cancel:
             for task in to_cancel:
@@ -3196,7 +3202,7 @@ async def main(args: argparse.Namespace):
         logging.info("Received interrupt signal (Ctrl+C), shutting down...")
         try:
             if ctx.server:
-                ctx.server.close()
+                ctx.server.close(reason=HOST_SHUTDOWN_REASON)
         except Exception:
             pass  # Server may not be initialized yet
         finally:

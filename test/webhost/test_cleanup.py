@@ -80,7 +80,7 @@ def test_cleanup_auto_delete(app, cleanup_on_test_db):
     Seed only goes once no Room references it. The interesting case is s1: its
     only Room aged out in the same pass, so the (old) Seed must follow it.
     """
-    from WebHostLib.models import db, commit, Room, Seed
+    from WebHostLib.models import db, commit, Room, RoomVisit, Seed
 
     now = utcnow()
     old_time = now - timedelta(days=AUTO_DELETE_DAYS * 2)
@@ -89,6 +89,7 @@ def test_cleanup_auto_delete(app, cleanup_on_test_db):
     with app.app_context():
         s1 = _make_seed(db, uuid4(), old_time)  # old seed, old room: both deleted
         r1 = _make_room(db, s1, uuid4(), old_time)
+        RoomVisit(room_id=r1.id, session_id=uuid4())  # goes with its room
         s2 = _make_seed(db, uuid4(), old_time)  # old seed, recent room: both kept
         r2 = _make_room(db, s2, uuid4(), recent_time)
         s3 = _make_seed(db, uuid4(), old_time)  # old seed, no rooms: deleted
@@ -102,6 +103,8 @@ def test_cleanup_auto_delete(app, cleanup_on_test_db):
     with app.app_context():
         db.session.expire_all()
         assert db.session.get(Room, ids["r1"]) is None, "old Room was not deleted"
+        assert db.session.scalars(select(RoomVisit).where(RoomVisit.room_id == ids["r1"])).all() == [], \
+            "visit rows outlived their Room"
         assert db.session.get(Seed, ids["s1"]) is None, \
             "old Seed whose only Room aged out was not deleted"
         assert db.session.get(Room, ids["r2"]) is not None, "recent Room was wrongly deleted"

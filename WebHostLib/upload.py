@@ -226,13 +226,15 @@ def me():
 
 @app.route('/me/rooms', methods=['GET'])
 def my_rooms():
-    """Full list of all rooms owned (or co-owned) by this browser."""
-    from .dashboard import classify_room
+    """Full list of all rooms owned, co-owned, or joined by this browser."""
+    from .dashboard import classify_room, list_visited_rooms
     from .ownership import list_authorized_rooms
     rooms = list_authorized_rooms(session["_id"])
+    joined_rooms = list_visited_rooms(session["_id"], exclude={room.id for room in rooms})
     return render_template(
         "me_rooms.html",
         rooms=rooms,
+        joined_rooms=joined_rooms,
         classify_room=classify_room,
         session_key=session["_id"],
     )

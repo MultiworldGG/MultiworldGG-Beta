@@ -1,5 +1,8 @@
+import asyncio
+import logging
 import unittest
 from contextlib import ExitStack
+from types import SimpleNamespace
 from unittest import mock
 
 import Utils
@@ -126,3 +129,27 @@ class TestConnectionRefusedRecovery(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((connect["cmd"], connect["name"]), ("Connect", "NewName"))
                 self.assertEqual(self.stored, [])
                 self.assertFalse(ctx.disconnected_intentionally)
+
+
+class TestDeliberateShutdownReason(unittest.IsolatedAsyncioTestCase):
+    """A deliberate shutdown names its reason on the GOING_AWAY close frame; that is
+    what lets clients skip auto-reconnect and tell the user why."""
+
+    @staticmethod
+    def _server_ctx():
+        return SimpleNamespace(exit_event=asyncio.Event(), auto_shutdown=0.01, client_activity_timers={},
+                               server=mock.Mock(), logger=logging.getLogger("test"))
+
+    async def test_inactivity_shutdown_closes_with_reason(self):
+        import MultiServer
+        ctx = self._server_ctx()
+        await MultiServer.auto_shutdown(ctx)
+        ctx.server.close.assert_called_once_with(reason=MultiServer.INACTIVITY_SHUTDOWN_REASON)
+        self.assertTrue(ctx.exit_event.is_set())
+
+    async def test_exit_command_closes_with_reason(self):
+        import MultiServer
+        ctx = self._server_ctx()
+        MultiServer.ServerCommandProcessor._cmd_exit(SimpleNamespace(ctx=ctx))
+        ctx.server.close.assert_called_once_with(reason=MultiServer.HOST_SHUTDOWN_REASON)
+        self.assertTrue(ctx.exit_event.is_set())

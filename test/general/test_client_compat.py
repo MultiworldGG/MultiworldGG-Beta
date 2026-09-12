@@ -13,6 +13,7 @@ import websockets
 
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.connection import Connection
+from websockets.frames import Close
 from websockets.protocol import State
 
 import ClientBuilder
@@ -331,7 +332,8 @@ def _loop_ctx(exit_set: bool = False) -> SimpleNamespace:
     ctx = SimpleNamespace(
         takeover_complete=asyncio.Event(), exit_event=asyncio.Event(), server=None,
         server_address="ws://localhost:38281", username="Player1", max_size=None,
-        disconnected_intentionally=False, autoreconnect_task=None, current_reconnect_delay=5,
+        disconnected_intentionally=False, autoreconnect_task=None, server_task=None,
+        starting_reconnect_delay=5, current_reconnect_delay=5, server_tags=[], hostname="localhost",
         _messagebox_connection_loss=None, ui=None, closed=0, losses=[],
         cancel_autoreconnect=lambda: False,
     )
@@ -347,8 +349,37 @@ def _loop_ctx(exit_set: bool = False) -> SimpleNamespace:
     return ctx
 
 
+def _closing_socket(exc: BaseException):
+    """Stands in for an open websocket whose first read raises exc."""
+    class Socket:
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise exc
+
+    return Socket()
+
+
 class TestServerLoopReconnect(unittest.TestCase):
-    def _run(self, ctx) -> list:
+    """Auto-reconnect only chases a server that went away unexpectedly: never after a
+    fresh connect fails, never after the server said GOING_AWAY."""
+
+    def _run(self, ctx, connect, reconnect_attempt: bool = False) -> None:
+        with mock.patch.object(CommonClient.websockets, "connect", connect):
+            asyncio.run(CommonClient.server_loop(ctx, ctx.server_address, reconnect_attempt=reconnect_attempt))
+
+    @staticmethod
+    async def _refused(address, **kwargs):
+        raise ConnectionRefusedError()
+
+    @staticmethod
+    def _closed_by(exc):
+        async def connect(address, **kwargs):
+            return _closing_socket(exc)
+        return connect
+
+    def test_wss_retry_schedules_one_reconnect(self):
         attempts = []
 
         async def connect(address, **kwargs):
@@ -357,24 +388,73 @@ class TestServerLoopReconnect(unittest.TestCase):
                 raise websockets.InvalidMessage("not a websocket upgrade")
             raise ConnectionRefusedError()
 
-        with mock.patch.object(CommonClient.websockets, "connect", connect):
-            asyncio.run(CommonClient.server_loop(ctx, ctx.server_address))
-        return attempts
-
-    def test_wss_retry_schedules_one_reconnect(self):
         ctx = _loop_ctx()
-        attempts = self._run(ctx)
+        self._run(ctx, connect, reconnect_attempt=True)
         self.assertEqual(attempts, ["ws://localhost:38281", "wss://localhost:38281"])
         self.assertEqual(ctx.closed, 1)
         self.assertEqual(len(ctx.losses), 1)
         self.assertIsNotNone(ctx.autoreconnect_task)
-        self.assertEqual(ctx.current_reconnect_delay, 10)
 
     def test_no_reconnect_after_exit_event(self):
         ctx = _loop_ctx(exit_set=True)
-        self._run(ctx)
+        self._run(ctx, self._refused, reconnect_attempt=True)
         self.assertEqual(ctx.closed, 1)
         self.assertIsNone(ctx.autoreconnect_task)
+
+    def test_fresh_connect_failure_does_not_reconnect(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._refused)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("/connect" in line for line in logs.output), logs.output)
+
+    def test_unexpected_close_reconnects(self):
+        ctx = _loop_ctx()
+        self._run(ctx, self._closed_by(websockets.ConnectionClosedError(None, None)))
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+
+    def test_server_going_away_does_not_reconnect(self):
+        close = Close(1001, "Shutting down due to inactivity")
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_by(websockets.ConnectionClosedOK(close, close, True)))
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
+        self.assertFalse(any("/me/rooms" in line for line in logs.output), logs.output)
+
+    def test_webhost_going_away_points_at_the_rooms_page(self):
+        close = Close(1001, "Shutting down due to inactivity")
+        ctx = _loop_ctx()
+        ctx.server_tags = ["AP", "WebHost"]
+        ctx.hostname = "mw.example.com"
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_by(websockets.ConnectionClosedOK(close, close, True)))
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any(
+            "Please resume the multiworld room at https://mw.example.com/me/rooms before typing /connect to reconnect"
+            in line for line in logs.output), logs.output)
+
+    def test_autoreconnect_doubles_delay_after_sleep(self):
+        ctx = _loop_ctx()
+        attempts = []
+
+        async def fake_server_loop(ctx_, address=None, *, reconnect_attempt=False):
+            attempts.append(reconnect_attempt)
+
+        async def run():
+            with mock.patch.object(CommonClient, "server_loop", fake_server_loop), \
+                    mock.patch.object(CommonClient.asyncio, "sleep", mock.AsyncMock()) as sleep:
+                await CommonClient.server_autoreconnect(ctx)
+                await ctx.server_task
+            return sleep
+
+        sleep = asyncio.run(run())
+        sleep.assert_awaited_once_with(5)
+        self.assertEqual(ctx.current_reconnect_delay, 10)
+        self.assertEqual(attempts, [True])
 
 
 class TestUpdateMwggHints(unittest.TestCase):

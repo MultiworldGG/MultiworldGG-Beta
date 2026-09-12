@@ -138,6 +138,7 @@ class Room(Base):
     slot_avatars: list["SlotAvatar"] = relationship(
         "SlotAvatar", cascade="all, delete-orphan"
     )
+    visits: list["RoomVisit"] = relationship("RoomVisit", cascade="all, delete-orphan")
 
 
 class Seed(Base):
@@ -340,6 +341,15 @@ class RoomCoOwner(Base):
     session_id: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True)
     granted_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
     granted_by: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
+
+
+class RoomVisit(Base):
+    """Sessions that opened a room page they do not own; feeds the joined list on /me/rooms."""
+    __tablename__ = "room_visit"
+
+    room_id: UUID = mapped_column(SA_UUID(as_uuid=True), ForeignKey("room.id"), primary_key=True)
+    session_id: UUID = mapped_column(SA_UUID(as_uuid=True), primary_key=True, index=True)
+    last_visit: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
 
 
 class LobbyCoOwner(Base):
