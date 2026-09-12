@@ -166,6 +166,7 @@ class TestLobbyRoutes(TestBase):
         max_yamls_per_player=3,
         allow_custom_apworlds=True,
         with_owner_player=True,
+        unlisted=False,
     ):
         """Insert a Lobby (and optionally its owner LobbyPlayer) directly.
 
@@ -173,6 +174,9 @@ class TestLobbyRoutes(TestBase):
         cannot produce on its own (CLOSED/DONE/GENERATING, passwords, capacity).
         """
         owner = owner if owner is not None else self.owner_session
+        meta = {"server_options": {"hint_cost": 4}, "generator_options": {"spoiler": 1}}
+        if unlisted:
+            meta["unlisted"] = True
         with self.app.app_context():
             lobby = Lobby(
                 title=title,
@@ -181,7 +185,7 @@ class TestLobbyRoutes(TestBase):
                 timeout_minutes=60,
                 max_yamls_per_player=max_yamls_per_player,
                 race=False,
-                meta=json.dumps({"server_options": {"hint_cost": 4}, "generator_options": {"spoiler": 1}}),
+                meta=json.dumps(meta),
                 state=state,
                 max_players=max_players,
                 allow_custom_apworlds=allow_custom_apworlds,
@@ -441,6 +445,49 @@ class TestLobbyRoutes(TestBase):
         self.assertIn("OPEN_LISTED_LOBBY", body)
         self.assertNotIn("CLOSED_HIDDEN_LOBBY", body)
         self.assertNotIn("DONE_HIDDEN_LOBBY", body)
+
+    def test_create_lobby_unlisted_is_stored_in_meta(self) -> None:
+        form = self.owner_client.get("/lobby/create").get_data(as_text=True)
+        self.assertIn('name="unlisted"', form)
+
+        resp = self.owner_client.post(
+            "/lobby/create",
+            data={"title": "Quiet Lobby", "player_name": "HostName", "unlisted": "1"},
+        )
+        self.assertEqual(resp.status_code, 302, resp.get_data(as_text=True))
+        with self.app.app_context():
+            lobby = db.session.scalars(
+                select(Lobby).where(Lobby.title == "Quiet Lobby").limit(1)
+            ).first()
+            self.assertTrue(json.loads(lobby.meta)["unlisted"])
+
+    def test_lobby_list_hides_unlisted_from_public_but_not_from_members(self) -> None:
+        self._make_lobby(owner=uuid4(), title="UNLISTED_STRANGER_LOBBY", unlisted=True)
+        self._make_lobby(title="UNLISTED_OWN_LOBBY", unlisted=True)
+
+        public = self.viewer_client.get("/play/lobbies").get_data(as_text=True)
+        self.assertNotIn("UNLISTED_STRANGER_LOBBY", public)
+        self.assertNotIn("UNLISTED_OWN_LOBBY", public)
+
+        mine = self.owner_client.get("/play/lobbies").get_data(as_text=True)
+        self.assertIn("UNLISTED_OWN_LOBBY", mine)
+        self.assertIn("lobby-unlisted-tag", mine)
+        self.assertNotIn("UNLISTED_STRANGER_LOBBY", mine)
+
+    def test_update_settings_toggles_unlisted(self) -> None:
+        lobby_id = self._make_lobby(title="Toggle Lobby")
+        for value in (True, False):
+            resp = self.owner_client.patch(
+                f"/api/lobby/{to_url(lobby_id)}/settings", json={"unlisted": value}
+            )
+            self.assertEqual(resp.status_code, 200, resp.get_data(as_text=True))
+            with self.app.app_context():
+                self.assertIs(json.loads(Lobby.get(id=lobby_id).meta)["unlisted"], value)
+            status = self.owner_client.get(f"/api/lobby/{to_url(lobby_id)}/status").get_json()
+            self.assertIs(status["unlisted"], value)
+            page = self.owner_client.get(f"/play/lobby/{to_url(lobby_id)}").get_data(as_text=True)
+            self.assertEqual('id="edit-unlisted" checked' in page, value)
+            self.assertEqual("| Unlisted" in page, value)
 
     def test_generate_rejects_non_owner(self) -> None:
         lobby_id = self._make_lobby(title="Gen Auth Lobby")

@@ -134,7 +134,7 @@
                         <span id="lobby-meta-main" class="lobby-meta">
                             Max YAMLs: {{ lobby.max_yamls_per_player }} |
                             Timeout: {{ fmt_timeout(lobby.timeout_minutes) }} |
-                            {% if lobby.race %}Race Mode | {% endif %}{{ 'Custom APWorlds: enabled' if lobby.allow_custom_apworlds else 'Custom APWorlds: disabled' }}
+                            {% if lobby.race %}Race Mode | {% endif %}{{ 'Custom APWorlds: enabled' if lobby.allow_custom_apworlds else 'Custom APWorlds: disabled' }}{% if unlisted %} | Unlisted{% endif %}
                         </span>
                         <span class="lobby-info-right">
                             <span id="lobby-status" class="lobby-status-{{ lobby.state }}">
@@ -196,7 +196,7 @@
                         <span id="lobby-meta-main" class="lobby-meta">
                             Max YAMLs: {{ lobby.max_yamls_per_player }} |
                             Timeout: {{ fmt_timeout(lobby.timeout_minutes) }} |
-                            {% if lobby.race %}Race Mode | {% endif %}{{ 'Custom APWorlds: enabled' if lobby.allow_custom_apworlds else 'Custom APWorlds: disabled' }}
+                            {% if lobby.race %}Race Mode | {% endif %}{{ 'Custom APWorlds: enabled' if lobby.allow_custom_apworlds else 'Custom APWorlds: disabled' }}{% if unlisted %} | Unlisted{% endif %}
                         </span>
                         <span class="lobby-info-right">
                             {% if not is_owner and lobby.state == 0 %}
@@ -426,6 +426,15 @@
                                             {% else %}
                                                 <input type="checkbox" id="edit-allow-custom-apworlds">
                                             {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="edit-unlisted">Unlisted:
+                                            <span class="interactive" data-tooltip="Keeps the lobby off the public lobby list. Players join through the lobby link.">(?)
+                                            </span>
+                                        </label></td>
+                                        <td>
+                                            <input type="checkbox" id="edit-unlisted" {% if unlisted %}checked{% endif %}>
                                         </td>
                                     </tr>
                                 </tbody>

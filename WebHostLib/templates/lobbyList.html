@@ -56,7 +56,7 @@
                         {% set hm = s.get('hint_mode', 'default') %}
                         {% set hc = s.get('hint_cost', 10) %}
                         <tr>
-                            <td data-label="Lobby">{{ lobby.title }}</td>
+                            <td data-label="Lobby">{{ lobby.title }}{% if meta.get('unlisted') %} <span class="lobby-unlisted-tag">Unlisted</span>{% endif %}</td>
                             <td data-label="Host">{{ my_owner_names.get(lobby.id, '?') }}</td>
                             <td data-label="Players">
                                 {{ my_player_counts.get(lobby.id, 0) }}{% if lobby.max_players > 0 %}/{{ lobby.max_players }}{% endif %}

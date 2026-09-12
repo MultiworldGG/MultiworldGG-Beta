@@ -150,6 +150,16 @@
     color: var(--mw-sys-color-white);
 }
 
+.lobby-unlisted-tag {
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--mw-sys-color-surface-container);
+    color: var(--mw-sys-color-on-surface-variant);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
 .lobby-status-0 { color: var(--mw-sys-color-success); font-weight: bold; }
 .lobby-status-1 { color: var(--mw-sys-color-warning); font-weight: bold; }
 .lobby-status-2 { color: var(--mw-sys-color-info); font-weight: bold; }
