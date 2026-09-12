@@ -41,6 +41,8 @@ INSIDE_TAG = "inside "
 
 WARPS_DATA = {
 
+#PRESENT TIME
+
     # LYNNA CITY
     "vasu's shop" :{
         "outside_warp": 0x7628,

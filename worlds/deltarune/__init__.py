@@ -27,6 +27,13 @@ from worlds.deltarune.LogicHelper import (
     all_chapter_unlocked,
     chapters_in_order,
     include_characters,
+    include_deluxedinner_fusion,
+    include_dogwidow_fusion,
+    include_hidden_items,
+    include_punchbowl_fusion,
+    include_tensionmax_fusion,
+    include_truetie_fusion,
+    include_tvdinner_fusion,
     included_chapter,
     progressive_weapons_kris,
     progressive_weapons_noelle,
@@ -35,6 +42,7 @@ from worlds.deltarune.LogicHelper import (
     randomized_chapters,
     weird_route,
 )
+from worlds.deltarune.OSTRandomizer import randomizeOST
 from worlds.deltarune.Options import (
     ChosenRoute,
     DeltaruneOptions,
@@ -229,6 +237,7 @@ class DeltaruneWorld(World):
         self.cached_filler_and_trap_weights: dict[int, float] = None
         self.weapon_to_progressive_weapon_index: dict[ItemGroups, dict[ItemIDs, int]] = {}
         self.included_chapters: list[int] = []
+        self.randomized: dict[str, Any] = {}
 
     # region Archipelago Functions
     def create_item(self, name: str) -> DeltaruneItem:
@@ -253,60 +262,88 @@ class DeltaruneWorld(World):
     def _get_deltarune_data(self):
         return {
             "options": self.options.as_dict(
-                "randomize_secret_bosses",
-                "macguffin_chapter_1",
-                "macguffin_chapter_2",
-                "macguffin_chapter_3",
-                "macguffin_chapter_4",
-                "macguffin_chapter_5",
-                "macguffin_extra",
-                "remove_starting_equipment",
-                "include_chapter_1",
-                "include_chapter_2",
-                "include_chapter_3",
-                "include_chapter_4",
-                "include_chapter_5",
-                "exclude_t_rank",
-                "exclude_z_rank",
-                "allow_doom_board_without_all_characters",
+                # No Group
+                "progression_balancing",
+                "accessibility",
+                "have_starwalker",
+                "shuffle_ost",
+                # Goal
                 "chosen_route",
                 "recruits_sanity",
                 "lose_recruits_sanity",
-                "include_swatchling_during_weird_route",
+                "randomize_secret_bosses",
+                "macguffin_extra",
+                # Chapters
                 "randomize_chapters",
+                "random_safety_chapter_inclusion",
+                "starting_chapter",
+                # Chapter 1
+                "include_chapter_1",
+                "macguffin_chapter_1",
+                "chapter_1_recruit",
+                # Chapter 2
+                "include_chapter_2",
+                "macguffin_chapter_2",
+                # Chapter 3
+                "include_chapter_3",
+                "macguffin_chapter_3",
+                "include_shadow_mantle",
+                "randomize_sword_route",
+                "shadow_mantle_holder_as_secret_boss",
+                "exclude_t_rank_board",
+                "exclude_z_rank_board",
+                "physical_challenge_rank_sanity",
+                "exclude_t_rank_physical_challenge",
+                "exclude_z_rank_physical_challenge",
+                "allow_doom_board_without_all_characters",
+                # Chapter 4
+                "include_chapter_4",
+                "macguffin_chapter_4",
+                "include_mike",
+                "exclude_mike_platinum",
+                # Chapter 5
+                "include_chapter_5",
+                "macguffin_chapter_5",
+                # Items
                 "include_hidden_items",
                 "include_secret_bosses_items_requirement",
                 "mysterykey_from_pink_coins",
                 "door_key_from_broken_keys",
-                "death_link",
-                "damage_link",
-                "damage_link_group",
-                "item_balancing",
-                "include_shadow_mantle",
-                "randomize_mantle",
                 "include_unused_items",
-                "include_mike",
-                "exclude_mike_platinum",
+                "progressive_kris_weapons",
+                "progressive_susie_weapons",
+                "progressive_ralsei_weapons",
+                "progressive_noelle_weapons",
                 "unlock_characters",
                 "start_with_random_character",
-                "better_odds",
-                "have_starwalker",
                 "unlock_fun_gang_actions",
-                "chapter_1_recruit",
-                "random_safety_chapter_inclusion",
-                "starting_chapter",
+                # Gameplay
+                "better_odds",
+                "remove_starting_equipment",
+                "item_balancing",
+                "pink_twin_ribbon_unnerf",
+                "rock_video_sanity",
+                "exclude_t_rank_rock_video",
+                "exclude_z_rank_rock_video",
+                # Logic Difficulty
+                "speedrun_gliches_as_logic",
+                "nohit_as_logic",
+                "annoying_farming_as_logic",
+                # Links
+                "death_link",
+                "death_link_group",
+                "damage_link",
+                "damage_link_group",
+                # Fillers Weight
                 "filler_healing_weight",
                 "filler_currency_weight",
                 "trap_weight",
                 "filler_armor_weight",
                 "filler_tension_weight",
                 "filler_smile_weight",
-                "progressive_kris_weapons",
-                "progressive_susie_weapons",
-                "progressive_ralsei_weapons",
-                "progressive_noelle_weapons",
                 toggles_as_bools=True,
             ),
+            "randomized": self.randomized,
             "world_seed": self.random.getrandbits(32),
             "seed_name": self.multiworld.seed_name,
             "player_name": self.multiworld.get_player_name(self.player),
@@ -323,6 +360,7 @@ class DeltaruneWorld(World):
         if re_gen_passthrough and self.game in re_gen_passthrough:
             # Get the passed through slot data from the real generation
             slot_data: dict[str, Any] = re_gen_passthrough[self.game]
+            self.randomized = slot_data.get("randomized", {})
 
             slot_options: dict[str, Any] = slot_data.get("options", {})
             # Set all your options here instead of getting them from the yaml
@@ -333,6 +371,8 @@ class DeltaruneWorld(World):
                     setattr(self.options, key, opt.from_any(value))
         else:
             self.fill_chapter_included_array()
+
+            self.randomized["ost"] = randomizeOST(self)
 
             validate_options(self)
 
@@ -453,6 +493,8 @@ class DeltaruneWorld(World):
         for item_data in item_pool:
             item_pool_names_and_amounts += [items[item_data.code]] * item_data.amount
 
+        self.add_filler_items_used_in_fusion(item_pool_names_and_amounts)
+
         item_pool_converted = [self.create_item(item) for item in item_pool_names_and_amounts]
 
         self.handle_item_unfill_and_overflows(item_pool_converted)
@@ -462,6 +504,23 @@ class DeltaruneWorld(World):
     # endregion
 
     # region DELTARUNE Generation functions
+
+    def add_filler_items_used_in_fusion(self, item_pool_before_convert):
+        if include_truetie_fusion(self):
+            item_pool_before_convert += [items[ItemIDs.frayedbowtie]]
+
+        if include_tvdinner_fusion(self):
+            item_pool_before_convert += [items[ItemIDs.tvslop]] * 2
+
+        if include_deluxedinner_fusion(self):
+            item_pool_before_convert += [items[ItemIDs.tvdinner]] * 2
+
+        if include_punchbowl_fusion(self) or include_tensionmax_fusion(self):
+            item_pool_before_convert += [items[ItemIDs.scarlixir]]
+
+        if include_dogwidow_fusion(self) and include_hidden_items(self):
+            # dogdollar must be find at their original location if hidden items not included
+            item_pool_before_convert += [items[ItemIDs.dogdollar]]
 
     def fill_chapter_included_array(self):
         self.included_chapters = []

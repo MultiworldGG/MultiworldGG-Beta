@@ -10,7 +10,7 @@
       {
         "map": "Overview",
         "x": 150,
-        "y": 110
+        "y": 790
       }
     ]
   },
@@ -24,8 +24,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 150,
-        "y": 160
+        "x": 96,
+        "y": 288
       }
     ]
   },
@@ -45,8 +45,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 150,
-        "y": 350
+        "x": 240,
+        "y": 288
       }
     ]
   },
@@ -73,30 +73,7 @@
           {
             "map": "Overview",
             "x": 50,
-            "y": 450
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Fields - Candy Trees 1&2",
-        "sections": [
-          {
-            "name": "CH1: Fields - Dark Candy Tree 1"
-          },
-          {
-            "name": "CH1: Fields - Dark Candy Tree 2"
-          }
-        ],
-        "map_locations": []
-      },
-      {
-        "name": "Chapter 1 - Fields - Candy Trees 3&4",
-        "sections": [
-          {
-            "name": "CH1: Fields - Dark Candy Tree 3"
-          },
-          {
-            "name": "CH1: Fields - Dark Candy Tree 4"
+            "y": 420
           }
         ]
       },
@@ -108,29 +85,16 @@
           },
           {
             "name": "CH1: Fields - Chest Before Great Board"
+          },
+          {
+            "name": "CH1: Fields - Donation hole"
           }
         ],
         "map_locations": [
           {
             "map": "Overview",
-            "x": 50,
-            "y": 550
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Fields - Maze of Death Chest",
-        "sections": [
-          {
-            "name": "CH1: Fields - Maze of Death Chest"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Fields - Chest Before Great Board",
-        "sections": [
-          {
-            "name": "CH1: Fields - Chest Before Great Board"
+            "x": 100,
+            "y": 420
           }
         ]
       },
@@ -147,8 +111,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 100,
-            "y": 450
+            "x": 50,
+            "y": 470
           }
         ]
       },
@@ -175,7 +139,7 @@
           {
             "map": "Overview",
             "x": 220,
-            "y": 475
+            "y": 470
           }
         ]
       },
@@ -190,7 +154,7 @@
           {
             "map": "Overview",
             "x": 100,
-            "y": 500
+            "y": 470
           }
         ]
       },
@@ -201,7 +165,16 @@
             "name": "CH1: Fields - Recruit Rudinn"
           },
           {
+            "name": "CH1: Fields - Lost Rudinn"
+          },
+          {
+            "name": "CH1: Fields - Lost Hathy"
+          },
+          {
             "name": "CH1: Fields - Recruit Hathy"
+          },
+          {
+            "name": "CH1: Fields - Lost Jigsawry"
           },
           {
             "name": "CH1: Fields - Recruit Jigsawry"
@@ -210,29 +183,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 150,
-            "y": 500
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Fields - Loses",
-        "sections": [
-          {
-            "name": "CH1: Fields - Lost Rudinn"
-          },
-          {
-            "name": "CH1: Fields - Lost Hathy"
-          },
-          {
-            "name": "CH1: Fields - Lost Jigsawry"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 150,
-            "y": 550
+            "x": 160,
+            "y": 470
           }
         ]
       }
@@ -246,19 +198,7 @@
         "sections": [
           {
             "name": "CH1: Great Board - Recruit Ponman"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 50,
-            "y": 700
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Great Board - Loses",
-        "sections": [
+          },
           {
             "name": "CH1: Great Board - Lost Ponman"
           }
@@ -267,7 +207,7 @@
           {
             "map": "Overview",
             "x": 50,
-            "y": 750
+            "y": 690
           }
         ]
       }
@@ -283,22 +223,10 @@
             "name": "CH1: Forest - Recruit Rabbick"
           },
           {
+            "name": "Cross Chapter - Lost Rabbick"
+          },
+          {
             "name": "CH1: Forest - Recruit Bloxer"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 100,
-            "y": 700
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Loses",
-        "sections": [
-          {
-            "name": "CH1: Forest - Lost Rabbick"
           },
           {
             "name": "CH1: Forest - Lost Bloxer"
@@ -307,8 +235,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 100,
-            "y": 750
+            "x": 150,
+            "y": 690
           }
         ]
       },
@@ -323,7 +251,7 @@
           {
             "map": "Overview",
             "x": 100,
-            "y": 650
+            "y": 690
           }
         ]
       },
@@ -352,56 +280,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 150,
-            "y": 750
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Scissor Dancers Chest",
-        "sections": [
-          {
-            "name": "CH1: Forest - Scissor Dancers Chest"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Hidden Chest Near Dancers",
-        "sections": [
-          {
-            "name": "CH1: Forest - Hidden Chest Near Dancers"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Man",
-        "sections": [
-          {
-            "name": "CH1: Forest - Man"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Coat Rack's Chest",
-        "sections": [
-          {
-            "name": "CH1: Forest - Coat Rack's Chest"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Letter Block Chest",
-        "sections": [
-          {
-            "name": "CH1: Forest - Letter Block Chest"
-          }
-        ]
-      },
-      {
-        "name": "Chapter 1 - Forest - Chest Near Worm",
-        "sections": [
-          {
-            "name": "CH1: Forest - Chest Near Worm"
+            "x": 200,
+            "y": 690
           }
         ]
       }
@@ -423,8 +303,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 200,
-            "y": 750
+            "x": 70,
+            "y": 600
           }
         ]
       },
@@ -438,8 +318,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 200,
-            "y": 650
+            "x": 100,
+            "y": 640
           }
         ]
       },
@@ -459,8 +339,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 200,
-            "y": 700
+            "x": 250,
+            "y": 600
           }
         ]
       }
@@ -536,8 +416,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 236,
-            "y": 830
+            "x": 240,
+            "y": 914
           }
         ]
       }
@@ -553,8 +433,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 420,
-        "y": 110
+        "x": 440,
+        "y": 790
       }
     ]
   },
@@ -583,8 +463,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 420,
-            "y": 210
+            "x": 390,
+            "y": 275
           }
         ]
       },
@@ -598,8 +478,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 520,
-            "y": 210
+            "x": 513,
+            "y": 275
           }
         ]
       }
@@ -631,7 +511,7 @@
           {
             "map": "Overview",
             "x": 400,
-            "y": 400
+            "y": 460
           }
         ]
       },
@@ -652,7 +532,7 @@
           {
             "map": "Overview",
             "x": 400,
-            "y": 350
+            "y": 410
           }
         ]
       },
@@ -663,28 +543,16 @@
             "name": "CH2: Recruit Werewire"
           },
           {
-            "name": "CH2: Recruit Tasque"
-          },
-          {
-            "name": "CH2: Recruit Virovirokun"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 350,
-            "y": 350
-          }
-        ]
-      },
-      {
-        "name": "Chapter 2 - Cyber Fields - Loses",
-        "sections": [
-          {
             "name": "CH2: Lost Werewire"
           },
           {
+            "name": "CH2: Recruit Tasque"
+          },
+          {
             "name": "CH2: Lost Tasque"
+          },
+          {
+            "name": "CH2: Recruit Virovirokun"
           },
           {
             "name": "CH2: Lost Virovirokun"
@@ -694,7 +562,7 @@
           {
             "map": "Overview",
             "x": 350,
-            "y": 400
+            "y": 460
           }
         ]
       },
@@ -709,7 +577,7 @@
           {
             "map": "Overview",
             "x": 450,
-            "y": 350
+            "y": 410
           }
         ]
       },
@@ -732,8 +600,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 480,
-            "y": 300
+            "x": 465,
+            "y": 470
           }
         ]
       }
@@ -753,7 +621,7 @@
           {
             "map": "Overview",
             "x": 350,
-            "y": 550
+            "y": 650
           }
         ]
       },
@@ -768,7 +636,7 @@
           {
             "map": "Overview",
             "x": 350,
-            "y": 500
+            "y": 600
           }
         ]
       },
@@ -791,8 +659,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 480,
-            "y": 470
+            "x": 500,
+            "y": 670
           }
         ]
       }
@@ -808,32 +676,32 @@
             "name": "CH2: Recruit Poppup"
           },
           {
+            "name": "CH2: Lost Poppup"
+          },
+          {
             "name": "CH2: Recruit Ambyu-lance"
           },
           {
+            "name": "CH2: Lost Ambyu-lance"
+          },
+          {
             "name": "CH2: Recruit Maus"
+          },
+          {
+            "name": "CH2: Lost Maus"
           }
         ],
         "map_locations": [
           {
             "map": "Overview",
             "x": 400,
-            "y": 500
+            "y": 600
           }
         ]
       },
       {
         "name": "Chapter 2 - Cyber City - Loses",
         "sections": [
-          {
-            "name": "CH2: Lost Poppup"
-          },
-          {
-            "name": "CH2: Lost Ambyu-lance"
-          },
-          {
-            "name": "CH2: Lost Maus"
-          },
           {
             "name": "CH2: Cyber City - \"Purchase\" FreezeRing"
           },
@@ -845,7 +713,7 @@
           {
             "map": "Overview",
             "x": 400,
-            "y": 550
+            "y": 650
           }
         ]
       },
@@ -869,7 +737,7 @@
           {
             "map": "Overview",
             "x": 450,
-            "y": 500
+            "y": 600
           }
         ]
       },
@@ -914,7 +782,7 @@
           {
             "map": "Overview",
             "x": 450,
-            "y": 550
+            "y": 650
           }
         ]
       }
@@ -943,7 +811,7 @@
           {
             "map": "Overview",
             "x": 350,
-            "y": 750
+            "y": 910
           }
         ]
       },
@@ -958,7 +826,7 @@
           {
             "map": "Overview",
             "x": 350,
-            "y": 700
+            "y": 860
           }
         ]
       },
@@ -985,7 +853,7 @@
           {
             "map": "Overview",
             "x": 450,
-            "y": 750
+            "y": 910
           }
         ]
       },
@@ -996,34 +864,22 @@
             "name": "CH2: Recruit Swatchling"
           },
           {
-            "name": "CH2: Recruit Tasque Manager"
-          },
-          {
-            "name": "CH2: Recruit Mauswheel"
-          },
-          {
-            "name": "CH2: Recruit Werewerewire"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 400,
-            "y": 700
-          }
-        ]
-      },
-      {
-        "name": "Chapter 2 - Mansion - Loses",
-        "sections": [
-          {
             "name": "CH2: Lost Swatchling"
+          },
+          {
+            "name": "CH2: Recruit Tasque Manager"
           },
           {
             "name": "CH2: Lost Tasque Manager"
           },
           {
+            "name": "CH2: Recruit Mauswheel"
+          },
+          {
             "name": "CH2: Lost Mauswheel"
+          },
+          {
+            "name": "CH2: Recruit Werewerewire"
           },
           {
             "name": "CH2: Lost Werewerewire"
@@ -1033,7 +889,7 @@
           {
             "map": "Overview",
             "x": 400,
-            "y": 750
+            "y": 910
           }
         ]
       },
@@ -1056,8 +912,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 500,
-            "y": 650
+            "x": 532,
+            "y": 910
           }
         ]
       }
@@ -1070,7 +926,10 @@
         "name": "Chapter 4 - Castle Town - Mike",
         "sections": [
           {
-            "name": "CH4: Castle Town - Defeat Mike"
+            "name": "CH4: Mike - Chest before Mike"
+          },
+          {
+            "name": "CH4: Mike - Defeat Mike"
           },
           {
             "name": "CH4: Mike - Battat (Bronze Rank)"
@@ -1112,8 +971,8 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 1100,
-            "y": 200
+            "x": 1085,
+            "y": 275
           }
         ]
       },
@@ -1127,8 +986,23 @@
         "map_locations": [
           {
             "map": "Overview",
-            "x": 935,
-            "y": 200
+            "x": 953,
+            "y": 275
+          }
+        ]
+      },
+      {
+        "name": "Chapter 4 - Castle Town - Cake",
+        "sections": [
+          {
+            "name": "CH4: Castle Town - Top Chef Gift"
+          }
+        ],
+        "map_locations": [
+          {
+            "map": "Overview",
+            "x": 1019,
+            "y": 275
           }
         ]
       }
@@ -1181,7 +1055,7 @@
           {
             "map": "Overview",
             "x": 930,
-            "y": 370
+            "y": 420
           }
         ]
       },
@@ -1192,40 +1066,28 @@
             "name": "CH4: Recruit Guei"
           },
           {
-            "name": "CH4: Recruit Balthizard"
-          },
-          {
-            "name": "CH4: Recruit Bibliox"
-          },
-          {
-            "name": "CH4: Recruit Mizzle"
-          },
-          {
-            "name": "CH4: Recruit Miss Mizzle"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 980,
-            "y": 320
-          }
-        ]
-      },
-      {
-        "name": "Chapter 4 - Dark Sanctuary - Loses",
-        "sections": [
-          {
             "name": "CH4: Lost Guei"
+          },
+          {
+            "name": "CH4: Recruit Balthizard"
           },
           {
             "name": "CH4: Lost Balthizard"
           },
           {
+            "name": "CH4: Recruit Bibliox"
+          },
+          {
             "name": "CH4: Lost Bibliox"
           },
           {
+            "name": "CH4: Recruit Mizzle"
+          },
+          {
             "name": "CH4: Lost Mizzle"
+          },
+          {
+            "name": "CH4: Recruit Miss Mizzle"
           },
           {
             "name": "CH4: Lost Miss Mizzle"
@@ -1235,7 +1097,7 @@
           {
             "map": "Overview",
             "x": 980,
-            "y": 370
+            "y": 420
           }
         ]
       },
@@ -1259,7 +1121,7 @@
           {
             "map": "Overview",
             "x": 1030,
-            "y": 370
+            "y": 510
           }
         ]
       },
@@ -1277,7 +1139,7 @@
           {
             "map": "Overview",
             "x": 1080,
-            "y": 370
+            "y": 420
           }
         ]
       },
@@ -1292,7 +1154,7 @@
           {
             "map": "Overview",
             "x": 1030,
-            "y": 320
+            "y": 420
           }
         ]
       }
@@ -1327,39 +1189,27 @@
           {
             "map": "Overview",
             "x": 930,
-            "y": 560
+            "y": 720
           }
         ]
       },
       {
-        "name": "Chapter 4 - Dark Sanctuary - Recruits",
+        "name": "Chapter 4 - Second Sanctuary - Recruits",
         "sections": [
           {
             "name": "CH4: Recruit Wicabel"
           },
           {
-            "name": "CH4: Recruit Winglade"
-          },
-          {
-            "name": "CH4: Recruit Organikk"
-          }
-        ],
-        "map_locations": [
-          {
-            "map": "Overview",
-            "x": 980,
-            "y": 510
-          }
-        ]
-      },
-      {
-        "name": "Chapter 4 - Dark Sanctuary - Loses",
-        "sections": [
-          {
             "name": "CH4: Lost Wicabel"
           },
           {
+            "name": "CH4: Recruit Winglade"
+          },
+          {
             "name": "CH4: Lost Winglade"
+          },
+          {
+            "name": "CH4: Recruit Organikk"
           },
           {
             "name": "CH4: Lost Organikk"
@@ -1369,7 +1219,7 @@
           {
             "map": "Overview",
             "x": 980,
-            "y": 560
+            "y": 720
           }
         ]
       },
@@ -1384,7 +1234,7 @@
           {
             "map": "Overview",
             "x": 1030,
-            "y": 560
+            "y": 720
           }
         ]
       }
@@ -1401,37 +1251,97 @@
       {
         "map": "Overview",
         "x": 1010,
-        "y": 110
+        "y": 790
       }
     ]
   },
   {
-    "name": "Cross Chapter - Fusions",
+    "name": "Cross Chapter - DD-Burger",
     "sections": [
       {
-        "name": "Castle Town - DD-Burger Fusion"
-      },
-      {
-        "name": "Castle Town - Silver Card Fusion"
-      },
-      {
-        "name": "Castle Town - Twin Ribbon Fusion"
-      },
-      {
-        "name": "Castle Town - TensionBow Fusion"
-      },
-      {
-        "name": "Castle Town - Spike Band Fusion"
-      },
-      {
-        "name": "Castle Town - TwistedSwd Fusion"
+        "name": "CC: Castle Town - DD-Burger Fusion"
       }
     ],
     "map_locations": [
       {
         "map": "Overview",
-        "x": 1260,
-        "y": 170
+        "x": 180,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - Silver Card",
+    "sections": [
+      {
+        "name": "CC: Castle Town - Silver Card Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 230,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - Twin Ribbon",
+    "sections": [
+      {
+        "name": "CC: Castle Town - Twin Ribbon Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 280,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - TensionBow",
+    "sections": [
+      {
+        "name": "CC: Castle Town - TensionBow Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 180,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - Spike Band",
+    "sections": [
+      {
+        "name": "CC: Castle Town - Spike Band Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 230,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - TwistedSwd",
+    "sections": [
+      {
+        "name": "CC: Castle Town - TwistedSwd Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 280,
+        "y": 1160
       }
     ]
   },
@@ -1440,34 +1350,10 @@
     "sections": [
       {
         "name": "CH4: Third Sanctuary - Annoying Dog...?"
-      }
-    ],
-    "map_locations": [
-      {
-        "map": "Overview",
-        "x": 930,
-        "y": 720
-      }
-    ]
-  },
-  {
-    "name": "CH4: Third Sanctuary - Speed Climbing Chest",
-    "sections": [
+      },
       {
         "name": "CH4: Third Sanctuary - Speed Climbing Chest"
-      }
-    ],
-    "map_locations": [
-      {
-        "map": "Overview",
-        "x": 980,
-        "y": 720
-      }
-    ]
-  },
-  {
-    "name": "CH4: Third Sanctuary - Dark Area Chest",
-    "sections": [
+      },
       {
         "name": "CH4: Third Sanctuary - Dark Area Chest"
       }
@@ -1475,8 +1361,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 1030,
-        "y": 720
+        "x": 930,
+        "y": 870
       }
     ]
   },
@@ -1491,7 +1377,7 @@
       {
         "map": "Overview",
         "x": 1080,
-        "y": 720
+        "y": 870
       }
     ]
   },
@@ -1505,8 +1391,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 710,
-        "y": 110
+        "x": 720,
+        "y": 885
       }
     ]
   },
@@ -1523,14 +1409,17 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 630,
-        "y": 210
+        "x": 620,
+        "y": 785
       }
     ]
   },
   {
-    "name": "Chapter 3 - Board 1 - Loses",
+    "name": "Chapter 3 - Board 1 - Recruits",
     "sections": [
+      {
+        "name": "CH3: Recruit Shadowguy"
+      },
       {
         "name": "CH3: Lost Shadowguy"
       }
@@ -1538,8 +1427,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 680,
-        "y": 210
+        "x": 650,
+        "y": 275
       }
     ]
   },
@@ -1574,8 +1463,38 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 730,
-        "y": 210
+        "x": 700,
+        "y": 275
+      }
+    ]
+  },
+  {
+    "name": "Chapter 3 - Board 1 - Physical Challenge",
+    "sections": [
+      {
+        "name": "CH3: Cooking Show - Z-Rank"
+      },
+      {
+        "name": "CH3: Cooking Show - C-Rank"
+      },
+      {
+        "name": "CH3: Cooking Show - B-Rank"
+      },
+      {
+        "name": "CH3: Cooking Show - A-Rank"
+      },
+      {
+        "name": "CH3: Cooking Show - S-Rank"
+      },
+      {
+        "name": "CH3: Cooking Show - T-Rank"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 750,
+        "y": 275
       }
     ]
   },
@@ -1589,8 +1508,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 780,
-        "y": 210
+        "x": 800,
+        "y": 275
       }
     ]
   },
@@ -1613,8 +1532,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 652,
-        "y": 303
+        "x": 670,
+        "y": 785
       }
     ]
   },
@@ -1640,8 +1559,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 719,
-        "y": 374
+        "x": 720,
+        "y": 785
       }
     ]
   },
@@ -1658,8 +1577,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 723,
-        "y": 292
+        "x": 770,
+        "y": 785
       }
     ]
   },
@@ -1688,8 +1607,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 790,
-        "y": 293
+        "x": 620,
+        "y": 835
       }
     ]
   },
@@ -1721,8 +1640,38 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 820,
-        "y": 293
+        "x": 670,
+        "y": 835
+      }
+    ]
+  },
+  {
+    "name": "Chapter 3 - Green Room - Physical Challenge",
+    "sections": [
+      {
+        "name": "CH3: Monster Movie - Z-Rank"
+      },
+      {
+        "name": "CH3: Monster Movie - C-Rank"
+      },
+      {
+        "name": "CH3: Monster Movie - B-Rank"
+      },
+      {
+        "name": "CH3: Monster Movie - A-Rank"
+      },
+      {
+        "name": "CH3: Monster Movie - S-Rank"
+      },
+      {
+        "name": "CH3: Monster Movie - T-Rank"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 670,
+        "y": 885
       }
     ]
   },
@@ -1757,26 +1706,38 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 730,
-        "y": 530
+        "x": 700,
+        "y": 475
       }
     ]
   },
   {
-    "name": "Chapter 3 - Board 2 - Loses",
+    "name": "Chapter 3 - Board 2 - Physical Challenge",
     "sections": [
       {
-        "name": "CH3: Lost Shuttah"
+        "name": "CH3: Rock Video - Z-Rank"
       },
       {
-        "name": "CH3: Lost Pippins"
+        "name": "CH3: Rock Video - C-Rank"
+      },
+      {
+        "name": "CH3: Rock Video - B-Rank"
+      },
+      {
+        "name": "CH3: Rock Video - A-Rank"
+      },
+      {
+        "name": "CH3: Rock Video - S-Rank"
+      },
+      {
+        "name": "CH3: Rock Video - T-Rank"
       }
     ],
     "map_locations": [
       {
         "map": "Overview",
-        "x": 680,
-        "y": 530
+        "x": 750,
+        "y": 475
       }
     ]
   },
@@ -1787,14 +1748,20 @@
         "name": "CH3: Recruit Shuttah"
       },
       {
+        "name": "CH3: Lost Shuttah"
+      },
+      {
         "name": "CH3: Recruit Pippins"
+      },
+      {
+        "name": "CH3: Lost Pippins"
       }
     ],
     "map_locations": [
       {
         "map": "Overview",
-        "x": 680,
-        "y": 480
+        "x": 650,
+        "y": 475
       }
     ]
   },
@@ -1808,35 +1775,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 780,
-        "y": 530
-      }
-    ]
-  },
-  {
-    "name": "Chapter 3 - TV World - Loses",
-    "sections": [
-      {
-        "name": "CH3: Lost Shadowguy"
-      },
-      {
-        "name": "CH3: Lost Pippins"
-      },
-      {
-        "name": "CH3: Lost Water Cooler"
-      },
-      {
-        "name": "CH3: Lost Shuttah"
-      },
-      {
-        "name": "CH3: Lost Zapper"
-      }
-    ],
-    "map_locations": [
-      {
-        "map": "Overview",
-        "x": 680,
-        "y": 680
+        "x": 800,
+        "y": 475
       }
     ]
   },
@@ -1847,23 +1787,41 @@
         "name": "CH3: Recruit Shadowguy"
       },
       {
+        "name": "CH3: Lost Shadowguy"
+      },
+      {
         "name": "CH3: Recruit Pippins"
+      },
+      {
+        "name": "CH3: Lost Pippins"
       },
       {
         "name": "CH3: Recruit Water Cooler"
       },
       {
+        "name": "CH3: Lost Water Cooler"
+      },
+      {
         "name": "CH3: Recruit Shuttah"
       },
       {
+        "name": "CH3: Lost Shuttah"
+      },
+      {
         "name": "CH3: Recruit Zapper"
+      },
+      {
+        "name": "CH3: Lost Zapper"
+      },
+      {
+        "name": "Cross Chapter - Lost Rabbick"
       }
     ],
     "map_locations": [
       {
         "map": "Overview",
-        "x": 680,
-        "y": 630
+        "x": 650,
+        "y": 680
       }
     ]
   },
@@ -1877,7 +1835,7 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 630,
+        "x": 700,
         "y": 680
       }
     ]
@@ -1937,7 +1895,7 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 730,
+        "x": 750,
         "y": 680
       }
     ]
@@ -1955,8 +1913,8 @@
     "map_locations": [
       {
         "map": "Overview",
-        "x": 650,
-        "y": 880
+        "x": 720,
+        "y": 835
       }
     ]
   },
@@ -1974,7 +1932,643 @@
       {
         "map": "Overview",
         "x": 770,
-        "y": 880
+        "y": 835
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - MonarchRBN Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - MonarchRBN Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 600,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - TrueTie Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - TrueTie Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 650,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - TVDinner Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - TVDinner Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 700,
+        "y": 1110
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - DeluxeDinner Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - DeluxeDinner Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 600,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - PunchBowl Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - PunchBowl Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 650,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - TensionMax Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - TensionMax Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 700,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Cross Chapter - DogWidow Fusion",
+    "sections": [
+      {
+        "name": "CC: Castle Town - DogWidow Fusion"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 750,
+        "y": 1160
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle Town",
+    "sections": [
+      {
+        "name": "CH5: Castle Town - Top Chef Gift"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 300
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle Town - Bakery",
+    "sections": [
+      {
+        "name": "CH5: Castle Town - Trashy Trio Challenge"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1300,
+        "y": 300
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Garden - Recruits",
+    "sections": [
+      {
+        "name": "CH5: Recruit Floradinn"
+      },
+      {
+        "name": "CH5: Lose Floradinn"
+      },
+      {
+        "name": "CH5: Recruit Sheary"
+      },
+      {
+        "name": "CH5: Lose Sheary"
+      },
+      {
+        "name": "CH5: Recruit Netskie"
+      },
+      {
+        "name": "CH5: Lose Netskie"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 450
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Garden - Chests",
+    "sections": [
+      {
+        "name": "CH5: Garden - First Chest"
+      },
+      {
+        "name": "CH5: Garden - First Chest (Susie Accepting Herself)"
+      },
+      {
+        "name": "CH5: Garden - Mushroom Puzzle Netskie Chest"
+      },
+      {
+        "name": "CH5: Garden - Shears Chest"
+      },
+      {
+        "name": "CH5: Garden - Chest Past Waterfall"
+      },
+      {
+        "name": "CH5: Garden - Chest Under Flowery Face 1"
+      },
+      {
+        "name": "CH5: Garden - Chest Under Flowery Face 2"
+      },
+      {
+        "name": "CH5: Garden - Hopschef Gift"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1300,
+        "y": 450
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Dark Garden - Chests",
+    "sections": [
+      {
+        "name": "CH5: Dark Garden - Watering Can Maze Chest"
+      },
+      {
+        "name": "CH5: Dark Garden - Hidden Heart Chest"
+      },
+      {
+        "name": "CH5: Dark Garden - Aqua's Gift"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 500
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Garden & Dark Garden - Warps",
+    "sections": [
+      {
+        "name": "CH5: Garden - Hopschef Warp Door"
+      },
+      {
+        "name": "CH5: Dark Garden - End of Garden Warp Door"
+      },
+      {
+        "name": "CH5: Dark Garden - Near Shrine Warp Door"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1300,
+        "y": 500
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Garden & Dark Garden - Pink Coins",
+    "sections": [
+      {
+        "name": "CH5: Garden - Watering Can Pink Coin"
+      },
+      {
+        "name": "CH5: Garden - Pink Coin Near Tropical Starwalker"
+      },
+      {
+        "name": "CH5: Dark Garden - Pink Coin Above Shrine"
+      },
+      {
+        "name": "CH5: Dark Garden - Pink Coin Left of Running Area"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1200,
+        "y": 450
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Green's Cafe",
+    "sections": [
+      {
+        "name": "CH5: Green's Cafe Item #1"
+      },
+      {
+        "name": "CH5: Green's Cafe Item #2"
+      },
+      {
+        "name": "CH5: Green's Cafe Item #3"
+      },
+      {
+        "name": "CH5: Green's Cafe Item #4"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1356,
+        "y": 505
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Cliffs - Recruits",
+    "sections": [
+      {
+        "name": "CH5: Recruit Shi"
+      },
+      {
+        "name": "CH5: Lost Shi"
+      },
+      {
+        "name": "CH5: Recruit Leafling"
+      },
+      {
+        "name": "CH5: Lost Leafling"
+      },
+      {
+        "name": "CH5: Recruit Kawkaw"
+      },
+      {
+        "name": "CH5: Lost Kawkaw"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1200,
+        "y": 600
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Cliffs - Chests",
+    "sections": [
+      {
+        "name": "CH5: Cliffs - Man"
+      },
+      {
+        "name": "CH5: Cliffs - Item Near Umbrellas"
+      },
+      {
+        "name": "CH5: Cliffs - Chest Near Climbing Vines"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 600
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Cliffs - Warps",
+    "sections": [
+      {
+        "name": "CH5: Cliffs - First Climb Warp Door"
+      },
+      {
+        "name": "CH5: Cliffs - Netskie Climb Warp Door"
+      },
+      {
+        "name": "CH5: Cliffs - Shop Warp Door"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1300,
+        "y": 600
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Cliffs - Pink Coins",
+    "sections": [
+      {
+        "name": "CH5: Cliffs - Pink Coin By Rising Vine"
+      },
+      {
+        "name": "CH5: Cliffs - Pink Coin Under Falling Water"
+      },
+      {
+        "name": "CH5: Cliffs - Wind Puzzle Pink Coin"
+      },
+      {
+        "name": "CH5: Cliffs - Running Challenge Pink Coin"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1200,
+        "y": 650
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Cliffs Shop",
+    "sections": [
+      {
+        "name": "CH5: Cliffs Shop Item #1"
+      },
+      {
+        "name": "CH5: Cliffs Shop Item #2"
+      },
+      {
+        "name": "CH5: Cliffs Shop Item #3"
+      },
+      {
+        "name": "CH5: Cliffs Shop Item #4"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1369,
+        "y": 690
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle - Recruits",
+    "sections": [
+      {
+        "name": "CH5: Recruit Shinobeetle"
+      },
+      {
+        "name": "CH5: Lost Shinobeetle"
+      },
+      {
+        "name": "CH5: Recruit Terakota"
+      },
+      {
+        "name": "CH5: Lost Terakota"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1200,
+        "y": 800
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle - Chests",
+    "sections": [
+      {
+        "name": "CH5: Castle West - Hidden Zen Garden Chest"
+      },
+      {
+        "name": "CH5: Castle East - Chest Past Paws"
+      },
+      {
+        "name": "CH5: Castle West - Shinobeetle Chest Behind Tree"
+      },
+      {
+        "name": "CH5: Top of Castle - Painting Room Item"
+      },
+      {
+        "name": "CH5: Top of Castle - Annoying Dog...?"
+      },
+      {
+        "name": "CH5: Castle West - Hidden Zen Garden Chest"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 800
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle - Pink Coins",
+    "sections": [
+      {
+        "name": "CH5: Castle West - Yellow Flower Platforming Pink Coin"
+      },
+      {
+        "name": "CH5: Castle West - Shinobeetle Shuriken Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Pink Coin Behind Paper Wall"
+      },
+      {
+        "name": "CH5: Castle East - Terakota Buttons Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Mysterious Puzzle Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Pink Lantern Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Fox Collecting Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Difficult Shadow Puzzle Pink Coin"
+      },
+      {
+        "name": "CH5: Castle East - Fox Race Pink Coin"
+      },
+      {
+        "name": "CH5: Top of Castle - Yellow Flower Platforming Pink Coin"
+      },
+      {
+        "name": "CH5: Top of Castle - Pink Door Pink Coin"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1300,
+        "y": 800
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle - Warps",
+    "sections": [
+      {
+        "name": "CH5: Flower Castle - Foyer Warp Door"
+      },
+      {
+        "name": "CH5: Castle West - Blue's Room Warp Door"
+      },
+      {
+        "name": "CH5: Castle East - Mysterious Puzzle Warp Door"
+      },
+      {
+        "name": "CH5: Top of Castle - Green's Shop Warp Door"
+      },
+      {
+        "name": "CH5: Top of Castle - Pink Door Warp Door"
+      },
+      {
+        "name": "CH5: Top of Castle - Last Room Warp Door"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1200,
+        "y": 850
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Soda Fountain",
+    "sections": [
+      {
+        "name": "CH5: Soda Fountain Item #1"
+      },
+      {
+        "name": "CH5: Soda Fountain Item #2"
+      },
+      {
+        "name": "CH5: Soda Fountain Item #3"
+      },
+      {
+        "name": "CH5: Soda Fountain Item #4"
+      },
+      {
+        "name": "CH5: Soda Fountain Flowery's Secret"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1383,
+        "y": 850
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Castle - Pink Room",
+    "sections": [
+      {
+        "name": "CH5: Top of Castle - Pink Defeat"
+      },
+      {
+        "name": "CH5: Top of Castle - Aqua's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Orange's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Blue's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Seth's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Green's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Yellow's Gift"
+      },
+      {
+        "name": "CH5: Top of Castle - Flowery's Gift"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1250,
+        "y": 850
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Complete",
+    "sections": [
+      {
+        "name": "CH5: Flower Kingdom - Fountain Sealed...?"
+      },
+      {
+        "name": "CH5: Flower Kingdom - Fountain Sealed"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1350,
+        "y": 800
+      }
+    ]
+  },
+  {
+    "name": "Chapter 5 - Complete - Weird Route",
+    "sections": [
+      {
+        "name": "CH5: Side B Complete"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Overview",
+        "x": 1310,
+        "y": 225
       }
     ]
   }

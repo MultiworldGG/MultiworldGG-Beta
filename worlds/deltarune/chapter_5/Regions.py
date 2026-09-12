@@ -100,6 +100,8 @@ def create_regions(world: "DeltaruneWorld"):
 
         garden.connect(dark_garden)
 
+        # The only two locations here are Hopschef & Tropical Starwalker pink coin, both of which don't need anyone
+        # For Tropical Starwalker, you can use the trick that makes Zenlooker tell you to take a shower instead of needing to fight.
         garden_no_character_required.connect(garden_petal_feather, rule=Has(items[ItemIDs.petalfeather]))
 
         # aqua fight needs kris

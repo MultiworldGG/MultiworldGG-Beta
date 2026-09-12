@@ -2,7 +2,6 @@ from types import MappingProxyType
 from typing import Callable
 
 from BaseClasses import CollectionState
-from worlds.AutoWorld import World
 from worlds.generic.Rules import add_rule
 from .Items import grinch_items
 from .Locations import GrinchLocationInfo
@@ -25,6 +24,11 @@ def set_location_rules(world):
                         #print(f"[G]ADDED GLITCHED ITEM to : {advanced_rule}")
                     loc_rules.append(advanced_rule)
                 #print(f"[A]Access_rules:{loc_rules}")
+        # if location == "MC - Complete MacGuffin Goal":
+        #     items: dict[str, int] = {}
+        #     items[grinch_items.keys.MACGUFFIN] = world.options.heart_size_required.value
+        #     add_rule(world, lambda state, heart_size_required=MappingProxyType(items):
+        #     state.has_all_counts(heart_size_required, world.player))
         rule_list = interpret_rule(loc_rules, world.player)
         if rule_list:
             add_rule(location, lambda state, rules=tuple(rule_list): any(rule(state) for rule in rules))
@@ -965,6 +969,9 @@ ALL_LOCATIONS_INFO: dict[str, GrinchLocationInfo] = {
             [
                 grinch_items.gadgets.GRINCH_COPTER,
             ],
+            [
+                grinch_items.moves.MAX,
+            ],
         ],
         advanced_location_access=[
             [],
@@ -1010,15 +1017,15 @@ ALL_LOCATIONS_INFO: dict[str, GrinchLocationInfo] = {
         ],
         advanced_location_access=[
             [
-                grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
                 grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
                 grinch_items.moves.PANCAKE,
-                grinch_items.moves.BAD_BREATH,
             ],
             [
                 grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
-                grinch_items.moves.PANCAKE,
-                grinch_items.moves.SNEAK,
+                grinch_items.gadgets.ROCKET_SPRING,
+            ],
+            [
+                grinch_items.gadgets.GRINCH_COPTER,
             ],
         ],
     ),
@@ -1058,19 +1065,29 @@ ALL_LOCATIONS_INFO: dict[str, GrinchLocationInfo] = {
                 grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
                 grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
                 grinch_items.moves.PANCAKE,
-                grinch_items.moves.BAD_BREATH,
-            ],
-            [
-                grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
-                grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
-                grinch_items.moves.PANCAKE,
-                grinch_items.moves.SNEAK,
             ],
             [
                 grinch_items.gadgets.SLIME_SHOOTER,
                 grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
                 grinch_items.moves.PANCAKE,
-                grinch_items.moves.SNEAK,
+            ],
+            [
+                grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+                grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
+                grinch_items.gadgets.ROCKET_SPRING,
+            ],
+            [
+                grinch_items.gadgets.SLIME_SHOOTER,
+                grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
+                grinch_items.gadgets.ROCKET_SPRING,
+            ],
+            [
+                grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+                grinch_items.gadgets.GRINCH_COPTER,
+            ],
+            [
+                grinch_items.gadgets.SLIME_SHOOTER,
+                grinch_items.gadgets.GRINCH_COPTER,
             ],
         ],
     ),
@@ -2591,6 +2608,11 @@ ALL_LOCATIONS_INFO: dict[str, GrinchLocationInfo] = {
                 grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
                 grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
                 grinch_items.moves.PANCAKE,
+            ],
+            [
+                grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+                grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
+                grinch_items.gadgets.ROCKET_SPRING,
             ],
         ],
     ),
@@ -4763,6 +4785,78 @@ ALL_LOCATIONS_INFO: dict[str, GrinchLocationInfo] = {
             ],
         ],
     ),
+    # "MC - Complete Missions Goal": GrinchLocationInfo(
+    #     location_access=[
+    #         self.options.missions_complete + location_group == "Missions",
+    #         ],
+    # ),
+    # "MC - Complete MacGuffin Goal": GrinchLocationInfo(
+    #     location_access=[
+    #         [grinch_items.sleigh_parts.EXHAUST_PIPES,
+    #         grinch_items.sleigh_parts.TWIN_END_TUBA,
+    #         grinch_items.sleigh_parts.SKIS,
+    #         grinch_items.sleigh_parts.TIRES]
+    #     ],
+    # ),
+    # "MC - Supadow - Complete Each Supadow in Hardest Difficulty": GrinchLocationInfo(
+    #     location_access=[
+    #         [
+    #             grinch_items.supadow.SPIN_N_WIN,
+    #             grinch_items.supadow.PANKAMANIA,
+    #             grinch_items.supadow.COPTER_RACE,
+    #         ],
+    #     ],
+    # ),
+    # "MC - Squashed all Gifts": GrinchLocationInfo(
+    #     location_access=[
+    #         [
+    #             grinch_items.gadgets.GRINCH_COPTER,
+    #             grinch_items.gadgets.SLIME_SHOOTER,
+    #             grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+    #             grinch_items.gadgets.ROCKET_SPRING,
+    #             grinch_items.gadgets.MARINE_MOBILE,
+    #             grinch_items.level_items.WV_WHO_CLOAK,
+    #             grinch_items.gadgets.ROCKET_SPRING,
+    #             grinch_items.moves.PANCAKE,
+    #             grinch_items.moves.MAX,
+    #             grinch_items.moves.SEIZE,
+    #             grinch_items.level_items.WF_CABLE_CAR_ACCESS_CARD,
+    #             grinch_items.moves.BAD_BREATH,
+    #             grinch_items.level_items.WL_SCOUT_CLOTHES,
+    #             grinch_items.level_items.WL_HOOK,
+    #         ],
+    #         [
+    #             grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
+    #             grinch_items.gadgets.SLIME_SHOOTER,
+    #             grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+    #             grinch_items.gadgets.ROCKET_SPRING,
+    #             grinch_items.gadgets.MARINE_MOBILE,
+    #             grinch_items.level_items.WV_WHO_CLOAK,
+    #             grinch_items.gadgets.ROCKET_SPRING,
+    #             grinch_items.moves.PANCAKE,
+    #             grinch_items.moves.MAX,
+    #             grinch_items.moves.SEIZE,
+    #             grinch_items.level_items.WF_CABLE_CAR_ACCESS_CARD,
+    #             grinch_items.moves.BAD_BREATH,
+    #             grinch_items.level_items.WL_SCOUT_CLOTHES,
+    #             grinch_items.level_items.WL_HOOK,
+    #         ],
+    #     ],
+    # ),
+    # "WF - Putting Beehives In Cabins - Event": GrinchLocationInfo(
+    #     location_access=[
+    #         [
+    #             grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+    #             grinch_items.gadgets.ROCKET_SPRING,
+    #             grinch_items.moves.BAD_BREATH,
+    #         ],
+    #         [
+    #             grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+    #             grinch_items.gadgets.GRINCH_COPTER,
+    #             grinch_items.moves.BAD_BREATH,
+    #         ],
+    #     ],
+    # ),
 }
 
 # - You waste a lot of Rotten Eggs when there are intentional game design alternatives not to.

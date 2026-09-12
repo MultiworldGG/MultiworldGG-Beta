@@ -372,6 +372,73 @@ class LocationIDs(IntEnum):
     ch5_weird_route_sinking = 350
     ch2_fountain_sealed_weird_route = 351
     ch4_castle_town_mike_chest = 352
+    ch1_field_donation_hole = 353
+    ch3_cooking_show_rank_z = 354
+    ch3_cooking_show_rank_c = 355
+    ch3_cooking_show_rank_b = 356
+    ch3_cooking_show_rank_a = 357
+    ch3_cooking_show_rank_s = 358
+    ch3_cooking_show_rank_t = 359
+    ch3_rock_video_rank_z = 360
+    ch3_rock_video_rank_c = 361
+    ch3_rock_video_rank_b = 362
+    ch3_rock_video_rank_a = 363
+    ch3_rock_video_rank_s = 364
+    ch3_rock_video_rank_t = 365
+    ch3_monster_movie_rank_z = 366
+    ch3_monster_movie_rank_c = 367
+    ch3_monster_movie_rank_b = 368
+    ch3_monster_movie_rank_a = 369
+    ch3_monster_movie_rank_s = 370
+    ch3_monster_movie_rank_t = 371
+    cc_rock_video_tv_time_Z = 372
+    cc_rock_video_tv_time_C = 373
+    cc_rock_video_tv_time_B = 374
+    cc_rock_video_tv_time_A = 375
+    cc_rock_video_tv_time_S = 376
+    cc_rock_video_tv_time_T = 377
+    cc_rock_video_tv_time_Z_hard = 378
+    cc_rock_video_tv_time_C_hard = 379
+    cc_rock_video_tv_time_B_hard = 380
+    cc_rock_video_tv_time_A_hard = 381
+    cc_rock_video_tv_time_S_hard = 382
+    cc_rock_video_tv_time_T_hard = 383
+    cc_rock_video_knock_you_down_Z = 384
+    cc_rock_video_knock_you_down_C = 385
+    cc_rock_video_knock_you_down_B = 386
+    cc_rock_video_knock_you_down_A = 387
+    cc_rock_video_knock_you_down_S = 388
+    cc_rock_video_knock_you_down_T = 389
+    cc_rock_video_knock_you_down_Z_hard = 390
+    cc_rock_video_knock_you_down_C_hard = 391
+    cc_rock_video_knock_you_down_B_hard = 392
+    cc_rock_video_knock_you_down_A_hard = 393
+    cc_rock_video_knock_you_down_S_hard = 394
+    cc_rock_video_knock_you_down_T_hard = 395
+    cc_rock_video_raise_up_your_bat_Z = 396
+    cc_rock_video_raise_up_your_bat_C = 397
+    cc_rock_video_raise_up_your_bat_B = 398
+    cc_rock_video_raise_up_your_bat_A = 399
+    cc_rock_video_raise_up_your_bat_S = 400
+    cc_rock_video_raise_up_your_bat_T = 401
+    cc_rock_video_raise_up_your_bat_Z_hard = 402
+    cc_rock_video_raise_up_your_bat_C_hard = 403
+    cc_rock_video_raise_up_your_bat_B_hard = 404
+    cc_rock_video_raise_up_your_bat_A_hard = 405
+    cc_rock_video_raise_up_your_bat_S_hard = 406
+    cc_rock_video_raise_up_your_bat_T_hard = 407
+    cc_rock_video_4rd_sanctuary_Z = 408
+    cc_rock_video_4rd_sanctuary_C = 409
+    cc_rock_video_4rd_sanctuary_B = 410
+    cc_rock_video_4rd_sanctuary_A = 411
+    cc_rock_video_4rd_sanctuary_S = 412
+    cc_rock_video_4rd_sanctuary_T = 413
+    cc_rock_video_4rd_sanctuary_Z_hard = 414
+    cc_rock_video_4rd_sanctuary_C_hard = 415
+    cc_rock_video_4rd_sanctuary_B_hard = 416
+    cc_rock_video_4rd_sanctuary_A_hard = 417
+    cc_rock_video_4rd_sanctuary_S_hard = 418
+    cc_rock_video_4rd_sanctuary_T_hard = 419
 
     # Lost recruits
     ch2_lost_werewire = 1049
@@ -423,6 +490,54 @@ locations = {
     LocationIDs.cc_castle_town_silver_card_fusion: "CC: Castle Town - Silver Card Fusion",
     LocationIDs.cc_castle_town_spike_band_fusion: "CC: Castle Town - Spike Band Fusion",
     LocationIDs.cc_castle_town_twistedsword_fusion: "CC: Castle Town - TwistedSwd Fusion",
+    LocationIDs.cc_rock_video_tv_time_Z: "CC: Rock Video - TV Time Z",
+    LocationIDs.cc_rock_video_tv_time_C: "CC: Rock Video - TV Time C",
+    LocationIDs.cc_rock_video_tv_time_B: "CC: Rock Video - TV Time B",
+    LocationIDs.cc_rock_video_tv_time_A: "CC: Rock Video - TV Time A",
+    LocationIDs.cc_rock_video_tv_time_S: "CC: Rock Video - TV Time S",
+    LocationIDs.cc_rock_video_tv_time_T: "CC: Rock Video - TV Time T",
+    LocationIDs.cc_rock_video_tv_time_Z_hard: "CC: Rock Video - TV Time Z (Hard)",
+    LocationIDs.cc_rock_video_tv_time_C_hard: "CC: Rock Video - TV Time C (Hard)",
+    LocationIDs.cc_rock_video_tv_time_B_hard: "CC: Rock Video - TV Time B (Hard)",
+    LocationIDs.cc_rock_video_tv_time_A_hard: "CC: Rock Video - TV Time A (Hard)",
+    LocationIDs.cc_rock_video_tv_time_S_hard: "CC: Rock Video - TV Time S (Hard)",
+    LocationIDs.cc_rock_video_tv_time_T_hard: "CC: Rock Video - TV Time T (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_Z: "CC: Rock Video - Knock You Down Z",
+    LocationIDs.cc_rock_video_knock_you_down_C: "CC: Rock Video - Knock You Down C",
+    LocationIDs.cc_rock_video_knock_you_down_B: "CC: Rock Video - Knock You Down B",
+    LocationIDs.cc_rock_video_knock_you_down_A: "CC: Rock Video - Knock You Down A",
+    LocationIDs.cc_rock_video_knock_you_down_S: "CC: Rock Video - Knock You Down S",
+    LocationIDs.cc_rock_video_knock_you_down_T: "CC: Rock Video - Knock You Down T",
+    LocationIDs.cc_rock_video_knock_you_down_Z_hard: "CC: Rock Video - Knock You Down Z (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_C_hard: "CC: Rock Video - Knock You Down C (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_B_hard: "CC: Rock Video - Knock You Down B (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_A_hard: "CC: Rock Video - Knock You Down A (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_S_hard: "CC: Rock Video - Knock You Down S (Hard)",
+    LocationIDs.cc_rock_video_knock_you_down_T_hard: "CC: Rock Video - Knock You Down T (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_Z: "CC: Rock Video - Raise Up Your Bat Z",
+    LocationIDs.cc_rock_video_raise_up_your_bat_C: "CC: Rock Video - Raise Up Your Bat C",
+    LocationIDs.cc_rock_video_raise_up_your_bat_B: "CC: Rock Video - Raise Up Your Bat B",
+    LocationIDs.cc_rock_video_raise_up_your_bat_A: "CC: Rock Video - Raise Up Your Bat A",
+    LocationIDs.cc_rock_video_raise_up_your_bat_S: "CC: Rock Video - Raise Up Your Bat S",
+    LocationIDs.cc_rock_video_raise_up_your_bat_T: "CC: Rock Video - Raise Up Your Bat T",
+    LocationIDs.cc_rock_video_raise_up_your_bat_Z_hard: "CC: Rock Video - Raise Up Your Bat Z (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_C_hard: "CC: Rock Video - Raise Up Your Bat C (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_B_hard: "CC: Rock Video - Raise Up Your Bat B (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_A_hard: "CC: Rock Video - Raise Up Your Bat A (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_S_hard: "CC: Rock Video - Raise Up Your Bat S (Hard)",
+    LocationIDs.cc_rock_video_raise_up_your_bat_T_hard: "CC: Rock Video - Raise Up Your Bat T (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_Z: "CC: Rock Video - 4rd Sanctuary Z",
+    LocationIDs.cc_rock_video_4rd_sanctuary_C: "CC: Rock Video - 4rd Sanctuary C",
+    LocationIDs.cc_rock_video_4rd_sanctuary_B: "CC: Rock Video - 4rd Sanctuary B",
+    LocationIDs.cc_rock_video_4rd_sanctuary_A: "CC: Rock Video - 4rd Sanctuary A",
+    LocationIDs.cc_rock_video_4rd_sanctuary_S: "CC: Rock Video - 4rd Sanctuary S",
+    LocationIDs.cc_rock_video_4rd_sanctuary_T: "CC: Rock Video - 4rd Sanctuary T",
+    LocationIDs.cc_rock_video_4rd_sanctuary_Z_hard: "CC: Rock Video - 4rd Sanctuary Z (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_C_hard: "CC: Rock Video - 4rd Sanctuary C (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_B_hard: "CC: Rock Video - 4rd Sanctuary B (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_A_hard: "CC: Rock Video - 4rd Sanctuary A (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_S_hard: "CC: Rock Video - 4rd Sanctuary S (Hard)",
+    LocationIDs.cc_rock_video_4rd_sanctuary_T_hard: "CC: Rock Video - 4rd Sanctuary T (Hard)",
     LocationIDs.ch1_unknown_hidden_item: "CH1: ?????? - Hidden Item",
     LocationIDs.ch1_castle_town_manual: "CH1: Castle Town - Manual",
     LocationIDs.ch1_throw_away_manual: "CH1: Throw Away Manual",
@@ -436,6 +551,7 @@ locations = {
     LocationIDs.ch1_field_return_top_cake: "CH1: Fields - Return Top Cake",
     LocationIDs.ch1_field_maze_of_death_chest: "CH1: Fields - Maze of Death Chest",
     LocationIDs.ch1_field_chest_before_great_board: "CH1: Fields - Chest Before Great Board",
+    LocationIDs.ch1_field_donation_hole: "CH1: Fields - Donation hole",
     LocationIDs.ch1_seam_seap_talk_about_strange_prisoner: "CH1: Seam's Seap - Talk About Strange Prisoner",
     LocationIDs.ch1_seam_seap_1: "CH1: Seam's Seap 1",
     LocationIDs.ch1_seam_seap_2: "CH1: Seam's Seap 2",
@@ -571,6 +687,12 @@ locations = {
     LocationIDs.ch3_board_1_s_rank: "CH3: Board 1 - S-Rank",
     LocationIDs.ch3_board_1_t_rank: "CH3: Board 1 - T-Rank",
     LocationIDs.ch3_board_1_z_rank: "CH3: Board 1 - Z-Rank",
+    LocationIDs.ch3_cooking_show_rank_c: "CH3: Cooking Show - C-Rank",
+    LocationIDs.ch3_cooking_show_rank_b: "CH3: Cooking Show - B-Rank",
+    LocationIDs.ch3_cooking_show_rank_a: "CH3: Cooking Show - A-Rank",
+    LocationIDs.ch3_cooking_show_rank_s: "CH3: Cooking Show - S-Rank",
+    LocationIDs.ch3_cooking_show_rank_t: "CH3: Cooking Show - T-Rank",
+    LocationIDs.ch3_cooking_show_rank_z: "CH3: Cooking Show - Z-Rank",
     LocationIDs.ch3_board_1_extra_key: "CH3: Board 1 - Extra Key",
     LocationIDs.ch3_board_1_extra_extra_key: "CH3: Board 1 - Extra Extra Key",
     LocationIDs.ch3_green_room_vending_machine_1: "CH3: Green Room - Vending Machine 1",
@@ -588,6 +710,12 @@ locations = {
     LocationIDs.ch3_b_rank_room_golden_prize_3: "CH3: B-Rank Room - Golden Prize 3",
     LocationIDs.ch3_b_rank_room_golden_prize_4: "CH3: B-Rank Room - Golden Prize 4",
     LocationIDs.ch3_b_rank_room_golden_prize_5: "CH3: B-Rank Room - Golden Prize 5",
+    LocationIDs.ch3_monster_movie_rank_c: "CH3: Monster Movie - C-Rank",
+    LocationIDs.ch3_monster_movie_rank_b: "CH3: Monster Movie - B-Rank",
+    LocationIDs.ch3_monster_movie_rank_a: "CH3: Monster Movie - A-Rank",
+    LocationIDs.ch3_monster_movie_rank_s: "CH3: Monster Movie - S-Rank",
+    LocationIDs.ch3_monster_movie_rank_t: "CH3: Monster Movie - T-Rank",
+    LocationIDs.ch3_monster_movie_rank_z: "CH3: Monster Movie - Z-Rank",
     LocationIDs.ch3_s_rank_room_person_behind_curtain: "CH3: S-Rank Room - Person Behind Curtain",
     LocationIDs.ch3_s_rank_room_vending_machine_1: "CH3: S-Rank Room - Vending Machine 1",
     LocationIDs.ch3_s_rank_room_vending_machine_2: "CH3: S-Rank Room - Vending Machine 2",
@@ -600,6 +728,12 @@ locations = {
     LocationIDs.ch3_board_2_s_rank: "CH3: Board 2 - S-Rank",
     LocationIDs.ch3_board_2_t_rank: "CH3: Board 2 - T-Rank",
     LocationIDs.ch3_board_2_z_rank: "CH3: Board 2 - Z-Rank",
+    LocationIDs.ch3_rock_video_rank_c: "CH3: Rock Video - C-Rank",
+    LocationIDs.ch3_rock_video_rank_b: "CH3: Rock Video - B-Rank",
+    LocationIDs.ch3_rock_video_rank_a: "CH3: Rock Video - A-Rank",
+    LocationIDs.ch3_rock_video_rank_s: "CH3: Rock Video - S-Rank",
+    LocationIDs.ch3_rock_video_rank_t: "CH3: Rock Video - T-Rank",
+    LocationIDs.ch3_rock_video_rank_z: "CH3: Rock Video - Z-Rank",
     LocationIDs.ch3_board_2_extra_photo: "CH3: Board 2 - Extra Photo",
     LocationIDs.ch3_board_2_moss: "CH3: Board 2 - Moss",
     LocationIDs.ch3_tv_world_chest_near_shadowmen: "CH3: TV World - Chest Near Shadowmen",
@@ -764,6 +898,7 @@ locations = {
     LocationIDs.ch5_vending_machine_2: "CH5: Soda Fountain Item #2",
     LocationIDs.ch5_vending_machine_3: "CH5: Soda Fountain Item #3",
     LocationIDs.ch5_vending_machine_4: "CH5: Soda Fountain Item #4",
+    LocationIDs.ch5_vending_machine_flowerys_secret: "CH5: Soda Fountain Flowery's Secret",
     LocationIDs.ch5_castle_west_hidden_zen_garden_chest: "CH5: Castle West - Hidden Zen Garden Chest",
     LocationIDs.ch5_castle_west_yellow_flower_platforming_pink_coin: "CH5: Castle West - Yellow Flower Platforming Pink Coin",
     LocationIDs.ch5_castle_west_shinobeetle_shuriken_pink_coin: "CH5: Castle West - Shinobeetle Shuriken Pink Coin",
@@ -779,7 +914,6 @@ locations = {
     LocationIDs.ch5_castle_east_fox_race_pink_coin: "CH5: Castle East - Fox Race Pink Coin",
     LocationIDs.ch5_castle_east_mysterious_puzzle_warp_door: "CH5: Castle East - Mysterious Puzzle Warp Door",
     LocationIDs.ch5_castle_top_painting_room_item: "CH5: Top of Castle - Painting Room Item",
-    LocationIDs.ch5_vending_machine_flowerys_secret: "CH5: Soda Fountain Flowery's Secret",
     LocationIDs.ch5_castle_moss: "CH5: Flower Castle - Moss",
     LocationIDs.ch5_castle_west_shinobeetle_chest_behind_tree: "CH5: Castle West - Shinobeetle Chest Behind Tree",
     LocationIDs.ch5_castle_top_yellow_flower_platforming_pink_coin: "CH5: Top of Castle - Yellow Flower Platforming Pink Coin",

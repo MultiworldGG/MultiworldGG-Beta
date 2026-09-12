@@ -12,20 +12,20 @@ from . import locationdefs as ld
 from .locationbase import LocationData
 
 
-def add_location(locations_ref: dict[str, LocationData], loc_name: str):
+def add_location(locations_ref: dict[str, LocationData], loc_name: str) -> None:
     locations_ref[loc_name] = ld.locations_all[loc_name]
 
-def add_locations(locations_ref: dict[str, LocationData], loc_names: Iterable[str]):
+def add_locations(locations_ref: dict[str, LocationData], loc_names: Iterable[str]) -> None:
     [add_location(locations_ref, loc) for loc in loc_names]
 
-def exclude_location(locations_ref: dict[str,LocationData], loc_name: str):
+def exclude_location(locations_ref: dict[str,LocationData], loc_name: str) -> None:
     #print(f"Exclude {loc_name}")
     locations_ref[loc_name] = locations_ref[loc_name].with_progress_type(LocationProgressType.EXCLUDED)
 
-def exclude_locations(locations_ref: dict[str, LocationData], loc_names: Iterable[str], strict: bool = False):
+def exclude_locations(locations_ref: dict[str, LocationData], loc_names: Iterable[str], strict: bool = False) -> None:
     [exclude_location(locations_ref, loc) for loc in loc_names if (strict or loc in locations_ref)]
 
-def setup_grade_check_locations(locations_ref: dict[str,LocationData], options: CupheadOptions):
+def setup_grade_check_locations(locations_ref: dict[str,LocationData], options: CupheadOptions) -> None:
     boss_grade_checks = options.boss_grade_checks.evalue
     rungun_grade_checks = options.rungun_grade_checks.evalue
     if boss_grade_checks>0:
@@ -38,12 +38,13 @@ def setup_grade_check_locations(locations_ref: dict[str,LocationData], options: 
         elif rungun_grade_checks==GradeCheckMode.PACIFIST:
             locations_ref.update(ld.location_level_rungun_pacifist)
 
-def setup_boss_phase_check_locations(locations_ref: dict[str, LocationData], options: CupheadOptions):
+def setup_boss_phase_check_locations(locations_ref: dict[str, LocationData], options: CupheadOptions) -> None:
     pass # TODO: Finish
 
-def setup_quest_locations(locations_ref: dict[str,LocationData], options: CupheadOptions):
-    def _add_location(name: str):
+def setup_quest_locations(locations_ref: dict[str,LocationData], options: CupheadOptions) -> None:
+    def _add_location(name: str) -> None:
         add_location(locations_ref, name)
+
     if options.buster_quest.bvalue:
         _add_location(locationnames.loc_quest_buster)
     if options.ginger_quest.bvalue:
@@ -67,11 +68,11 @@ def setup_quest_locations(locations_ref: dict[str,LocationData], options: Cuphea
         _add_location(locationnames.loc_quest_pacifist)
 
 def setup_boss_final_locations(
-        locations_ref: dict[str,LocationData],
-        options: CupheadOptions,
-        base_final: dict[str,LocationData],
-        dlc_final: dict[str,LocationData],
-    ):
+    locations_ref: dict[str,LocationData],
+    options: CupheadOptions,
+    base_final: dict[str,LocationData],
+    dlc_final: dict[str,LocationData],
+) -> None:
     if not options.are_bits_satisfied(options.mode, GameMode.BEAT_DEVIL, GameMode.DLC_BEAT_SALTBAKER):
         locations_ref.update(base_final)
         #if (
@@ -91,7 +92,7 @@ def setup_boss_final_locations(
         #):
         #    exclude_locations(locations_ref, dlc_final.keys())
 
-def setup_dlc_chalice_locations(locations_ref: dict[str,LocationData], options: CupheadOptions):
+def setup_dlc_chalice_locations(locations_ref: dict[str,LocationData], options: CupheadOptions) -> None:
     if options.dlc_chalice.evalue == ChaliceMode.RANDOMIZED:
         add_location(locations_ref, locationnames.loc_dlc_cookie)
     elif options.dlc_chalice.evalue == ChaliceMode.VANILLA:
@@ -118,7 +119,7 @@ def setup_dlc_chalice_locations(locations_ref: dict[str,LocationData], options: 
         )
         add_location(locations_ref, locationnames.loc_dlc_quest_cactusgirl)
 
-def setup_dlc_locations(locations_ref: dict[str,LocationData], options: CupheadOptions):
+def setup_dlc_locations(locations_ref: dict[str,LocationData], options: CupheadOptions) -> None:
     locations_ref.update(ld.locations_dlc)
     if options.boss_grade_checks.value > 0:
         locations_ref.update(ld.location_level_dlc_boss_topgrade)
@@ -130,25 +131,30 @@ def setup_dlc_locations(locations_ref: dict[str,LocationData], options: CupheadO
         if (options.mode.evalue & GameMode.DLC_NO_ISLE4) == 0:
             locations_ref.update(ld.location_level_dlc_tutorial)
         setup_dlc_chalice_locations(locations_ref, options)
-    if options.dlc_kingsleap.evalue != ChessCastleMode.INCLUDE_ALL:
+    if (options.dlc_kingsleap.evalue & ChessCastleMode.INCLUDE_ALL) != ChessCastleMode.INCLUDE_ALL:
         _kingsleap_locs = [x for x in [
             *ld.location_level_dlc_chesscastle.keys(), *ld.location_level_dlc_chesscastle_dlc_chaliced.keys()
         ] if x in locations_ref]
         for loc in ld.location_level_dlc_chesscastle.keys():
             if (
                 (
-                    options.dlc_kingsleap.evalue == ChessCastleMode.EXCLUDE_GAUNTLET and
+                    # No gauntlet
+                    (options.dlc_kingsleap.evalue & ChessCastleMode.INCLUDE_GAUNTLET) == 0 and
                     (
                         loc == locationnames.loc_level_dlc_chesscastle_run or
                         loc == locationnames.loc_level_dlc_chesscastle_run_dlc_chaliced
                     )
                 ) or (
-                    options.dlc_kingsleap.evalue == ChessCastleMode.GAUNTLET_ONLY and
+                    # No main
+                    (options.dlc_kingsleap.evalue & ChessCastleMode.INCLUDE_MAIN) == 0 and
                     (
                         loc != locationnames.loc_level_dlc_chesscastle_run and
                         loc != locationnames.loc_level_dlc_chesscastle_run_dlc_chaliced
                     )
-                ) or options.dlc_kingsleap.evalue == ChessCastleMode.EXCLUDE
+                ) or (
+                    # Nothing at all
+                    (options.dlc_kingsleap.evalue & ChessCastleMode.INCLUDE_ALL) == 0
+                )
             ):
                 exclude_location(locations_ref, loc)
 

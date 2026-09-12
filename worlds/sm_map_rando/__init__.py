@@ -287,6 +287,7 @@ class SMMapRandoWorld(World):
             self.multiworld.regions += self.region_dict
 
             for loc_name in remaining_locations:
+                self.locations[loc_name].progress_type = LocationProgressType.EXCLUDED
                 region = self.multiworld.get_region(f"step {self.spoiler_log_summary_size - 1}", self.player)
                 self.locations[loc_name].parent_region = region
                 region.locations.append(self.locations[loc_name])

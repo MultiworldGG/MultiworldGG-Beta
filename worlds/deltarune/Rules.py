@@ -2,7 +2,14 @@ from typing import TYPE_CHECKING
 
 from rule_builder.options import OptionFilter
 from rule_builder.rules import CanReachLocation, CanReachRegion, Has
-from worlds.deltarune.Options import ChosenRoute, UnlockCharacters, UnlockFunGangActions
+from worlds.deltarune.Options import (
+    AnnoyingFarmingAsLogic,
+    ChosenRoute,
+    NoHitAsLogic,
+    SpeedrunGlitchesAsLogic,
+    UnlockCharacters,
+    UnlockFunGangActions,
+)
 from worlds.deltarune.Items import ItemGroups, items, ItemIDs, glitched_item_name
 from worlds.deltarune.Regions import Regions
 from worlds.deltarune.Locations import LocationIDs, locations
@@ -26,6 +33,13 @@ have_susie_or_ralsei = have_susie | have_ralsei
 
 have_actions = Has(items[ItemIDs.s_r_n_actions]) | OptionFilter(UnlockFunGangActions, 0)
 
+speedrun_glitch_logic = Has(glitched_item_name) | [
+    OptionFilter(SpeedrunGlitchesAsLogic, SpeedrunGlitchesAsLogic.option_true)
+]
+nohit_logic = Has(glitched_item_name) | [OptionFilter(NoHitAsLogic, NoHitAsLogic.option_true)]
+annoying_farming_logic = Has(glitched_item_name) | [
+    OptionFilter(AnnoyingFarmingAsLogic, AnnoyingFarmingAsLogic.option_true)
+]
 
 def have_thornring(world: "DeltaruneWorld"):
     return Has(items[ItemIDs.thornring]) | Has(
@@ -41,8 +55,8 @@ def can_snowgrave(world: "DeltaruneWorld"):
 can_recruit_with_violence_ralsei = have_ralsei
 can_recruit_with_violence_susie = have_susie
 can_recruit_with_violence_noelle = have_noelle
-can_spam_spare = have_kris_susie_or_ralsei & Has(glitched_item_name)
-can_spam_spare_kris_and_ralsei_only = have_kris_or_ralsei & Has(glitched_item_name)
+can_spam_spare = have_kris_susie_or_ralsei & annoying_farming_logic
+can_spam_spare_kris_and_ralsei_only = have_kris_or_ralsei & annoying_farming_logic
 can_act_spare_susie = have_susie & have_actions
 can_act_spare_ralsei = have_ralsei & have_actions
 

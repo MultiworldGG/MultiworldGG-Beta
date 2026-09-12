@@ -1491,10 +1491,10 @@ class UltrakillRules:
                                 and stamina(state, 1)
                             )
                             or walljumps(state, 2)
+                            or stamina(state, 3)
                             or slam_storage(state)
                         )
                     )
-                    or stamina(state, 3)
                 ),
 
             "0-2: Secret #4":
@@ -3072,9 +3072,12 @@ class UltrakillRules:
                     and (
                         can_punch(state)
                         or shoalt_any(state)
+                        or (
+                            slide(state)
+                            and slam(state)
+                        )
                     )
                     and good_weapon(state)
-                    and can_break_gutterman_shield(state)
                 ),
 
             "7-4: Don't fight the security system":
@@ -3088,10 +3091,13 @@ class UltrakillRules:
                     and (
                         can_punch(state)
                         or shoalt_any(state)
+                        or (
+                            slide(state)
+                            and slam(state)
+                        )
                     )
                     and good_weapon(state)
                     and can_zap(state)
-                    and can_break_gutterman_shield(state)
                 ),
 
             "7-4: Perfect Rank":
@@ -3101,6 +3107,10 @@ class UltrakillRules:
                     and (
                         can_punch(state)
                         or shoalt_any(state)
+                        or (
+                            slide(state)
+                            and slam(state)
+                        )
                     )
                     and good_weapon(state)
                     and can_break_gutterman_shield(state)
@@ -4628,6 +4638,7 @@ class UltrakillRules:
                     (
                         can_reach_level(state, "Enemy: Gutterman", "7-2")
                         and arm2(state)
+                        and can_break_gutterman_shield(state)
                     )
                     or (
                         can_reach_level(state, "Enemy: Gutterman", "7-3")
@@ -4663,7 +4674,10 @@ class UltrakillRules:
                         )
                         and can_break_gutterman_shield(state)
                     )
-                    or can_reach_level(state, "Enemy: Gutterman", "8-1")
+                    or (
+                        can_reach_level(state, "Enemy: Gutterman", "8-1")
+                        and can_break_gutterman_shield(state)
+                    )
                     or (
                         can_reach_level(state, "Enemy: Gutterman", "8-2")
                         and grab_item(state)

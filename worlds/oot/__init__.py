@@ -1258,6 +1258,7 @@ class OOTWorld(World):
                     loc.place_locked_item(item)
                     self.hinted_dungeon_reward_locations[item.name] = loc
         else:  # mode == 'reward'
+            self.shuffled_boss_reward_locations = prize_locs[:]
             while prize_locs:
                 self.random.shuffle(prizepool)
                 self.random.shuffle(prize_locs)
@@ -1265,6 +1266,30 @@ class OOTWorld(World):
                 loc = prize_locs.pop()
                 loc.place_locked_item(item)
                 self.hinted_dungeon_reward_locations[item.name] = loc
+
+
+    def retry_boss_rewards(self):
+        locations = getattr(self, 'shuffled_boss_reward_locations', [])
+        if not locations or self.logic_rules == 'no_logic':
+            return
+
+        rewards = [location.item for location in locations]
+        for attempt in range(1000):
+            state = CollectionState(self.multiworld)
+            for item in self.itempool + self.pre_fill_items:
+                self.multiworld.worlds[item.player].collect(state, item)
+            state.sweep_for_advancements(locations=self.get_locations())
+            if state.has_group_unique('rewards', self.player, 9):
+                return
+            if attempt == 999:
+                break
+            self.random.shuffle(rewards)
+            for location, reward in zip(locations, rewards):
+                self.multiworld.push_item(location, reward, collect=False)
+                self.hinted_dungeon_reward_locations[reward.name] = location
+
+        raise FillError(f'OoT (Player {self.player}): could not find a reachable boss reward layout '
+                        'after 1000 attempts.')
 
 
     # Separate the result from generate_itempool into main and prefill pools
@@ -1897,6 +1922,8 @@ class OOTWorld(World):
                         single_player_placement=True, lock=True, allow_excluded=True,
                         on_place=lambda loc: placed_prefill_items.append(loc.item))
 
+        self.retry_boss_rewards()
+
         # Place songs
         # 15 built-in retries because this section can fail sometimes
         if self.shuffle_song_items != 'any':
@@ -2063,18 +2090,23 @@ class OOTWorld(World):
                     self.random.shuffle(song_locations)
                     if self.shuffle_song_items == 'dungeon':
                         song_locations.sort(key=lambda location: 0 if location.name == 'Sheik in Ice Cavern' else 1)
-                    song_base_state = base_prefill_state()
+
+                    song_base_state = base_prefill_state(
+                        assume_song_of_time=False,
+                        assume_time_travel=False,
+                        assume_dungeon_rewards=False,
+                    )
                     if song_of_time_opens_door:
-                        song_of_time_state = prefill_state(base_prefill_state(
-                            assume_song_of_time=False,
-                            assume_time_travel=False,
-                        ))
+                        song_of_time_state = prefill_state(
+                            song_base_state, collect_placed_items=False,
+                        )
                         place_songs(song_of_time_state, song_locations, [song_of_time])
-                    song_state = prefill_state(song_base_state)
+                    song_state = prefill_state(song_base_state, collect_placed_items=False)
                     remaining_songs = [song for song in attempt_songs if song.location is None]
                     remaining_song_locations = [location for location in song_locations if location.item is None]
 
-                    place_songs(song_state, remaining_song_locations, remaining_songs, allow_main_pool_fallback=True)
+                    place_songs(song_state, remaining_song_locations, remaining_songs,
+                                allow_main_pool_fallback=tries == 1)
                     logger.debug(
                         f"Successfully placed songs for player {self.player} "
                         f"after {max_song_tries + 1 - tries} attempt(s)")

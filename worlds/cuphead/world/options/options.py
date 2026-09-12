@@ -1,6 +1,8 @@
 ### Copyright 2025-2026 JKLeckr
 ### SPDX-License-Identifier: MPL-2.0
 
+# ty: ignore[conflicting-metaclass]
+
 from collections.abc import Mapping
 from typing import Any
 
@@ -209,7 +211,8 @@ class DlcChaliceItemsSeparate(OptionSet, NamedOption):
         return e.ItemGroups(self._fvalue)
 
     @fvalue.setter
-    def fvalue(self, value: e.ItemGroups | int):
+    def fvalue(self, value: e.ItemGroups | int) -> None:
+        """flag value"""
         self._fvalue = int(value)
 
     def _get_separate_items_mode(self) -> e.ItemGroups:
@@ -234,7 +237,7 @@ class DlcChaliceItemsSeparate(OptionSet, NamedOption):
         return _set
 
     @override
-    def __setattr__(self, name: str, value: Any, /):
+    def __setattr__(self, name: str, value: Any, /) -> None:
         super().__setattr__(name, value)
         if name == "value":
             self._value_set = True
@@ -279,6 +282,16 @@ class DlcChessCastle(EnumOption[e.ChessCastleMode], Choice, NamedOption):
     option_exclude_gauntlet = 1
     option_include_all = 3
     default = 1
+
+
+class DlcChessCastlePSugar(BToggle, NamedOption):
+    """
+    -DLC ONLY-
+    -REQUIRES THE KING'S LEAP-
+    Allow P. Sugar to be used in the King's Leap levels. Vanilla behavior only allows Parry.
+    """
+    name = "dlc_kingsleap_psugar"
+    display_name = "[DLC] The King's Leap P. Sugar"
 
 
 class DlcChessChaliceChecks(EnumOption[e.ChaliceCheckMode], Choice, NamedOption):
@@ -499,7 +512,7 @@ class LevelPlacements(LevelDict, NamedOption):
     name = "level_placements"
     display_name = "Level Placements"
     visibility = Visibility.spoiler | Visibility.template | Visibility.complex_ui
-    default: Mapping[str, str] = {}  # ty: ignore[invalid-attribute-override]
+    default: Mapping[str, str] = {}  # ty: ignore[invalid-attribute-override]  # pyrefly: ignore[bad-override]
 
 
 class LevelShuffle(EnumOption[e.LevelShuffleMode], Choice, NamedOption):

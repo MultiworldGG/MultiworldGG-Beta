@@ -5,17 +5,16 @@ from typing import TYPE_CHECKING
 from worlds.deltarune.Locations import locations, LocationIDs
 from worlds.deltarune.Items import ItemIDs, items, glitched_item_name
 from worlds.deltarune.LogicHelper import (
-    all_recruits_route,
     include_actions,
     include_freeze_recruits_chapter2,
     include_hidden_items,
     include_lose_recruits,
-    include_lose_swatchlings_weird_route,
-    include_recruit_swatchlings_weird_route,
     include_recruits,
     include_recruits_chapter2_weird_route_exclusion,
     include_secret_bosses_items_requirement,
     include_secret_bosses_items_reward,
+    include_singapour_wrong_warp_locations_lose_recruits,
+    include_singapour_wrong_warp_locations_recruit,
     not_weird_route_only,
     weird_route,
 )
@@ -51,14 +50,8 @@ def set_rules(world: "DeltaruneWorld"):
         world.get_location(locations[LocationIDs.ch2_castle_town_clover_rematch_challenge]), have_kris_susie_or_ralsei
     )
 
-    world.set_rule(world.get_location(locations[LocationIDs.ch2_cyber_city_cheese_maze_chest]), have_kris_or_noelle)
-
     if weird_route(world):
         world.set_rule(world.get_location(locations[LocationIDs.ch2_cyber_city_purchase_freezering]), have_noelle)
-        world.set_rule(
-            world.get_location(locations[LocationIDs.ch2_cyber_city_purchase_thornring]),
-            have_noelle | Has(glitched_item_name),
-        )
 
     if include_freeze_recruits_chapter2(world):
         world.set_rule(world.get_location(locations[LocationIDs.ch2_lost_werewire]), can_lost_chapter2)
@@ -71,7 +64,7 @@ def set_rules(world: "DeltaruneWorld"):
         world.set_rule(world.get_location(locations[LocationIDs.ch2_lost_tasque_manager]), can_lost_chapter2)
         world.set_rule(world.get_location(locations[LocationIDs.ch2_lost_mauswheel]), can_lost_chapter2)
         world.set_rule(world.get_location(locations[LocationIDs.ch2_lost_werewerewire]), can_lost_chapter2)
-        if include_lose_swatchlings_weird_route(world):
+        if include_singapour_wrong_warp_locations_lose_recruits(world):
             world.set_rule(world.get_location(locations[LocationIDs.ch2_lost_swatchlings]), can_lost_chapter2)
 
     if include_recruits(world):
@@ -82,7 +75,7 @@ def set_rules(world: "DeltaruneWorld"):
         if include_recruits_chapter2_weird_route_exclusion(world):
             world.set_rule(world.get_location(locations[LocationIDs.ch2_recruit_ambyu_lance]), can_recruit_ambuy_lance)
             world.set_rule(world.get_location(locations[LocationIDs.ch2_recruit_maus]), can_recruit_maus)
-        if include_recruit_swatchlings_weird_route(world):
+        if include_singapour_wrong_warp_locations_recruit(world):
             world.set_rule(world.get_location(locations[LocationIDs.ch2_recruit_swatchling]), can_recruit_swatchling)
         world.set_rule(
             world.get_location(locations[LocationIDs.ch2_recruit_tasque_manager]), can_recruit_tasque_manager

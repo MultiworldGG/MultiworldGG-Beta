@@ -6,8 +6,7 @@ from worlds.deltarune.Regions import Regions
 from worlds.deltarune.LogicHelper import (
     include_lose_recruits,
     include_recruits,
-    include_mantle,
-    not_include_lose_recruits,
+    physical_challenge_sanity_enabled,
 )
 
 if TYPE_CHECKING:
@@ -42,6 +41,36 @@ chapter3_locations = {
         LocationData(
             LocationIDs.ch3_lost_shadowguy,
             should_be_included=include_lose_recruits,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_z,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_c,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_b,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_a,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_s,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_cooking_show_rank_t,
+            should_be_included=physical_challenge_sanity_enabled,
             group=LocationGroups.chapter3,
         ),
     ],
@@ -133,6 +162,36 @@ chapter3_locations = {
             should_be_included=include_lose_recruits,
             group=LocationGroups.chapter3,
         ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_z,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_c,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_b,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_a,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_s,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_monster_movie_rank_t,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
     ],
     Regions.ch3_board_2: [
         LocationData(LocationIDs.ch3_board_2_z_rank, group=LocationGroups.chapter3),
@@ -143,6 +202,36 @@ chapter3_locations = {
         LocationData(LocationIDs.ch3_board_2_t_rank, group=LocationGroups.chapter3),
         LocationData(LocationIDs.ch3_board_2_extra_photo, group=LocationGroups.chapter3),
         LocationData(LocationIDs.ch3_board_2_moss, group=LocationGroups.chapter3),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_z,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_c,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_b,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_a,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_s,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
+        LocationData(
+            LocationIDs.ch3_rock_video_rank_t,
+            should_be_included=physical_challenge_sanity_enabled,
+            group=LocationGroups.chapter3,
+        ),
         LocationData(LocationIDs.ch3_green_room_board_2_ramb_gift, group=LocationGroups.chapter3),
         LocationData(
             LocationIDs.ch3_recruit_pippins,
@@ -248,12 +337,10 @@ chapter3_locations = {
     Regions.ch3_sword_3: [
         LocationData(
             LocationIDs.ch3_mantle_defeat,
-            should_be_included=include_mantle,
             group=LocationGroups.chapter3,
         ),
         LocationData(
             LocationIDs.ch3_mantle_susie_gift,
-            should_be_included=include_mantle,
             group=LocationGroups.chapter3,
         ),
     ],

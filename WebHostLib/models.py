@@ -91,6 +91,7 @@ class Lobby(db.Entity):
     state = Required(int, default=0, index=True)  # LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED
     max_players = Required(int, default=0) # 0 = unlimited
     allow_custom_apworlds = Required(bool, default=False)
+    listed = Required(bool, default=True)
     seed = Optional('Seed')
     room = Optional(Room)
     players = Set('LobbyPlayer')
@@ -99,6 +100,26 @@ class Lobby(db.Entity):
     apworlds = Set('LobbyApworld')
     apworld_requests = Set('LobbyApworldRequest')
     generation_id = Optional(UUID)  # ID of the Generation/Seed (they share the same UUID)
+    meta_yaml = Optional('LobbyMetaYaml', cascade_delete=True)
+    auxiliary_apworlds = Set('LobbyAuxiliaryApworld')
+
+
+class LobbyMetaYaml(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    lobby = Required(Lobby)
+    content = Required(bytes, lazy=True)
+    uploaded_at = Required(datetime, default=lambda: utcnow())
+
+
+class LobbyAuxiliaryApworld(db.Entity):
+    id = PrimaryKey(int, auto=True)
+    lobby = Required(Lobby, index=True)
+    game_name = Required(str, index=True)
+    uploader = Required(UUID)
+    original_filename = Required(str)
+    storage_path = Required(str)
+    file_size = Required(int)
+    uploaded_at = Required(datetime, default=lambda: utcnow())
 
 
 class LobbyPlayer(db.Entity):

@@ -82,22 +82,6 @@ class ExtraCubes(Choice):
     option_green_cubes_bag = 2
     option_never = 9
     default = 2
-    
-class UnderwaterCubes(Choice):
-    """
-    [NOT IMPLEMETED YET]
-    This option adds underwater cubes throughout the main game.
-    Always: underwater cubes are always collectable (they are blue).
-    Red Cubes Bag: you need to find the Red Cubes Bag item first to be able to collect underwater cubes.
-    Blue Cubes Bag: you need to find the Blue Cubes Bag item first to be able to collect underwater cubes.
-    Never: there are no underwater cubes at all in your game.
-    """
-    display_name = "Underwater Cubes"
-    # option_always = 0
-    # option_red_cubes_bag = 1
-    # option_blue_cubes_bag = 2
-    option_never = 9
-    default = 9
 
 class NumberOfMinigames(Range):
     """
@@ -109,7 +93,7 @@ class NumberOfMinigames(Range):
     display_name = "Number of Minigames"
     default = 7
     range_start = -1
-    range_end = 15
+    range_end = 17
     
 class NerfMinigameChecks(Toggle):
     """
@@ -203,6 +187,14 @@ class MinigamesLikeliness(OptionCounter):
     Download *any* custom map you want, you can find them pinned in the archipelago-refunct post/thread.
     Put the custom map in the correct folder (open the mod, press CTRL+SHIFT+M, "Open Maps Folder").
     And then when starting the minigame, choose the map you want to play!
+    
+    Defunct Minigame:
+    All the platforms are there already, pressing buttons sinks them.
+    Goal: sink the entire game D:
+    
+    Defunct Rando Minigame:
+    Defunct Minigame but randomized. Three buttons light up at a time.
+    Keep pressing them until the entire game is gone D:
     """
    
     display_name = "Likeliness of minigames"
@@ -223,12 +215,14 @@ class MinigamesLikeliness(OptionCounter):
         "Funny Bridge Game Minigame": int,
         "Clique": int,
         "Custom Minigame": int,
+        "Defunct Minigame": int,
+        "Defunct Rando Minigame": int,
     })
     min = 0
     default = {
         "Vanilla Minigame": 2,
         "Seeker Minigame": 2,
-        "Button Galore Minigame": 2,
+        "Button Galore Minigame": 1,
         "OG Randomizer Minigame": 5,
         "Block Brawl Minigame": 5,
         "Climb Line Minigame": 1,
@@ -241,7 +235,10 @@ class MinigamesLikeliness(OptionCounter):
         "Funny Bridge Game Minigame": 1,
         "Clique": 1,
         "Custom Minigame": 1,
+        "Defunct Minigame": 2,
+        "Defunct Rando Minigame": 4,
     }
+    
 
 
 class EffectsAndTraps(OptionCounter):
@@ -328,7 +325,6 @@ class RefunctOptions(PerGameCommonOptions):
     
     cubes: Cubes
     extra_cubes: ExtraCubes
-    # underwater_cubes: UnderwaterCubes
     
     number_of_minigames: NumberOfMinigames
     nerf_minigame_checks: NerfMinigameChecks
@@ -356,7 +352,6 @@ refunct_option_groups = [
         [
             Cubes,
             ExtraCubes,
-            # UnderwaterCubes,
         ],
     ),
     OptionGroup(

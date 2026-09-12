@@ -93,7 +93,7 @@ ITEMS_DATA = {
         'id': 0x22
     },
     "Gale Seeds": {
-        'classification': ItemClassification.useful,
+        'classification': ItemClassification.progression,
         'id': 0x23
     },
     "Mystery Seeds": {
@@ -116,12 +116,12 @@ ITEMS_DATA = {
         'subid': 0x02
     },
     "Rupees (20)": {
-        'classification': ItemClassification.progression_skip_balancing,
+        'classification': ItemClassification.filler,
         'id': 0x28,
         'subid': 0x03
     },
     "Rupees (30)": {
-        'classification': ItemClassification.progression_skip_balancing,
+        'classification': ItemClassification.filler,
         'id': 0x28,
         'subid': 0x04
     },

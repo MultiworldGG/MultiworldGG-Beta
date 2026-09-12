@@ -158,8 +158,8 @@ def place_seed(world: OracleOfAgesWorld, seed_name: str, location_name: str):
 def ooa_create_seeds_items(world: OracleOfAgesWorld):
     
     # Grab/validate the duplicate trees setting
-    duplicate_trees = world.options.duplicate_seed_trees.value
-
+    duplicate_trees = sorted(world.options.duplicate_seed_trees.value)
+    
     if len(duplicate_trees) > 3:
         raise OptionError("Can't select more than 3 duplicate seed trees")
 
@@ -216,6 +216,7 @@ def ooa_create_seeds_items(world: OracleOfAgesWorld):
 def ooa_create_items(world: OracleOfAgesWorld):
     ooa_create_seeds_items(world)
     item_pool_dict = build_item_pool_dict(world)
+
     
     # Create items following the dictionary that was previously constructed
     if (item_pool_dict.get("Random Ring")):
@@ -225,16 +226,17 @@ def ooa_create_items(world: OracleOfAgesWorld):
     for item_name, quantity in item_pool_dict.items():
         for i in range(quantity):
             prefill_item = None
+            created_item = world.create_item(item_name)
             if ("Small Key" in item_name or "Master Key" in item_name) and not world.options.keysanity_small_keys:
-                prefill_item = world.create_item(item_name)
+                prefill_item = created_item
             elif "Boss Key" in item_name and not world.options.keysanity_boss_keys:
-                prefill_item = world.create_item(item_name)
+                prefill_item = created_item
             elif ("Compass" in item_name or "Dungeon Map" in item_name) and not world.options.keysanity_maps_compasses:
-                prefill_item = world.create_item(item_name)
+                prefill_item = created_item
             elif "Slate" in item_name and not world.options.keysanity_slates:
-                prefill_item = world.create_item(item_name)
+                prefill_item = created_item
             else:
-                world.multiworld.itempool.append(world.create_item(item_name))        
+                world.multiworld.itempool.append(created_item)        
             if (prefill_item is not None):
                 world.dungeon_items.append(prefill_item)
                 world.pre_fill_items.append(prefill_item)

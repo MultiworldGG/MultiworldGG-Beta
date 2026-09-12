@@ -5,7 +5,7 @@ from worlds.LauncherComponents import Component, components, launch_subprocess, 
 from functools import partial
 from typing import ClassVar, cast
 
-from . import Slot, Items, Locations, Rules, Options, Settings
+from . import Slot, Items, Locations, Rules, Options, Settings, Tracker, Regions
 
 
 def launch_client(*args: str) -> None:
@@ -39,8 +39,9 @@ class XenobladeXWorld(CachedRuleBuilderWorld):
     topology_present = True
     web = XenobladeXWeb()
 
-    data_version = 16
+    data_version = 18
     base_id: int = 4100000
+    ut_can_gen_without_yaml = True
 
     options_dataclass = Options.XenobladeXOptions
 
@@ -58,6 +59,7 @@ class XenobladeXWorld(CachedRuleBuilderWorld):
     }
 
     def create_regions(self) -> None:
+        Regions.init_region(self, "Menu")
         Locations.create_locations(self)
 
     def create_items(self) -> None:
@@ -73,7 +75,7 @@ class XenobladeXWorld(CachedRuleBuilderWorld):
         Rules.set_rules(self)
 
     def generate_early(self) -> None:
-        pass
+        Tracker.prepare_tracker(self)
 
     def generate_basic(self) -> None:
         pass

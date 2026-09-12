@@ -1204,7 +1204,7 @@ grinch_locations = {
     ),
     "MC - Sleigh Ride - Save Christmas": GrinchLocationData(
         "Sleigh Ride",
-        ["Sleigh Ride"],
+        ["Sleigh Ride", "Goal"],
         1302,
         [GrinchRamData(0x010000, value=0x3E)],
     ),
@@ -3089,7 +3089,7 @@ grinch_locations = {
     ),
     "WV - Collect all Rotten Egg Launcher Blueprints": GrinchLocationData(
         "Whoville",
-        ["Rotten Egg Launcher Blueprints", "Blueprints", "Whoville", "Whoville Blueprints", "Miscellaneous"],
+        ["Rotten Egg Launcher Blueprints", "Blueprints", "Whoville", "Whoville Blueprints"],
         2400,
         [
             GrinchRamData(0x01020B, binary_bit_pos=0),
@@ -3100,7 +3100,7 @@ grinch_locations = {
     ),
     "WF - Collect all Rocket Spring Blueprints": GrinchLocationData(
         "Who Forest",
-        ["Rocket Spring Blueprints", "Blueprints", "Who Forest", "Who Forest Blueprints", "Miscellaneous"],
+        ["Rocket Spring Blueprints", "Blueprints", "Who Forest", "Who Forest Blueprints"],
         2401,
         [
             GrinchRamData(0x010243, binary_bit_pos=3),
@@ -3116,7 +3116,7 @@ grinch_locations = {
     ),
     "WF - Collect all Slime Shooter Blueprints": GrinchLocationData(
         "Who Forest",
-        ["Slime Shooter Blueprints", "Blueprints", "Who Forest", "Who Forest Blueprints", "Miscellaneous"],
+        ["Slime Shooter Blueprints", "Blueprints", "Who Forest", "Who Forest Blueprints"],
         2402,
         [
             GrinchRamData(0x010244, binary_bit_pos=3),
@@ -3132,7 +3132,7 @@ grinch_locations = {
     ),
     "WD - Collect all Octopus Climbing Device Blueprints": GrinchLocationData(
         "Who Dump",
-        ["Octopus Climbing Device Blueprints", "Blueprints", "Who Dump", "Who Dump Blueprints", "Miscellaneous"],
+        ["Octopus Climbing Device Blueprints", "Blueprints", "Who Dump", "Who Dump Blueprints"],
         2403,
         [
             GrinchRamData(0x010252, binary_bit_pos=3),
@@ -3148,7 +3148,7 @@ grinch_locations = {
     ),
     "WL - Collect all Marine Mobile Blueprints": GrinchLocationData(
         "Who Lake",
-        ["Marine Mobile Blueprints", "Blueprints", "Who Lake", "Who Lake Blueprints", "Miscellaneous"],
+        ["Marine Mobile Blueprints", "Blueprints", "Who Lake", "Who Lake Blueprints"],
         2404,
         [
             GrinchRamData(0x010281, binary_bit_pos=5),
@@ -3172,7 +3172,7 @@ grinch_locations = {
     "MC - Collect all Grinch Copter Blueprints": GrinchLocationData(
         "Mount Crumpit",
         ["Grinch Copter Blueprints", "Blueprints", "Whoville", "Whoville Blueprints",
-         "Who Forest", "Who Forest Blueprints", "Who Dump", "Who Dump Blueprints", "Who Lake", "Who Lake Blueprints", "Miscellaneous"],
+         "Who Forest", "Who Forest Blueprints", "Who Dump", "Who Dump Blueprints", "Who Lake", "Who Lake Blueprints"],
         2405,
         [
             GrinchRamData(0x01021F, binary_bit_pos=7),
@@ -3195,7 +3195,7 @@ grinch_locations = {
     ),
         "WV - Collect all Binoculars Blueprints": GrinchLocationData(
         "Whoville",
-        ["Binocular Blueprints", "Blueprints", "Whoville", "Whoville Blueprints", "Miscellaneous"],
+        ["Binocular Blueprints", "Blueprints", "Whoville", "Whoville Blueprints"],
         2406,
         [
             GrinchRamData(0x01020B, binary_bit_pos=2),
@@ -3474,6 +3474,36 @@ grinch_locations = {
             GrinchRamData(0x010275, binary_bit_pos=1),
         ],
     ),
+    # "MC - Complete Missions Goal": GrinchLocationData(
+    #     "Mount Crumpit",
+    #     ["Mount Crumpit", "Goal"],
+    #     2900,
+    # ),
+    # "MC - Complete MacGuffin Goal": GrinchLocationData(
+    #     "Mount Crumpit",
+    #     ["Mount Crumpit", "Goal"],
+    #     2901,
+    # ),
+    # "MC - Supadow - Complete Each Supadow in Hardest Difficulty": GrinchLocationData(
+    #     "Mount Crumpit",
+    #     ["Supadow Minigames", "Goal"],
+    #     2902,
+    # ),
+    # "MC - Squashed all Gifts": GrinchLocationData(
+    #     "Mount Crumpit",
+    #     ["Giftsanity", "Hard Require GC", "Goal"],
+    #     2903,
+    #     [GrinchRamData(0x01005C, value=500, byte_size=2),
+    #     GrinchRamData(0x01005E, value=750, byte_size=2),
+    #     GrinchRamData(0x010060, value=750, byte_size=2),
+    #     GrinchRamData(0x010062, value=1000, byte_size=2)],
+    # ),
+    # "WF - Putting Beehives In Cabins - Event": GrinchLocationData(
+    #     "Who Forest",
+    #     ["Who Forest Missions", "Missions", "Who Forest"],
+    #     3000,
+    #     [GrinchRamData(0x0100CA, value=10)],
+    # ),
 }
 def grinch_locations_to_id() -> dict[str, int]:
     location_mappings: dict[str, int] = {}

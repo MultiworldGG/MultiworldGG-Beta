@@ -4,7 +4,7 @@ import yaml
 
 from typing import ClassVar, Any, Optional, Type, TextIO
 from Options import Option
-from BaseClasses import Item, Location, LocationProgressType
+from BaseClasses import Item, Location, LocationProgressType, MultiWorld
 from Options import Accessibility, OptionError
 from typing import Any, Set, List, Dict, Optional, Tuple, ClassVar, TextIO, Union
 from .data.Items import *
@@ -168,9 +168,22 @@ class OracleOfAgesWorld(World):
     # ===================================================================================
     #
     # ===================================================================================
+    @classmethod
+    def stage_pre_fill(cls, multiworld: MultiWorld) -> None:
+        """
+        Class method used to correctly place dungeon items.
+
+        :param multiworld: The MultiWorld.
+        """
+        from .generation.PreFill import stage_pre_fill_dungeon_items
+        stage_pre_fill_dungeon_items(multiworld)
+
+    # ===================================================================================
+    #
+    # ===================================================================================
     def pre_fill(self) -> None:
-        from .generation.PreFill import pre_fill
-        pre_fill(self)
+        from .generation.PreFill import pre_fill_seeds
+        pre_fill_seeds(self)
 
     # -----------------------------------------------------------------------------------
     #

@@ -1,7 +1,7 @@
 # The Grinch (PS1) - Setup Guide
 
 ## Required Software
-- [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases). Please use version 0.7.200 or later for integrated
+- [MultiworldGG](https://github.com/MultiworldGG/MultiworldGG/releases). Please use latest version for integrated
 BizHawk support.
 - Legally obtained NTSC Bin ROM file, probably named something like `Grinch, The (USA) (En,Fr,Es).bin`. 
 The game's CUE file should also work alongside the BIN file if you have troubles opening the BIN file.

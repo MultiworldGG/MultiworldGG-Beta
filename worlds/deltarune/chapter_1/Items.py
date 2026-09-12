@@ -35,27 +35,37 @@ chapter1_items = [
     ItemData(ItemIDs.spincake, ItemClassification.filler, groups=[ItemGroups.healing_item]),
     ItemData(ItemIDs.amber_card, ItemClassification.filler, groups=[ItemGroups.armors, ItemGroups.fusion_ingredient]),
     ItemData(ItemIDs.glowshard, ItemClassification.filler, groups=[ItemGroups.currencies]),
-    ItemData(ItemIDs.dice_brace, ItemClassification.useful, groups=[ItemGroups.armors]),
-    ItemData(ItemIDs.spookysword, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons]),
-    ItemData(ItemIDs.brave_ax, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons]),
-    ItemData(ItemIDs.ragger, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons]),
-    ItemData(ItemIDs.daintyscarf, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons]),
+    ItemData(ItemIDs.dice_brace, ItemClassification.useful, groups=[ItemGroups.armors], amount=1),
+    ItemData(
+        ItemIDs.spookysword, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.brave_ax, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.ragger, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.daintyscarf, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons], amount=1
+    ),
     ItemData(ItemIDs.manual, ItemClassification.progression, amount=2),
-    ItemData(ItemIDs.bake_sale_ticket, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
-    ItemData(ItemIDs.castle_key, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
-    ItemData(ItemIDs.brokencake, ItemClassification.progression),
-    ItemData(ItemIDs.top_cake, ItemClassification.progression),
+    ItemData(ItemIDs.bake_sale_ticket, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1),
+    ItemData(ItemIDs.castle_key, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1),
+    ItemData(ItemIDs.brokencake, ItemClassification.progression, amount=1),
+    ItemData(ItemIDs.top_cake, ItemClassification.progression, amount=1),
     ItemData(
         ItemIDs.ironshackle,
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.white_ribbon,
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.king_shape_key_piece,
@@ -69,6 +79,7 @@ chapter1_items = [
         should_be_included=include_hidden_items,
         groups=[ItemGroups.eggs],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.castle_moss,
@@ -76,54 +87,63 @@ chapter1_items = [
         should_be_included=include_hidden_items,
         groups=[ItemGroups.moss],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.broken_key_a,
         ItemClassification.progression,
         should_be_included=include_secret_bosses_items_requirement,
         groups=[ItemGroups.jevil_keys],
+        amount=1,
     ),
     ItemData(
         ItemIDs.broken_key_b,
         ItemClassification.progression,
         should_be_included=include_secret_bosses_items_requirement,
         groups=[ItemGroups.jevil_keys],
+        amount=1,
     ),
     ItemData(
         ItemIDs.broken_key_c,
         ItemClassification.progression,
         should_be_included=include_secret_bosses_items_requirement,
         groups=[ItemGroups.jevil_keys],
+        amount=1,
     ),
     ItemData(
         ItemIDs.door_key,
         ItemClassification.progression,
         should_be_included=include_doorkey,
         groups=[ItemGroups.jevil_keys],
+        amount=1,
     ),
     ItemData(
         ItemIDs.jevilstail,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.armors],
+        amount=1,
     ),
     ItemData(
         ItemIDs.devilsknife,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.weapons, ItemGroups.susie_weapons],
+        amount=1,
     ),
     ItemData(
         ItemIDs.shadowcrystal,
         ItemClassification.filler,
         should_be_included=include_secret_bosses_items_reward,
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.chapter_1_unlock,
         ItemClassification.progression,
         should_be_included=randomized_chapters,
         groups=[ItemGroups.region_blockers],
+        amount=1,
     ),
     ItemData(
         ItemIDs.brokencake_consumable,
@@ -148,12 +168,14 @@ chapter1_items = [
         ItemClassification.useful,
         should_be_included=include_unused_items,
         groups=[ItemGroups.armors, ItemGroups.unused_items],
+        amount=1,
     ),
     ItemData(
         ItemIDs.trefoil,
         ItemClassification.useful,
         should_be_included=include_unused_items,
         groups=[ItemGroups.weapons, ItemGroups.kris_weapons, ItemGroups.unused_items],
+        amount=1,
     ),
 ]
 

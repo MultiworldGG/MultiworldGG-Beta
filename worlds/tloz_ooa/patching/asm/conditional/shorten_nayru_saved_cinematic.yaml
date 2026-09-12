@@ -1,0 +1,13 @@
+#skip all the text
+0c/72d7/: dwbe $72da # TX_1d04
+0c/72ec/: dwbe $72ef # TX_1d05
+0c/7303/: dwbe $7306 # TX_1308
+0c/731b/: dwbe $731e # TX_1309
+0a/560f/: |
+  nop # call showText after ld bc,TX_560c
+  nop 
+  nop 
+0c/732c/: dwbe $732f # TX_560d
+0c/737b/: dwbe $737e # TX_130a
+0c/7386/: dwbe $7389 # TX_2a0c
+0c/73b9/: dwbe $73bc # TX_2a0d

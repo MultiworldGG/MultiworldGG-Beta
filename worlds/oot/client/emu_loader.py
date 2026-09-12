@@ -32,6 +32,8 @@ CONNECT_STATUS_LOG_INTERVAL = 30.0
 RETROARCH_COMMAND_HOST = "127.0.0.1"
 RETROARCH_COMMAND_PORT = 55355
 RETROARCH_COMMAND_TIMEOUT = 0.5
+# A 256-byte read produces an ASCII reply under 1 KiB, fitting one UDP packet.
+RETROARCH_READ_BLOCK_SIZE = 256
 N64_KSEG1_BASE = 0xA0000000
 
 _last_connect_status: Optional[str] = None
@@ -838,21 +840,32 @@ class RetroArchNetworkInfo:
         if self._word_cache is not None and normalized_address in self._word_cache:
             return self._word_cache[normalized_address]
 
-        command_address = self._to_retroarch_address(normalized_address)
-        response = self._send_command(f"READ_CORE_MEMORY {command_address:08X} 4")
+        # Only explicit batches use read-ahead. Delivery/counter checks outside a
+        # batch must always see fresh memory, including repeated word reads.
+        if self._word_cache is not None and 0 <= normalized_address < 0x00800000:
+            block_address = normalized_address & ~(RETROARCH_READ_BLOCK_SIZE - 1)
+            data = self._read_memory(block_address, RETROARCH_READ_BLOCK_SIZE)
+            for offset in range(0, len(data), 4):
+                self._word_cache[block_address + offset] = int.from_bytes(data[offset:offset + 4], "little")
+            return self._word_cache[normalized_address]
+
+        return int.from_bytes(self._read_memory(normalized_address, 4), "little")
+
+    def _read_memory(self, address: int, size: int) -> bytes:
+        command_address = self._to_retroarch_address(address)
+        response = self._send_command(f"READ_CORE_MEMORY {command_address:08X} {size}")
         parts = response.split()
         if len(parts) < 3 or parts[0] != "READ_CORE_MEMORY":
             raise Exception(f"Unexpected RetroArch read response: {response}")
+        if int(parts[1], 16) != command_address:
+            raise Exception(f"RetroArch read response address mismatch: {response}")
         if parts[2] == "-1":
             error = " ".join(parts[3:]) or "unknown error"
             raise Exception(f"RetroArch read failed at 0x{command_address:08X}: {error}")
         data = bytes(int(part, 16) for part in parts[2:])
-        if len(data) != 4:
-            raise Exception(f"RetroArch read returned {len(data)} bytes, expected 4: {response}")
-        value = int.from_bytes(data, byteorder="little")
-        if self._word_cache is not None:
-            self._word_cache[normalized_address] = value
-        return value
+        if len(data) != size:
+            raise Exception(f"RetroArch read returned {len(data)} bytes, expected {size}: {response}")
+        return data
 
     def _write_word(self, address: int, value: int):
         normalized_address = self._normalize_rdram_address(address)

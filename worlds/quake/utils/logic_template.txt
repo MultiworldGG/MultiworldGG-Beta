@@ -1,0 +1,47 @@
+        dive_area = self.region(
+            "Dive Area",
+            [],
+        )
+        self.connect(ret, dive_area, r.can_dive)
+
+        shootswitch_area = self.region(
+            "Shootswitch Area",
+            [],
+        )
+        self.connect(ret, shootswitch_area, r.can_shootswitch)
+
+        jump_area = self.region(
+            "Jump Area",
+            [],
+        )
+        self.connect(ret, jump_area, r.jump)
+
+        past_door_area = self.region(
+            "Past Door Area",
+            [],
+        )
+        self.connect(ret, past_door_area, r.can_door)
+
+        past_button_area = self.region(
+            "Past Button Area",
+            [],
+        )
+        self.connect(ret, past_button_area, r.can_button)
+
+        past_silver_door_area = self.region(
+            "Past Silver Door",
+            [],
+        )
+        self.connect(ret, past_silver_door_area, self.silver_key)
+
+        past_gold_door_area = self.region(
+            "Past Gold Door",
+            [],
+        )
+        self.connect(ret, past_gold_door_area, self.gold_key)
+
+        bigjump_area = self.region(
+            "Bigjump Area",
+            [],
+        )
+        self.connect(ret, bigjump_area, r.bigjump)

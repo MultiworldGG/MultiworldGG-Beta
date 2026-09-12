@@ -59,7 +59,7 @@ location_table = OrderedDict([
     ("Gift from Sages",                                              ("Cutscene",     0xFF,  0x03, None,                             None,                                   None)),
 
     ## Songs
-    ("Song from Impa",                                               ("Song",         0xFF,  0x26, (0x2E8E925, 0x2E8E925),          'Zeldas Lullaby',                        ("Hyrule Castle", "Market", "Songs"))),
+    ("Song from Impa",                                               ("Song",         0xFF,  0x26, (0x2E8E925, 0x2E8E925),          'Zeldas Lullaby',                        ("Hyrule Castle", "Songs"))),
     ("Song from Malon",                                              ("Song",         0xFF,  0x27, (0x0D7EB53, 0x0D7EBCF),          'Eponas Song',                           ("Lon Lon Ranch", "Songs",))),
     ("Song from Saria",                                              ("Song",         0xFF,  0x28, (0x20B1DB1, 0x20B1DB1),          'Sarias Song',                           ("Sacred Forest Meadow", "Forest", "Songs"))),
     ("Song from Royal Familys Tomb",                                 ("Song",         0xFF,  0x29, (0x332A871, 0x332A871),          'Suns Song',                             ("the Graveyard", "Kakariko", "Songs"))),
@@ -70,7 +70,7 @@ location_table = OrderedDict([
     ("Sheik in Ice Cavern",                                          ("Song",         0xFF,  0x22, (0x2BEC889, 0x2BEC889),          'Serenade of Water',                     ("Ice Cavern", "Songs",))),
     ("Sheik at Colossus",                                            ("Song",         0xFF,  0x23, (0x218C57D, 0x218C57D),          'Requiem of Spirit',                     ("Desert Colossus", "Songs",))),
     ("Sheik in Kakariko",                                            ("Song",         0xFF,  0x24, (0x2000FE1, 0x2000FE1),          'Nocturne of Shadow',                    ("Kakariko Village", "Kakariko", "Songs"))),
-    ("Sheik at Temple",                                              ("Song",         0xFF,  0x25, (0x2531329, 0x2531329),          'Prelude of Light',                      ("Temple of Time", "Market", "Songs"))),
+    ("Sheik at Temple",                                              ("Song",         0xFF,  0x25, (0x2531329, 0x2531329),          'Prelude of Light',                      ("Temple of Time", "Songs"))),
 
     ## Overworld
     # Kokiri Forest
@@ -185,8 +185,8 @@ location_table = OrderedDict([
     ("HF GS Cow Grotto",                                             ("GS Token",     0x0A,  0x01, None,                            'Gold Skulltula Token',                  ("Hyrule Field", "Skulltulas", "Grottos"))),
     ("HF GS Near Kak Grotto",                                        ("GS Token",     0x0A,  0x02, None,                            'Gold Skulltula Token',                  ("Hyrule Field", "Skulltulas", "Grottos"))),
     # Hyrule Field Pots
-    ("HF Cow Grotto Pot 1",                                          ("Pot",          0x3E,  (4,0,6), None,                         'Deku Nuts (5)',                         ("Hyrule Field", "Grottos", "Pot"))),
-    ("HF Cow Grotto Pot 2",                                          ("Pot",          0x3E,  (4,0,8), None,                         'Rupees (5)',                            ("Hyrule Field", "Grottos", "Pot"))),
+    ("HF Cow Grotto Pot 1",                                          ("Pot",          0x3E,  (4,0x04,6), None,                      'Deku Nuts (5)',                         ("Hyrule Field", "Grottos", "Pot"))),
+    ("HF Cow Grotto Pot 2",                                          ("Pot",          0x3E,  (4,0x04,8), None,                      'Rupees (5)',                            ("Hyrule Field", "Grottos", "Pot"))),
     # Hyrule Field Beehives
     ("HF Near Market Grotto Beehive 1",                              ("Beehive",      0x3E, (0,0x00,8), None,                       'Rupees (5)',                            ("Hyrule Field", "Grottos", "Beehive"))),
     ("HF Near Market Grotto Beehive 2",                              ("Beehive",      0x3E, (0,0x00,9), None,                       'Rupees (20)',                           ("Hyrule Field", "Grottos", "Beehive"))),
@@ -242,7 +242,7 @@ location_table = OrderedDict([
     ("Market Mask Shop Item 7",                                      ("MaskShop",     0x33,  0x1B, (shop_address(10, 6), None),     'Bunny Hood',                            ("the Market", "Market", "Shops"))),
     ("Market Mask Shop Item 8",                                      ("MaskShop",     0x33,  0x18, (shop_address(10, 7), None),     'Spooky Mask',                           ("the Market", "Market", "Shops"))),
 
-    ("ToT Light Arrows Cutscene",                                    ("Cutscene",     0xFF,  0x01, None,                            'Light Arrows',                          ("Temple of Time", "Market"))),
+    ("ToT Light Arrows Cutscene",                                    ("Cutscene",     0xFF,  0x01, None,                            'Light Arrows',                          ("Temple of Time",))),
 
     # Market Pots/Crates
     ("Market Night Red Rupee Crate",                                 ("Crate",        0x21,  (0,0,23), None,                        'Rupees (20)',                           ("the Market", "Market", "Crate"))),
@@ -303,12 +303,12 @@ location_table = OrderedDict([
     ("Market Guard House Child Pot 43",                              ("Pot",          0x4D,  (0,0,51), None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
     ("Market Guard House Child Pot 44",                              ("Pot",          0x4D,  (0,0,52), None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
     ("Market Guard House Adult Pot 1",                               ("Pot",          0x4D,  (0,2,2),  None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 2",                               ("Pot",          0x4D,  (0,2,4),  None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 3",                               ("Pot",          0x4D,  (0,2,5),  None,                        'Recovery Heart',                        ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 4",                               ("Pot",          0x4D,  (0,2,7),  None,                        'Rupees (20)',                           ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 5",                               ("Pot",          0x4D,  (0,2,8),  None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 6",                               ("Pot",          0x4D,  (0,2,10), None,                        'Recovery Heart',                        ("the Market", "Market", "Pot"))),
-    ("Market Guard House Adult Pot 7",                               ("Pot",          0x4D,  (0,2,12), None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 2",                               ("Pot",          0x4D,  (0,2,3),  None,                        'Nothing',                               ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 3",                               ("Pot",          0x4D,  (0,2,4),  None,                        'Recovery Heart',                        ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 4",                               ("Pot",          0x4D,  (0,2,5),  None,                        'Rupees (20)',                           ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 5",                               ("Pot",          0x4D,  (0,2,6),  None,                        'Nothing',                               ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 6",                               ("Pot",          0x4D,  (0,2,7),  None,                        'Recovery Heart',                        ("the Market", "Market", "Pot"))),
+    ("Market Guard House Adult Pot 7",                               ("Pot",          0x4D,  (0,2,8),  None,                        'Rupee (1)',                             ("the Market", "Market", "Pot"))),
     ("Market Guard House Adult Pot 8",                               ("Pot",          0x4D,  (0,2,9), None,                         'Nothing',                               ("Market", "Pots",))),
     ("Market Guard House Adult Pot 9",                               ("Pot",          0x4D,  (0,2,10), None,                        'Rupee (1)',                             ("Market", "Pots",))),
     ("Market Guard House Adult Pot 10",                              ("Pot",          0x4D,  (0,2,11), None,                        'Nothing',                               ("Market", "Pots",))),
@@ -318,15 +318,15 @@ location_table = OrderedDict([
     ("Market Man in Green House Pot 3",                              ("Pot",          0x2B,  (0,0,5), None,                         'Rupees (5)',                            ("the Market", "Market", "Pot"))),
 
     # Hyrule Castle
-    ("HC Malon Egg",                                                 ("NPC",          0x5F,  0x47, None,                            'Weird Egg',                             ("Hyrule Castle", "Market"))),
-    ("HC Zeldas Letter",                                             ("NPC",          0x4A,  0x0B, None,                            'Zeldas Letter',                         ("Hyrule Castle", "Market"))),
-    ("HC Great Fairy Reward",                                        ("Cutscene",     0xFF,  0x11, None,                            'Dins Fire',                             ("Hyrule Castle", "Market", "Fairies"))),
+    ("HC Malon Egg",                                                 ("NPC",          0x5F,  0x47, None,                            'Weird Egg',                             ("Hyrule Castle",))),
+    ("HC Zeldas Letter",                                             ("NPC",          0x4A,  0x0B, None,                            'Zeldas Letter',                         ("Hyrule Castle",))),
+    ("HC Great Fairy Reward",                                        ("Cutscene",     0xFF,  0x11, None,                            'Dins Fire',                             ("Hyrule Castle", "Fairies"))),
     ("HC GS Tree",                                                   ("GS Token",     0x0E,  0x04, None,                            'Gold Skulltula Token',                  ("Hyrule Castle", "Skulltulas"))),
     ("HC GS Storms Grotto",                                          ("GS Token",     0x0E,  0x02, None,                            'Gold Skulltula Token',                  ("Hyrule Castle", "Skulltulas", "Grottos"))),
-    ("HC Storms Grotto Pot 1",                                       ("Pot",          0x3E,  (8,0,7), None,                         'Rupees (20)',                           ("Hyrule Castle", "Grottos", "Pot"))),
-    ("HC Storms Grotto Pot 2",                                       ("Pot",          0x3E,  (8,0,8), None,                         'Bombs (5)',                             ("Hyrule Castle", "Grottos", "Pot"))),
-    ("HC Storms Grotto Pot 3",                                       ("Pot",          0x3E,  (8,0,10), None,                        'Arrows (5)',                            ("Hyrule Castle", "Grottos", "Pot"))),
-    ("HC Storms Grotto Pot 4",                                       ("Pot",          0x3E,  (8,0,12), None,                        'Deku Nuts (5)',                         ("Hyrule Castle", "Grottos", "Pot"))),
+    ("HC Storms Grotto Pot 1",                                       ("Pot",          0x3E,  (8,0x16,7), None,                      'Rupees (20)',                           ("Hyrule Castle", "Grottos", "Pot"))),
+    ("HC Storms Grotto Pot 2",                                       ("Pot",          0x3E,  (8,0x16,8), None,                      'Bombs (5)',                             ("Hyrule Castle", "Grottos", "Pot"))),
+    ("HC Storms Grotto Pot 3",                                       ("Pot",          0x3E,  (8,0x16,10), None,                     'Arrows (5)',                            ("Hyrule Castle", "Grottos", "Pot"))),
+    ("HC Storms Grotto Pot 4",                                       ("Pot",          0x3E,  (8,0x16,12), None,                     'Deku Nuts (5)',                         ("Hyrule Castle", "Grottos", "Pot"))),
 
     # Lon Lon Ranch
     ("LLR Talons Chickens",                                          ("NPC",          0x4C,  0x14, None,                            'Bottle with Milk',                      ("Lon Lon Ranch", "Minigames"))),
@@ -572,10 +572,10 @@ location_table = OrderedDict([
     ("DMC Child Blue Rupee 5",                                       ("Freestanding", 0x61,  (1,0,8), None,                         'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Freestanding",))),    
     ("DMC Child Blue Rupee 6",                                       ("Freestanding", 0x61,  (1,0,9), None,                         'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Freestanding",))),    
     # Death Mountain Crater Pots
-    ("DMC Near GC Pot 1",                                            ("Pot",          0x61,  (1,2,14), None,                        'Recovery Heart',                        ("Death Mountain Crater", "Death Mountain", "Pot"))),
-    ("DMC Near GC Pot 2",                                            ("Pot",          0x61,  (1,2,15), None,                        'Arrows (10)',                           ("Death Mountain Crater", "Death Mountain", "Pot"))),
-    ("DMC Near GC Pot 3",                                            ("Pot",          0x61,  (1,2,16), None,                        'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Pot"))),
-    ("DMC Near GC Pot 4",                                            ("Pot",          0x61,  (1,2,17), None,                        'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Pot"))),
+    ("DMC Near GC Pot 1",                                            ("Pot",          0x61,  [(1,2,14), (1,0,16)], None,            'Recovery Heart',                        ("Death Mountain Crater", "Death Mountain", "Pot"))),
+    ("DMC Near GC Pot 2",                                            ("Pot",          0x61,  [(1,2,15), (1,0,17)], None,            'Arrows (10)',                           ("Death Mountain Crater", "Death Mountain", "Pot"))),
+    ("DMC Near GC Pot 3",                                            ("Pot",          0x61,  [(1,2,16), (1,0,18)], None,            'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Pot"))),
+    ("DMC Near GC Pot 4",                                            ("Pot",          0x61,  [(1,2,17), (1,0,19)], None,            'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Pot"))),
     # Death mountain Crater Beehives
     ("DMC Upper Grotto Beehive 1",                                   ("Beehive",      0x3E, (0,0x1A,8), None,                       'Rupees (5)',                            ("Death Mountain Crater", "Death Mountain", "Grottos", "Beehive"))),
     ("DMC Upper Grotto Beehive 2",                                   ("Beehive",      0x3E, (0,0x1A,9), None,                       'Rupees (20)',                           ("Death Mountain Crater", "Death Mountain", "Grottos", "Beehive"))),
@@ -816,7 +816,7 @@ location_table = OrderedDict([
     ("Colossus Grotto Beehive",                                      ("Beehive",      0x3E,  (9,0x1D,3), None,                     'Rupees (20)',                           ("Desert Colossus", "Grottos", "Beehive"))),
 
     # Outside Ganon's Castle
-    ("OGC Great Fairy Reward",                                       ("Cutscene",     0xFF,  0x15, None,                            'Double Defense',                        ("Outside Ganon's Castle", "Market", "Fairies"))),
+    ("OGC Great Fairy Reward",                                       ("Cutscene",     0xFF,  0x15, None,                            'Double Defense',                        ("Outside Ganon's Castle", "Fairies"))),
     ("OGC GS",                                                       ("GS Token",     0x0E,  0x01, None,                            'Gold Skulltula Token',                  ("Outside Ganon's Castle", "Skulltulas"))),
 
     ## Dungeons
@@ -1272,8 +1272,8 @@ location_table = OrderedDict([
     ("Fire Temple Big Lava Room Pot 1",                              ("Pot",          0x04,  (1,0,27), None,                        'Arrows (10)',                           ("Fire Temple", "Vanilla", "Pot"))),
     ("Fire Temple Big Lava Room Pot 2",                              ("Pot",          0x04,  (1,0,28), None,                        'Recovery Heart',                        ("Fire Temple", "Vanilla", "Pot"))),
     ("Fire Temple Big Lava Room Pot 3",                              ("Pot",          0x04,  (1,0,29), None,                        'Arrows (10)',                           ("Fire Temple", "Vanilla", "Pot"))),
-    ("Fire Temple Near Boss Pot 1",                                  ("Pot",          0x04,  (2,0,10), None,                        'Bombs (10)',                            ("Fire Temple", "Vanilla", "Pot"))),
-    ("Fire Temple Near Boss Pot 2",                                  ("Pot",          0x04,  (2,0,11), None,                        'Bombs (10)',                            ("Fire Temple", "Vanilla", "Pot"))),
+    ("Fire Temple Near Boss Pot 1",                                  ("Pot",          0x04,  (2,0,9),  None,                        'Fairy Drop',                            ("Fire Temple", "Vanilla", "Pot"))),
+    ("Fire Temple Near Boss Pot 2",                                  ("Pot",          0x04,  (2,0,10), None,                        'Bombs (10)',                            ("Fire Temple", "Vanilla", "Pot"))),
     ("Fire Temple Near Boss Pot 3",                                  ("Pot",          0x04,  (2,0,11), None,                        'Bombs (10)',                            ("Fire Temple", "Vanilla Dungeons", "Pots",))),
     ("Fire Temple Near Boss Pot 4",                                  ("Pot",          0x04,  (2,0,12), None,                        'Fairy Drop',                            ("Fire Temple", "Vanilla Dungeons", "Pots",))),
     ("Fire Temple Flame Maze Right Side Pot 1",                      ("Pot",          0x04,  (10,0,52), None,                       'Bombs (10)',                            ("Fire Temple", "Vanilla", "Pot"))),
@@ -1774,7 +1774,7 @@ location_table = OrderedDict([
     ("Spirit Temple MQ Statue Room Invisible Chest",                 ("Chest",        0x06,  0x02, None,                            'Recovery Heart',                        ("Spirit Temple", "Master Quest"))),
     ("Spirit Temple MQ Leever Room Chest",                           ("Chest",        0x06,  0x04, None,                            'Rupees (50)',                           ("Spirit Temple", "Master Quest"))),
     ("Spirit Temple MQ Symphony Room Chest",                         ("Chest",        0x06,  0x07, None,                            'Rupees (50)',                           ("Spirit Temple", "Master Quest"))),
-    ("Spirit Temple MQ Beamos Room Chest",                           ("Chest",        0x06,  0x19, None,                            'Recovery Heart',                        ("Spirit Temple", "Master Quest"))),
+    ("Spirit Temple MQ Beamos Room Chest",                           ("Chest",        0x06,  0x19, None,                            'Arrows (30)',                           ("Spirit Temple", "Master Quest"))),
     ("Spirit Temple MQ Chest Switch Chest",                          ("Chest",        0x06,  0x18, None,                            'Ice Trap',                              ("Spirit Temple", "Master Quest"))),
     ("Spirit Temple MQ Boss Key Chest",                              ("Chest",        0x06,  0x05, None,                            'Boss Key (Spirit Temple)',              ("Spirit Temple", "Master Quest"))),
     ("Spirit Temple Mirror Shield Chest",                            ("Chest",        0x5C,  0x09, None,                            'Mirror Shield',                         ("Spirit Temple", "Vanilla", "Master Quest", "Desert Colossus"))),
@@ -2072,12 +2072,12 @@ location_table = OrderedDict([
     ("Ganons Tower Pot 6",                                           ("Pot",          0x0A,  [(8,0,7),(0,0,53)], None,              'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
     ("Ganons Tower Pot 7",                                           ("Pot",          0x0A,  [(8,0,8),(0,0,54)], None,              'Rupees (5)',                            ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
     ("Ganons Tower Pot 8",                                           ("Pot",          0x0A,  [(8,0,9),(0,0,56)], None,              'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 9",                                           ("Pot",          0x0A,  [(8,0,12),(0,0,58)], None,             'Arrows (10)',                           ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 10",                                          ("Pot",          0x0A,  [(8,0,13),(0,0,59)], None,             'Arrows (10)',                           ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 11",                                          ("Pot",          0x0A,  [(8,0,14),(0,0,60)], None,             'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 12",                                          ("Pot",          0x0A,  [(8,0,15),(0,0,61)], None,             'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 13",                                          ("Pot",          0x0A,  [(8,0,16),(0,0,62)], None,             'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
-    ("Ganons Tower Pot 14",                                          ("Pot",          0x0A,  [(8,0,19),(0,0,65)], None,             'Arrows (10)',                           ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 9",                                           ("Pot",          0x0A,  [(8,0,10),(0,0,55)], None,             'Nothing',                               ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 10",                                          ("Pot",          0x0A,  [(8,0,11),(0,0,57)], None,             'Nothing',                               ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 11",                                          ("Pot",          0x0A,  [(8,0,12),(0,0,58)], None,             'Arrows (10)',                           ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 12",                                          ("Pot",          0x0A,  [(8,0,13),(0,0,59)], None,             'Arrows (10)',                           ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 13",                                          ("Pot",          0x0A,  [(8,0,14),(0,0,60)], None,             'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
+    ("Ganons Tower Pot 14",                                          ("Pot",          0x0A,  [(8,0,15),(0,0,61)], None,             'Recovery Heart',                        ("Ganon's Castle", "Ganon's Tower", "Vanilla", "Master Quest", "Pot"))),
     ("Ganons Tower Pot 15",                                          ("Pot",          0x0A,  [(8,0,16),(0,0,62)], None,             'Recovery Heart',                        ("Ganon's Tower", "Vanilla Dungeons", "Master Quest", "Pots",))),
     ("Ganons Tower Pot 16",                                          ("Pot",          0x0A,  [(8,0,17),(0,0,63)], None,             'Nothing',                               ("Ganon's Tower", "Vanilla Dungeons", "Master Quest", "Pots",))),
     ("Ganons Tower Pot 17",                                          ("Pot",          0x0A,  [(8,0,18),(0,0,64)], None,             'Nothing',                               ("Ganon's Tower", "Vanilla Dungeons", "Master Quest", "Pots",))),
@@ -2467,8 +2467,8 @@ location_table = OrderedDict([
     ("Hideout 3 Torch Jail Wonderitem 2",                            ("Wonderitem",   0x0C,  (1,0,5), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
     ("Hideout 1 Torch Jail Wonderitem 1",                            ("Wonderitem",   0x0C,  (2,0,3), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
     ("Hideout 1 Torch Jail Wonderitem 2",                            ("Wonderitem",   0x0C,  (2,0,4), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
-    ("Hideout Kitchen Stove Wonderitem",                             ("Wonderitem",   0x0C,  (3,0,4), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
-    ("Hideout Kitchen Wonderitem",                                   ("Wonderitem",   0x0C,  (3,0,5), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
+    ("Hideout Kitchen Stove Wonderitem",                             ("Wonderitem",   0x0C,  (3,0,5), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
+    ("Hideout Kitchen Wonderitem",                                   ("Wonderitem",   0x0C,  (3,0,4), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
     ("Hideout 4 Torch Jail Wonderitem 1",                            ("Wonderitem",   0x0C,  (4,0,3), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
     ("Hideout 4 Torch Jail Wonderitem 2",                            ("Wonderitem",   0x0C,  (4,0,4), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
     ("Hideout 2 Torch Jail Wonderitem 1",                            ("Wonderitem",   0x0C,  (5,0,3), None,                                 'Rupees (5)',                    ("Thieves' Hideout", "Wonderitem"))),
@@ -2579,9 +2579,9 @@ location_table = OrderedDict([
     ("Spirit Temple MQ Chest Switch Hammer Wonderitem",              ("Wonderitem",   0x06,  (18,0,9), None,                        'Recovery Heart',                        ("Spirit Temple", "Master Quest", "Wonderitem"))),
 
     # Gerudo Training Ground Wonderitems
-    ("Gerudo Training Ground Eye Statue Wonderitem",                 ("Wonderitem",   0x0B,  (4,0,3), None,                         'Arrows (10)',                           ("Shadow Temple", "Vanilla", "Wonderitem"))),
-    ("Gerudo Training Ground Hammer Room Wonderitem",                ("Wonderitem",   0x0B,  (5,0,17), None,                         'Arrows (10)',                           ("Shadow Temple", "Vanilla", "Wonderitem"))),
-    ("Gerudo Training Ground Beamos Wonderitem",                     ("Wonderitem",   0x0B,  (7,0,13), None,                         'Arrows (10)',                           ("Shadow Temple", "Vanilla", "Wonderitem"))),
+    ("Gerudo Training Ground Eye Statue Wonderitem",                 ("Wonderitem",   0x0B,  (4,0,3), None,                         'Arrows (10)',                           ("Gerudo Training Ground", "Vanilla", "Wonderitem"))),
+    ("Gerudo Training Ground Hammer Room Wonderitem",                ("Wonderitem",   0x0B,  (5,0,17), None,                         'Arrows (10)',                           ("Gerudo Training Ground", "Vanilla", "Wonderitem"))),
+    ("Gerudo Training Ground Beamos Wonderitem",                     ("Wonderitem",   0x0B,  (7,0,13), None,                         'Arrows (10)',                           ("Gerudo Training Ground", "Vanilla", "Wonderitem"))),
 
     # Gerudo Training Ground MQ Wonderitems
     ("Gerudo Training Ground MQ Eye Statue Proximity Wonderitem",    ("Wonderitem",   0x0B,  (4,0,5), None,                         'Rupees (20)',                           ("Gerudo Training Ground", "Master Quest", "Wonderitem"))),

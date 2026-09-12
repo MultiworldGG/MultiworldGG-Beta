@@ -83,6 +83,22 @@ def can_collect(state: CollectionState, player, world):
             or state.has("Apple Basket", player))
 
 
+def can_talk_everywhere(state: CollectionState, player, world):
+    return ((state.has("Hairball City Ticket", player)
+             and has_textbox(state, player, world, "Hairball City"))
+            or (state.has("Turbine Town Ticket", player)
+                and has_textbox(state, player, world, "Turbine Town"))
+            or (state.has("Salmon Creek Forest Ticket", player)
+                and has_textbox(state, player, world, "Salmon Creek Forest"))
+            or (state.has("Public Pool Ticket", player)
+                and has_textbox(state, player, world, "Public Pool"))
+            or (state.has("Bathhouse Ticket", player)
+                and has_textbox(state, player, world, "Bathhouse"))
+            or (state.has("Tadpole HQ Ticket", player)
+                and has_textbox(state, player, world, "Tadpole HQ"))
+            or has_textbox(state, player, world, "Home"))
+
+
 def has_access_garden(state: CollectionState, player, world):
     access_option = world.options.access_garys_garden.value
     if access_option == 1:
@@ -157,7 +173,7 @@ def has_helped_everyone(state: CollectionState, player, world):
                 and state.can_reach_location("Public Pool - Blippy Dog", player)
                 and state.can_reach_location("Public Pool - Little Gabi's Flowers", player)
                 and state.can_reach_location("Public Pool - Blessley", player)
-                and state.can_reach_location("Public Pool - SPORTVIVAL VOLLEY", player)
+                and state.can_reach_location("Public Pool - WATER VOLLEY", player)
                 and state.can_reach_location("Public Pool - Fish with Fischer", player)
                 and state.can_reach_location("Bathhouse - Poppy", player)
                 and state.can_reach_location("Bathhouse - Fish with Fischer", player)
@@ -273,7 +289,6 @@ def get_region_rules(player, world):
             lambda state: (options.applebasket.value != 1 or state.has("Apple Basket", player)),
     }
 
-
 def get_location_rules(player, world):
     options = world.options
     lowest_cost: int = options.min_kiosk_cost.value
@@ -320,6 +335,44 @@ def get_location_rules(player, world):
         ]
     cassette_location_count = len(cassette_locations)
     cassette_values = list(range(1, cassette_location_count + 1))
+           # mulitiple entries due to Mitch and Mai having different conditions in Salmon Creek Forest and Public pool
+    MitchMaiProgressiveList = [lambda state: (state.has("Hairball City Ticket", player)
+            and has_contact_list(state, player, 1)
+            and has_textbox(state, player, world, "Hairball City")),
+        lambda state: (state.has("Hairball City Ticket", player)
+            and has_contact_list(state, player, 1)
+            and has_textbox(state, player, world, "Hairball City")),
+        lambda state: (state.has("Turbine Town Ticket", player)
+            and has_contact_list(state, player, 1)
+            and has_textbox(state, player, world, "Turbine Town")),
+        lambda state: (state.has("Turbine Town Ticket", player)
+            and has_contact_list(state, player, 1)
+            and has_textbox(state, player, world, "Turbine Town")),
+           # Mitch needs only contact list 1
+        lambda state: (state.has("Salmon Creek Forest Ticket", player)
+            and has_contact_list(state, player, 1)
+            and has_textbox(state, player, world, "Salmon Creek Forest")),
+           # Mai needs only a key
+        lambda state: (state.has("Salmon Creek Forest Ticket", player)
+            and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
+            and has_textbox(state, player, world, "Salmon Creek Forest")),
+            # Mitch needs contact list 2
+        lambda state: (state.has("Public Pool Ticket", player)
+            and has_contact_list(state, player, 2)
+            and has_textbox(state, player, world, "Public Pool")),
+           # Mai is always there
+        lambda state: (state.has("Public Pool Ticket", player)
+            and has_textbox(state, player, world, "Public Pool")),
+        lambda state: (state.has("Bathhouse Ticket", player)
+            and has_textbox(state, player, world, "Bathhouse")),
+        lambda state: (state.has("Bathhouse Ticket", player)
+            and has_textbox(state, player, world, "Bathhouse")),
+        lambda state: (state.has("Tadpole HQ Ticket", player)
+            and has_textbox(state, player, world, "Tadpole HQ")),
+        lambda state: (state.has("Tadpole HQ Ticket", player)
+            and has_textbox(state, player, world, "Tadpole HQ")),
+        lambda state: has_access_garden(state, player, world),
+        lambda state: has_access_garden(state, player, world)]
 
     if options.cassette_logic.value == 2:
         world.random.shuffle(cassette_values)
@@ -449,7 +502,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Hairball City"),
         "Hairball City - Game Kid":
             lambda state: has_contact_list(state, player, 2)
-                          and has_textbox(state, player, world, "Hairball City"),
+                          and has_textbox(state, player, world, "Hairball City")
+                          and can_swim(state, player, world),
         "Hairball City - Blippy Dog":
             lambda state: has_contact_list(state, player, 1)
                           and (options.bonesanity.value != 2 or state.has("Hairball City Bone", player, 5))
@@ -459,7 +513,8 @@ def get_location_rules(player, world):
             lambda state: has_contact_list(state, player, 2),
         "Hairball City - Serschel & Louist":
             lambda state: has_contact_list(state, player, 2)
-                          and has_textbox(state, player, world, "Hairball City"),
+                          and has_textbox(state, player, world, "Hairball City")
+                          and can_soda(state, player, world),
         "Turbine Town - Blippy Dog":
             lambda state: has_contact_list(state, player, 1)
                           and (options.bonesanity.value != 2 or state.has("Turbine Town Bone", player, 5))
@@ -481,8 +536,9 @@ def get_location_rules(player, world):
                           and can_swim(state, player, world),
         "Salmon Creek Forest - Serschel & Louist":
             lambda state: has_contact_list(state, player, 2)
-                          and has_textbox(state, player, world, "Salmon Creek Forest"),
-        "Public Pool - SPORTVIVAL VOLLEY":
+                          and has_textbox(state, player, world, "Salmon Creek Forest")
+                          and can_swim(state, player, world),
+        "Public Pool - WATER VOLLEY":
             lambda state: has_contact_list(state, player, 2)
                           and has_textbox(state, player, world, "Public Pool")
                           and can_swim(state, player, world),
@@ -730,311 +786,59 @@ def get_location_rules(player, world):
         # Progressive Cassette Logic
         "Mitch/Mai - 1":
             lambda state: (has_enough_cassettes(state, player, 1)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 1))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 2":
             lambda state: (has_enough_cassettes(state, player, 2)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 2))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 3":
             lambda state: (has_enough_cassettes(state, player, 3)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 3))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 4":
             lambda state: (has_enough_cassettes(state, player, 4)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 4))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 5":
             lambda state: (has_enough_cassettes(state, player, 5)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 5))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 6":
             lambda state: (has_enough_cassettes(state, player, 6)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 6))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 7":
             lambda state: (has_enough_cassettes(state, player, 7)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 7))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 8":
             lambda state: (has_enough_cassettes(state, player, 8)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 8))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 9":
             lambda state: (has_enough_cassettes(state, player, 9)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 9))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 10":
             lambda state: (has_enough_cassettes(state, player, 10)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 10))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 11":
             lambda state: (has_enough_cassettes(state, player, 11)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 11))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 12":
             lambda state: (has_enough_cassettes(state, player, 12)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 12))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 13":
             lambda state: (has_enough_cassettes(state, player, 13)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 13))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
         "Mitch/Mai - 14":
             lambda state: (has_enough_cassettes(state, player, 14)
-                          and ((state.has("Hairball City Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Hairball City Textbox", player))
-                          or (state.has("Turbine Town Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and options.textbox.value != 2 or state.has("Turbine Town Textbox", player))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                               and has_contact_list(state, player, 1)
-                               and (state.has("Key", player, 7) or state.has("Salmon Creek Forest Key", player))
-                               and options.textbox.value != 2 or state.has("Salmon Creek Forest Textbox", player))
-                          or (state.has("Public Pool Ticket", player)
-                               and has_contact_list(state, player, 2)
-                               and options.textbox.value != 2 or state.has("Public Pool Textbox", player))
-                          or (state.has("Bathhouse Ticket", player)
-                               and options.textbox.value != 2 or state.has("Bathhouse Textbox", player))
-                          or (state.has("Tadpole HQ Ticket", player)
-                               and options.textbox.value != 2 or state.has("Tadpole HQ Textbox", player))
-                          or (state.has("Gary's Garden Ticket", player))
-                               and options.textbox.value != 2 or state.has("Gary's Garden Textbox", player)))
+                          and (sum(func(state) for func in MitchMaiProgressiveList) >= 14))
                           and (options.textbox.value != 1 or state.has("Textbox", player)),
 
         "Hairball City - Apple On Frog Statue Island Pier 1":
@@ -1101,12 +905,22 @@ def get_location_rules(player, world):
 
         "Hairball City - Big Umbrella":
             lambda state: can_parasol(state, player, world),
+        "Hairball City - Palm Tree":
+            lambda state: can_parasol(state, player, world),
+        "Hairball City - Bug On Tall Palm Tree Platform 1":
+            lambda state: can_parasol(state, player, world),
+        "Hairball City - Bug On Tall Palm Tree Platform 2":
+            lambda state: can_parasol(state, player, world),
         "Turbine Town - Stone Pillar Behind Wind Turbine":
             lambda state: can_parasol(state, player, world),
         "Turbine Town - Bug On Stone Pillar Behind Wind Turbine 1":
             lambda state: can_parasol(state, player, world),
         "Turbine Town - Bug On Stone Pillar Behind Wind Turbine 2":
             lambda state: can_parasol(state, player, world),
+        "Salmon Creek Forest - Apple On Third Rock Cluster Near Building Submerged In Ocean 1":
+            lambda state: can_swim(state, player, world),
+        "Salmon Creek Forest - Apple On Third Rock Cluster Near Building Submerged In Ocean 2":
+            lambda state: can_swim(state, player, world),
         "Salmon Creek Forest - Apple On Third Rock Cluster Near Building Submerged In Ocean 3":
             lambda state: can_parasol(state, player, world)
                           and can_swim(state, player, world),
@@ -1119,6 +933,16 @@ def get_location_rules(player, world):
         "Salmon Creek Forest - Apple On Third Rock Cluster Near Building Submerged In Ocean 6":
             lambda state: can_parasol(state, player, world)
                           and can_swim(state, player, world),
+        "Salmon Creek Forest - Apple By Soda Cannon In Treetops 1":
+            lambda state: can_soda(state, player, world),
+        "Salmon Creek Forest - Apple By Soda Cannon In Treetops 2":
+            lambda state: can_soda(state, player, world),
+        "Salmon Creek Forest - Apple By Soda Cannon In Treetops 3":
+            lambda state: can_soda(state, player, world),
+        "Salmon Creek Forest - Apple By Soda Cannon In Treetops 4":
+            lambda state: can_soda(state, player, world),
+        "Salmon Creek Forest - Apple By Soda Cannon In Treetops 5":
+            lambda state: can_soda(state, player, world),
 
         "Public Pool - Far Away Island":
             lambda state: can_soda(state, player, world)
@@ -1234,9 +1058,38 @@ def get_location_rules(player, world):
             lambda state: can_ac(state, player, world),
         "Bathhouse - Seed By Serschel & Louist":
             lambda state: can_ac(state, player, world),
+        "Bathhouse - Apple By Handsome Frog 1":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 2":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 3":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 4":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 5":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 6":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 7":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 8":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 9":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Apple By Handsome Frog 10":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Bug Near Handsome Frog 1":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Bug Near Handsome Frog 2":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
+        "Bathhouse - Bug Near Handsome Frog 3":
+            lambda state: (can_soda(state, player, world) or can_ac(state, player, world)),
 
         "Achievement - Lost at Sea":
-            lambda state: can_swim(state, player, world),
+            lambda state: can_swim(state, player, world)
+                          or (has_enough_seeds(state, player, world, 10)
+                          and can_ac(state, player, world)
+                          and can_soda(state, player, world)),
         "Hairball City - Behind The Train":
             lambda state: can_swim(state, player, world, True),
         "Home - Hasselhop (Chatsanity)":
@@ -1291,7 +1144,7 @@ def get_location_rules(player, world):
             lambda state: can_swim(state, player, world),
         "Turbine Town - Axolotl":
             lambda state: can_swim(state, player, world),
-        "Turbine Town - Prianha":
+        "Turbine Town - Piranha":
             lambda state: can_swim(state, player, world),
         "Turbine Town - Mantaray":
             lambda state: can_swim(state, player, world),
@@ -1328,6 +1181,11 @@ def get_location_rules(player, world):
                           and can_ac(state, player, world),
         "Turbine Town - Hasselhop (Chatsanity)":
             lambda state: can_swim(state, player, world),
+        "Turbine Town - Britney (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Turbine Town - Next To Torii Gates":
+            lambda state: can_swim(state, player, world, True)
+                          or can_parasol(state, player, world),
 
         "Salmon Creek Forest - Beneath Pond":
             lambda state: can_swim(state, player, world),
@@ -1406,6 +1264,52 @@ def get_location_rules(player, world):
             lambda state: can_swim(state, player, world, True),
         "Public Pool - Niko, Pink Frog & King Frog (Thought)":
             lambda state: can_swim(state, player, world, True),
+        "Public Pool - Frog Hint (Chatsanity)":
+            lambda state: has_contact_list(state, player, 2),
+        "Public Pool - Frog Hint 2 (Chatsanity)":
+            lambda state: has_contact_list(state, player, 2),
+        "Public Pool - Behind Frog Statue":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Bug On Frog Statue 1":
+            lambda state: can_swim(state, player, world, True),
+        "Public Pool - Bug On Frog Statue 2":
+            lambda state: can_swim(state, player, world, True),
+        "Public Pool - First Apple Group Near Shallow Pool First Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - First Apple Group Near Shallow Pool First Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - First Apple Group Near Shallow Pool First Palm Tree 3":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - First Apple Group Near Shallow Pool Second Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - First Apple Group Near Shallow Pool Second Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - First Apple Group Near Shallow Pool Second Palm Tree 3":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool First Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool First Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool First Palm Tree 3":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool Second Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool Second Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Second Apple Group Near Shallow Pool Second Palm Tree 3":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool First Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool First Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool First Palm Tree 3":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool Second Palm Tree 1":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool Second Palm Tree 2":
+            lambda state: can_swim(state, player, world),
+        "Public Pool - Third Apple Group Near Shallow Pool Second Palm Tree 3":
+            lambda state: can_swim(state, player, world),
 
         "Bathhouse - Bone Above Middle Bathhouse":
             lambda state: can_swim(state, player, world)
@@ -1430,6 +1334,22 @@ def get_location_rules(player, world):
             lambda state: can_swim(state, player, world)
                           and has_contact_list(state, player, 2),
         "Bathhouse - Hut in Water":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Steamy Frog (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Mickey (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Moe (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Marshal (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Lil' Sis Doe (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Carl (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Biki (Chatsanity)":
+            lambda state: can_swim(state, player, world),
+        "Bathhouse - Wess (Chatsanity)":
             lambda state: can_swim(state, player, world),
 
         "Tadpole HQ - Bone On Wood Board On Side Of Right Building":
@@ -1463,6 +1383,28 @@ def get_location_rules(player, world):
             lambda state: can_swim(state, player, world)
                           and can_bonk(state, player, world)
                           and (state.has("Key", player, 7) or state.has("Tadpole HQ Key", player)),
+        "Tadpole HQ - Apple On Xylophone":
+            lambda state: can_swim(state, player, world),
+        "Tadpole HQ - Bug Near Fischer 1":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Fischer 2":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Fischer 3":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Fischer 4":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Apple Behind Bench Near Fischer":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Fischer's Pond":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Apple Behind Fischer Towards Rocks":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Rocks Behind Fischer 1":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Bug Near Rocks Behind Fischer 2":
+            lambda state: can_swim(state, player, world, True),
+        "Tadpole HQ - Behind Fischer On A Rock":
+            lambda state: can_swim(state, player, world, True),
 
         "Home - Give High Frog Lunchbox":
             lambda state: has_textbox(state, player, world, "Home"),
@@ -1506,7 +1448,8 @@ def get_location_rules(player, world):
         "Bathhouse - Game Kid":
             lambda state: has_textbox(state, player, world, "Bathhouse"),
         "Bathhouse - Handsome Frog":
-            lambda state: has_textbox(state, player, world, "Bathhouse"),
+            lambda state: has_textbox(state, player, world, "Bathhouse")
+                          and (can_soda(state, player, world) or can_ac(state, player, world)),
         "Bathhouse - LONG VOLLEY":
             lambda state: has_textbox(state, player, world, "Bathhouse"),
         "Bathhouse - Nina":
@@ -1532,9 +1475,9 @@ def get_location_rules(player, world):
         "Hairball City - Game Kid (Chatsanity)":
             lambda state: has_contact_list(state, player, 2),
         "Hairball City - Louist (Chatsanity)":
-            lambda state: has_access_to(state, player, "Hairball City - Serschel & Louist"),
+            lambda state: has_contact_list(state, player, 2),
         "Hairball City - Serschel (Chatsanity)":
-            lambda state: has_access_to(state, player, "Hairball City - Serschel & Louist"),
+            lambda state: has_contact_list(state, player, 2),
         "Hairball City - Nina (Chatsanity)":
             lambda state: has_access_to(state, player, "Hairball City - Nina"),
         "Hairball City - Melissa (Chatsanity)":
@@ -1555,9 +1498,9 @@ def get_location_rules(player, world):
         "Turbine Town - Blippy Dog (Chatsanity)":
             lambda state: has_contact_list(state, player, 1),
         "Turbine Town - Serschel (Chatsanity)":
-            lambda state: has_access_to(state, player, "Turbine Town - Serschel & Louist"),
+            lambda state: has_contact_list(state, player, 2),
         "Turbine Town - Louist (Chatsanity)":
-            lambda state: has_access_to(state, player, "Turbine Town - Serschel & Louist"),
+            lambda state: has_contact_list(state, player, 2),
         "Turbine Town - Mitch (Chatsanity)":
             lambda state: has_contact_list(state, player, 1),
         "Turbine Town - Mai (Chatsanity)":
@@ -1619,8 +1562,7 @@ def get_location_rules(player, world):
         "Public Pool - Mitch (Chatsanity)":
             lambda state: has_contact_list(state, player, 2),
         "Public Pool - Blippy (Chatsanity)":
-            lambda state: has_contact_list(state, player, 2)
-                          and (state.has("Key", player, 7)
+            lambda state: (state.has("Key", player, 7)
                            or state.has("Public Pool Key", player)),
         "Public Pool - Little Gabi (Chatsanity)":
             lambda state: has_contact_list(state, player, 2),
@@ -1642,6 +1584,8 @@ def get_location_rules(player, world):
             lambda state: has_access_to(state, player, "Bathhouse - Poppy"),
         "Public Pool - Tippy (Chatsanity)":
             lambda state: has_access_to(state, player, "Bathhouse - Poppy"),
+        "Public Pool - Melissa & Stijn (Chatsanity)":
+            lambda state: has_access_to(state, player, "Salmon Creek Forest - Stijn & Melissa"),
 
         "Bathhouse - Blessley (Chatsanity)":
             lambda state: has_contact_list(state, player, 2),
@@ -1678,9 +1622,11 @@ def get_location_rules(player, world):
         "Bathhouse - Clover (Chatsanity)":
             lambda state: has_access_to(state, player, "Public Pool - Frogtective"),
         "Bathhouse - Marry D. Carota (Chatsanity)":
-            lambda state: has_access_to(state, player, "Public Pool - Frogtective"),
+            lambda state: has_access_to(state, player, "Public Pool - Frogtective")
+                          and can_swim(state, player, world),
         "Bathhouse - David D. Carota (Chatsanity)":
-            lambda state: has_access_to(state, player, "Public Pool - Frogtective"),
+            lambda state: has_access_to(state, player, "Public Pool - Frogtective")
+                          and can_swim(state, player, world),
         "Bathhouse - Dustan (Chatsanity)":
             lambda state: has_access_to(state, player, "Bathhouse - Dustan on Bathhouse"),
 
@@ -1713,10 +1659,12 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Bathhouse"),
         "Chatsanity - Biki":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Bird":
             lambda state: has_access_garden(state, player, world)
-                          and has_enough_seeds(state, player, world, 4),
+                          and has_enough_seeds(state, player, world, 4)
+                          and can_ac(state, player, world),
         "Chatsanity - Blast Frog":
             lambda state: has_textbox(state, player, world, "Home"),
         "Chatsanity - Blessley":
@@ -1781,7 +1729,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Hairball City"),
         "Chatsanity - Borbie":
             lambda state: state.has("Tadpole HQ Ticket", player)
-                          and has_textbox(state, player, world, "Tadpole HQ"),
+                          and has_textbox(state, player, world, "Tadpole HQ")
+                          and has_enough_coins(state, player, world.kiosk_cost["Elevator"]),
         "Chatsanity - Britney":
             lambda state: (state.has("Hairball City Ticket", player)
                           and has_textbox(state, player, world, "Hairball City"))
@@ -1799,7 +1748,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Turbine Town"),
         "Chatsanity - Carl":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Carrot":
             lambda state: (state.has("Hairball City Ticket", player)
                           and has_textbox(state, player, world, "Hairball City"))
@@ -1832,10 +1782,12 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Turbine Town"),
         "Chatsanity - Dance Frog":
             lambda state: has_access_garden(state, player, world)
-                          and has_enough_seeds(state, player, world, 8),
+                          and has_enough_seeds(state, player, world, 8)
+                          and can_ac(state, player, world),
         "Chatsanity - Danger Frog":
             lambda state: has_access_garden(state, player, world)
-                          and has_enough_seeds(state, player, world, 5),
+                          and has_enough_seeds(state, player, world, 5)
+                          and can_ac(state, player, world),
         "Chatsanity - David D. Carota":
             lambda state: state.has("Public Pool Ticket", player)
                           and has_textbox(state, player, world, "Public Pool"),
@@ -1858,7 +1810,8 @@ def get_location_rules(player, world):
                           or has_textbox(state, player, world, "Home"),
         "Chatsanity - Divin' Doe":
             lambda state: state.has("Salmon Creek Forest Ticket", player)
-                          and has_textbox(state, player, world, "Salmon Creek Forest"),
+                          and has_textbox(state, player, world, "Salmon Creek Forest")
+                          and can_swim(state, player, world),
         "Chatsanity - Doe of Darkness":
             lambda state: state.has("Salmon Creek Forest Ticket", player)
                           and has_textbox(state, player, world, "Salmon Creek Forest"),
@@ -1878,7 +1831,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Salmon Creek Forest"),
         "Chatsanity - Fear Frog":
             lambda state: has_access_garden(state, player, world)
-                          and has_enough_seeds(state, player, world, 7),
+                          and has_enough_seeds(state, player, world, 7)
+                          and can_ac(state, player, world),
         "Chatsanity - Fischer":
             lambda state: (state.has("Party Invitation", player)
                               and has_textbox(state, player, world, "Home"))
@@ -1973,7 +1927,10 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Hairball City"))
                           or (state.has("Party Invitation", player)
                               and has_textbox(state, player, world, "Home"))
-                          or has_access_garden(state, player, world),
+                          or (has_access_garden(state, player, world)
+                              and has_enough_seeds(state, player, world, 10)
+                              and can_ac(state, player, world)
+                              and can_soda(state, player, world)),
         "Chatsanity - HUD Frog":
             lambda state: state.has("Hairball City Ticket", player)
                           and has_textbox(state, player, world, "Hairball City"),
@@ -1990,34 +1947,34 @@ def get_location_rules(player, world):
                               and has_textbox(state, player, world, "Public Pool"))
                           or (state.has("Bathhouse Ticket", player)
                               and has_textbox(state, player, world, "Bathhouse"))
+                              and (can_soda(state, player, world) or can_ac(state, player, world))
                           or (state.has("Tadpole HQ Ticket", player)
                               and has_textbox(state, player, world, "Tadpole HQ"))
                           or (has_access_garden(state, player, world)
                               and has_enough_seeds(state, player, world, 2)),
         "Chatsanity - Hasselhop":
-            lambda state: can_swim(state, player, world)
+            lambda state: (can_swim(state, player, world)
+                           and can_talk_everywhere(state, player, world))
                           or (has_access_garden(state, player, world)
-                              and has_enough_seeds(state, player, world, 10))
-                          or (state.has("Hairball City Ticket", player)
-                              and has_textbox(state, player, world, "Hairball City"))
-                          or (state.has("Turbine Town Ticket", player)
-                              and has_textbox(state, player, world, "Turbine Town"))
-                          or (state.has("Salmon Creek Forest Ticket", player)
-                              and has_textbox(state, player, world, "Salmon Creek Forest"))
-                          or (state.has("Public Pool Ticket", player)
-                              and has_textbox(state, player, world, "Public Pool"))
-                          or (state.has("Bathhouse Ticket", player)
-                              and has_textbox(state, player, world, "Bathhouse"))
-                          or (state.has("Tadpole HQ Ticket", player)
-                              and has_textbox(state, player, world, "Tadpole HQ"))
-                          or has_textbox(state, player, world, "Home"),
+                              and has_enough_seeds(state, player, world, 10)
+                              and can_soda(state, player, world)
+                              and can_ac(state, player, world)),
         "Chatsanity - Hat Kid":
             lambda state: state.has("Public Pool Ticket", player)
                           and has_textbox(state, player, world, "Public Pool"),
+        "Chatsanity - Hint Frog":
+            lambda state: state.has("Public Pool Ticket", player)
+                          and has_textbox(state, player, world, "Public Pool")
+                          and has_contact_list(state, player, 2),
+        "Chatsanity - Hint Frog 2":
+            lambda state: state.has("Public Pool Ticket", player)
+                          and has_textbox(state, player, world, "Public Pool")
+                          and has_contact_list(state, player, 2),
         "Chatsanity - Hungry Frog":
             lambda state: has_access_garden(state, player, world)
                           and has_enough_seeds(state, player, world, 9)
-                          and can_soda(state, player, world),
+                          and can_soda(state, player, world)
+                          and can_ac(state, player, world),
         "Chatsanity - Impatient Frog":
             lambda state: state.has("Hairball City Ticket", player)
                           and has_textbox(state, player, world, "Hairball City"),
@@ -2038,7 +1995,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Turbine Town"),
         "Chatsanity - Lil' Sis Doe":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Little Gabi":
             lambda state: (state.has("Hairball City Ticket", player)
                           and has_textbox(state, player, world, "Hairball City"))
@@ -2060,8 +2018,8 @@ def get_location_rules(player, world):
             lambda state: state.has("Turbine Town Ticket", player)
                           and has_textbox(state, player, world, "Turbine Town"),
         "Chatsanity - Loud Stag":
-            lambda state: state.has("Tadpole HQ Ticket", player)
-                          and has_textbox(state, player, world, "Tadpole HQ"),
+            lambda state: state.has("Salmon Creek Forest Ticket", player)
+                          and has_textbox(state, player, world, "Salmon Creek Forest"),
         "Chatsanity - Louist":
             lambda state: (state.has("Hairball City Ticket", player)
                               and has_contact_list(state, player, 2)
@@ -2113,6 +2071,10 @@ def get_location_rules(player, world):
         "Chatsanity - Marry D. Carota":
             lambda state: state.has("Public Pool Ticket", player)
                           and has_textbox(state, player, world, "Public Pool"),
+        "Chatsanity - Marshal":
+            lambda state: state.has("Bathhouse Ticket", player)
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Master":
             lambda state: state.has("Tadpole HQ Ticket", player)
                           and has_textbox(state, player, world, "Tadpole HQ"),
@@ -2129,7 +2091,8 @@ def get_location_rules(player, world):
             lambda state: has_textbox(state, player, world, "Home"),
         "Chatsanity - Mickey":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Miki":
             lambda state: state.has("Bathhouse Ticket", player)
                           and has_textbox(state, player, world, "Bathhouse"),
@@ -2164,13 +2127,14 @@ def get_location_rules(player, world):
                               and has_textbox(state, player, world, "Tadpole HQ")),
         "Chatsanity - Moe":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Mom Gull (PP)":
             lambda state: state.has("Public Pool Ticket", player)
                           and has_textbox(state, player, world, "Public Pool"),
         "Chatsanity - Mom Gull (TT)":
-            lambda state: state.has("Public Pool Ticket", player)
-                          and has_textbox(state, player, world, "Public Pool"),
+            lambda state: state.has("Turbine Town Ticket", player)
+                          and has_textbox(state, player, world, "Turbine Town"),
         "Chatsanity - Monty":
             lambda state: state.has("Bathhouse Ticket", player)
                           and has_textbox(state, player, world, "Bathhouse"),
@@ -2227,7 +2191,8 @@ def get_location_rules(player, world):
                           or state.has("Bathhouse Ticket", player)
                               and has_textbox(state, player, world, "Bathhouse")
                           or (state.has("Tadpole HQ Ticket", player)
-                              and has_textbox(state, player, world, "Tadpole HQ"))
+                              and has_textbox(state, player, world, "Tadpole HQ")
+                              and has_enough_coins(state, player, world.kiosk_cost["Elevator"]))
                           or has_textbox(state, player, world, "Home"),
         "Chatsanity - Pelly the Engineer":
             lambda state: (state.has("Turbine Town Ticket", player)
@@ -2235,7 +2200,10 @@ def get_location_rules(player, world):
                           or (state.has("Party Invitation", player)
                               and has_textbox(state, player, world, "Home")),
         "Chatsanity - Penny":
-            lambda state: has_access_to(state, player, "Bathhouse - Poppy"),
+            lambda state: (state.has("Key", player, 7)
+                           or state.has("Bathhouse Key", player, 2))
+                          and state.has("Bathhouse Ticket", player)
+                          and has_textbox(state, player, world, "Bathhouse"),
         "Chatsanity - Pine Frog":
             lambda state: state.has("Salmon Creek Forest Ticket", player)
                           and has_textbox(state, player, world, "Salmon Creek Forest")
@@ -2243,7 +2211,10 @@ def get_location_rules(player, world):
         "Chatsanity - Poppy":
             lambda state: (state.has("Party Invitation", player)
                           and has_textbox(state, player, world, "Home"))
-                          or has_access_to(state, player, "Bathhouse - Poppy"),
+                           or ((state.has("Key", player, 7)
+                           or state.has("Bathhouse Key", player, 2))
+                          and state.has("Bathhouse Ticket", player)
+                          and has_textbox(state, player, world, "Bathhouse")),
         "Chatsanity - R&D Frog":
             lambda state: state.has("Tadpole HQ Ticket", player)
                           and has_textbox(state, player, world, "Tadpole HQ"),
@@ -2311,7 +2282,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Salmon Creek Forest"),
         "Chatsanity - Steamy Frog":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Stijn":
             lambda state: has_access_to(state, player, "Salmon Creek Forest - Stijn & Melissa")
                           or (state.has("Bathhouse Ticket", player)
@@ -2350,7 +2322,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Hairball City"),
         "Chatsanity - Tourist Frog":
             lambda state: has_access_garden(state, player, world)
-                          and has_enough_seeds(state, player, world, 6),
+                          and has_enough_seeds(state, player, world, 6)
+                          and can_ac(state, player, world),
         "Chatsanity - Train Frog":
             lambda state: state.has("Hairball City Ticket", player)
                               and has_textbox(state, player, world, "Hairball City")
@@ -2415,7 +2388,8 @@ def get_location_rules(player, world):
                           and has_textbox(state, player, world, "Public Pool"),
         "Chatsanity - Wess":
             lambda state: state.has("Bathhouse Ticket", player)
-                          and has_textbox(state, player, world, "Bathhouse"),
+                          and has_textbox(state, player, world, "Bathhouse")
+                          and can_swim(state, player, world),
         "Chatsanity - Wind Dragon":
             lambda state: state.has("Turbine Town Ticket", player)
                           and has_textbox(state, player, world, "Turbine Town"),
@@ -2506,18 +2480,24 @@ def get_location_rules(player, world):
             lambda state: state.has("Gary's Garden Seed", player, 3)
                           and can_ac(state, player, world),
         "Gary's Garden - Seed 5":
-            lambda state: state.has("Gary's Garden Seed", player, 4),
+            lambda state: state.has("Gary's Garden Seed", player, 4)
+                          and can_ac(state, player, world),
         "Gary's Garden - Seed 6":
-            lambda state: state.has("Gary's Garden Seed", player, 5),
+            lambda state: state.has("Gary's Garden Seed", player, 5)
+                          and can_ac(state, player, world),
         "Gary's Garden - Seed 7":
-            lambda state: state.has("Gary's Garden Seed", player, 6),
+            lambda state: state.has("Gary's Garden Seed", player, 6)
+                          and can_ac(state, player, world),
         "Gary's Garden - Seed 8":
-            lambda state: state.has("Gary's Garden Seed", player, 7),
+            lambda state: state.has("Gary's Garden Seed", player, 7)
+                          and can_ac(state, player, world),
         "Gary's Garden - Seed 9":
-            lambda state: state.has("Gary's Garden Seed", player, 8),
+            lambda state: state.has("Gary's Garden Seed", player, 8)
+                          and can_ac(state, player, world),
         "Gary's Garden - Seed 10":
             lambda state: state.has("Gary's Garden Seed", player, 9)
-                          and can_soda(state, player, world),
+                          and can_soda(state, player, world)
+                          and can_ac(state, player, world),
 
         "Gary's Garden - Flower Frog (Chatsanity)":
             lambda state: has_enough_seeds(state, player, world, 1),
@@ -2536,35 +2516,55 @@ def get_location_rules(player, world):
             lambda state: has_enough_seeds(state, player, world, 3)
                           and can_ac(state, player, world),
         "Gary's Garden - Bird (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 4),
+            lambda state: has_enough_seeds(state, player, world, 4)
+                          and can_ac(state, player, world),
         "Gary's Garden - On Tree Branch":
-            lambda state: has_enough_seeds(state, player, world, 4),
+            lambda state: has_enough_seeds(state, player, world, 4)
+                          and can_ac(state, player, world),
         "Gary's Garden - Danger Frog (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 5),
+            lambda state: has_enough_seeds(state, player, world, 5)
+                          and can_ac(state, player, world),
         "Gary's Garden - Next To Smaller Tree":
-            lambda state: has_enough_seeds(state, player, world, 5),
+            lambda state: has_enough_seeds(state, player, world, 5)
+                          and can_ac(state, player, world),
         "Gary's Garden - Tourist Frog (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 6),
+            lambda state: has_enough_seeds(state, player, world, 6)
+                          and can_ac(state, player, world),
         "Gary's Garden - Next Garden Seed On Rocks":
-            lambda state: has_enough_seeds(state, player, world, 6),
+            lambda state: has_enough_seeds(state, player, world, 6)
+                          and can_ac(state, player, world),
         "Gary's Garden - Fear Frog (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 7),
+            lambda state: has_enough_seeds(state, player, world, 7)
+                          and can_ac(state, player, world),
         "Gary's Garden - Beginning Of Giant Gold Scissor":
-            lambda state: has_enough_seeds(state, player, world, 7),
+            lambda state: has_enough_seeds(state, player, world, 7)
+                          and can_ac(state, player, world),
         "Gary's Garden - Near End Of Giant Gold Scissor":
-            lambda state: has_enough_seeds(state, player, world, 7),
+            lambda state: has_enough_seeds(state, player, world, 7)
+                          and can_ac(state, player, world),
         "Gary's Garden - Dance Frog (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 8),
+            lambda state: has_enough_seeds(state, player, world, 8)
+                          and can_ac(state, player, world),
         "Gary's Garden - Tree Branch Near Gold Scissor Row":
-            lambda state: has_enough_seeds(state, player, world, 8),
+            lambda state: has_enough_seeds(state, player, world, 8)
+                          and can_ac(state, player, world),
         "Gary's Garden - Hungry Frog (Chatsanity)":
             lambda state: has_enough_seeds(state, player, world, 9)
-                          and can_soda(state, player, world),
+                          and can_soda(state, player, world)
+                          and can_ac(state, player, world),
         "Gary's Garden - Tree Branch Near The Top":
             lambda state: has_enough_seeds(state, player, world, 9)
-                          and can_soda(state, player, world),
+                          and can_soda(state, player, world)
+                          and can_ac(state, player, world),
         "Gary's Garden - Gunter (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 10),
+            lambda state: has_enough_seeds(state, player, world, 10)
+                          and can_ac(state, player, world)
+                          and can_soda(state, player, world),
         "Gary's Garden - Hasselhop (Chatsanity)":
-            lambda state: has_enough_seeds(state, player, world, 10),
+            lambda state: has_enough_seeds(state, player, world, 10)
+                          and can_ac(state, player, world)
+                          and can_soda(state, player, world),
+        "Gary's Garden - Gunter & Little Gabi":
+            lambda state: can_ac(state, player, world)
+                          and can_soda(state, player, world),
     }

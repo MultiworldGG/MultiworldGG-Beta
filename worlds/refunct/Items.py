@@ -28,7 +28,6 @@ item_table["Lifts"] = ItemData(9999995, ItemClassification.progression)
 
 item_table["Red Cubes Bag"] = ItemData(9999989, ItemClassification.progression)
 item_table["Green Cubes Bag"] = ItemData(9999988, ItemClassification.progression)
-item_table["Blue Cubes Bag"] = ItemData(9999987, ItemClassification.progression)
 
 item_table["Flower"] = ItemData(9999981, ItemClassification.filler)
 
@@ -60,6 +59,8 @@ item_table["Clique: Button Activation"] = ItemData(9999901, ItemClassification.p
 item_table["Clique: Feeling of Satisfaction"] = ItemData(9999902, ItemClassification.filler)
 
 item_table["Custom Minigame"] = ItemData(9999890, ItemClassification.progression)
+item_table["Defunct Minigame"] = ItemData(9999880, ItemClassification.progression)
+item_table["Defunct Rando Minigame"] = ItemData(9999870, ItemClassification.progression)
 
 
 # for i in range(0, 101):
@@ -178,10 +179,9 @@ item_groups = {
     "Cubes Bags": {
         "Red Cubes Bag",
         "Green Cubes Bag",
-        "Blue Cubes Bag",
     },
     "Clusters": {
-        f"Cluster {i}" for i in range(1, 31) 
+        f"Cluster {i}" for i in range(1, 32) 
     },
     "Minigames": {
         "Vanilla Minigame",
@@ -203,6 +203,8 @@ item_groups = {
         "Refunct Mountain Minigame",
         "Rando Mountain Minigame",
         "Custom Minigame",
+        "Defunct Minigame",
+        "Defunct Rando Minigame",
     },
     "Abilities": {
         "Ledge Grab",

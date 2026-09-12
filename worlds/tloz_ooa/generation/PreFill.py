@@ -2,21 +2,11 @@ from ..data import *
 from ..data.Constants import *
 from Fill import fill_restrictive, FillError
 from Options import OptionError
+from BaseClasses import MultiWorld
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .. import OracleOfAgesWorld
+from .. import OracleOfAgesWorld
 
 import logging
-
-# -----------------------------------------------------------------------------------
-#
-# -----------------------------------------------------------------------------------
-def pre_fill(world: "OracleOfAgesWorld") -> None:
-    pre_fill_seeds(world)
-    pre_fill_dungeon_items(world)
-
-    # world.debug_pre_fill("Dimitri's Flute", "Impa Gift")
 
 
 # -----------------------------------------------------------------------------------
@@ -43,105 +33,126 @@ def pre_fill(world: "OracleOfAgesWorld") -> None:
 #        allow_excluded=True,
 #    )
 
-
 # -----------------------------------------------------------------------------------
 #
 # -----------------------------------------------------------------------------------
-def pre_fill_dungeon_items(world: "OracleOfAgesWorld"):
+def stage_pre_fill_dungeon_items(multiworld: MultiWorld):
     # If keysanity is off, dungeon items can only be put inside local dungeon locations, and there are not so many
     # of those which makes them pretty crowded.
     # This usually ends up with generator not having anywhere to place a few small keys, making the seed unbeatable.
     # To circumvent this, we perform a restricted pre-fill here, placing only those dungeon items
     # before anything else.
-    collection_state = world.multiworld.get_all_state(False)
+    
+    oos_players = multiworld.get_game_players(OracleOfAgesWorld.game)
+
+    base_all_state = multiworld.get_all_state(False, collect_pre_fill_items=False, perform_sweep=False)
+
+    for player in multiworld.player_ids:
+        if player in oos_players:
+            continue
+        subworld = multiworld.worlds[player]
+        for item in subworld.get_pre_fill_items():
+            subworld.collect(base_all_state, item)
+    base_all_state.sweep_for_advancements()
+
     D6_remaining_location = []
 
-    for i in range(11):
-        if i == 10:
-            if world.options.linked_heros_cave.value > 0:
-                i = 11
-            else:
+    
+    for filling_player in oos_players:
+        # Create a player-specific state for just the player that is filling dungeons.
+        per_player_base_all_state = base_all_state.copy()
+        # Collect the pre_fill_items() of all other OoS players into the state.
+        for other_player in oos_players:
+            if other_player == filling_player:
                 continue
-        # Build a list of locations in this dungeon
-        dungeon_location_names = [
-            name
-            for name, loc in LOCATIONS_DATA.items()
-            if "dungeon" in loc and loc["dungeon"] == i
-        ]
-        dungeon_locations = [
-            loc
-            for loc in world.multiworld.get_locations(world.player)
-            if loc.name in dungeon_location_names
+            subworld = multiworld.worlds[other_player]
+            for item in subworld.get_pre_fill_items():
+                subworld.collect(per_player_base_all_state, item)
+        # And then sweep the state to pick up pre-placed items.
+        per_player_base_all_state.sweep_for_advancements()
+
+        # Get the world for the player that is filling.
+        filling_world = multiworld.worlds[filling_player]
+
+        for i in range(11):
+            if i == 10:
+                if filling_world.options.linked_heros_cave.value > 0:
+                    i = 11
+                else:
+                    continue
+            # Build a list of locations in this dungeon
+            dungeon_location_names = [ name for name, loc in LOCATIONS_DATA.items() if "dungeon" in loc and loc["dungeon"] == i ]
+            dungeon_locations = [loc for loc in multiworld.get_locations(filling_player) if loc.name in dungeon_location_names ]
+            collection_state = per_player_base_all_state.copy()
+
+            # Build a list of dungeon items that are "confined" (i.e. must be placed inside this dungeon)
+            # See `create_items` to see how `world.dungeon_items` is populated depending on current options.
+            confined_dungeon_items = [
+                item
+                for item in filling_world.dungeon_items
+                if item.name.endswith(f"({DUNGEON_NAMES[i]})")
+                or (i == 8 and "Slate" in item.name)
+            ]
+            if len(confined_dungeon_items) == 0:
+                if i == 9 or i == 6:
+                    D6_remaining_location += dungeon_locations
+                continue  # This list might be empty with some keysanity options
+            for item in confined_dungeon_items:
+                collection_state.remove(item)
+
+            # Perform a prefill to place confined items inside locations of this dungeon
+            for attempts_remaining in range(2, -1, -1):
+                filling_world.random.shuffle(dungeon_locations)
+                try:
+                    fill_restrictive(
+                        multiworld,
+                        collection_state,
+                        dungeon_locations,
+                        confined_dungeon_items,
+                        single_player_placement=True,
+                        lock=True,
+                        allow_excluded=True,
+                    )
+                    if i == 9 or i == 6:
+                        D6_remaining_location += dungeon_locations
+                    break
+                except FillError as exc:
+                    if attempts_remaining == 0:
+                        raise exc
+                    logging.debug(
+                        f"Failed to shuffle dungeon items for player {filling_player}. Retrying..."
+                    )
+
+        # D6 specific item that can appear in both dungeon (the boss key)
+        d6CommonDungeon = "(Mermaid's Cave)"
+
+        confined_dungeon_items = [
+            item for item in filling_world.dungeon_items if item.name.endswith(d6CommonDungeon)
         ]
 
-        # Build a list of dungeon items that are "confined" (i.e. must be placed inside this dungeon)
-        # See `create_items` to see how `world.dungeon_items` is populated depending on current options.
-        confined_dungeon_items = [
-            item
-            for item in world.dungeon_items
-            if item.name.endswith(f"({DUNGEON_NAMES[i]})")
-            or (i == 8 and "Slate" in item.name)
-        ]
-        if len(confined_dungeon_items) == 0:
-            if i == 9 or i == 6:
-                D6_remaining_location += dungeon_locations
-            continue  # This list might be empty with some keysanity options
         for item in confined_dungeon_items:
             collection_state.remove(item)
 
-        # Perform a prefill to place confined items inside locations of this dungeon
+        # Preplace D6 Boss key
         for attempts_remaining in range(2, -1, -1):
-            world.random.shuffle(dungeon_locations)
+            filling_world.random.shuffle(D6_remaining_location)
             try:
                 fill_restrictive(
-                    world.multiworld,
+                    multiworld,
                     collection_state,
-                    dungeon_locations,
+                    D6_remaining_location,
                     confined_dungeon_items,
                     single_player_placement=True,
                     lock=True,
                     allow_excluded=True,
                 )
-                if i == 9 or i == 6:
-                    D6_remaining_location += dungeon_locations
                 break
             except FillError as exc:
                 if attempts_remaining == 0:
                     raise exc
                 logging.debug(
-                    f"Failed to shuffle dungeon items for player {world.player}. Retrying..."
+                    f"Failed to shuffle dungeon items for player {filling_player}. Retrying..."
                 )
-
-    # D6 specific item that can appear in both dungeon (the boss key)
-    d6CommonDungeon = "(Mermaid's Cave)"
-
-    confined_dungeon_items = [
-        item for item in world.dungeon_items if item.name.endswith(d6CommonDungeon)
-    ]
-
-    for item in confined_dungeon_items:
-        collection_state.remove(item)
-
-    # Preplace D6 Boss key
-    for attempts_remaining in range(2, -1, -1):
-        world.random.shuffle(D6_remaining_location)
-        try:
-            fill_restrictive(
-                world.multiworld,
-                collection_state,
-                D6_remaining_location,
-                confined_dungeon_items,
-                single_player_placement=True,
-                lock=True,
-                allow_excluded=True,
-            )
-            break
-        except FillError as exc:
-            if attempts_remaining == 0:
-                raise exc
-            logging.debug(
-                f"Failed to shuffle dungeon items for player {world.player}. Retrying..."
-            )
 
 # -----------------------------------------------------------------------------------
 #

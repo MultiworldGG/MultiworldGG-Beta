@@ -1,14 +1,14 @@
 from worlds.deltarune.Locations import LocationData, LocationGroups, LocationIDs
 from worlds.deltarune.LogicHelper import (
     include_freeze_recruits_chapter2,
+    include_singapour_wrong_warp_locations,
+    include_singapour_wrong_warp_locations_lose_recruits,
+    include_singapour_wrong_warp_locations_recruit,
     normal_route,
     weird_route,
     include_lose_recruits,
-    include_lose_swatchlings_weird_route,
-    include_recruit_swatchlings_weird_route,
     include_recruits,
     include_recruits_chapter2_weird_route_exclusion,
-    all_recruits_route,
 )
 from worlds.deltarune.Regions import Regions
 from typing import TYPE_CHECKING
@@ -201,22 +201,6 @@ chapter2_locations = {
             group=LocationGroups.chapter2,
         ),
         LocationData(
-            LocationIDs.ch2_cyber_city_cheese_maze_chest,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
-            LocationIDs.ch2_cyber_city_trash_can_3,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
-            LocationIDs.ch2_cyber_city_trash_can_4,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
-            LocationIDs.ch2_cyber_city_trash_can_5,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
             LocationIDs.ch2_cyber_city_purchase_mannequin,
             should_be_included=normal_route,
             group=LocationGroups.chapter2,
@@ -262,17 +246,7 @@ chapter2_locations = {
             group=LocationGroups.chapter2,
         ),
         LocationData(
-            LocationIDs.ch2_recruit_maus,
-            should_be_included=include_recruits_chapter2_weird_route_exclusion,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
             LocationIDs.ch2_lost_ambyu_lance,
-            should_be_included=include_freeze_recruits_chapter2,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
-            LocationIDs.ch2_lost_maus,
             should_be_included=include_freeze_recruits_chapter2,
             group=LocationGroups.chapter2,
         ),
@@ -281,6 +255,36 @@ chapter2_locations = {
             should_be_included=weird_route,
             group=LocationGroups.chapter2,
         ),
+    ],
+    Regions.ch2_cyber_city_post_toilet: [
+        LocationData(
+            LocationIDs.ch2_cyber_city_cheese_maze_chest,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_cyber_city_trash_can_3,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_cyber_city_trash_can_4,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_cyber_city_trash_can_5,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_recruit_maus,
+            should_be_included=include_recruits_chapter2_weird_route_exclusion,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_lost_maus,
+            should_be_included=include_freeze_recruits_chapter2,
+            group=LocationGroups.chapter2,
+        ),
+    ],
+    Regions.ch2_thornring: [
         LocationData(
             LocationIDs.ch2_cyber_city_purchase_thornring,
             should_be_included=weird_route,
@@ -325,12 +329,22 @@ chapter2_locations = {
     Regions.ch2_mansion_both_route: [
         LocationData(
             LocationIDs.ch2_mansion_painting_chest,
-            should_be_included=normal_route,
+            should_be_included=include_singapour_wrong_warp_locations,
             group=LocationGroups.chapter2,
         ),
         LocationData(
             LocationIDs.ch2_mansion_sculpture_room_chest,
-            should_be_included=normal_route,
+            should_be_included=include_singapour_wrong_warp_locations,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_recruit_swatchling,
+            should_be_included=include_singapour_wrong_warp_locations_recruit,
+            group=LocationGroups.chapter2,
+        ),
+        LocationData(
+            LocationIDs.ch2_lost_swatchlings,
+            should_be_included=include_singapour_wrong_warp_locations_lose_recruits,
             group=LocationGroups.chapter2,
         ),
     ],
@@ -359,8 +373,6 @@ chapter2_locations = {
             should_be_included=include_recruits,
             group=LocationGroups.chapter2,
         ),
-    ],
-    Regions.ch2_lose_werewerewire: [
         LocationData(
             LocationIDs.ch2_lost_werewerewire,
             should_be_included=include_lose_recruits,
@@ -369,11 +381,6 @@ chapter2_locations = {
     ],
     Regions.ch2_mansion_recruits: [
         LocationData(
-            LocationIDs.ch2_recruit_swatchling,
-            should_be_included=include_recruit_swatchlings_weird_route,
-            group=LocationGroups.chapter2,
-        ),
-        LocationData(
             LocationIDs.ch2_recruit_tasque_manager,
             should_be_included=include_recruits,
             group=LocationGroups.chapter2,
@@ -381,13 +388,6 @@ chapter2_locations = {
         LocationData(
             LocationIDs.ch2_recruit_mauswheel,
             should_be_included=include_recruits,
-            group=LocationGroups.chapter2,
-        ),
-    ],
-    Regions.ch2_mansion_losts: [
-        LocationData(
-            LocationIDs.ch2_lost_swatchlings,
-            should_be_included=include_lose_swatchlings_weird_route,
             group=LocationGroups.chapter2,
         ),
         LocationData(

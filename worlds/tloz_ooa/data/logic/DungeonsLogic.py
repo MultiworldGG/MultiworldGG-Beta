@@ -683,7 +683,7 @@ def make_d6present_logic(player: int):
             ooa_has_switch_hook(state, player),
             any([
                 ooa_has_bombs(state, player),
-                ooa_has_bombchus(state, player)
+                ooa_has_bombchus(state, player, 2)
             ]),
             any([
                 ooa_option_hard_logic(state, player),

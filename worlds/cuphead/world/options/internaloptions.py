@@ -1,6 +1,8 @@
 ### Copyright 2025-2026 JKLeckr
 ### SPDX-License-Identifier: MPL-2.0
 
+# ty: ignore[conflicting-metaclass]
+
 from typing import Any, ClassVar, Self
 
 from typing_extensions import override
@@ -33,7 +35,7 @@ class CoinAmounts(Option[tuple[int, int, int]], NamedOption):
     visibility = Visibility.none
     default = (0, 0, 0)
 
-    def __init__(self, value: tuple[int, int, int]):
+    def __init__(self, value: tuple[int, int, int]) -> None:
         self.value = value
 
     @classmethod
@@ -46,7 +48,7 @@ class CoinAmounts(Option[tuple[int, int, int]], NamedOption):
 
     @classmethod
     @override
-    def get_option_name(cls, value: tuple[int, int, int]):
+    def get_option_name(cls, value: tuple[int, int, int]) -> str:
         return f"({value[0]}, {value[1]}, {value[2]})"
 
 
@@ -81,7 +83,7 @@ class FillerItemWeights(Option[dict[str, int]], NamedOption):
     visibility = Visibility.none
     default: ClassVar[dict[str, int]] = {}
 
-    def __init__(self, value: dict[str, int]):
+    def __init__(self, value: dict[str, int]) -> None:
         self.value = value
 
     @classmethod
@@ -91,7 +93,7 @@ class FillerItemWeights(Option[dict[str, int]], NamedOption):
 
     @classmethod
     @override
-    def get_option_name(cls, value: dict[str, int]):
+    def get_option_name(cls, value: dict[str, int]) -> str:
         return ", ".join(f"{key}: {v}" for key, v in value.items())
 
 
@@ -104,7 +106,7 @@ class ShopMap(Option[list[tuple[int, int]]], NamedOption):
     visibility = Visibility.none
     default: ClassVar[list[tuple[int, int]]] = []
 
-    def __init__(self, value: list[tuple[int, int]]):
+    def __init__(self, value: list[tuple[int, int]]) -> None:
         self.value = value
 
     @classmethod
@@ -115,7 +117,7 @@ class ShopMap(Option[list[tuple[int, int]]], NamedOption):
 
     @classmethod
     @override
-    def get_option_name(cls, value: list[tuple[int, int]]):
+    def get_option_name(cls, value: list[tuple[int, int]]) -> str:
         return ", ".join(f"({v1}, {v2})" for v1, v2 in value)
 
 class TestOverrides(Option[dict[str, Any]], NamedOption):
@@ -126,7 +128,7 @@ class TestOverrides(Option[dict[str, Any]], NamedOption):
     visibility = Visibility.none
     default: ClassVar[dict[str, Any]] = {}
 
-    def __init__(self, value: dict[str, Any]):
+    def __init__(self, value: dict[str, Any]) -> None:
         self.value = value
 
     @classmethod
@@ -136,7 +138,7 @@ class TestOverrides(Option[dict[str, Any]], NamedOption):
 
     @classmethod
     @override
-    def get_option_name(cls, value: dict[str, int]):
+    def get_option_name(cls, value: dict[str, int]) -> str:
         return ", ".join(f"{key}: {v}" for key, v in value.items())
 
 class TrapItemWeights(Option[dict[str, int]], NamedOption):
@@ -148,7 +150,7 @@ class TrapItemWeights(Option[dict[str, int]], NamedOption):
     visibility = Visibility.none
     default: ClassVar[dict[str, int]] = {}
 
-    def __init__(self, value: dict[str, int]):
+    def __init__(self, value: dict[str, int]) -> None:
         self.value = value
 
     @classmethod
@@ -158,5 +160,5 @@ class TrapItemWeights(Option[dict[str, int]], NamedOption):
 
     @classmethod
     @override
-    def get_option_name(cls, value: dict[str, int]):
+    def get_option_name(cls, value: dict[str, int]) -> str:
         return ", ".join(f"{key}: {v}" for key, v in value.items())

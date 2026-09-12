@@ -17,6 +17,9 @@ moduleMatches = 0xF882D5CF, 0x30B6E091, 0x218F6E07 ; 1.0.1E, 1.0.2U, 1.0.0E
 IsReady = 0x021ccdec
 0x024bf00c = bl _IsReadyAdjusted
 
+# affinity quests no longer lock you out of other quests
+0x022ce6c4 = li r3,0
+
 # disable lock party from affinity quests
 0x02296518 = nop
 0x02290ca4 = nop
@@ -113,6 +116,24 @@ addItem = 0x02365934
 
 # overwrite setLocal for blade flag
 0x0228f018 = bl _setLocal
+
+# add new run speed
+0x0264332c = bl _setRunSpeed
+0x0240ab90 = stw r0, +0x14(r1) # swap order with following instruction
+0x0240ab94 = bl _ToggleSuperRunningState
+0x025051ec = bl _UpdateRunningState
+
+# set movement variables
+setValueFloat = 0x02003148
+setValueBool = 0x02003178
+setValueInt = 0x0200a5d0
+getMappedId = 02007f90
+getValueName = 0x020030e0
+0x0263b660 = bl _initImplCharaAdjusted # innerChara
+initImpl_EventCharacter = 0x02635b80
+0x02617f04 = bl _initImplDollAdjusted # doll
+initImpl_UnitCharacter = 0x02612524
+
 
 addItemEquipment = 0x02366cf0 # ::ItemBox::ItemType::Type::ItemHandle
 getItem = 0x021ab180 # ::ItemDrop::ItemDropManager
@@ -235,6 +256,8 @@ chkLv = 0x02af8e6c # ::menu::MenuDollGarage
 
 // Parameters from rules.txt
 int disableGroundArmor, disableGroundWeapons, disableSkellArmor, disableSkellWeapons, disableGroundAugments, disableSkellAugments, disableImportantItems, disableBlueprints, drifterRangedWeapon, drifterMeleeWeapon;
+float fastRunSpeedFloat, fasterRunSpeedFloat;
+int fastRunningState = 0, fasterRunPlaySound = 0, fasterRunningState = 0;
 
 extern int characterLevel;
 
@@ -269,6 +292,13 @@ int getItemNum(int* ptr, int enemies, int boxes);
 
 int getFlagVal(int* bdatPtr, const char* flagName, int id, const char* columnName);
 
+void _playSound(int id);
+
+char* getValueName(int* ptr, int id);
+int getMappedId(int* ptr, int zero, int id);
+void setValueFloat(float value, int* ptr, int mapId);
+void initImpl_EventCharacter(int** ptr, int* ptr2);
+void initImpl_UnitCharacter(int** ptr, int* ptr2);
 
 int _IsPermit(){
 	return _hasPreciousItem(24 + 3 - 1);
@@ -320,6 +350,86 @@ int _getDefaultSkellWeapon(int* DEF_DlList_bdat, char weaponColumn[], int skellI
 	return 0;
 }
 
+void _setRunSpeed(){
+	register float value asm("fr1");
+	value = fastRunSpeedFloat;
+	if (fastRunningState == 1 && fasterRunningState == 1){
+		// Load float value
+		value = fasterRunSpeedFloat;
+		if (fasterRunPlaySound == 1){
+			fasterRunPlaySound = 0;
+			_playSound(0x2d4);
+		}
+	}
+}
+
+void _UpdateRunningState(int* ptr, int newRunningState){
+	int backup;
+	register int original asm("r26");
+	backup = original;
+
+	fastRunningState = original;
+	if(fastRunningState == 1)
+		fasterRunningState = 0;
+
+	original = backup;
+	asm("cmpwi cr0, r26, 0");
+}
+
+void _ToggleSuperRunningState(){
+	int backup;
+	register int original asm("r3");
+	backup = original;
+	if(fasterRunningState == 0){
+		fasterRunningState = 1;
+		fasterRunPlaySound = 1;
+	}else if(fasterRunningState == 1)
+		fasterRunningState = 0;
+	// Restore condition register
+	original = backup;
+	asm("cmpwi cr0, r3, 0");
+}
+
+int _FindSystemVariableByName(int* valuePtr, char* name){
+	for (int id = 0; true; id++){
+		if(__strcmp(name, getValueName(valuePtr + 3, id)) == 0)
+			return id;
+	}
+}
+
+void _InitCharaSystemVariables(int ** ptr, int* ptr2){
+	int* valuePtr = ptr[1];
+
+	// Addional functions for debugging id mapping
+	// int mapId = getMappedId(valuePtr, 0, id);
+	char* name = (char*)"VF_MoveSpeedSwimRun";
+	setValueFloat(3.0, valuePtr + 3, _FindSystemVariableByName(valuePtr, name));
+	name = (char*)"VF_MoveSpeedSwimDash";
+	setValueFloat(10.0, valuePtr + 3, _FindSystemVariableByName(valuePtr, name));
+
+	// Available
+	// setValueBool(valuePtr + 3, mapId, true); // Start with VI_
+	// setValueInt(valuePtr + 3, id, newValueInt); // Start with VB_
+
+}
+
+void _initImplCharaAdjusted(int ** ptr, int* ptr2){
+	_InitCharaSystemVariables(ptr, ptr2);
+	initImpl_EventCharacter(ptr, ptr2);
+}
+
+void _InitDollSystemVariables(int ** ptr, int* ptr2){
+	int* valuePtr = ptr[1];
+
+	// setValueFloat(2.0, valuePtr + 3, _FindSystemVariableByName(valuePtr, (char*)"VF_MoveSpeedHoverDash"));
+}
+
+void _initImplDollAdjusted(int ** ptr, int* ptr2){
+	_InitDollSystemVariables(ptr, ptr2);
+	initImpl_UnitCharacter(ptr, ptr2);
+}
+
+
 void _SetBdatValue(const char* bdatName, const char* columnName, int rowId, int newValue, int valueSize){
 	int* bdat = getFP(bdatName);
 	int* columnPtr = getMember(bdat, columnName);
@@ -327,6 +437,7 @@ void _SetBdatValue(const char* bdatName, const char* columnName, int rowId, int 
 	// ignore value check for simplicity
 	// char* valCheckPtr = getValCheckSub(bdat, getMember(bdat, columnName), valueSize);
 	int baseOffset = *(short*)((char*)bdat + 0xe);
+	// needs work row is wrong
 	int rowOffset = *(short*)((char*)bdat + 0x8) * (rowId - 1);
 	int columnOffset = *(short*)((char*)bdat + 0x2 + columnOffsetBase);
 	char* valPtr = (char*)bdat + baseOffset + rowOffset + columnOffset;

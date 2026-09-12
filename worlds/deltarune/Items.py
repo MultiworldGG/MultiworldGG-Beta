@@ -94,7 +94,7 @@ class ItemIDs(IntEnum):
     spoison = 32
     dogdollar = 33
     tvdinner = 34
-    # nothing = 35
+    pipis = 35
     flatsoda = 36
     tvslop = 37
     execbuffet = 38
@@ -192,6 +192,7 @@ class ItemIDs(IntEnum):
     chainmail = 20011
     bshotbowtie = 20012
     spikeband = 20013
+    silver_watch = 20014
     tensionbow = 20015
     mannequin = 20016
     darkgoldband = 20017
@@ -399,6 +400,7 @@ items = {
     ItemIDs.smile: "SMILE",
     ItemIDs.tvslop: "TVSlop",
     ItemIDs.tvdinner: "TVDinner",
+    ItemIDs.pipis: "Pipis",
     ItemIDs.deluxedinner: "DeluxeDinner",
     ItemIDs.flatsoda: "FlatSoda",
     ItemIDs.tensionmax: "TensionMax",
@@ -471,6 +473,7 @@ items = {
     ItemIDs.pink_ribbon: "Pink Ribbon",
     ItemIDs.white_ribbon: "White Ribbon",
     ItemIDs.silver_card: "Silver Card",
+    ItemIDs.silver_watch: "Silver Watch",
     ItemIDs.spikeband: "SpikeBand",
     ItemIDs.twin_ribbon: "Twin Ribbon",
     ItemIDs.tensionbow: "TensionBow",
@@ -569,7 +572,7 @@ class ItemData(NamedTuple):
     classification: ItemClassification
     should_be_included: Callable[["DeltaruneWorld"], bool] = lambda world: True
     groups: list[ItemGroups] = []
-    amount: int = 1
+    amount: int = 0
     blacklist_filler: bool = False
     changing_classification: bool = False
 

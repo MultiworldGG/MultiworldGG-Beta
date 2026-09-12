@@ -369,7 +369,7 @@ class TestLobbyApworldQueue(TestBase):
             self.assertTrue(
                 any(
                     "Host: the APWorld that replaced yours was removed" in content
-                    and "You can upload your APWorld again." in content
+                    and "You may upload another APWorld." in content
                     for content in system_messages
                 )
             )
@@ -534,7 +534,7 @@ class TestLobbyApworldQueue(TestBase):
             )
 
         response = self.host_client.get(f"/api/lobby/{to_url(ids['lobby_id'])}/download-package")
-        self.assertEqual(response.status_code, 200, response.get_data(as_text=True))
+        self.assertEqual(response.status_code, 200, response.get_json())
 
         with zipfile.ZipFile(io.BytesIO(response.get_data())) as package:
             names = set(package.namelist())

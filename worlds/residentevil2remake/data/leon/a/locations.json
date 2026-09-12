@@ -1724,7 +1724,9 @@
         "name": "King Panel",
         "region": "Supplies Storage Room",
         "original_item": "King Plug",
-        "condition": {},    
+        "condition": {
+            "items": ["Queen Plug"]
+        },
         "item_object": "KingB_sm42_208_PlugPlace01A_control",
         "parent_object": "KingB_sm42_208_PlugPlace01A_control",
         "folder_path": "RopewayContents/World/Location_WasteWater/Environments/st3_625_0/gimmick",
@@ -2393,7 +2395,9 @@
         "name": "Final Hit on Super Tyrant",
         "region": "Path to Super Tyrant",
         "original_item": "Anti-tank Rocket",
-        "condition": {},    
+        "condition": {
+            "items": ["Joint Plug"]
+        },
         "item_object": "WP4600",
         "parent_object": "wp4600_rocketLauncher",
         "folder_path": "RopewayContents/World/Location_LaboratoryUndermost/Environments/st5_211_0/gimmick/CutScene",

@@ -47,7 +47,7 @@ def _is_lobby_viewer(lobby_id) -> bool:
 @app.route('/lobbies')
 def lobby_list():
     lobbies = select(
-        l for l in Lobby if l.state == LOBBY_OPEN
+        l for l in Lobby if l.state == LOBBY_OPEN and l.listed
     ).order_by(lambda l: desc(l.last_activity))[:50]
 
     any_expired = False
@@ -168,6 +168,7 @@ def lobby_create():
             max_players = 0
 
         allow_custom_apworlds = bool(request.form.get('allow_custom_apworlds'))
+        listed = bool(request.form.get('listed'))
 
         owned_active = count(
             l for l in Lobby
@@ -194,6 +195,7 @@ def lobby_create():
             race=race,
             max_players=max_players,
             allow_custom_apworlds=allow_custom_apworlds,
+            listed=listed,
             meta=json.dumps(meta),
             state=LOBBY_OPEN,
         )
@@ -249,7 +251,7 @@ def lobby_view(lobby: UUID):
     player_count = count(p for p in LobbyPlayer if p.lobby == lobby)
     has_custom = bool(count(y for y in LobbyYaml if y.lobby == lobby and y.is_custom))
     has_upgrade_apworld = bool(count(a for a in LobbyApworld if a.lobby == lobby and not a.yaml.is_custom))
-    force_local_generation = has_custom or has_upgrade_apworld or yaml_count > 25
+    force_local_generation = has_custom or has_upgrade_apworld or bool(lobby.auxiliary_apworlds) or yaml_count > 25
     is_full = lobby.max_players > 0 and player_count >= lobby.max_players
 
     meta = json.loads(lobby.meta)

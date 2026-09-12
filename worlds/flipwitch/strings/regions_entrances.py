@@ -198,6 +198,7 @@ class GhostCastleRegion:
 
 
 class JigokuRegion:
+    lava_jump_top_hidden_flip = "JG: Lava Jump Top Hidden Flip"
     jigoku_start = "JG: Jigoku Start"
     start_drop = "JG: Start Drop"
     stone_shrine = "JG: Stone Shrine"
@@ -768,6 +769,10 @@ class GhostCastleEntrance:
 
 
 class JigokuEntrance:
+    lava_jump_top_hidden_flip_to_the_mound = "JG: Lava Jump Top Hidden Flip to The Mound"
+    lava_jump_top_hidden_flip_to_top = "JG: Lava Jump Top Hidden Flip to Lava Jump Top"
+    lava_jump_top_to_hidden_flip = "JG: Lava Jump Top to Lava Jump Top Hidden Flip"
+    the_mound_to_lava_jump_top_hidden_flip = "JG: The Mound to Lava Jump Top Hidden Flip"
     multi_story_top_to_tall_ruins_top = "JG: Multi Story Top to Tall Ruins Top"
     jigoku_start_to_jigoku_path = "JG: Jigoku Path to Spirit City"
     jigoku_start_to_start_drop = "JG: Jigoku Start to Start Drop"

@@ -233,6 +233,8 @@
                     </div>
                 </div>
 
+                <div id="lobby-meta-yaml" class="lobby-meta-file"></div>
+
                 <div id="lobby-main">
                     {# Left: Players #}
                     <div id="lobby-sidebar">
@@ -419,6 +421,15 @@
                                             {% else %}
                                                 <input type="checkbox" id="edit-allow-custom-apworlds">
                                             {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><label for="edit-listed">Show in Lobby Browser:
+                                            <span class="interactive" data-tooltip="Unlisted lobbies remain accessible to anyone with the direct link.">(?)
+                                            </span>
+                                        </label></td>
+                                        <td>
+                                            <input type="checkbox" id="edit-listed" {% if lobby.listed %}checked{% endif %}>
                                         </td>
                                     </tr>
                                 </tbody>

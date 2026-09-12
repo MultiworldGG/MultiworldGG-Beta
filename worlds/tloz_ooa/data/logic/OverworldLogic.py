@@ -544,6 +544,7 @@ def make_overworld_logic(player: int, options: OracleOfAgesOptions):
         ["ridge upper present", "ridge upper past", False, lambda state: ooa_can_switch_past_and_present(state, player)],
         ["ridge upper present", "treasure hunting goron", False, lambda state: all([
             ooa_has_bombs(state, player, 2),
+            ooa_has_satchel(state, player),
             ooa_has_ember_seeds(state, player),
             any([
                 all([
@@ -782,7 +783,10 @@ def make_overworld_logic(player: int, options: OracleOfAgesOptions):
         
         ["nuun (ricky)", "nuun highlands top", False, lambda state: any([
             ooa_can_summon_ricky(state, player),
-            ooa_can_go_back_to_present(state, player),
+            all([
+                ooa_can_go_back_to_present(state, player),
+                ooa_option_medium_logic(state, player),
+                ]),
             all([
                 # Can break bush 1 tile after a holes
                 ooa_can_jump_1_wide_pit(state, player, False),
@@ -805,7 +809,10 @@ def make_overworld_logic(player: int, options: OracleOfAgesOptions):
         ])],
         ["nuun (moosh)", "nuun highlands top", False, lambda state: any([
             ooa_can_summon_moosh(state, player),
-            ooa_can_go_back_to_present(state, player),
+            all([
+                ooa_can_go_back_to_present(state, player),
+                ooa_option_medium_logic(state, player),
+            ]),
             all([
                 ooa_can_break_bush(state, player),
                 ooa_can_jump_3_wide_pit(state, player, False),
@@ -813,7 +820,10 @@ def make_overworld_logic(player: int, options: OracleOfAgesOptions):
         ])],
         ["nuun (dimitri)", "nuun highlands top", False, lambda state: any([
             ooa_can_summon_dimitri(state, player),
-            ooa_can_go_back_to_present(state, player),
+            all([
+                ooa_can_go_back_to_present(state, player),
+                ooa_option_medium_logic(state, player),
+            ]),
             all([
                 state.has("Swimmer's Ring", player),
                 ooa_can_swim(state, player, False),

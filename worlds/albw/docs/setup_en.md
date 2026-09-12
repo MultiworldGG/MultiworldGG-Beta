@@ -12,7 +12,7 @@
 ## Setup
 
 1. Install the latest version of MultiworldGG.
-2. If you are using AP: Download `albw.apworld` and put it in your `Archipelago/custom_worlds/` folder.
+2. If you are using AP: Download `albw.apworld` and put it in your `Archipelago/custom_worlds/` folder or double-click it.
 
 ### Setup (Emulator)
 

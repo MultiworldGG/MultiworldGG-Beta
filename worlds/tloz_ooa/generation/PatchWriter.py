@@ -37,7 +37,7 @@ def ooa_create_appp_patch(world: "OracleOfAgesWorld") -> OoAProcedurePatch:
             continue
         if loc.item.player == loc.player:
             item_name = loc.item.name
-        elif loc.item.classification in [ItemClassification.progression, ItemClassification.progression_skip_balancing]:
+        elif loc.item.advancement:
             item_name = "Archipelago Progression Item"
         else:
             item_name = "Archipelago Item"

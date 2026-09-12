@@ -1,5 +1,6 @@
 import json
 import math
+from copy import deepcopy
 from random import Random
 from .levels import SL, HIPSL, ROGUESL, MG1SL, DOPASL
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -60,16 +61,18 @@ class Q1World(World):
     location_name_to_id = {
         name: net_id(loc_id) for name, loc_id in game_ids["locations"].items()
     }
+    web = Q1Web()
     item_name_groups = item_groups
     id_checksum = game_ids["checksum"]
     options_dataclass = Q1Options
     options: Q1Options
-    web = Q1Web()
+    ut_can_gen_without_yaml = True
 
     def __init__(self, world: MultiWorld, player: int):
         self.included_levels: List[Q1Level] = []
         self.starting_levels: List[Q1Level] = []
         self.used_locations: Set[str] = set()
+        self._tracker_locations: Optional[Set[int]] = None
         # Add the id checksum of our location and item ids for consistency check with clients
         self.slot_data: Dict[str, Any] = {
             "checksum": self.id_checksum,
@@ -77,9 +80,9 @@ class Q1World(World):
         }
         self.rules: Optional[Rules] = None
 
-        self.seed = getattr(world, "re_gen_passthrough", {}).get(
-            "Quake 1", world.random.getrandbits(64)
-        )
+        passthrough = getattr(world, "re_gen_passthrough", {}).get(self.game)
+        seed = passthrough.get("ut_s") if isinstance(passthrough, dict) else passthrough
+        self.seed = int(seed) if seed is not None else world.random.getrandbits(64)
 
         print("__init__ world.random seed: ", self.seed)
 
@@ -271,23 +274,11 @@ class Q1World(World):
 
         super().__init__(world, player)
 
-    def interpret_slot_data(self, slot_data: Dict[str, Any]):
-        # If the seed is not specified in the slot data, this mean the world was generated before Universal Tracker support.
-        seed_str = slot_data.get("ut_s")  # Get the string value
-        if seed_str is not None:
-            try:
-                seed = int(seed_str)  # Try converting to an integer
-            except ValueError:
-                try:
-                    seed = float(seed_str)  # If not an int, try float
-                except ValueError:
-                    print(
-                        f"Could not convert '{seed_str}' to a number."
-                    )  # If it's neither!
-                    seed = 0
-        else:
-            print("Key 'ut_s' not found in slot_data.")
-        return seed
+    @staticmethod
+    def interpret_slot_data(slot_data: Dict[str, Any]) -> Dict[str, Any]:
+        if "ut_s" not in slot_data or "options" not in slot_data:
+            raise RuntimeError("This Quake seed predates yaml-less Universal Tracker support.")
+        return slot_data
 
     @classmethod
     def local_id(cls, ap_id: int) -> int:
@@ -358,6 +349,20 @@ class Q1World(World):
             special_levels = DOPASL()
         else:
             episode_options = [1, 2, 3, 4]
+
+        passthrough = getattr(self.multiworld, "re_gen_passthrough", {}).get(self.game)
+        if isinstance(passthrough, dict):
+            # Other slots consume the shared RNG; restore the actual selected levels.
+            levels_by_id = {
+                self.item_name_to_id[level.unlock]: level
+                for episode in (*all_episodes, special_levels)
+                for level in episode.levels
+            }
+            try:
+                self.included_levels = [levels_by_id[level_id] for level_id in passthrough["levels"]]
+            except KeyError as error:
+                raise RuntimeError("Quake seed contains an unknown level; check the installed APWorld version.") from error
+            return
 
         ep_option_reference = [
             self.options.episode1,
@@ -440,13 +445,29 @@ class Q1World(World):
         self.slot_data["settings"]["dynamic"][str(item.ap_id)] = item_data
 
     DIFF_TO_FACTOR_MAPPING = {
-        Difficulty.option_easy: 1,
+        Difficulty.option_easy: 1.0,
         Difficulty.option_medium: 0.5,
         Difficulty.option_hard: 0.25,
         Difficulty.option_extreme: 0.125,
     }
 
     def generate_early(self) -> None:
+        passthrough = getattr(self.multiworld, "re_gen_passthrough", {}).get(self.game)
+        if isinstance(passthrough, dict):
+            self._tracker_locations = set(passthrough["locations"])
+            for name, value in passthrough["options"].items():
+                option = getattr(self.options, name)
+                option.value = type(option).from_any(value).value
+
+        option_names = (*Q1Options.__annotations__, "start_inventory", "exclude_locations", "priority_locations")
+        self.slot_data["options"] = {
+            name: (sorted(option.value) if isinstance(option.value, set)
+                   else deepcopy(dict(option.value)) if isinstance(option.value, dict)
+                   else deepcopy(option.value))
+            for name in option_names
+            for option in (getattr(self.options, name),)
+        }
+
         # Difficulty settings
         # Adds a mult factor for healing/armor items based on difficulty
         factor = self.DIFF_TO_FACTOR_MAPPING.get(self.options.difficulty)
@@ -472,6 +493,7 @@ class Q1World(World):
             self.options.basegame.value
         ]
         self.slot_data["settings"]["difficulty"] = self.options.skill_level.value
+        self.slot_data["settings"]["ap_vanilla_items"] = self.options.ap_vanilla_items.value.copy()
         self.slot_data["settings"]["lock"] = {}
         self.slot_data["settings"]["shell_recharge"] = self.options.shell_recharge.value
         self.slot_data["settings"][
@@ -532,6 +554,12 @@ class Q1World(World):
         self.slot_data["levels"] = [
             self.item_name_to_id[level.unlock] for level in self.included_levels
         ]
+        passthrough = getattr(self.multiworld, "re_gen_passthrough", {}).get(self.game)
+        if isinstance(passthrough, dict):
+            if set(self.slot_data["locations"]) != set(passthrough["locations"]):
+                raise RuntimeError("Quake locations did not match the original seed.")
+            if set(self.slot_data["levels"]) != set(passthrough["levels"]):
+                raise RuntimeError("Quake levels did not match the original seed.")
         goal_exits = self.options.goal in {
             self.options.goal.option_beat_all_levels,
             self.options.goal.option_all,
@@ -585,38 +613,56 @@ class Q1World(World):
         depth = 0
         levels_tried = []
 
-        while depth < len(self.included_levels):
-            state = CollectionState(self.multiworld, True)
-            # print("Attempt ", depth + 1)
-            for level in self.starting_levels:
-                # print("Starting Level: ", level.prefix, level.name)
-                state.collect(self.create_item(level.unlock))
-            for level in self.starting_levels:
-                levels_tried.append(level)
-            # TODO: Re-enable this when AP 0.6.0 goes live
-            # sweep_locations = self.get_locations()
-            sweep_locations = self.multiworld.get_locations()
-            state.sweep_for_advancements(locations=sweep_locations)
+        starting_level_ids = set(passthrough.get("starting_levels", ())) if isinstance(passthrough, dict) else set()
+        if starting_level_ids:
+            self.starting_levels = [
+                level for level in self.included_levels
+                if self.item_name_to_id[level.unlock] in starting_level_ids
+            ]
+            if len(self.starting_levels) != len(starting_level_ids):
+                raise RuntimeError("Quake starting levels did not match the original seed.")
+        else:
+            while depth < len(self.included_levels):
+                state = CollectionState(self.multiworld, True)
+                # print("Attempt ", depth + 1)
+                for level in self.starting_levels:
+                    # print("Starting Level: ", level.prefix, level.name)
+                    state.collect(self.create_item(level.unlock))
+                for level in self.starting_levels:
+                    levels_tried.append(level)
+                # TODO: Re-enable this when AP 0.6.0 goes live
+                # sweep_locations = self.get_locations()
+                sweep_locations = self.multiworld.get_locations()
+                state.sweep_for_advancements(locations=sweep_locations)
 
-            num_early_locs = sum(
-                1
-                for loc in self.multiworld.get_reachable_locations(state, self.player)
-                if loc.address and not loc.item
-            )
+                num_early_locs = sum(
+                    1
+                    for loc in self.multiworld.get_reachable_locations(state, self.player)
+                    if loc.address and not loc.item
+                )
 
-            # print("Number of early locations: ", num_early_locs)
-            depth += 1
+                # print("Number of early locations: ", num_early_locs)
+                depth += 1
 
-            # Break out of the loop if we found a valid sphere 1
-            if num_early_locs > 0:
-                break
+                # Break out of the loop if we found a valid sphere 1
+                if num_early_locs > 0:
+                    break
 
-            # Remove candidates if they didnt work
-            level_candidate = self.multiworld.random.choice(self.included_levels)
-            while level_candidate in levels_tried:
+                # Remove candidates if they didnt work
                 level_candidate = self.multiworld.random.choice(self.included_levels)
-            self.starting_levels.pop()
-            self.starting_levels.append(level_candidate)
+                while level_candidate in levels_tried:
+                    level_candidate = self.multiworld.random.choice(self.included_levels)
+                self.starting_levels.pop()
+                self.starting_levels.append(level_candidate)
+
+        self.slot_data["starting_levels"] = [
+            self.item_name_to_id[level.unlock] for level in self.starting_levels
+        ]
+
+        for level, entrance in zip(self.included_levels, menu_region.exits):
+            entrance.access_rule = (
+                self.rules.true if level in self.starting_levels else self.rules.level(level)
+            )
 
         for level in self.starting_levels:
             # print("Final Starting Level: ", level.prefix, level.name)

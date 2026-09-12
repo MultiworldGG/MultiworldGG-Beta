@@ -231,13 +231,13 @@
         "to": "Side Stairs"
     },
 	{ 
-        "from": "Main Hall",
-        "to": "Waiting Room",
+        "from": "Waiting Room",
+        "to": "Main Hall",
         "condition": {}
     },
     { 
-        "from": "Waiting Room",
-        "to": "East Hallway 2F",
+        "from": "East Hallway 2F",
+        "to": "Waiting Room",
         "condition": {
             "items": ["Spade Key"]
         }
@@ -474,9 +474,7 @@
     { 
         "from": "Bottom Waterway",
         "to": "Supplies Storage Room",
-        "condition": {
-            "items": ["Queen Plug"]
-        }
+        "condition": {}
     },
     { 
         "from": "Upper Waterway",

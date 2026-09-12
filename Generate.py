@@ -195,26 +195,7 @@ def main(args=None) -> tuple[argparse.Namespace, int]:
     args.name = {}
 
     if meta_weights:
-        for category_name, category_dict in meta_weights.items():
-            for key in category_dict:
-                option = roll_meta_option(key, category_name, category_dict)
-                if option is not None:
-                    for path in weights_cache:
-                        for yaml in weights_cache[path]:
-                            if category_name is None:
-                                for category in yaml:
-                                    if category in AutoWorldRegister.world_types and \
-                                            key in Options.CommonOptions.type_hints:
-                                        yaml[category][key] = option
-                            elif category_name not in yaml:
-                                logging.warning(f"Meta: Category {category_name} is not present in {path}.")
-                            elif key == "triggers":
-                                if "triggers" not in yaml[category_name]:
-                                    yaml[category_name][key] = []
-                                for trigger in option:
-                                    yaml[category_name][key].append(trigger)
-                            else:
-                                yaml[category_name][key] = option
+        apply_meta_weights(weights_cache, meta_weights)
 
     settings_cache: dict[str, tuple[argparse.Namespace, ...] | None] = {fname: None for fname in weights_cache}
     if args.sameoptions:
@@ -440,6 +421,33 @@ def update_weights(weights: dict, new_weights: dict, update_type: str, name: str
                             f'overwrite a root option. '
                             f'This is probably in error.')
     return weights
+
+
+def apply_meta_weights(weights_cache: dict[str, tuple[dict, ...]], meta_weights: dict) -> None:
+    """Roll each meta override once, then apply it to every matching player before rolling settings.
+
+    The caller removes meta_description. Shared by CLI and web lobby generation.
+    """
+    from worlds import AutoWorldRegister, ensure_worlds_loaded
+    ensure_worlds_loaded()
+
+    for category_name, category_dict in meta_weights.items():
+        for key in category_dict:
+            option = roll_meta_option(key, category_name, category_dict)
+            if option is None:
+                continue
+            for path, yamls in weights_cache.items():
+                for player_yaml in yamls:
+                    if category_name is None:
+                        for category in player_yaml:
+                            if category in AutoWorldRegister.world_types and key in Options.CommonOptions.type_hints:
+                                player_yaml[category][key] = copy.deepcopy(option)
+                    elif category_name not in player_yaml:
+                        logging.warning(f"Meta: Category {category_name} is not present in {path}.")
+                    elif key == "triggers":
+                        player_yaml[category_name].setdefault(key, []).extend(copy.deepcopy(option))
+                    else:
+                        player_yaml[category_name][key] = copy.deepcopy(option)
 
 
 def roll_meta_option(option_key, game: str, category_dict: dict) -> Any:

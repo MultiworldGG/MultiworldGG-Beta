@@ -4,6 +4,7 @@ OoT AP bridge: attaches to N64 emulator memory, serves connector protocol on :28
 
 import asyncio
 import json
+from contextlib import contextmanager
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
 try:
@@ -206,8 +207,23 @@ def _set_player_name(emu: EmuLoaderClient, player_id: int, name: str) -> None:
     data = bytes(encode_oot_player_name(name, PLAYER_NAME_LENGTH))
     # Player name slots are 8-byte/4-byte aligned; write as words to avoid
     # hundreds of synchronous RetroArch UDP writes on first connect.
-    emu.write_u32(addr, int.from_bytes(data[:4], "big"))
-    emu.write_u32(addr + 4, int.from_bytes(data[4:], "big"))
+    for offset in (0, 4):
+        word = int.from_bytes(data[offset:offset + 4], "big")
+        if emu.read_u32(addr + offset) != word:
+            emu.write_u32(addr + offset, word)
+
+
+def _set_player_names(emu: EmuLoaderClient, player_names) -> None:
+    # Menu cycles also restore names after a ROM reset. Compare against actual
+    # RAM in a fresh batch instead of rewriting unchanged names every cycle.
+    with _read_batch(emu):
+        if isinstance(player_names, dict):
+            for idx, name in player_names.items():
+                _set_player_name(emu, int(idx), name)
+        else:
+            for idx, name in enumerate(player_names[:AP_MAX_PLAYER_ID], start=1):
+                _set_player_name(emu, idx, name)
+        _set_player_name(emu, 0, "a player")
 
 
 def _resolve_mq_table(emu: EmuLoaderClient, state: OoTBridgeState) -> None:
@@ -809,21 +825,28 @@ def _check_collectibles(emu: EmuLoaderClient, st: OoTBridgeState) -> dict:
     return result
 
 
+@contextmanager
+def _read_batch(emu: EmuLoaderClient):
+    batch_owner = getattr(emu.emulator_info, "begin_batch", None)
+    batch_done = getattr(emu.emulator_info, "end_batch", None)
+    if not (batch_owner and batch_done):
+        yield
+    else:
+        try:
+            batch_owner()
+            yield
+        finally:
+            batch_done()
+
+
 def _build_state(
     emu: EmuLoaderClient,
     st: OoTBridgeState,
     include_full_state: bool,
     force_resync: bool,
 ) -> dict:
-    batch_owner = getattr(emu.emulator_info, "begin_batch", None)
-    batch_done = getattr(emu.emulator_info, "end_batch", None)
-    if batch_owner and batch_done:
-        batch_owner()
-    try:
+    with _read_batch(emu):
         return _build_state_uncached(emu, st, include_full_state, force_resync)
-    finally:
-        if batch_done:
-            batch_done()
 
 
 def _check_locations_with_cache(emu: EmuLoaderClient, st: OoTBridgeState, force_resync: bool) -> dict:
@@ -870,14 +893,7 @@ def _process_block(emu: EmuLoaderClient, st: OoTBridgeState, block: dict) -> Non
         st.first_connect = False
         st.player_names_initialized = True
         _resolve_mq_table(emu, st)
-        player_names = block["playerNames"]
-        if isinstance(player_names, dict):
-            for idx, name in player_names.items():
-                _set_player_name(emu, int(idx), name)
-        else:
-            for idx, name in enumerate(player_names[:AP_MAX_PLAYER_ID], start=1):
-                _set_player_name(emu, idx, name)
-        _set_player_name(emu, 0, "a player")
+        _set_player_names(emu, block["playerNames"])
 
     if block.get("triggerDeath"):
         _kill_link(emu)
@@ -887,9 +903,13 @@ def _process_block(emu: EmuLoaderClient, st: OoTBridgeState, block: dict) -> Non
     received = emu.read_u16(INTERNAL_COUNT_ADDR)
     if received < len(st.item_queue) and _item_receivable(emu):
         pid = emu.read_u16(PLAYER_ID_ADDR)
-        emu.write_u16(INCOMING_PLAYER_ADDR, pid)
-        emu.write_u16(INCOMING_ITEM_ADDR, st.item_queue[received])
-        
+        # The ROM can finish the previous item during the readiness reads,
+        # especially over RetroArch UDP. Retry next cycle if its acknowledgement
+        # changed the count, or we'd resend that item and skip the following one.
+        if emu.read_u16(INTERNAL_COUNT_ADDR) == received:
+            emu.write_u16(INCOMING_PLAYER_ADDR, pid)
+            emu.write_u16(INCOMING_ITEM_ADDR, st.item_queue[received])
+
     # Collectible override pointer (resolved once from a rando-context pointer).
     co = block.get("collectibleOverrides", 0)
     if st.collectible_overrides is None and co:
@@ -905,6 +925,30 @@ def _process_block(emu: EmuLoaderClient, st: OoTBridgeState, block: dict) -> Non
     if new_shop_offsets != st.shop_flag_offsets:
         st.shop_flag_offsets = new_shop_offsets
         st.location_cache_dirty = True
+
+
+async def _run_emulator_operation(operation: Callable, *args):
+    # Each session awaits one operation at a time. On cancellation, wait for
+    # its worker before releasing the session lock or closing emulator memory.
+    task = asyncio.create_task(asyncio.to_thread(operation, *args))
+    try:
+        return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        while not task.done():
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError:
+                continue
+            except Exception:
+                break
+        if not task.cancelled():
+            task.exception()
+        raise
+
+
+def _process_and_build_state(emu, st, block, include_full_state, force_resync):
+    _process_block(emu, st, block)
+    return _build_state(emu, st, include_full_state, force_resync)
 
 
 async def _protocol_cycle(
@@ -924,11 +968,13 @@ async def _protocol_cycle(
         raise ConnectionError("client disconnected")
     try:
         block = json.loads(raw.decode().strip())
-        _process_block(emu, st, block)
     except json.JSONDecodeError:
         logger.warning("OoT Bridge: could not decode client message")
+        block = {}
 
-    payload = _build_state(emu, st, include_full_state, force_resync)
+    payload = await _run_emulator_operation(
+        _process_and_build_state, emu, st, block, include_full_state, force_resync,
+    )
     line    = json.dumps(payload) + "\n"
     writer.write(line.encode())
     await writer.drain()
@@ -942,7 +988,6 @@ async def _client_session(
     ctx,
 ) -> None:
     st.reset_connection()
-    loop  = asyncio.get_event_loop()
     frame = 0
 
     try:
@@ -952,7 +997,7 @@ async def _client_session(
             # Ensure emulator is attached.
             if not emu.is_connected():
                 try:
-                    ok = await loop.run_in_executor(None, emu.connect)
+                    ok = await _run_emulator_operation(emu.connect)
                     if ok:
                         logger.info(
                             f"OoT Bridge: attached to "
@@ -968,10 +1013,10 @@ async def _client_session(
             # polling at ~10 Hz is enough and avoids saturating RetroArch UDP.
             if frame % OUTGOING_KEY_POLL_FRAMES == 0:
                 try:
-                    _poll_outgoing_key(emu, st)
+                    await _run_emulator_operation(_poll_outgoing_key, emu, st)
                 except Exception as exc:
                     logger.debug(f"OoT Bridge: outgoing-key read failed: {exc}")
-                    emu.disconnect()
+                    await _run_emulator_operation(emu.disconnect)
                     break
 
             # Exchange often enough for incoming items to feel responsive, but
@@ -988,7 +1033,7 @@ async def _client_session(
                     break
                 except Exception as exc:
                     logger.warning(f"OoT Bridge: cycle error: {exc}")
-                    emu.disconnect()
+                    await _run_emulator_operation(emu.disconnect)
                     break
 
             await asyncio.sleep(1 / 60)
@@ -1027,4 +1072,6 @@ async def n64_bridge_task(ctx) -> None:
         while not ctx.exit_event.is_set():
             await asyncio.sleep(1)
 
-    emu.disconnect()
+    # A session may still be finishing a worker when exit_event is set.
+    async with lock:
+        await _run_emulator_operation(emu.disconnect)

@@ -38,6 +38,7 @@ chapter1_locations = {
             LocationIDs.ch1_field_warp_door,
             group=LocationGroups.chapter1,
         ),
+        LocationData(LocationIDs.ch1_field_donation_hole, group=LocationGroups.chapter1),
         LocationData(
             LocationIDs.ch1_recruit_rudinn,
             should_be_included=include_recruits_chapter1,

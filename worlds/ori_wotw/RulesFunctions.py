@@ -68,7 +68,7 @@ def can_glidebashchain(state: CollectionState, player: int) -> bool:
     return state.has_all(("Glide", "Bash"), player)
 
 def can_doublejumpbashchain(state: CollectionState, player: int) -> bool:
-    return state.has_all(("Glide", "Bash"), player)
+    return state.has_all(("Double Jump", "Bash"), player)
 
 def can_launchbashchain(state: CollectionState, player: int) -> bool:
     return state.has_all(("Launch", "Bash"), player)

@@ -61,9 +61,18 @@ def create_regions(world: "DeltaruneWorld"):
     # Kris or Ralsei required for Triple Hathy fight
     fields.connect(fields_post_hathy, rule=have_kris_or_ralsei)
 
+    fields.connect(
+        fields_post_hathy, get_entrance_name(fields, fields_post_hathy, "ARMS"), rule=Has(glitched_item_name)
+    )
+
     fields_post_hathy.connect(seam_seap)
+
     # Any character is required for the Jigsawry fight
     fields_post_hathy.connect(great_board, rule=have_kris_susie_or_ralsei)
+
+    fields_post_hathy.connect(
+        great_board, get_entrance_name(fields_post_hathy, great_board, "ARMS"), rule=Has(glitched_item_name)
+    )
 
     # Kris required for K.Round fight
     great_board.connect(forest, rule=have_kris)
@@ -71,8 +80,15 @@ def create_regions(world: "DeltaruneWorld"):
     # Bake Sale Ticket is required to enter and Kris or Ralsei is required for Clover fight unless you do ARMS glitch
     forest.connect(
         bake_sale,
-        rule=Has(items[ItemIDs.bake_sale_ticket]) & (have_kris_or_ralsei | Has(glitched_item_name)),
+        rule=Has(items[ItemIDs.bake_sale_ticket]) & have_kris_or_ralsei,
     )
+
+    forest.connect(
+        bake_sale,
+        get_entrance_name(forest, bake_sale, "ARMS"),
+        rule=Has(items[ItemIDs.bake_sale_ticket]) & Has(glitched_item_name),
+    )
+
     forest.connect(world.get_region(Regions.lost_rabbick))
 
     bake_sale.connect(forest_post_bake_sale)

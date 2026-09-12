@@ -659,6 +659,21 @@
     "map_locations": []
   },
   {
+    "name": "CH1: Field - Donation hole",
+    "sections": [
+      {
+        "name": "CH1: Fields - Donation hole"
+      }
+    ],
+    "map_locations": [
+      {
+        "map": "Chapter 1 - Fields",
+        "x": 355,
+        "y": 172
+      }
+    ]
+  },
+  {
     "name": "CH1: Seam's Seap",
     "sections": [
       {

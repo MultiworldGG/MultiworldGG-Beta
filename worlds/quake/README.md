@@ -46,3 +46,21 @@ AP Backpack: Gives ammo equivalent to an ammo pickup of every weapon type
 AP Medkit: Heals for 25 HP, HP over 100 gets reduced comparable to Megahealth.
 AP Armor: Adds 25 armor. Armor type (green,yellow,red) is set based on armorvalue (50, 100, 200).
 AP Automap: Shows a 3D view of the available items, secrets and exits if the automap for the level was received.
+
+Vanilla excluded pickups
+------------------------
+
+The YAML option `ap_vanilla_items` controls vanilla rewards for pickups excluded from the seed:
+
+```yaml
+Quake 1:
+  ap_vanilla_items:
+    "item_health (Megahealth)": 1
+    "item_health (Large Medkit)": 1
+    weapon_rocketlauncher: 0
+    item_artifact_super_damage: 0
+```
+
+Use the same item names as `custom_included_locations`. Each value must be `0` or `1`; omitted types default to `0`. Active AP locations still use AP pickups. Disabled excluded items with map links appear as white translucent AP tokens so their triggers work. Excluded pickups obey the map's difficulty and multiplayer spawn flags.
+
+This requires the updated APWorld and engine, and a newly generated seed. Older seeds default to all types disabled. Loading an existing save restores its saved entities.

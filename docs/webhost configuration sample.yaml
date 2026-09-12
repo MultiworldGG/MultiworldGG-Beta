@@ -26,6 +26,15 @@
 # Place where uploads go.
 #UPLOAD_FOLDER: uploads
 
+# World-name prefixes (matched against the YAML's game value) that may upload auxiliary .apworld files.
+# Matching is case-sensitive; empty prefixes are ignored. Full world names still match themselves.
+# Each listed world may have up to 5 auxiliary files per lobby, in addition to its main APWorld.
+# Requires custom APWorlds to be enabled in the lobby. These lobbies generate locally.
+#LOBBY_AUXILIARY_APWORLD_GAMES:
+#  - Pokemon Black and White
+#  - UZDoom
+# UZDoom also matches names such as "UZDoom - Doom II". The limit applies to each full world name.
+
 # Maximum upload size.  Default is 64 megabyte (64 * 1024 * 1024)
 #MAX_CONTENT_LENGTH: 67108864
 

@@ -1,6 +1,7 @@
 import hashlib
 import os
 import pkgutil
+import logging
 
 import yaml
 
@@ -62,7 +63,7 @@ class OoAPatchExtensions(APPatchExtension):
         define_underwater_warp_arraywarps(assembler, rom_data, patch_data)
 
         # Parse assembler files, compile them and write the result in the ROM
-        print(f"Compiling ASM files...")
+        logging.info(f"Compiling ASM files...")
         for file_path in get_asm_files(patch_data):
             data_loaded = yaml.safe_load(pkgutil.get_data(__name__, file_path))
             for metalabel, contents in data_loaded.items():

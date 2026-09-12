@@ -18,8 +18,10 @@ def create_regions(world: "DeltaruneWorld"):
     chapter_select = Region(Regions.chapter_select, world.player, world.multiworld)
     fusion = Region(Regions.fusion, world.player, world.multiworld)
     ch5_fusion = Region(Regions.ch5_fusion, world.player, world.multiworld)
+    rock_video = Region(Regions.rock_video, world.player, world.multiworld)
+    ch5_rock_video = Region(Regions.ch5_rock_video, world.player, world.multiworld)
 
-    regions = [chapter_select, fusion, ch5_fusion]
+    regions = [chapter_select, fusion, ch5_fusion, rock_video, ch5_rock_video]
 
     if any_included_chapter(world, [1, 3]):
         lost_rabbick = Region(Regions.lost_rabbick, world.player, world.multiworld)
@@ -65,6 +67,7 @@ def create_regions(world: "DeltaruneWorld"):
             | OptionFilter(RandomizeChapters, RandomizeChapters.option_all_unlocked),
         )
         chapter_4.connect(fusion)
+        chapter_4.connect(rock_video)
         regions.append(chapter_4)
 
     if included_chapter(world, 5):
@@ -78,6 +81,9 @@ def create_regions(world: "DeltaruneWorld"):
         if world.options.chosen_route.value != ChosenRoute.option_weird_route:
             chapter_5.connect(fusion)
             chapter_5.connect(ch5_fusion)
+            chapter_5.connect(rock_video)
+            chapter_5.connect(ch5_rock_video)
+
         regions.append(chapter_5)
 
     for region in regions:

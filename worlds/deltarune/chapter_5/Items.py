@@ -41,14 +41,15 @@ chapter5_items = [
     ItemData(ItemIDs.flowerydollars_25, ItemClassification.filler, groups=[ItemGroups.currencies]),
     ItemData(ItemIDs.flowerydollars_50, ItemClassification.filler, groups=[ItemGroups.currencies]),
     ItemData(ItemIDs.flowerydollars_100, ItemClassification.filler, groups=[ItemGroups.currencies]),
-    ItemData(ItemIDs.netskiehat, ItemClassification.filler, groups=[ItemGroups.armors], amount=3),
-    ItemData(ItemIDs.redribbon, ItemClassification.filler, groups=[ItemGroups.armors], amount=3),
+    ItemData(ItemIDs.netskiehat, ItemClassification.filler, groups=[ItemGroups.armors]),
+    ItemData(ItemIDs.redribbon, ItemClassification.filler, groups=[ItemGroups.armors]),
     ItemData(
         ItemIDs.chapter_5_egg,
         ItemClassification.filler,
         should_be_included=include_hidden_items,
         groups=[ItemGroups.eggs],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.castle_moss,
@@ -56,34 +57,47 @@ chapter5_items = [
         should_be_included=include_hidden_items,
         groups=[ItemGroups.moss],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.shadowcrystal,
         ItemClassification.filler,
         should_be_included=include_secret_bosses_items_reward,
         blacklist_filler=True,
+        amount=1,
     ),
-    ItemData(ItemIDs.susie_can_wear_ribbons, ItemClassification.useful),
-    ItemData(ItemIDs.woodblade2, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons]),
-    ItemData(ItemIDs.thatchet, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons]),
-    ItemData(ItemIDs.mistlewp, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons]),
+    ItemData(ItemIDs.susie_can_wear_ribbons, ItemClassification.useful, amount=1),
+    ItemData(
+        ItemIDs.woodblade2, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.thatchet, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.mistlewp, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons], amount=1
+    ),
     ItemData(
         ItemIDs.gildedrose,
         ItemClassification.useful,
         should_be_included=include_unused_items,
         groups=[ItemGroups.weapons, ItemGroups.noelle_weapons],
+        amount=1,
     ),
     ItemData(
         ItemIDs.dogdollar,
-        ItemClassification.progression | ItemClassification.deprioritized,
+        ItemClassification.filler,
         should_be_included=include_hidden_items,
         groups=[ItemGroups.currencies, ItemGroups.fusion_ingredient],
-        amount=1,
+        blacklist_filler=True,
         changing_classification=True,
     ),
-    ItemData(ItemIDs.petalfeather, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
-    ItemData(ItemIDs.compliment_list_yellow, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
-    ItemData(ItemIDs.compliment_list_green, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
+    ItemData(ItemIDs.petalfeather, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1),
+    ItemData(
+        ItemIDs.compliment_list_yellow, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1
+    ),
+    ItemData(
+        ItemIDs.compliment_list_green, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1
+    ),
     ItemData(
         ItemIDs.jarona_lesson,
         ItemClassification.progression_skip_balancing,
@@ -95,6 +109,7 @@ chapter5_items = [
         ItemClassification.progression,
         should_be_included=randomized_chapters,
         groups=[ItemGroups.region_blockers],
+        amount=1,
     ),
     ItemData(
         ItemIDs.pinkcoin,
@@ -102,52 +117,55 @@ chapter5_items = [
         should_be_included=include_secret_bosses_items_requirement,
         amount=19,
     ),
-    ItemData(
-        ItemIDs.pinkkey,
-        ItemClassification.progression,
-        should_be_included=include_mysterykey,
-    ),
+    ItemData(ItemIDs.pinkkey, ItemClassification.progression, should_be_included=include_mysterykey, amount=1),
     ItemData(
         ItemIDs.aquaknife,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.weapons, ItemGroups.kris_weapons],
+        amount=1,
     ),
     ItemData(
         ItemIDs.blueshoes,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons],
+        amount=1,
     ),
     ItemData(
         ItemIDs.greenapron,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.armors],
+        amount=1,
     ),
     ItemData(
         ItemIDs.yellowhat,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.armors],
+        amount=1,
     ),
     ItemData(
         ItemIDs.ogloves,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.armors],
+        amount=1,
     ),
     ItemData(
         ItemIDs.sethspecs,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.armors],
+        amount=1,
     ),
     ItemData(
         ItemIDs.brokenscarf,
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons],
+        amount=1,
     ),
 ]
 
@@ -162,6 +180,7 @@ def create_items(world: "DeltaruneWorld") -> list[DeltaruneItem]:
                     ItemClassification.progression,
                     should_be_included=randomized_chapters,
                     groups=[ItemGroups.region_blockers],
+                    amount=1,
                 )
             ],
         )

@@ -6,6 +6,7 @@ from Options import (
     PerGameCommonOptions,
     Toggle,
     OptionDict,
+    OptionError,
     StartInventoryPool,
     DeathLink,
 )
@@ -257,6 +258,26 @@ class CustomIncludedLocations(OptionDict):
     ]
 
 
+class VanillaItems(OptionDict):
+    """Spawn excluded pickups with their vanilla rewards, per item type.
+    Uses the same item names as custom_included_locations, including separate health variants.
+    Set an item to 1 to enable it, or 0 to disable it. Omitted items default to 0.
+    Active AP locations remain AP pickups. Disabled items with map links still spawn
+    as white AP tokens so their triggers work. Map difficulty and multiplayer flags still apply.
+    """
+
+    display_name = "Vanilla Excluded Items"
+    valid_keys = CustomIncludedLocations.valid_keys
+    default = dict.fromkeys(CustomIncludedLocations.default, 0)
+
+    def __init__(self, value):
+        super().__init__(value)
+        self.verify_keys()
+        for item, enabled in self.value.items():
+            if type(enabled) is not int or enabled not in (0, 1):
+                raise OptionError(f"ap_vanilla_items: {item} must be 0 or 1, got {enabled!r}")
+
+
 class Episode1(Toggle):
     """Include Episode 1 in the randomizer"""
 
@@ -409,6 +430,7 @@ class Q1Options(PerGameCommonOptions):
     included_locations_preset: IncludedLocations
     include_mp_items: IncludeMPItems
     custom_included_locations: CustomIncludedLocations
+    ap_vanilla_items: VanillaItems
     include_secrets: IncludeSecrets
     include_allkills: IncludeAllKills
     episode1: Episode1

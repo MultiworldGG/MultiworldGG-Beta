@@ -20,6 +20,8 @@ from Options import (
     StartInventoryPool, OptionGroup, Visibility,
     DeathLinkMixin,
 )
+from worlds.grinch import grinch_items
+
 
 class Goal(Choice):
     """
@@ -27,18 +29,21 @@ class Goal(Choice):
     physically collect them to goal.
     missions_completed: You must complete a certain number of missions to
     goal.
-    squashing_all_gifts: You must squash every gift in the entire game to goal.
+    macguffin_hunt: Same as sleigh_ride, except you must allow the Grinch's
+    heart to grow just enough to access the Sleigh Room.
     supadows_completed: You are required to win every supadow minigame to
     goal and obtain access to their minigames to do so.
+    squashing_all_gifts: You must squash every gift in the entire game to goal.
     slaughter: You must kill every Who, every animal, and every robot to goal.
     """
 
     display_name = "Goal"
     option_sleigh_ride = 0
     option_missions_completed = 1
-    option_squashing_all_gifts = 2
+    option_macguffin_hunt = 2
     option_supadows_completed = 3
-    option_slaughter = 4
+    option_squashing_all_gifts = 4
+    option_slaughter = 5
     default = 0
     visibility = Visibility.none
 
@@ -56,6 +61,19 @@ class MissionsCompleted(Range):
     default = 12
     visibility = Visibility.none
 
+
+class HeartSizeGoalCount(Range):
+    """
+    If your goal is macguffin_hunt, set how many Heart Size Increase items you
+    want to allow access to the Sleigh Room.
+    """
+    display_name = "Heart Size Increase Requirement"
+    range_start = 0
+    range_end = 30
+    default = 20
+    visibility = Visibility.none
+
+
 # We will make a list of every mission in the game, excluding squashing gifts.
 # Randomly pick whatever range is chosen via missions_completed to include
 # in the location pool. If they include squashing all gifts, include those in the
@@ -67,6 +85,7 @@ class MissionCompletedIncludeGiftSquash(Toggle):
     """
     display_name = "Include Gift Squashing in Missions Completed Goal"
     visibility = Visibility.none
+
 
 
 class StartingArea(Choice):
@@ -93,22 +112,12 @@ class ProgressiveVacuums(Toggle):  # DefaultOnToggle
     display_name = "Progressive Vacuum Tubes"
 
 
-class Missionsanity(Choice):
+class Missionsanity(Toggle):
     """
-    How mission checks are randomized in the pool.
-    - none: Does not add mission checks
-    - completion: Only completing the mission gives you a check
-    - individual: Individual tasks for one mission, such as individual snowmen
-    squashed, are checks.
-    - both: Both individual tasks and mission completion are randomized.
+    Adds individual tasks of a particular mission as locations.
     """
 
     display_name = "Mission Locations"
-    option_none = 0
-    option_completion = 1
-    option_individual = 2
-    option_both = 3
-    default = 1
 
 class AdvancedLogic(Toggle):
 
@@ -218,13 +227,13 @@ class Gadgetrandolist(OptionSet):
 
     display_name = "Gadgets Randomized"
     default = [
-        "Binoculars",
-        "Rotten Egg Launcher",
-        "Rocket Spring",
-        "Slime Shooter",
-        "Octopus Climbing Device",
-        "Marine Mobile",
-        "Grinch Copter",
+        grinch_items.gadgets.BINOCULARS,
+        grinch_items.gadgets.ROTTEN_EGG_LAUNCHER,
+        grinch_items.gadgets.ROCKET_SPRING,
+        grinch_items.gadgets.SLIME_SHOOTER,
+        grinch_items.gadgets.OCTOPUS_CLIMBING_DEVICE,
+        grinch_items.gadgets.MARINE_MOBILE,
+        grinch_items.gadgets.GRINCH_COPTER,
     ]
 
 
@@ -254,11 +263,11 @@ class Moverandolist(OptionSet):
 
     display_name = "Moves Randomized"
     default = [
-        "Pancake",
-        "Bad Breath",
-        "Seize",
-        "Max",
-        "Sneak",
+        grinch_items.moves.PANCAKE,
+        grinch_items.moves.BAD_BREATH,
+        grinch_items.moves.SEIZE,
+        grinch_items.moves.MAX,
+        grinch_items.moves.SNEAK,
     ]
 
 
@@ -305,9 +314,9 @@ class FillerWeight(OptionCounter):
     # min = 0
     # max = 100
     default = {
-        "5 Rotten Eggs": 50,
-        "10 Rotten Eggs": 25,
-        "20 Rotten Eggs": 25,
+        grinch_items.filler_trap.FIVE_EGGS: 50,
+        grinch_items.filler_trap.TEN_EGGS: 25,
+        grinch_items.filler_trap.TWENTY_EGGS: 25,
     }
 
 
@@ -331,16 +340,16 @@ class TrapWeight(OptionCounter):
     # min = 0
     # max = 100
     default = {
-        "Dump it to Crumpit": 33,
-        "Who sent me back?": 33,
-        "Depletion Trap": 34,
-        # "Bonk Trap": 25,
-        # "Push Trap": 25,
-        # "Damage Trap": 25,
-        # "Electrocution Trap": 25,
-        # "Ice Trap": 25,
-        # "Bee Trap": 25,
-        # "Banana Trap": 25,
+        grinch_items.filler_trap.DUMP_IT_TO_CRUMPIT: 33,
+        grinch_items.filler_trap.WHO_SENT_ME_BACK: 33,
+        grinch_items.filler_trap.DEPLETION_TRAP: 34,
+        # grinch_items.filler_trap.BONK_TRAP: 25,
+        # grinch_items.filler_trap.PUSH_TRAP: 25,
+        # grinch_items.filler_trap.DAMAGE_TRAP: 25,
+        # grinch_items.filler_trap.ELECTROCUTION_TRAP: 25,
+        # grinch_items.filler_trap.ICE_TRAP: 25,
+        # grinch_items.filler_trap.BEE_TRAP: 25,
+        # grinch_items.filler_trap.BANANA_TRAP: 25,
     }
 
 class MiscLocations(Toggle):
@@ -453,6 +462,7 @@ class GrinchOptions(PerGameCommonOptions):
     randomize_sleigh_parts: RandomizeSleighParts
     teleport_multibind: TeleportMultibind
     death_link: DeathLinkOption
+    heart_size_required: HeartSizeGoalCount
 
 
 # Web for option group support
@@ -508,7 +518,7 @@ class GrinchWeb(WebWorld):
     vanilla = {
         ProgressiveVacuums: "true",
         StartingArea: "whoville",
-        Missionsanity: "completion",
+        Missionsanity: "false",
         # FillerWeight: "0",
         RandomizeMissionItems: "false",
         RandomizeSleighParts: "false",
@@ -526,13 +536,13 @@ class GrinchWeb(WebWorld):
         TeleportMultibind: "true",
         RandomizeMissionItems: "false",
         RandomizeSleighParts: "false",
-        Missionsanity: "none",
+        Missionsanity: "false",
         ExcludeEnvironments: ["Post Office", "Clock Tower", "City Hall", "Ski Resort",
                               "Civic Center", "Minefield", "Power Plant", "Generator Building",
                               "Scout's Hut", "North Shore", "Mayor's Villa", "Submarine World"],
     }
     dev_settings = {
-        Missionsanity: "both",
+        Missionsanity: "true",
         MusicRando: "true",
         ReducedCutscenes: "true"
     }
@@ -549,7 +559,7 @@ class GrinchWeb(WebWorld):
         ExcludeGC: "false",
     }
     minsanity = {
-        Missionsanity: "none",
+        Missionsanity: "false",
         ExcludeEnvironments: ["Post Office", "Clock Tower", "City Hall", "Ski Resort",
                               "Civic Center", "Minefield", "Power Plant", "Generator Building",
                               "Scout's Hut", "North Shore", "Mayor's Villa", "Submarine World"],
@@ -564,13 +574,13 @@ class GrinchWeb(WebWorld):
         Gifts: "false",
         ReducedCutscenes: "true",
         TeleportMultibind: "true",
-        Missionsanity: "completion",
+        Missionsanity: "false",
         UnlimitedEggs: "true",
         ExcludeGC: "false",
     }
     async_viable = {
         "progression_balancing": "disabled",
-        Missionsanity: "full",
+        Missionsanity: "true",
         MiscLocations: "true",
     }
     options_presets: Dict[str, Dict[str, Any]] = {
@@ -586,7 +596,7 @@ class GrinchWeb(WebWorld):
     tutorials = [
         Tutorial(
             "Multiworld Setup Guide",
-            "A guide to setting up The Grinch randomizer connected to a MultiworldGG Multiworld",
+            "A guide to setting up The Grinch randomizer connected to an Archipelago Multiworld",
             "English",
             "setup_en.md",
             "setup/en",

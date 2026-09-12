@@ -18,12 +18,9 @@
 # run certain actions depending on what item was picked up and where. this
 # has to be explicitly called if an item is given by an interaction other
 # than ID 60.
-#09//handleGetMultiworldItem: /include handleGetMultiworldItem
 09//handleGetItem: |
-    ; call handleGetMultiworldItem
     ld a,b
     ld e,a
-    ; jr nz,@outgoing
     push de
     ld e,$73
     ld a,(de) # nonzero if interaction should set item room flag
@@ -42,10 +39,13 @@
     call symmetryBrotherSetFakeId
     @incoming:
     call setD6BossKey
-    call checkEssencePostSavedWaifu
     call makuSeedResetTreeState
     ld a,e
-    jp giveTreasure
+    call giveTreasure
+    push af
+    call checkEssenceCount
+    pop af
+    ret
 09/4c4e/: call handleGetItem
 
 # make satchel refill seeds inherently, not as part of a scripted event.
@@ -76,11 +76,14 @@
     pop bc
     ret
 
-09//checkEssencePostSavedWaifu: |
-    ld a,($c738) ; Maku Tree Room flags
+09//checkEssenceCount: |
+    ld a,($c738)                # Tree Saved and item dropped
     bit 7,a
     ret z
-    ld a,(wEssencesObtained)
+    ld a,TREASURE_MAKU_SEED     # Seed not received yet
+    call checkTreasureObtained
+    ret c
+    ld a,(wEssencesObtained)    # Enough essences
     call getNumSetBits
     cp option.requiredEssences
     ret c

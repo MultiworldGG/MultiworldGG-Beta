@@ -7,8 +7,10 @@ from enum import IntEnum
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from . import WotWWorld
+    from BaseClasses import Entrance
 
 from .generated_data.DoorData import doors_map
+from .generated_data.Regions import region_table
 
 class Groups(IntEnum):
     # Main room
@@ -257,54 +259,83 @@ class ERGeneratorWotW:
         return False  # Failure: no valid pairing
 
 
+def check_unreachable_regions(world: WotWWorld) -> list[str]:
+    """Check that every region stays reachable from spawn once every item is collected. Return the ones that aren't."""
+    state = world.multiworld.get_all_state(allow_partial_entrances=True)
+    return [region_name for region_name in region_table if not state.can_reach_region(region_name, world.player)]
+
+
 def generate_er_connections(world: WotWWorld, coupled: bool) -> list[int]:
     """Randomize and create the entrances between the doors. Return the pairing data to send through slot_data."""
-    max_attempts = 5
-    current_attempt = 1
-    result = True  # Track success of the entrance connection
+    max_reachability_attempts = 20
+    reachability_attempt = 1
+# While loop in order to be able to retry the door randomizer if any region is unreachable after generation
+    while True:
+        max_attempts = 10
+        current_attempt = 1
+        result = True  # Track success of the entrance connection
 
-    while current_attempt <= max_attempts:
-        er_gen = ERGeneratorWotW()
-        while er_gen.unlinked_doors:
-            result = er_gen.create_connection(world=world, coupled=coupled)
-            if not result:
-                current_attempt += 1
-                break  # Go to the next attempt
+        while current_attempt <= max_attempts:
+            er_gen = ERGeneratorWotW()
+            while er_gen.unlinked_doors:
+                result = er_gen.create_connection(world=world, coupled=coupled)
+                if not result:
+                    current_attempt += 1
+                    break  # Go to the next attempt
 
-        if result:  # Exit the while loop if the generation was successful
+            if result:  # Exit the while loop if the generation was successful
+                break
+
+        if current_attempt > max_attempts:
+            raise RuntimeError(
+                f"Entrance Randomization failed {max_attempts} times: no valid connection is possible.\n"
+                f"Generator state:\n\n"
+                f"placements: {er_gen.placements}\n\n"
+                f"unlinked_doors: {er_gen.unlinked_doors}\n\n"
+                f"unaccessible_doors: {er_gen.unaccessible_doors}\n\n"
+                f"accessible_doors: {er_gen.accessible_doors}"
+            )
+
+        er_pairings = er_gen.placements
+
+        expected_connections = 16 if coupled else 32
+        if len(er_pairings) != expected_connections:
+            mode = "coupled" if coupled else "decoupled"
+            raise RuntimeError(
+                f"er_pairings have {len(er_pairings)} connections in {mode} mode, expected {expected_connections}.\n"
+                "Something went really wrong, please report this issue to the dev.\n\n"
+                "Generator state:\n\n"
+                f"placements: {er_gen.placements}\n\n"
+                f"unlinked_doors: {er_gen.unlinked_doors}\n\n"
+                f"unaccessible_doors: {er_gen.unaccessible_doors}\n\n"
+                f"accessible_doors: {er_gen.accessible_doors}"
+            )
+
+        # Connect the entrances
+        created_exits: list[Entrance] = []
+        for entry, target in er_pairings.items():
+            # For the exit door, connect to the base region and not the door one (thus remove ` (Door)` from the
+            # name, hence the [:-7]) This matters in decoupled mode, since you cannot always reenter the door you
+            # just exited.
+            created_exits.append(world.get_region(entry).connect(world.get_region(target[:-7])))
+            if coupled:
+                created_exits.append(world.get_region(target).connect(world.get_region(entry[:-7])))
+
+        unreachable_regions = check_unreachable_regions(world)
+        if not unreachable_regions:
             break
 
-    if current_attempt > max_attempts:
-        raise RuntimeError(
-            f"Entrance Randomization failed {max_attempts} times: no valid connection is possible.\nCurrent state:\n\n"
-            f"placements: {er_gen.placements}\n\n"
-            f"unlinked_doors: {er_gen.unlinked_doors}\n\n"
-            f"unaccessible_doors: {er_gen.unaccessible_doors}\n\n"
-            f"accessible_doors: {er_gen.accessible_doors}"
-        )
-
-    er_pairings = er_gen.placements
-
-    # Connect the entrances
-    for entry, target in er_pairings.items():
-        # For the exit door, connect to the base region and not the door one (thus remove ` (Door)` from the name,
-        # hence the [:-7]) This matters in decoupled mode, since you cannot always reenter the door you just exited.
-        world.get_region(entry).connect(world.get_region(target[:-7]))
-        if coupled:
-            world.get_region(target).connect(world.get_region(entry[:-7]))
-
-    expected_connections = 16 if coupled else 32
-    if len(er_pairings) != expected_connections:
-        mode = "coupled" if coupled else "decoupled"
-        raise RuntimeError(
-            f"er_pairings have {len(er_pairings)} connections in {mode} mode, expected {expected_connections}.\n"
-            "Something went really wrong, please report this issue to the dev.\n\n"
-            "Generator state:\n\n"
-            f"placements: {er_gen.placements}\n\n"
-            f"unlinked_doors: {er_gen.unlinked_doors}\n\n"
-            f"unaccessible_doors: {er_gen.unaccessible_doors}\n\n"
-            f"accessible_doors: {er_gen.accessible_doors}"
-        )
+        if reachability_attempt >= max_reachability_attempts:
+            raise RuntimeError(
+                "Door randomization could not find a door configuration that keeps every region reachable "
+                f"after {max_reachability_attempts} attempts.\n\n"
+                f"Placements: {er_gen.placements}\n\n"
+                f"Unreachable regions: {unreachable_regions}\n\n"
+            )
+        reachability_attempt += 1
+        for exit in created_exits:
+            exit.parent_region.exits.remove(exit)
+            exit.connected_region.entrances.remove(exit)
 
     # Create the data list of the pairings to give to slot_data.
     er_door_ids = [0] * 32

@@ -20,7 +20,7 @@ from itertools import groupby
 import colorama
 
 # CommonClient import first to trigger ModuleUpdater
-from CommonClient import CommonContext, server_loop, logger, get_base_parser, gui_enabled
+from CommonClient import (CommonContext, server_loop, logger, get_base_parser, gui_enabled)  # noqa: F401
 from settings import get_settings
 
 from worlds.xenobladex import XenobladeXWorld
@@ -38,6 +38,14 @@ from .items.dollWeapons import doll_weapons_type_data
 from .Items import game_type_item_to_offset
 from .Locations import game_type_location_to_offset
 from .Options import XenobladeXOption
+
+tracker_loaded = False
+try:
+    # Loaded from .apworld
+    from worlds.tracker.TrackerClient import TrackerGameContext as SuperContext  # type: ignore[import-not-found]
+    tracker_loaded = True
+except ModuleNotFoundError:
+    from CommonClient import CommonContext as SuperContext
 
 CEMU_MODS_NOT_FOUND = "Unable to find the Cemu Mods please make sure to download the community mods " \
                       "within Cemu settings first"
@@ -334,10 +342,12 @@ class XenobladeXHTTPRequestHandler(BaseHTTPRequestHandler):
             self.debug_post_items()
 
 
-class XenobladeXContext(CommonContext):
+class XenobladeXContext(SuperContext):  # type: ignore[misc]
     game = "Xenoblade X"
     items_handling = 0b111  # get items from your own world
     want_slot_data = True
+
+    tags = {"AP"}
 
     cemu_process: Optional[subprocess.Popen[bytes]] = None
     locations_checked: Set[int]
@@ -371,6 +381,7 @@ class XenobladeXContext(CommonContext):
                 self.prepare_cemu(cemu_options)
         if cmd in {"RoomInfo"}:
             self.seed_name = args["seed_name"]
+        super().on_package(cmd, args)
 
     def on_deathlink(self, data: dict[str, Any]) -> None:
         self.death_link_pending = True
@@ -401,17 +412,14 @@ class XenobladeXContext(CommonContext):
             self.http_server.upload_message("Reached Goal", self.player_names[args["slot"]])
         super(XenobladeXContext, self).on_print_json(args)
 
-    def run_gui(self) -> None:
-        from kvui import GameManager
+    def make_gui(self):
+        ui = super().make_gui()
+        ui.base_title = f"{apname} Xenoblade X Client"
+        return ui
 
-        class XenobladeXManager(GameManager):
-            logging_pairs = [
-                ("Client", "Archipelago")
-            ]
-            base_title = apname + " Xenoblade X Client"
-
-        self.ui = XenobladeXManager(self)
-        self.ui_task = asyncio.create_task(self.ui.async_run(), name="UI")
+    @staticmethod
+    def interpret_slot_data(slot_data: dict[str, Any]) -> dict[str, Any]:
+        return slot_data
 
     def get_level(self, archipelago_item_id: int) -> int:
         return len([item.item for item in self.items_received if item.item == archipelago_item_id])
@@ -630,6 +638,23 @@ class XenobladeXContext(CommonContext):
     # endregion
 
 
+async def ensure_single_instance(ctx: XenobladeXContext) -> None:
+    try:
+        ctx.single_instance_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        ctx.single_instance_socket.bind(('localhost', ctx.xeno_port))
+    except Exception:
+        msg = "Client is already running"
+        detail = "Please use the open instance of the client"
+        logger.error(msg)
+        await asyncio.sleep(1)
+        ctx.gui_error(msg, detail)
+        while ctx.ui and ctx._messagebox and ctx._messagebox._is_open:
+            await asyncio.sleep(0.1)
+        if ctx.ui:
+            ctx.ui.stop()
+        ctx.exit_event.set()
+
+
 async def main(args: dict[str, Any]) -> None:
     Utils.init_logging("XenobladeXClient", exception_logger="Client")
 
@@ -650,9 +675,13 @@ async def main(args: dict[str, Any]) -> None:
     if ctx.server_task is None:
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
 
+    if tracker_loaded:
+        ctx.run_generator()
     if gui_enabled:
         ctx.run_gui()
     ctx.run_cli()
+
+    await ensure_single_instance(ctx)
 
     asyncio.create_task(asyncio.to_thread(ctx.http_server.serve_forever), name="XenobladeXHttpServer")
     xeno_sync_task = asyncio.create_task(ctx.process_game(), name="XenobladeXSync")

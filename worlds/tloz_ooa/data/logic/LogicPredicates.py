@@ -793,6 +793,8 @@ def ooa_can_toss_ring(state: CollectionState, player: int):
     ])
 def ooa_can_harvest_gasha(state: CollectionState, player: int, count: int):
     reachable_soils = [state.has(f"_reached_{region_name}", player) for region_name in GASHA_SPOT_REGIONS]
+    if state.multiworld.worlds[player].options.secret_locations:
+        reachable_soils.append(state.has(f"_reached_sea of storms spot", player))
     return all([
         reachable_soils.count(True) >= count,  # Enough soils are reachable
         state.has("Gasha Seed", player, count),  # Enough seeds to plant

@@ -4,8 +4,8 @@
 
 - Stardew Valley 1.6 sur PC (Recommandé: [Steam](https://store.steampowered.com/app/413150/Stardew_Valley/))
 - SMAPI ([Mod loader pour Stardew Valley](https://www.nexusmods.com/stardewvalley/mods/2400?tab=files))
-- [StardewArchipelago Version 7.x.x](https://github.com/agilbert1412/StardewArchipelago/releases)
-  - Il est important d'utiliser une release en 7.x.x pour jouer sur des seeds générées ici. Les versions ultérieures peuvent uniquement être utilisées pour des release ultérieures du générateur de mondes, qui ne sont pas encore hébergées sur archipelago.gg
+- [StardewArchipelago Version 8.x.x](https://github.com/agilbert1412/StardewArchipelago/releases)
+  - Il est important d'utiliser une release en 8.x.x pour jouer sur des seeds générées ici. Les versions ultérieures peuvent uniquement être utilisées pour des release ultérieures du générateur de mondes, qui ne sont pas encore hébergées sur archipelago.gg
 
 ## Logiciels optionnels
 

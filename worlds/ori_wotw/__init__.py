@@ -167,15 +167,11 @@ class WotWWorld(World):
         return change
 
     def generate_early(self) -> None:
-        # TODO Launch on seir + fragments
         options = self.options
         # Options checking
         if options.open_mode:
             options.no_rain.value = True
-
-        # Prevent combinations that don't generate well on random spawn
-        if not options.better_spawn and options.spawn == StartingLocation.option_outerruins:
-            raise OptionError("Outer Ruins spawn (UpperWastes.NorthTP) behaves poorly without Better random spawn.")
+            
         if not options.tp:
             if (options.spawn.value in (
                     StartingLocation.option_willow,
@@ -183,6 +179,7 @@ class WotWWorld(World):
                     StartingLocation.option_random_loc,
                     StartingLocation.option_random_tp,
                     StartingLocation.option_depths,
+                    StartingLocation.option_westpools,
                 )
             or (options.difficulty.value == LogicDifficulty.option_moki and options.spawn.value in (
                     StartingLocation.option_westwoods,
@@ -194,7 +191,7 @@ class WotWWorld(World):
                 )
                     )):
                 raise OptionError("Removing Teleporters from the pool can cause impossible seeds"
-                                  "when spawning in Willow, Depths or at a random location, "
+                                  "when spawning in Willow, Depths, West Pools, or at a random location, "
                                   "or on the east side in Moki.")
             if not options.better_spawn and options.spawn.value in (
                 StartingLocation.option_burrows,
@@ -202,6 +199,7 @@ class WotWWorld(World):
                 StartingLocation.option_eastpools,
                 StartingLocation.option_westpools,  # outerruins already prevented just without better spawn
                 StartingLocation.option_innerruins,  # random loc/tp and willow are already impossible just without tp
+                StartingLocation.option_outerruins,
             ):
                 raise OptionError("Removing Teleporters and not having Better random spawn can cause impossible seeds"
                                   "in most places (apart from glades, wellspring, woods, reach, early wastes).")
@@ -260,16 +258,15 @@ class WotWWorld(World):
                         break
                     else:
                         total_weight -= weight
-                assert options.spawn.value != StartingLocation.option_random_tp  # TODO debug, remove
             self.spawn_region_name = spawn_dict_reverse[options.spawn.value]
         self.spawn_area = str.split(self.spawn_region_name, ".")[0]
         # TODO Debug, remove when generation stable ?
         logging.info(f"Ori WotW: Spawn {self.spawn_region_name} for player {self.player}")
 
         # Selection of a random goal
-        if "random" in options.goal:
+        if "one_random" in options.goal:
             possible_goals = sorted(list(options.goal.value))
-            possible_goals.remove("random")
+            possible_goals.remove("one_random")
             selected_goal: list = []
             if not possible_goals:  # Only random selected, choose among all goals
                 possible_goals = ["trees", "wisps", "quests", "relics"]
@@ -454,7 +451,6 @@ class WotWWorld(World):
                 name = f"Spawn item {i}"
                 spawn_loc = WotWLocation(player, name, self.location_name_to_id[name], menu_region)
                 menu_region.locations.append(spawn_loc)
-                # spawn_loc.progress_type = LocationProgressType.PRIORITY
                 spawn_loc.item_rule = item_rule
 
     def create_event(self, event: str, show_spoiler=False) -> None:
@@ -504,13 +500,47 @@ class WotWWorld(World):
             mworld.push_precollected(self.create_item("Regenerate"))
             skipped_items.append("Regenerate")
 
-        # The generator can have difficulties to find the exit to these areas, so guide it towards the key item
-        if self.spawn_area in ("UpperWastes", "LowerWastes"):
+
+        # The generator can have difficulties to find the exit to these areas, so guide it towards key items
+        if self.spawn_area in ("LowerWastes", "UpperWastes", "WindtornRuins"):
             self.multiworld.early_items[self.player]["Burrow"] = 1
-        elif self.spawn_area in ("UpperDepths", "LowerDepths"):
-            self.multiworld.early_items[self.player]["Glide"] = 1
-        elif self.spawn_area in ("EastPools", "WestPools", "UpperPools", "PoolsApproach"):
+        elif self.spawn_area in ("EastPools", "UpperPools", "PoolsApproach", "West Pools"):
             self.multiworld.early_items[self.player]["Clean Water"] = 1
+            self.multiworld.early_items[self.player]["Water Dash"] = 1
+
+        # Add more early items for solo worlds, since it is usually very constrained
+        if len(mworld.player_name) <= 1:
+            if self.spawn_area == "WindtornRuins":
+                self.multiworld.early_items[self.player]["Glide"] = 1
+                self.multiworld.early_items[self.player]["Double Jump"] = 1
+            elif self.spawn_area in ("UpperDepths", "LowerDepths"):
+                self.multiworld.early_items[self.player]["Bash"] = 1
+                self.multiworld.early_items[self.player]["Flash"] = 1
+            elif self.spawn_area == "InnerWellspring":
+                self.multiworld.early_items[self.player]["Bash"] = 1
+                self.multiworld.early_items[self.player]["Grapple"] = 1
+            elif self.spawn_area == "WoodsMain":
+                self.multiworld.early_items[self.player]["Glide"] = 1
+            elif self.spawn_area == "HowlsDen":
+                self.multiworld.early_items[self.player]["Double Jump"] = 1
+            elif self.spawn_area == "MidnightBurrows":
+                self.multiworld.early_items[self.player]["Double Jump"] = 1
+                self.multiworld.early_items[self.player]["Hammer"] = 1
+            elif self.spawn_area == "WestHollow":
+                self.multiworld.early_items[self.player]["Bow"] = 1
+            elif self.spawn_area == "EastHollow":
+                self.multiworld.early_items[self.player]["Bash"] = 1
+            elif self.spawn_area == "WestGlades":
+                self.multiworld.early_items[self.player]["Double Jump"] = 1
+                self.multiworld.early_items[self.player]["Dash"] = 1
+            elif self.spawn_area == "GladesTown":
+                self.multiworld.early_items[self.player]["Double Jump"] = 1
+            elif self.spawn_area == "UpperReach":
+                self.multiworld.early_items[self.player]["Grenade"] = 1
+            elif self.spawn_area == "LowerReach":
+                self.multiworld.early_items[self.player]["Grenade"] = 1
+            elif self.spawn_area in ("WillowsEnd", "WeepingRidge"):
+                self.multiworld.early_items[self.player]["Launch"] = 1
 
         for item, count in options.start_inventory.value.items():
             for _ in range(count):
@@ -569,15 +599,6 @@ class WotWWorld(World):
                 loc = self.get_location(location)
                 loc.place_locked_item(self.create_item(item))
                 removed_items.append(item)
-            if (options.difficulty == LogicDifficulty.option_moki
-                and options.door_rando != RandomizeDoors.option_disabled
-                and not options.tp):
-                # Add another water breath in the pool to prevent an impossible seed if the door rando connects
-                # UpperWastes.OutsideRuins (Door) to InnerWellspring.Teleporter (Door).
-                # In that case Wellspring escape is locked behind the Pools Wisp,
-                # which logically requires Water Breath, which requires the escape on vanilla shop upgrades.
-                removed_items.remove("Water Breath")
-
 
         if options.launch_on_seir:
             self.get_location("WindtornRuins.Seir").place_locked_item(self.create_item("Launch"))
@@ -585,16 +606,20 @@ class WotWWorld(World):
 
         if options.launch_fragments:
             removed_items.append("Launch")
-            pool += [self.create_item("Launch Fragment") for _ in range(options.fragments_count.value)]
+            for _ in range(options.fragments_count.value):
+                fragment = self.create_item("Launch Fragment")
+                pool.append(fragment)
 
             menu_region = self.get_region("Menu")
-            event_loc = WotWLocation(self.player, "LaunchFromFragments", None, menu_region)
-            menu_region.locations.append(event_loc)
-            event_loc.place_locked_item(self.create_item("Launch"))
-            # Give logical launch when all fragments are collected
-            set_rule(event_loc, lambda state: state.has("Launch Fragment", self.player, options.fragments_count.value))
+            launch_event_loc = WotWLocation(self.player, "LaunchFromFragments", None, menu_region)
+            menu_region.locations.append(launch_event_loc)
+            fragment_launch = self.create_item("Launch")
 
-
+            launch_event_loc.place_locked_item(fragment_launch)
+            set_rule(
+                launch_event_loc,
+                lambda state: state.has("Launch Fragment", self.player, options.fragments_required.value)
+            )
         counter = Counter(skipped_items)
 
 
@@ -739,6 +764,8 @@ class WotWWorld(World):
         if "relics" in options.goal:
             add_rule(victory_conn, lambda s: s.count("Relic", player) >= options.relic_count.value)
 
+        self.connect_to_menu("Teleporters")  # You can teleport from anywhere in the rando, so teleporter access is free
+
         # Rules for specific options
         if options.qol:
             self.precollect_event("GladesTown.TuleySpawned")
@@ -749,7 +776,7 @@ class WotWWorld(World):
             self.precollect_event("EastPools.EntryLever")
             self.precollect_event("UpperWastes.LeverDoor")
 
-        if "Everything" in options.no_combat or "Bosses" in options.no_combat:
+        if "everything" in options.no_combat or "bosses" in options.no_combat:
             for entrance in ("ExternalStates -> SkipKwolok",
                              "ExternalStates -> SkipMora1",
                              "ExternalStates -> SkipMora2"):
@@ -761,7 +788,7 @@ class WotWWorld(World):
                      lambda s: s.has("Victory", player))
             set_rule(self.get_entrance("ExternalStates -> SkipMora2"),
                      lambda s: s.has("Victory", player))
-        if "Everything" in options.no_combat or "Shrines" in options.no_combat:
+        if "everything" in options.no_combat or "shrines" in options.no_combat:
             for entrance in (
                         "DenShrine -> HowlsDen.CombatShrineCompleted",
                         "MarshShrine -> MarshPastOpher.CombatShrineCompleted",
@@ -769,6 +796,18 @@ class WotWWorld(World):
                         "WoodsShrine -> WoodsMain.CombatShrineCompleted",
                         "DepthsShrine -> LowerDepths.CombatShrineCompleted"):
                 set_rule(self.get_entrance(entrance), lambda s: True)
+        if "everything" in options.no_combat or "arenas" in options.no_combat:
+            self.precollect_event("MarshSpawn.CaveFight")
+            self.precollect_event("LowerReach.ArenaBeaten")
+            self.precollect_event("MarshSpawn.BurrowArena")
+            self.precollect_event("HowlsDen.DoubleJumpTreeCombat")
+            self.precollect_event("WeepingRidge.ElevatorFightCompleted")
+            self.precollect_event("InnerWellspring.SpinArena")
+            self.precollect_event("EastPools.FightArenas")
+        if "everything" in options.no_combat or "demi bosses" in options.no_combat:
+            self.precollect_event("MarshSpawn.HowlBurnt")
+            self.precollect_event("EastHollow.BeetleDefeated")
+            self.precollect_event("WillowsEnd.MinibossHeart")
 
         if options.better_wellspring:
             self.precollect_event("InnerWellspring.TopDoorOpen")
@@ -1017,9 +1056,12 @@ class WotWWorld(World):
         if not options.zone_hints:
             location_flags += 0b100000
 
-        spawn_items_amount = (int(spawn_data[self.spawn_area].items_amount)
-                              if options.spawn != StartingLocation.option_vanilla
-                              else 0)
+        if options.spawn == StartingLocation.option_vanilla:
+            spawn_items_amount = 0
+        else:
+            spawn_items_amount = int(spawn_data[self.spawn_area].items_amount)
+            if len(self.multiworld.player_name) <= 1:
+                spawn_items_amount += 2
 
         slot_data: dict[str, Any] = {
             "difficulty": logic_difficulty[options.difficulty.value],

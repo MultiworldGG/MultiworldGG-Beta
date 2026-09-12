@@ -133,6 +133,7 @@ class DeathState(Enum):
     IsKillingPlayer = 1
     Dead = 2
 
+
 K64_WORLD_REMAP = {
     0: "Pop Star",
     1: "Rock Star",
@@ -237,6 +238,9 @@ class K64Client(BizHawkClient):
             ctx.ui.connect_layout.add_widget(self.crystal_label)
 
         current_crystals = sum(1 for item in ctx.items_received if item.item == 0x0020)
+        waddle_dee = any(item.item == 0x0100 for item in ctx.items_received)
+        adeleine = any(item.item == 0x0101 for item in ctx.items_received)
+        king_dedede = any(item.item == 0x0102 for item in ctx.items_received)
         highest = 1
         for crystal in self.boss_requirements:
             if current_crystals < crystal:
@@ -244,7 +248,11 @@ class K64Client(BizHawkClient):
                 break
             highest += 1
         else:
-            self.crystal_label.text = "Level 7"
+            if waddle_dee and adeleine and king_dedede:
+                self.crystal_label.text = "Level 7"
+            else:
+                self.crystal_label.text = "Level 6"
+            self.crystal_label.text += f": {''.join('T' if x else 'F' for x in (waddle_dee, adeleine, king_dedede))}"
 
     async def game_watcher(self, ctx: "BizHawkClientContext") -> None:
         from worlds._bizhawk import read, write
@@ -331,13 +339,17 @@ class K64Client(BizHawkClient):
             ctx.finished_game = True
 
         if self.death_link:
-            if self.death_state != DeathState.Dead and int.from_bytes(health_visual, "big") == 0:
-                if self.death_state == DeathState.Alive:
-                    # send a death link
-                    await ctx.send_death(
-                        f"{ctx.player_names[ctx.slot]} couldn't handle {K64_WORLD_REMAP[int.from_bytes(current_level, 'big')]}.")
-                self.death_state = DeathState.Dead
-            elif int.from_bytes(health_visual, "big") != 0 and self.death_state == DeathState.Dead:
+            if game_state_val == 0xF:
+                if self.death_state != DeathState.Dead and int.from_bytes(health_visual, "big") == 0:
+                    if self.death_state == DeathState.Alive:
+                        # send a death link
+                        await ctx.send_death(
+                            f"{ctx.player_names[ctx.slot]} couldn't handle {K64_WORLD_REMAP[int.from_bytes(current_level, 'big')]}.")
+                    self.death_state = DeathState.Dead
+                elif int.from_bytes(health_visual, "big") != 0 and self.death_state == DeathState.Dead:
+                    self.death_state = DeathState.Alive
+            else:
+                # If we are in a game state that isn't in a stage, we are alive
                 self.death_state = DeathState.Alive
 
         writes = []

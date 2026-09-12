@@ -12,10 +12,6 @@ import functools
 import shutil
 
 import Utils
-try:
-    from Utils import instance_name as apname
-except ImportError:
-    apname = "Archipelago"
 
 from NetUtils import NetworkItem, ClientStatus
 from worlds import deltarune
@@ -23,7 +19,7 @@ from MultiServer import mark_raw, Context, Client, Endpoint
 from Utils import async_start, logging
 from worlds.deltarune.LinuxProxy import encode, proxy, proxy_loop
 
-ap_world_version = "v2.1.3+hotfix1"
+ap_world_version = "v2.2.1"
 deltarune_mod_github = "https://github.com/Tenebrosful/DeltaruneAP-mod/releases"
 
 DEBUG = True
@@ -51,7 +47,7 @@ try:
 
     if not gui_loaded_from_utils:
         from worlds.tracker.TrackerClient import gui_enabled
-except ModuleNotFoundError:
+except ImportError:
     from CommonClient import ClientCommandProcessor, CommonContext as SuperContext, get_base_parser, server_loop
 
     if not gui_loaded_from_utils:
@@ -79,13 +75,13 @@ def guess_deltarune_path(path: str | None):
                 return tempInstall
 
     if path == "linux":
-        tempInstall = "~/.local/share/Steam/steamapps/common/DELTARUNE"
-        if os.path.exists(os.path.expanduser(tempInstall)):
+        tempInstall = os.path.expanduser("~/.local/share/Steam/steamapps/common/DELTARUNE")
+        if os.path.exists(tempInstall):
             return tempInstall
 
     if path == "linuxdepot":
-        tempInstall = "~/.local/share/Steam/steamapps/content/app_1671210/depot_1671212"
-        if os.path.exists(os.path.expanduser(tempInstall)):
+        tempInstall = os.path.expanduser("~/.local/share/Steam/steamapps/content/app_1671210/depot_1671212")
+        if os.path.exists(tempInstall):
             return tempInstall
 
     return path
@@ -372,7 +368,7 @@ class DeltaruneContext(SuperContext):
 
     def make_gui(self):
         ui = super().make_gui()
-        ui.base_title = f"{apname} DELTARUNE Client " + ap_world_version + f" - {apname} version"
+        ui.base_title = "Archipelago DELTARUNE Client " + ap_world_version + " - AP version"
         ui.logging_pairs = [("Client", "Archipelago")]
         return ui
 

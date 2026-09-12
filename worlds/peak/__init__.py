@@ -5,7 +5,7 @@ import typing
 
 from BaseClasses import ItemClassification, CollectionState, LocationProgressType, Tutorial
 from worlds.AutoWorld import World, WebWorld
-from .Items import PeakItem, item_table, progression_table, useful_table, filler_table, trap_table, unlock_table, lookup_id_to_name, item_groups
+from .Items import PeakItem, item_table, progression_table, useful_table, filler_table, trap_table, unlock_table, spawn_table, spawn_filler_items, lookup_id_to_name, item_groups, multiplayer_only_items, multiplayer_only_unlocks
 from .Locations import LOCATION_TABLE, EXCLUDED_LOCATIONS
 from .Options import PeakOptions, peak_option_groups
 from .Rules import apply_rules, TROPICS_LOCATIONS, MESA_LOCATIONS, ALPINE_LOCATIONS, ROOTS_LOCATIONS, CALDERA_LOCATIONS, KILN_LOCATIONS
@@ -182,6 +182,7 @@ class PeakWorld(World):
         for item_name in useful_table.keys():
             if item_name != "Progressive Stamina Bar":  # Skip stamina bar since we handled it above
                 item_pool.append(self.create_item(item_name))
+        multiplayer_items_enabled = self.options.multiplayer_only_items.value
         # Add unlock items only when ItemSanity is enabled
         if self.options.item_sanity.value:
             scout_amulet_unlocks = {
@@ -196,6 +197,8 @@ class PeakWorld(World):
                     continue
                 if progressive_amulets and unlock_name in amulet_chain_unlocks:
                     continue
+                if not multiplayer_items_enabled and unlock_name in multiplayer_only_unlocks:
+                    continue
                 item_pool.append(self.create_item(unlock_name))
             if progressive_amulets:
                 for _ in range(6):
@@ -207,6 +210,16 @@ class PeakWorld(World):
             logging.debug(f"[Player {self.multiworld.player_name[self.player]}] Added {len(unlock_table)} unlock items (ItemSanity enabled)")
         else:
             logging.debug(f"[Player {self.multiworld.player_name[self.player]}] Skipping unlock items (ItemSanity disabled)")
+            if self.options.item_spawns.value:
+                for item_name in spawn_table:
+                    if not multiplayer_items_enabled and item_name in multiplayer_only_items:
+                        continue
+                    item_pool.append(self.create_item(item_name))
+                for item_name in spawn_filler_items:
+                    if wants_soul and item_name == "Strange Gem":
+                        continue
+                    item_pool.append(self.create_item(item_name))
+                logging.debug(f"[Player {self.multiworld.player_name[self.player]}] Added {len(spawn_table)} spawnable Acquire items (ItemSpawns enabled)")
         # Calculate how many slots are left for traps and fillers
         remaining_slots = total_locations - len(item_pool)
         
@@ -242,7 +255,7 @@ class PeakWorld(World):
             raise Exception(
                 f"[PEAK] Item pool ({len(item_pool)}) exceeds fillable locations ({total_locations}) for "
                 f"player {self.multiworld.player_name[self.player]}. Too many locations are excluded "
-                f"(exclude_locations / disable_*_badges / low ascent goal); reduce exclusions or disable item_sanity."
+                f"(exclude_locations / disable_*_badges / low ascent goal); reduce exclusions or disable item_sanity / item_spawns."
             )
 
         self.multiworld.itempool.extend(item_pool)
@@ -518,9 +531,11 @@ class PeakWorld(World):
             "death_link_send_behavior": self.options.death_link_send_behavior.value,
             "active_traps": self.output_active_traps(),
             "item_sanity": self.options.item_sanity.value,
+            "item_spawns": self.options.item_spawns.value,
             "loot_sanity": self.options.loot_sanity.value,
             "logical_scout_statue": self.options.logical_scout_statue.value,
             "scout_amulet_sanity": self.options.scout_amulet_sanity.value,
+            "multiplayer_only_items": self.options.multiplayer_only_items.value,
             "tracker_item_spawning": self.options.tracker_item_spawning.value,
             "session_id": session_id,
             "mountain_hints": mountain_hints,

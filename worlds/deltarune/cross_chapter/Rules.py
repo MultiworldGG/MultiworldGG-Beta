@@ -1,5 +1,6 @@
 from rule_builder.options import OptionFilter
-from rule_builder.rules import Has, True_
+from rule_builder.rules import CanReachRegion, Has, True_
+from BaseClasses import LocationProgressType
 
 from worlds.deltarune.LogicHelper import (
     all_included_chapter,
@@ -7,6 +8,7 @@ from worlds.deltarune.LogicHelper import (
     can_access_fusion,
     can_access_fusion_post_chapter_5,
     chapters_in_order,
+    have_access_to_rock_video,
     include_dogwidow_fusion,
     include_hidden_items,
     include_spike_band_fusion,
@@ -17,6 +19,10 @@ from worlds.deltarune.LogicHelper import (
     included_chapter,
     normal_route,
     not_weird_route_only,
+    rock_video_sanity_enabled,
+    rock_video_sanity_enabled_ch5,
+    rock_video_sanity_hard_enabled,
+    rock_video_sanity_hard_enabled_ch5,
     weird_route,
 )
 from worlds.deltarune.Options import (
@@ -34,6 +40,7 @@ from typing import TYPE_CHECKING
 from worlds.deltarune.Locations import locations, LocationIDs
 from worlds.deltarune.Items import ItemGroups, glitched_item_name, items, ItemIDs
 from worlds.deltarune.Rules import have_thornring
+from worlds.deltarune.Regions import Regions
 
 if TYPE_CHECKING:
     from .. import DeltaruneWorld
@@ -41,33 +48,14 @@ if TYPE_CHECKING:
 
 def set_rules(world: "DeltaruneWorld"):
     if can_access_fusion(world):
-        have_chapter2_equipment_not_in_order = [
-            OptionFilter(IncludeChapter2, IncludeChapter2.option_true),
-            OptionFilter(RemoveStartingEquipment, RemoveStartingEquipment.option_false),
-            OptionFilter(RandomizeChapters, RandomizeChapters.option_in_order, operator="ne"),
-        ]
-
-        have_chapter2_equipment_in_order_glitched = Has(
-            glitched_item_name,
-            options=[
-                OptionFilter(IncludeChapter1, IncludeChapter1.option_true),
-                OptionFilter(IncludeChapter2, IncludeChapter2.option_true),
-                OptionFilter(RemoveStartingEquipment, RemoveStartingEquipment.option_false),
-                OptionFilter(RandomizeChapters, RandomizeChapters.option_in_order),
-            ],
-        )
-
-        have_chapter2_equipment_first_chapter = [
-            OptionFilter(IncludeChapter1, IncludeChapter1.option_false),
-            OptionFilter(IncludeChapter2, IncludeChapter2.option_true),
-            OptionFilter(RandomizeChapters, RandomizeChapters.option_in_order),
-        ]
-
-        have_white_ribbon = (
-            Has(items[ItemIDs.white_ribbon])
-            | have_chapter2_equipment_not_in_order
-            | have_chapter2_equipment_in_order_glitched
-            | have_chapter2_equipment_first_chapter
+        have_white_ribbon = Has(items[ItemIDs.white_ribbon]) | (
+            CanReachRegion(
+                Regions.chapter_2,
+                options=[
+                    OptionFilter(IncludeChapter2, IncludeChapter2.option_true),
+                    OptionFilter(RemoveStartingEquipment, RemoveStartingEquipment.option_false),
+                ],
+            )
         )
 
         if include_twin_ribbon_fusion(world):
@@ -76,19 +64,13 @@ def set_rules(world: "DeltaruneWorld"):
                 have_white_ribbon & Has(items[ItemIDs.pink_ribbon]),
             )
 
-        have_glowwrist = (
-            Has(items[ItemIDs.glowwrist])
-            | True_(
-                options=[
-                    OptionFilter(IncludeChapter3, IncludeChapter3.option_true),
-                    OptionFilter(RemoveStartingEquipment, RemoveStartingEquipment.option_false),
-                ]
-            )
-            | True_(
+        have_glowwrist = Has(items[ItemIDs.glowwrist]) | (
+            CanReachRegion(
+                Regions.chapter_4,
                 options=[
                     OptionFilter(IncludeChapter4, IncludeChapter4.option_true),
                     OptionFilter(RemoveStartingEquipment, RemoveStartingEquipment.option_false),
-                ]
+                ],
             )
         )
 
@@ -146,15 +128,13 @@ def set_rules(world: "DeltaruneWorld"):
             if included_chapter(world, 4):
                 world.set_rule(
                     world.get_location(locations[LocationIDs.cc_castle_town_punchbowl_fusion]),
-                    (Has(items[ItemIDs.scarlixir], 2) | Has(items[ItemIDs.scarlixir], 1) & Has(glitched_item_name))
-                    & Has(items[ItemIDs.powerband]),
+                    Has(items[ItemIDs.scarlixir], 1) & Has(items[ItemIDs.powerband]),
                 )
 
             if included_chapter(world, 4):
                 world.set_rule(
                     world.get_location(locations[LocationIDs.cc_castle_town_tensionmax_fusion]),
-                    (Has(items[ItemIDs.scarlixir], 2) | Has(items[ItemIDs.scarlixir], 1) & Has(glitched_item_name))
-                    & Has(items[ItemIDs.mysticband]),
+                    Has(items[ItemIDs.scarlixir], 1) & Has(items[ItemIDs.mysticband]),
                 )
 
             if included_chapter(world, 4):
@@ -162,6 +142,40 @@ def set_rules(world: "DeltaruneWorld"):
                     world.get_location(locations[LocationIDs.cc_castle_town_dogwidow_fusion]),
                     Has(items[ItemIDs.dogdollar]) & Has(items[ItemIDs.goldwidow]),
                 )
+
+    if rock_video_sanity_enabled(world) and have_access_to_rock_video(world):
+
+        if world.options.exclude_t_rank_rock_video == 1:
+            world.get_location(locations[LocationIDs.cc_rock_video_knock_you_down_T]).progress_type = LocationProgressType.EXCLUDED
+            world.get_location(locations[LocationIDs.cc_rock_video_tv_time_T]).progress_type = LocationProgressType.EXCLUDED
+            world.get_location(locations[LocationIDs.cc_rock_video_raise_up_your_bat_T]).progress_type = LocationProgressType.EXCLUDED
+
+            if rock_video_sanity_enabled_ch5(world):
+                world.get_location(locations[LocationIDs.cc_rock_video_4rd_sanctuary_T]).progress_type = LocationProgressType.EXCLUDED
+
+            if rock_video_sanity_hard_enabled(world):
+                world.get_location(locations[LocationIDs.cc_rock_video_knock_you_down_T_hard]).progress_type = LocationProgressType.EXCLUDED
+                world.get_location(locations[LocationIDs.cc_rock_video_tv_time_T_hard]).progress_type = LocationProgressType.EXCLUDED
+                world.get_location(locations[LocationIDs.cc_rock_video_raise_up_your_bat_T_hard]).progress_type = LocationProgressType.EXCLUDED
+
+                if rock_video_sanity_hard_enabled_ch5(world):
+                    world.get_location(locations[LocationIDs.cc_rock_video_4rd_sanctuary_T_hard]).progress_type = LocationProgressType.EXCLUDED
+
+        if world.options.exclude_z_rank_rock_video == 1:
+            world.get_location(locations[LocationIDs.cc_rock_video_knock_you_down_Z]).progress_type = LocationProgressType.EXCLUDED
+            world.get_location(locations[LocationIDs.cc_rock_video_tv_time_Z]).progress_type = LocationProgressType.EXCLUDED
+            world.get_location(locations[LocationIDs.cc_rock_video_raise_up_your_bat_Z]).progress_type = LocationProgressType.EXCLUDED
+
+            if rock_video_sanity_enabled_ch5(world):
+                world.get_location(locations[LocationIDs.cc_rock_video_4rd_sanctuary_Z]).progress_type = LocationProgressType.EXCLUDED
+
+            if rock_video_sanity_hard_enabled(world):
+                world.get_location(locations[LocationIDs.cc_rock_video_knock_you_down_Z_hard]).progress_type = LocationProgressType.EXCLUDED
+                world.get_location(locations[LocationIDs.cc_rock_video_tv_time_Z_hard]).progress_type = LocationProgressType.EXCLUDED
+                world.get_location(locations[LocationIDs.cc_rock_video_raise_up_your_bat_Z_hard]).progress_type = LocationProgressType.EXCLUDED
+
+                if rock_video_sanity_hard_enabled_ch5(world):
+                    world.get_location(locations[LocationIDs.cc_rock_video_4rd_sanctuary_Z_hard]).progress_type = LocationProgressType.EXCLUDED
 
 
 def get_location(world: "DeltaruneWorld", chapter: int):

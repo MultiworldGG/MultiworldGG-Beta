@@ -5,8 +5,8 @@ from worlds.deltarune.Options import (
     IncludeMike,
     IncludeUnusedItems,
     RandomizeChapters,
-    RandomizeMANTLE,
     RandomizeSecretBosses,
+    RockVideoSanity,
     UnlockCharacters,
 )
 
@@ -60,16 +60,16 @@ def include_recruits_chapter2_weird_route_exclusion(world: "DeltaruneWorld"):
     return include_recruits(world) and not_weird_route_only(world)
 
 
-def include_recruit_swatchlings_weird_route(world: "DeltaruneWorld"):
-    return include_recruits(world) and (
-        world.options.include_swatchling_during_weird_route == 1 or not_weird_route_only(world)
-    )
+def include_singapour_wrong_warp_locations(world: "DeltaruneWorld"):
+    return not_weird_route_only(world) or is_speedrun_logic(world)
 
 
-def include_lose_swatchlings_weird_route(world: "DeltaruneWorld"):
-    return include_lose_recruits(world) and (
-        world.options.include_swatchling_during_weird_route == 1 or not_weird_route_only(world)
-    )
+def include_singapour_wrong_warp_locations_recruit(world: "DeltaruneWorld"):
+    return include_singapour_wrong_warp_locations(world) and include_recruits(world)
+
+
+def include_singapour_wrong_warp_locations_lose_recruits(world: "DeltaruneWorld"):
+    return include_singapour_wrong_warp_locations(world) and include_lose_recruits(world)
 
 
 def include_twin_ribbon_fusion(world: "DeltaruneWorld"):
@@ -152,6 +152,37 @@ def include_lancer_cookie(world: "DeltaruneWorld"):
     return any_included_chapter(world, [1, 2, 4])
 
 
+def physical_challenge_sanity_enabled(world: "DeltaruneWorld") -> bool:
+    return world.options.physical_challenge_rank_sanity.value == 1
+
+
+def rock_video_sanity_enabled(world: "DeltaruneWorld") -> bool:
+    return have_access_to_rock_video(world) and world.options.rock_video_sanity.value in [
+        RockVideoSanity.option_normal_only,
+        RockVideoSanity.option_true,
+    ]
+
+
+def rock_video_sanity_hard_enabled(world: "DeltaruneWorld") -> bool:
+    return have_access_to_rock_video(world) and world.options.rock_video_sanity.value == RockVideoSanity.option_true
+
+
+def rock_video_sanity_enabled_ch5(world: "DeltaruneWorld") -> bool:
+    return rock_video_sanity_enabled(world) and have_access_to_rock_video_ch5(world)
+
+
+def rock_video_sanity_hard_enabled_ch5(world: "DeltaruneWorld") -> bool:
+    return rock_video_sanity_hard_enabled(world) and have_access_to_rock_video_ch5(world)
+
+
+def have_access_to_rock_video_ch5(world: "DeltaruneWorld") -> bool:
+    return included_chapter(world, 5) and not_weird_route_only(world)
+
+
+def have_access_to_rock_video(world: "DeltaruneWorld") -> bool:
+    return included_chapter(world, 4) or have_access_to_rock_video_ch5(world)
+
+
 # region Direct Option Read
 
 
@@ -196,12 +227,12 @@ def include_mike_games(world: "DeltaruneWorld") -> bool:
     return world.options.include_mike.value == IncludeMike.option_battle_and_games
 
 
-def include_mantle(world: "DeltaruneWorld") -> bool:
-    return world.options.randomize_mantle.value != RandomizeMANTLE.option_mantleless
+def randomized_sword_route(world: "DeltaruneWorld") -> bool:
+    return world.options.randomize_sword_route.value == 1
 
 
-def randomized_mantle(world: "DeltaruneWorld") -> bool:
-    return world.options.randomize_mantle.value in [RandomizeMANTLE.option_true, RandomizeMANTLE.option_mantleless]
+def shadow_mantle_holder_as_secret_boss(world: "DeltaruneWorld") -> bool:
+    return world.options.shadow_mantle_holder_as_secret_boss.value == 1
 
 
 def include_shadow_mantle(world: "DeltaruneWorld") -> bool:
@@ -296,12 +327,20 @@ def include_unused_items(world: "DeltaruneWorld") -> bool:
     ]
 
 
-def excluded_t_rank(world: "DeltaruneWorld") -> bool:
-    return world.options.exclude_t_rank.value == 1
+def excluded_t_rank_board(world: "DeltaruneWorld") -> bool:
+    return world.options.exclude_t_rank_board.value == 1
 
 
-def excluded_z_rank(world: "DeltaruneWorld") -> bool:
-    return world.options.exclude_z_rank.value == 1
+def excluded_z_rank_board(world: "DeltaruneWorld") -> bool:
+    return world.options.exclude_z_rank_board.value == 1
+
+
+def excluded_t_rank_physical_challenge(world: "DeltaruneWorld") -> bool:
+    return world.options.exclude_t_rank_physical_challenge.value == 1
+
+
+def excluded_z_rank_physical_challenge(world: "DeltaruneWorld") -> bool:
+    return world.options.exclude_z_rank_physical_challenge.value == 1
 
 
 # endregion
@@ -339,6 +378,24 @@ def any_included_chapter(world: "DeltaruneWorld", chapters: list[int]):
 
 def all_included_chapter(world: "DeltaruneWorld", chapters: list[int]):
     return all(chapter in world.included_chapters for chapter in chapters)
+
+
+# endregion
+
+
+# region Logic Difficulty
+
+
+def is_speedrun_logic(world: "DeltaruneWorld") -> bool:
+    return world.options.speedrun_gliches_as_logic == 1
+
+
+def is_nohit_logic(world: "DeltaruneWorld") -> bool:
+    return world.options.nohit_as_logic == 1
+
+
+def is_annoying_logic(world: "DeltaruneWorld") -> bool:
+    return world.options.annoying_farming_as_logic == 1
 
 
 # endregion

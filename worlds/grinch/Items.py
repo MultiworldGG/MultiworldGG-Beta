@@ -59,6 +59,7 @@ class grinch_items:
         WHO_LAKE: str = "Who Lake Vacuum Tube"
         PROGRESSIVE_VACUUM_TUBE: str = "Progressive Vacuum Tube"
         SLEIGH_ROOM_KEY: str = "Sleigh Room Key"
+        MACGUFFIN: str = "Progressive Heart Size"
 
     class sleigh_parts:
         EXHAUST_PIPES: str = "Exhaust Pipes"
@@ -90,7 +91,7 @@ class grinch_items:
     class useful_items:
         HEART_OF_STONE: str = "Heart of Stone"
 
-    class trap_items:
+    class filler_trap:
         DEPLETION_TRAP: str = "Depletion Trap"
         DUMP_IT_TO_CRUMPIT: str = "Dump it to Crumpit"
         WHO_SENT_ME_BACK: str = "Who sent me back?"
@@ -101,6 +102,10 @@ class grinch_items:
         BANANA_TRAP: str = "Banana Trap"
         BEE_TRAP: str = "Bee Trap"
         PUSH_TRAP: str = "Push Trap"
+        FIVE_EGGS: str = "5 Rotten Eggs"
+        TEN_EGGS: str = "10 Rotten Eggs"
+        TWENTY_EGGS: str = "20 Rotten Eggs"
+        PRESENT: str = "Present"
 
     class supadow:
         SPIN_N_WIN: str = "Spin N' Win Supadow"
@@ -131,6 +136,7 @@ class grinch_categories:
     PROGRESSION_IC: str = "Progression"
     VACUUM_TUBES: str = "Vacuum Tubes"
     SUPADOW_MINIGAMES: str = "Supadow Door Unlocks"
+    HEART: str = "Heart"
 
 def get_region_health(region_name: str):
     from .Regions import ALL_REGIONS_INFO
@@ -149,7 +155,7 @@ GADGETS_TABLE: dict[str, GrinchItemData] = {
             grinch_categories.USEFUL_IC,
         ],
         100,
-        IC.useful,
+        IC.progression_skip_balancing,
         [
             GrinchRamData(0x0102B6, value=0x40),
             GrinchRamData(0x0102B7, value=0x41),
@@ -499,6 +505,15 @@ SLEIGH_TABLE: dict[str, GrinchItemData] = {
         [
             GrinchRamData(0x0101FB, binary_bit_pos=6)],
     ),
+    # grinch_items.keys.MACGUFFIN: GrinchItemData(
+    #     [
+    #         grinch_categories.HEART,
+    #     ],
+    #     416,
+    #     IC.progression_skip_balancing,
+    #     [
+    #     ],
+    # ),
 }
 
 # Access Keys
@@ -603,7 +618,7 @@ MISC_ITEMS_TABLE: dict[str, GrinchItemData] = {
     # This item may not function properly if you receive it during a loading screen or in Mount Crumpit
     # "Fully Healed Grinch": GrinchItemData(["Health Items", "Filler"], 500, IC.filler,
     #     [GrinchRamData(0x0E8FDC, value=120)]),
-    "5 Rotten Eggs": GrinchItemData(
+    grinch_items.filler_trap.FIVE_EGGS: GrinchItemData(
         [
             grinch_categories.ROTTEN_EGG_BUNDLES,
             grinch_categories.FILLER,
@@ -620,7 +635,7 @@ MISC_ITEMS_TABLE: dict[str, GrinchItemData] = {
             )
         ],
     ),
-    "10 Rotten Eggs": GrinchItemData(
+    grinch_items.filler_trap.TEN_EGGS: GrinchItemData(
         [
             grinch_categories.ROTTEN_EGG_BUNDLES,
             grinch_categories.FILLER,
@@ -637,7 +652,7 @@ MISC_ITEMS_TABLE: dict[str, GrinchItemData] = {
             )
         ],
     ),
-    "20 Rotten Eggs": GrinchItemData(
+    grinch_items.filler_trap.TWENTY_EGGS: GrinchItemData(
         [
             grinch_categories.ROTTEN_EGG_BUNDLES,
             grinch_categories.FILLER,
@@ -654,7 +669,7 @@ MISC_ITEMS_TABLE: dict[str, GrinchItemData] = {
             )
         ],
     ),
-    "Present": GrinchItemData(
+    grinch_items.filler_trap.PRESENT: GrinchItemData(
         [
             grinch_categories.FILLER,
         ],
@@ -783,7 +798,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
     # alias to Slowness Trap for traplink
     # "Tip Toe Trap": GrinchItemData(["Traps"], 603, IC.trap, [GrinchRamData()]),
     # This item may not function properly if you receive it during a loading screen or in Mount Crumpit
-    grinch_items.trap_items.BANANA_TRAP: GrinchItemData(
+    grinch_items.filler_trap.BANANA_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         600,
         IC.trap,
@@ -804,7 +819,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
         ],
     ),
     # alias to Ice Trap for traplink
-    grinch_items.trap_items.PUSH_TRAP: GrinchItemData(
+    grinch_items.filler_trap.PUSH_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         601,
         IC.trap,
@@ -826,7 +841,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
                           byte_size=1, ),
         ],
     ),
-    grinch_items.trap_items.ICE_TRAP: GrinchItemData(
+    grinch_items.filler_trap.ICE_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         602,
         IC.trap,
@@ -836,7 +851,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
             GrinchRamData(get_death_offset("Civic Center"), value=40, byte_size=1, ),
         ],
     ),
-    grinch_items.trap_items.BEE_TRAP: GrinchItemData(
+    grinch_items.filler_trap.BEE_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         603,
         IC.trap,
@@ -844,7 +859,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
             GrinchRamData(get_death_offset("Who Lake"), value=40, byte_size=1, ),
         ],
     ),
-    grinch_items.trap_items.ELECTROCUTION_TRAP: GrinchItemData(
+    grinch_items.filler_trap.ELECTROCUTION_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         604,
         IC.trap,
@@ -864,7 +879,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
         ],
     ),
     # alias to Exhaustion Trap
-    grinch_items.trap_items.DAMAGE_TRAP: GrinchItemData(
+    grinch_items.filler_trap.DAMAGE_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         605,
         IC.trap,
@@ -913,13 +928,13 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
                           byte_size=1, ),
         ],
     ),
-    grinch_items.trap_items.DEPLETION_TRAP: GrinchItemData(
+    grinch_items.filler_trap.DEPLETION_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         606,
         IC.trap,
         [GrinchRamData(0x010058, value=1, byte_size=2)],
     ),
-    grinch_items.trap_items.DUMP_IT_TO_CRUMPIT: GrinchItemData(
+    grinch_items.filler_trap.DUMP_IT_TO_CRUMPIT: GrinchItemData(
         [grinch_categories.TRAPS],
         607,
         IC.trap,  # Alias to Home Trap for traplink
@@ -935,7 +950,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
     # alias to Spring Trap for traplink
     # "Rocket Spring Trap": GrinchItemData(["Traps"], 607, IC.trap, [GrinchRamData()]),
     # alias to Home Trap for traplink
-    grinch_items.trap_items.WHO_SENT_ME_BACK: GrinchItemData(
+    grinch_items.filler_trap.WHO_SENT_ME_BACK: GrinchItemData(
         [grinch_categories.TRAPS],
         608,
         IC.trap,
@@ -945,7 +960,7 @@ TRAPS_TABLE: dict[str, GrinchItemData] = {
             GrinchRamData(0x0100B3, value=0),
         ],
     ),
-    grinch_items.trap_items.BONK_TRAP: GrinchItemData(
+    grinch_items.filler_trap.BONK_TRAP: GrinchItemData(
         [grinch_categories.TRAPS],
         609,
         IC.trap,

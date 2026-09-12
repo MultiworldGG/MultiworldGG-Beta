@@ -139,8 +139,12 @@ class Q1Level(object):
             else:
                 classname = self.locations[location].classname
 
+            # Restore the server's selections instead of rerolling item percentages.
+            if self.world._tracker_locations is not None:
+                if self.world.location_name_to_id[location] not in self.world._tracker_locations:
+                    return
             # always include secrets and exits
-            if classname == "trigger_secret" or classname == "trigger_changelevel":
+            elif classname == "trigger_secret" or classname == "trigger_changelevel":
                 pass
 
             # include all_kills if the option is active

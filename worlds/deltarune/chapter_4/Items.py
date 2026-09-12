@@ -27,24 +27,28 @@ chapter4_items = [
     ItemData(ItemIDs.bittertear, ItemClassification.filler, groups=[ItemGroups.healing_item]),
     ItemData(ItemIDs.spincake, ItemClassification.filler, groups=[ItemGroups.healing_item]),
     ItemData(ItemIDs.tensiongem, ItemClassification.filler, groups=[ItemGroups.tension_items]),
-    ItemData(ItemIDs.absorbax, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons]),
-    ItemData(ItemIDs.jingleblade, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons]),
-    ItemData(ItemIDs.wingblade, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons]),
-    ItemData(ItemIDs.claimbclaws, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
-    ItemData(ItemIDs.sheetmusic, ItemClassification.progression, groups=[ItemGroups.region_blockers]),
+    ItemData(
+        ItemIDs.absorbax, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.susie_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.jingleblade, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons], amount=1
+    ),
+    ItemData(
+        ItemIDs.wingblade, ItemClassification.useful, groups=[ItemGroups.weapons, ItemGroups.kris_weapons], amount=1
+    ),
+    ItemData(ItemIDs.claimbclaws, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1),
+    ItemData(ItemIDs.sheetmusic, ItemClassification.progression, groups=[ItemGroups.region_blockers], amount=1),
     ItemData(
         ItemIDs.dogdollar,
         ItemClassification.filler,
         should_be_included=include_hidden_items,
         groups=[ItemGroups.currencies, ItemGroups.fusion_ingredient],
-        amount=1,
         changing_classification=True,
     ),
     ItemData(
         ItemIDs.scarlixir,
         ItemClassification.filler,
         groups=[ItemGroups.healing_item, ItemGroups.fusion_ingredient],
-        amount=2,
         changing_classification=True,
     ),
     ItemData(
@@ -52,31 +56,35 @@ chapter4_items = [
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.mysticband,
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.powerband,
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
-        amount=2,
         changing_classification=True,
+        amount=2,
     ),
     ItemData(
         ItemIDs.scarfmark,
         ItemClassification.useful,
         groups=[ItemGroups.weapons, ItemGroups.ralsei_weapons, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.princessrbn,
         ItemClassification.useful,
         groups=[ItemGroups.armors, ItemGroups.fusion_ingredient],
         changing_classification=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.combination_lock_digit,
@@ -89,12 +97,14 @@ chapter4_items = [
         ItemClassification.useful,
         should_be_included=include_secret_bosses_items_reward,
         groups=[ItemGroups.weapons, ItemGroups.susie_weapons],
+        amount=1,
     ),
     ItemData(
         ItemIDs.shadowcrystal,
         ItemClassification.filler,
         should_be_included=include_secret_bosses_items_reward,
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.chapter_4_egg,
@@ -102,6 +112,7 @@ chapter4_items = [
         should_be_included=include_hidden_items,
         groups=[ItemGroups.eggs],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.sacred_moss,
@@ -109,12 +120,14 @@ chapter4_items = [
         should_be_included=include_hidden_items,
         groups=[ItemGroups.moss],
         blacklist_filler=True,
+        amount=1,
     ),
     ItemData(
         ItemIDs.chapter_4_unlock,
         ItemClassification.progression,
         should_be_included=randomized_chapters,
         groups=[ItemGroups.region_blockers],
+        amount=1,
     ),
 ]
 

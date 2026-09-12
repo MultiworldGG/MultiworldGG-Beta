@@ -19,6 +19,8 @@ from worlds.deltarune.Rules import (
     have_kris_and_susie,
     have_susie,
     can_recruit_guei,
+    nohit_logic,
+    speedrun_glitch_logic,
 )
 from worlds.deltarune.Items import items, ItemIDs, glitched_item_name
 from worlds.deltarune.Locations import locations, LocationIDs
@@ -65,24 +67,28 @@ def create_regions(world: "DeltaruneWorld"):
 
     castle_town.connect(dojo)
     # Require at least one character until you go for no-hit
-    castle_town.connect(mike_room, rule=have_kris_susie_or_ralsei | Has(glitched_item_name))
+    castle_town.connect(mike_room, rule=have_kris_susie_or_ralsei | nohit_logic)
     # Require at least one character for Guei fight
     castle_town.connect(
         dark_sanctuary,
-        rule=can_recruit_guei
-        | have_kris_susie_or_ralsei
-        & [OptionFilter(ChosenRoute, [ChosenRoute.option_weird_route, ChosenRoute.option_normal_route], operator="in")],
+        rule=have_kris_susie_or_ralsei,
     )
-    # If you get the claimbclaws, you can recreate a save to skip Dark Sanctuary but require Kris or Susie for Wingblade fight
+
+    knight_climb = have_kris | nohit_logic
+
+    # If you get the claimbclaws, you can recreate a save to skip Dark Sanctuary but require Kris or Susie for Wingblade fight.
     castle_town.connect(
         second_sanctuary,
-        rule=Has(items[ItemIDs.claimbclaws]) & have_kris_or_susie & Has(glitched_item_name),
+        rule=Has(items[ItemIDs.claimbclaws]) & knight_climb & have_kris_or_susie & speedrun_glitch_logic,
     )
     # If you can go to the Second Sanctuary with the previous rule, then you can Wrong Warp to skip Second Sanctuary
     castle_town.connect(
         third_sanctuary,
-        rule=Has(items[ItemIDs.claimbclaws]) & Has(glitched_item_name),
+        rule=Has(items[ItemIDs.claimbclaws]) & knight_climb & speedrun_glitch_logic,
     )
+    # However, you can return later with everyone, so ralsei can be there instead
+    third_sanctuary.connect(second_sanctuary, rule=have_kris_susie_or_ralsei)
+    third_sanctuary.connect(second_sanctuary_post_wicabel, rule=have_kris_susie_or_ralsei)
 
     dark_sanctuary.connect(old_man_shop)
     dark_sanctuary.connect(dark_sanctuary_claimbclaws, rule=Has(items[ItemIDs.claimbclaws]))
@@ -91,15 +97,15 @@ def create_regions(world: "DeltaruneWorld"):
     # You can't leave second sanctuary once you enter unless you can beat SoJ so we put the block before
     dark_sanctuary_claimbclaws.connect(
         second_sanctuary,
-        rule=Has(items[ItemIDs.sheetmusic]) & (have_kris_and_susie | Has(glitched_item_name)),
+        rule=Has(items[ItemIDs.sheetmusic]) & knight_climb & (have_kris_and_susie | Has(glitched_item_name)),
     )
-    dark_sanctuary_claimbclaws.connect(gerson, rule=have_susie | Has(glitched_item_name))
+    dark_sanctuary_claimbclaws.connect(gerson, rule=have_susie | nohit_logic)
 
     second_sanctuary.connect(second_sanctuary_post_wicabel, rule=have_kris)
 
-    second_sanctuary_post_wicabel.connect(third_sanctuary, rule=have_susie | Has(glitched_item_name))
+    second_sanctuary_post_wicabel.connect(third_sanctuary, rule=have_susie)
 
-    third_sanctuary.connect(gerson, rule=have_susie | Has(glitched_item_name))
+    third_sanctuary.connect(gerson, rule=have_susie | nohit_logic)
 
     secret_boss_mandatory = CanReachLocation(
         locations[LocationIDs.ch4_dark_sanctuary_hammer_of_justice_defeat_item_1]

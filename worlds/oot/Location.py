@@ -103,8 +103,8 @@ def build_location_name_groups() -> dict:
         return t
 
     def rename(d, k1, k2) -> None:
-        d[k2] = d[k1]
-        del d[k1]
+        # The table mixes legacy and current tags; preserve both groups.
+        d.setdefault(k2, set()).update(d.pop(k1, set()))
 
     # whoever wrote the location table didn't realize they need to add a comma to mark a singleton as a tuple
     # so we have to check types unfortunately
@@ -128,7 +128,6 @@ def build_location_name_groups() -> dict:
     ret.pop('Forest', None)
     ret.pop('Gerudo', None)
     ret.pop('Kakariko', None)
-    ret.pop('Market', None)
 
     # Delete Vanilla and MQ tags because they are just way too broad
     ret.pop('Vanilla', None)

@@ -81,6 +81,9 @@ def create_events(world: OracleOfAgesWorld):
     for region_name in GASHA_SPOT_REGIONS:
         create_event(world, region_name, f"_reached_{region_name}")
 
+    if world.options.secret_locations:
+        create_event(world, "sea of storms spot", f"_reached_sea of storms spot")
+
 # -----------------------------------------------------------------------------------
 #
 # -----------------------------------------------------------------------------------
