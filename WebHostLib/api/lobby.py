@@ -15,10 +15,11 @@ from sqlalchemy import select, func
 
 from Utils import tuplize_version, Version, utcnow
 from WebHostLib.api import api_endpoints
-from WebHostLib.check import get_yaml_data, roll_options
+from WebHostLib.check import get_yaml_data, parse_meta_yaml, roll_options
 from WebHostLib.models import (
     db, commit, flush,
     Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyApworldRequest,
+    LobbyAuxiliaryApworld, LobbyMetaYaml,
     Room, Seed, Generation,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     uuid4,
@@ -29,6 +30,8 @@ from WebHostLib import app, limiter
 
 APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB - leaves headroom under 64 MB global limit
 LOBBY_LOCAL_GENERATION_YAML_LIMIT = 25
+AUXILIARY_APWORLD_LIMIT = 5
+META_YAML_MAX_SIZE = 1024 * 1024
 
 def _safe_zip_name(name: str) -> str:
     """Replace characters that are problematic in ZIP entry names."""
@@ -45,7 +48,7 @@ def _has_name_template(name: str) -> bool:
     return bool(_NAME_TEMPLATE_RE.search(name))
 
 
-def _delete_apworld_file(apworld: LobbyApworld) -> None:
+def _delete_apworld_file(apworld: LobbyApworld | LobbyAuxiliaryApworld) -> None:
     """Delete the apworld file from the filesystem, ignoring errors.
     Also removes the lobby subdirectory if it is now empty."""
     path = apworld.storage_path
@@ -149,6 +152,19 @@ def _yaml_requires_newer_world(requires_json: str | None, world_version: Version
     return _version_mismatch_direction(requires_json, world_version) == "newer"
 
 
+def _auxiliary_apworlds(lobby: Lobby, game_name: str | None = None) -> list[LobbyAuxiliaryApworld]:
+    stmt = select(LobbyAuxiliaryApworld).where(LobbyAuxiliaryApworld.lobby_id == lobby.id)
+    if game_name is not None:
+        stmt = stmt.where(LobbyAuxiliaryApworld.game_name == game_name)
+    return db.session.scalars(stmt.order_by(LobbyAuxiliaryApworld.id)).all()
+
+
+def _delete_auxiliary_apworlds_for_game(lobby: Lobby, game_name: str) -> None:
+    for auxiliary in _auxiliary_apworlds(lobby, game_name):
+        _delete_apworld_file(auxiliary)
+        auxiliary.delete()
+
+
 def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> None:
     current = LobbyYaml.get(id=yaml_record.id)
     if not current:
@@ -157,9 +173,17 @@ def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> No
     owner = yaml_record.player
     lobby = yaml_record.lobby
     filename = yaml_record.filename
+    game_name = yaml_record.yaml_game
     owner_name = owner.player_name
     _cleanup_yaml_apworld(yaml_record)
     yaml_record.delete()
+    # Auxiliary files belong to the world, not the YAML: keep them while any YAML for it remains.
+    if game_name and not db.session.scalar(
+        select(func.count()).select_from(LobbyYaml).where(
+            LobbyYaml.lobby_id == lobby.id, LobbyYaml.yaml_game == game_name,
+        )
+    ):
+        _delete_auxiliary_apworlds_for_game(lobby, game_name)
     owner.is_ready = False
     if reason:
         _lobby_system_message(
@@ -853,6 +877,22 @@ def _get_player_in_lobby(lobby: Lobby) -> LobbyPlayer | None:
     ).first()
 
 
+def _auxiliary_apworld_games() -> list[str]:
+    """Configured world-name prefixes whose YAMLs may carry auxiliary APWorlds."""
+    return [prefix for prefix in (app.config.get("LOBBY_AUXILIARY_APWORLD_GAMES") or [])
+            if isinstance(prefix, str) and prefix]
+
+
+def _can_remove_auxiliary(lobby: Lobby, auxiliary: LobbyAuxiliaryApworld) -> bool:
+    session_id = session.get("_id")
+    return session_id is not None and (auxiliary.uploader == session_id or is_authorized(lobby, session_id))
+
+
+def _meta_yaml_content(lobby: Lobby) -> bytes:
+    content = lobby.meta_yaml.content
+    return bytes(content) if isinstance(content, (memoryview, bytearray)) else content
+
+
 def _get_lobby_owner_name(lobby: Lobby) -> str | None:
     owner_player = LobbyPlayer.get(lobby=lobby, session_id=lobby.owner)
     return owner_player.player_name if owner_player else None
@@ -962,7 +1002,8 @@ def lobby_status(lobby: UUID):
         apworld_by_yaml_id[a.yaml_id] = entry
         apworld_by_game.setdefault(a.game_name, entry)
 
-    has_custom = False
+    auxiliaries = _auxiliary_apworlds(lobby)
+    has_custom = bool(auxiliaries)
     for y_id, y_filename, y_pname, y_game, p_id, y_is_custom, y_requires_version in yaml_rows:
         if y_is_custom:
             has_custom = True
@@ -1069,6 +1110,15 @@ def lobby_status(lobby: UUID):
         "timeout_minutes": lobby.timeout_minutes,
         "allow_custom_apworlds": lobby.allow_custom_apworlds,
         "unlisted": bool(meta.get("unlisted")),
+        "meta_yaml": {"filename": "meta.yaml", "uploaded_at": lobby.meta_yaml.uploaded_at.isoformat() + "Z"}
+                     if lobby.meta_yaml else None,
+        "auxiliary_apworld_games": _auxiliary_apworld_games(),
+        "auxiliary_apworld_limit": AUXILIARY_APWORLD_LIMIT,
+        "auxiliary_apworlds": [
+            {"id": a.id, "game_name": a.game_name, "filename": a.original_filename,
+             "file_size": a.file_size, "can_delete": _can_remove_auxiliary(lobby, a)}
+            for a in auxiliaries
+        ],
         "has_custom": has_custom,
         "force_local_generation": has_custom or total_yamls > LOBBY_LOCAL_GENERATION_YAML_LIMIT,
         "race": lobby.race,
@@ -1673,7 +1723,7 @@ def lobby_generate(lobby: UUID):
             )
         )
     ).all()
-    if custom_yamls or upgrade_apworlds:
+    if custom_yamls or upgrade_apworlds or _auxiliary_apworlds(lobby):
         return jsonify({
             "error": "Cannot generate: lobby contains custom APWorld YAMLs. "
                      "Use 'Download Package' to generate locally, then upload the result."
@@ -1704,7 +1754,11 @@ def lobby_generate(lobby: UUID):
     # Validate all options together
     meta = _lobby_meta_with_host_display_name(lobby)
     plando_options = set(meta.get("plando_options", []))
-    results, gen_options = roll_options(options, plando_options)
+    try:
+        meta_weights = parse_meta_yaml(_meta_yaml_content(lobby)) if lobby.meta_yaml else None
+    except (ValueError, TypeError, yaml.YAMLError) as exc:
+        return jsonify({"error": f"Invalid meta.yaml: {exc}"}), 400
+    results, gen_options = roll_options(options, plando_options, meta_weights=meta_weights)
 
     errors = {k: v for k, v in results.items() if isinstance(v, str)}
     if errors:
@@ -2442,6 +2496,144 @@ def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
     return jsonify({"success": True})
 
 
+def _reset_lobby_readiness(lobby: Lobby, game_name: str | None = None) -> None:
+    for player in lobby.players:
+        if game_name is None or any(y.yaml_game == game_name for y in player.yamls):
+            player.is_ready = False
+    lobby.last_activity = utcnow()
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/meta-yaml', methods=['GET', 'POST', 'DELETE'])
+def lobby_meta_yaml(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if not _get_player_in_lobby(lobby):
+        return jsonify({"error": "You must be in this lobby to access meta.yaml"}), 403
+    if request.method == 'GET':
+        if not lobby.meta_yaml:
+            return jsonify({"error": "No meta.yaml uploaded"}), 404
+        view_only = request.args.get("view") == "1"
+        return send_file(io.BytesIO(_meta_yaml_content(lobby)), download_name="meta.yaml",
+                         as_attachment=not view_only,
+                         mimetype="text/plain; charset=utf-8" if view_only else "application/x-yaml")
+    if not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "Only the lobby owner can change meta.yaml"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot change meta.yaml after generation has started"}), 400
+    if request.method == 'DELETE':
+        if not lobby.meta_yaml:
+            return jsonify({"error": "No meta.yaml uploaded"}), 404
+        lobby.meta_yaml = None
+        action = "removed"
+    else:
+        upload = request.files.get('file')
+        if not upload or not upload.filename.lower().endswith(('.yaml', '.yml')):
+            return jsonify({"error": "Upload a YAML file"}), 400
+        content = upload.read(META_YAML_MAX_SIZE + 1)
+        if len(content) > META_YAML_MAX_SIZE:
+            return jsonify({"error": "meta.yaml must be at most 1 MB"}), 400
+        try:
+            parse_meta_yaml(content)
+        except (ValueError, TypeError, yaml.YAMLError) as exc:
+            return jsonify({"error": f"Invalid meta.yaml: {exc}"}), 400
+        action = "replaced" if lobby.meta_yaml else "uploaded"
+        if lobby.meta_yaml:
+            lobby.meta_yaml.content = content
+            lobby.meta_yaml.uploaded_at = utcnow()
+        else:
+            LobbyMetaYaml(lobby=lobby, content=content)
+    _reset_lobby_readiness(lobby)
+    _lobby_system_message(lobby, f"Host {action} meta.yaml. Player readiness has been reset.")
+    commit()
+    return jsonify({"status": action})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/auxiliary-apworld/<int:yaml_id>', methods=['POST'])
+@limiter.limit("30 per hour")
+def lobby_upload_auxiliary_apworld(lobby: UUID, yaml_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    player = _get_player_in_lobby(lobby)
+    if not player:
+        return jsonify({"error": "You must be in this lobby to upload an auxiliary APWorld"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Lobby is not accepting uploads"}), 400
+    yaml_record = LobbyYaml.get(id=yaml_id)
+    if not yaml_record or yaml_record.lobby_id != lobby.id:
+        return jsonify({"error": "YAML not found"}), 404
+    if yaml_record.player_id != player.id and not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "You can only upload auxiliary APWorlds for your own YAML"}), 403
+    game_name = yaml_record.yaml_game or ""
+    allowed_game = any(game_name.startswith(prefix) for prefix in _auxiliary_apworld_games())
+    if not lobby.allow_custom_apworlds or not allowed_game:
+        return jsonify({"error": "Auxiliary APWorlds are not enabled for this world in this lobby"}), 400
+    if len(_auxiliary_apworlds(lobby, game_name)) >= AUXILIARY_APWORLD_LIMIT:
+        return jsonify({"error": f"Each world can have at most {AUXILIARY_APWORLD_LIMIT} auxiliary APWorlds per lobby"}), 400
+    upload = request.files.get('file')
+    if not upload or not upload.filename.lower().endswith('.apworld'):
+        return jsonify({"error": "File must be a .apworld file"}), 400
+    filename = upload.filename.replace('\\', '/').rsplit('/', 1)[-1]
+    if filename != _safe_zip_name(filename) or len(filename) > 255:
+        return jsonify({"error": "Invalid APWorld filename"}), 400
+    content = upload.read(APWORLD_MAX_SIZE + 1)
+    if len(content) > APWORLD_MAX_SIZE:
+        return jsonify({"error": "APWorld must be at most 60 MB"}), 400
+    if not zipfile.is_zipfile(io.BytesIO(content)):
+        return jsonify({"error": "File is not a valid .apworld (must be a ZIP archive)"}), 400
+    filenames = {a.original_filename.casefold() for a in _auxiliary_apworlds(lobby)}
+    for main in lobby.apworlds:
+        try:
+            with open(main.storage_path, 'rb') as source:
+                filenames.add(_apworld_package_filename(main, source.read()).casefold())
+        except OSError:
+            filenames.add(_apworld_package_filename(main).casefold())
+    if filename.casefold() in filenames:
+        return jsonify({"error": "An APWorld with this filename already exists in the lobby"}), 409
+    directory = os.path.join(_apworld_lobby_dir(lobby), 'auxiliary')
+    path = _safe_storage_path(directory, f"{uuid4().hex}.apworld")
+    try:
+        with open(path, 'wb') as target:
+            target.write(content)
+        auxiliary = LobbyAuxiliaryApworld(lobby_id=lobby.id, game_name=game_name, uploader=session["_id"],
+                                         original_filename=filename, storage_path=path, file_size=len(content))
+        _reset_lobby_readiness(lobby, game_name)
+        _lobby_system_message(lobby, f"{player.player_name} uploaded auxiliary APWorld '{filename}' for {game_name}.")
+        commit()
+    except Exception:
+        _delete_pending_apworld_file(path)
+        raise
+    return jsonify({"id": auxiliary.id, "filename": filename}), 201
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/auxiliary-apworld/<int:auxiliary_id>', methods=['GET', 'DELETE'])
+def lobby_auxiliary_apworld(lobby: UUID, auxiliary_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if not _get_player_in_lobby(lobby):
+        return jsonify({"error": "You must be in this lobby to access auxiliary APWorlds"}), 403
+    auxiliary = LobbyAuxiliaryApworld.get(id=auxiliary_id)
+    if not auxiliary or auxiliary.lobby_id != lobby.id:
+        return jsonify({"error": "Auxiliary APWorld not found"}), 404
+    if request.method == 'GET':
+        if not os.path.isfile(auxiliary.storage_path):
+            return jsonify({"error": "Auxiliary APWorld file is missing"}), 404
+        return send_file(auxiliary.storage_path, download_name=auxiliary.original_filename,
+                         as_attachment=True, mimetype="application/zip")
+    if not _can_remove_auxiliary(lobby, auxiliary):
+        return jsonify({"error": "Only the uploader or lobby owner can remove this APWorld"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot remove APWorlds after generation has started"}), 400
+    _reset_lobby_readiness(lobby, auxiliary.game_name)
+    _lobby_system_message(lobby, f"Auxiliary APWorld '{auxiliary.original_filename}' for {auxiliary.game_name} was removed.")
+    _delete_apworld_file(auxiliary)
+    auxiliary.delete()
+    commit()
+    return jsonify({"status": "removed"})
+
+
 @api_endpoints.route('/lobby/<suuid:lobby>/download-package', methods=['GET'])
 @limiter.limit("20 per hour")
 @limiter.limit("2 per minute")
@@ -2501,6 +2693,8 @@ def lobby_download_package(lobby: UUID):
 
     with zipfile.ZipFile(zip_buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("host.yaml", host_yaml)
+        if lobby.meta_yaml:
+            zf.writestr("Players/meta.yaml", _meta_yaml_content(lobby))
 
         seen_yaml_names: set[str] = set()
         for y_id, y_player_name, y_game, y_filename, y_content, y_lobby_player_name in yaml_rows:
@@ -2532,6 +2726,18 @@ def lobby_download_package(lobby: UUID):
                 safe_filename = f"{root}_{a.id}{ext or '.apworld'}"
             seen_apworld_filenames.add(safe_filename)
             zf.writestr(f"custom_worlds/{safe_filename}", apworld_data)
+
+        for auxiliary in _auxiliary_apworlds(lobby):
+            filename = auxiliary.original_filename
+            if filename.casefold() in {name.casefold() for name in seen_apworld_filenames}:
+                return jsonify({"error": f"Conflicting APWorld filename '{filename}'. "
+                                         "Remove the conflicting auxiliary file."}), 409
+            try:
+                with open(auxiliary.storage_path, 'rb') as source:
+                    zf.writestr(f"custom_worlds/{filename}", source.read())
+            except OSError:
+                return jsonify({"error": f"Auxiliary APWorld '{filename}' is missing. Please upload it again."}), 400
+            seen_apworld_filenames.add(filename)
 
     zip_buffer.seek(0)
     safe_title = _safe_zip_name(lobby.title)

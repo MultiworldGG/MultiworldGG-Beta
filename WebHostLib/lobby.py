@@ -22,7 +22,7 @@ except Exception as e:
 from WebHostLib import app, limiter
 from WebHostLib.generate import get_meta
 from WebHostLib.models import (
-    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld,
+    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyAuxiliaryApworld,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
     UUID, db, commit, rollback,
 )
@@ -297,7 +297,11 @@ def lobby_view(lobby: UUID):
         .join(LobbyYaml, LobbyApworld.yaml_id == LobbyYaml.id)
         .where(LobbyApworld.lobby_id == lobby.id, LobbyYaml.is_custom == False)
     ))
-    force_local_generation = has_custom or has_upgrade_apworld or yaml_count > 25
+    has_auxiliary = bool(db.session.scalar(
+        select(func.count()).select_from(LobbyAuxiliaryApworld)
+        .where(LobbyAuxiliaryApworld.lobby_id == lobby.id)
+    ))
+    force_local_generation = has_custom or has_upgrade_apworld or has_auxiliary or yaml_count > 25
     is_full = lobby.max_players > 0 and player_count >= lobby.max_players
 
     meta = json.loads(lobby.meta)

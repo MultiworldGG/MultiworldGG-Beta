@@ -78,6 +78,8 @@ app.config["LOGS_FOLDER"] = LOGS_FOLDER
 app.config["GENERATED_FOLDER"] = GENERATED_FOLDER
 for _key, _sub in _UPLOAD_SUBFOLDERS.items():
     app.config[_key] = os.path.join(UPLOAD_FOLDER, _sub)
+# YAML game-name prefixes allowed up to five auxiliary APWorlds per world per lobby.
+app.config["LOBBY_AUXILIARY_APWORLD_GAMES"] = []
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
 # SECRET_KEY signs session cookies: $MWGG_SECRET_KEY, else config.yaml
 # SECRET_KEY, else the hostname fallback (dev only; get_app() refuses it in prod).
