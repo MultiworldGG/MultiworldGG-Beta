@@ -1738,8 +1738,9 @@ class ClientMessageProcessor(CommonCommandProcessor):
                 # disallow others from knowing what the new remote administration password is.
                 "!admin /option admin_password"):
             output = f"!admin /option admin_password {('*' * random.randint(4, 16))}"
-        self.ctx.broadcast_text_all(self.ctx.get_aliased_name(self.client.team, self.client.slot) + ': ' + output,
-                                    {"type": "Chat", "team": self.client.team, "slot": self.client.slot, "message": output})
+        # echoed to the caller only: the admin screen issues these constantly
+        self.ctx.notify_client(self.client, self.ctx.get_aliased_name(self.client.team, self.client.slot) + ': ' + output,
+                               {"type": "Chat", "team": self.client.team, "slot": self.client.slot, "message": output})
 
         if not self.ctx.admin_password:
             self.output("Sorry, Remote administration is disabled")

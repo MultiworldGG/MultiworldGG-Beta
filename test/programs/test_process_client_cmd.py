@@ -600,6 +600,20 @@ class TestSpacedPlayerNames(unittest.TestCase):
         self.assertTrue(run_sync(lambda: messages('!admin /release "Player Two"')), self.out)
         self.assertEqual(self.received(1), [102])
 
+    def test_admin_command_is_echoed_to_the_caller_only(self) -> None:
+        # the admin screen polls /players and friends; nobody else should see those lines
+        self.ctx.admin_password = "pw"
+        self.ctx.commandprocessor = self.proc
+        client = make_client(self.ctx, slot=1)
+        self.proc.client = client
+        self.addCleanup(setattr, self.proc, "client", None)
+        messages = MultiServer.ClientMessageProcessor(self.ctx, client)
+        messages.output = lambda text: self.out.append(text)
+        self.assertTrue(run_sync(lambda: messages("!admin /players")), self.out)
+        self.assertEqual([kind for kind, _ in self.ctx.captured if kind == "broadcast_text_all"], [])
+        echoes = [p["message"] for p in sent_packets(self.ctx) if p.get("type") == "Chat"]
+        self.assertEqual(echoes, ["!admin /players"])
+
 
 SLOT_PINS = {
     1: {"version": (1, 2, 3), "custom": False},
