@@ -20,7 +20,16 @@ from settings import get_settings
 from worlds import AutoWorld
 from worlds.generic.Rules import exclusion_rules, locality_rules
 
-__all__ = ["main"]
+__all__ = ["main", "embedded_server_options"]
+
+
+def embedded_server_options(server_options: dict[str, object]) -> dict[str, object]:
+    """Server options as written into the multidata.
+
+    Upstream Archipelago hosts read only server_password, this server admin_password;
+    a zip must carry both so it hosts anywhere."""
+    admin_password = server_options.get("admin_password") or server_options.get("server_password") or None
+    return {**server_options, "admin_password": admin_password, "server_password": admin_password}
 
 
 def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
@@ -28,6 +37,7 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
     if not baked_server_options:
         baked_server_options = get_settings().server_options.as_dict()
     assert isinstance(baked_server_options, dict)
+    baked_server_options = embedded_server_options(baked_server_options)
     if baked_generator_options is None:
         baked_generator_options = get_settings().generator.as_dict()
     assert isinstance(baked_generator_options, dict)

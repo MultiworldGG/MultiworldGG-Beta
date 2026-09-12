@@ -762,6 +762,7 @@ class Context:
             "stored_data": self.stored_data,
             "game_options": {"hint_cost": self.hint_cost, "location_check_points": self.location_check_points,
                              "admin_password": self.admin_password, "password": self.password,
+                             "server_password": self.admin_password,  # upstream hosts read this key
                              "release_mode": self.release_mode,
                              "remaining_mode": self.remaining_mode, "collect_mode": self.collect_mode,
                              "countdown_mode": self.countdown_mode, "hint_mode": self.hint_mode, 
