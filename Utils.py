@@ -595,6 +595,21 @@ def _client_launch_argv(server_address, slot_name: typing.Optional[str], label: 
     return launch_argv
 
 
+def _update_world_after_failed_launch(module_id: str) -> bool:
+    """Re-pull mwgg_igdb ahead of the daily check and reinstall `module_id` when
+    the fresh index carries a newer version of it (a patch generated on a newer
+    apworld is the usual cause). True when it was reinstalled, so a restart loads it."""
+    try:
+        if module_id not in ModuleUpdate.check_for_updates(worlds_only=True, force=True):
+            update_logger.info(f"The index has no newer {module_id} yet; keeping the installed version.")
+            return False
+        update_logger.warning(f"Installing the newer {module_id} from the refreshed index and restarting.")
+        return module_id not in ModuleUpdate.install_worlds([module_id]).failed
+    except Exception as update_error:
+        logging.error(f"Update after the failed launch of {module_id} failed: {update_error}", exc_info=True)
+        return False
+
+
 def _defer_cli_launch(launch_function, label: str, server_address,
                       already_restarted: bool,
                       dep_install_module: typing.Optional[str] = None,
@@ -650,7 +665,11 @@ def _defer_cli_launch(launch_function, label: str, server_address,
                 f"Deferred world launch failed for {label}: {launch_error}",
                 exc_info=True,
             )
-            _fire_pending_error_callback()
+            if dep_install_module and not already_restarted \
+                    and _update_world_after_failed_launch(dep_install_module):
+                _restart_client_with_args()
+            else:
+                _fire_pending_error_callback()
         finally:
             sys.argv[:] = saved_argv
 
