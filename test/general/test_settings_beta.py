@@ -285,3 +285,103 @@ class TestFolderPathBrowseWindows(unittest.TestCase):
 
         self.assertIsInstance(res, settings.SNIOptions.SNIPath)
         self.assertEqual(res, "SNI")
+
+
+# --------------------------------------------------------------------------- #
+# Settings.save merges. Launcher, clients, tracker and Generate share one
+# host.yaml and each holds a snapshot from its own start; a save applies only
+# what this object changed onto the file as it is now. Dumping the whole
+# snapshot made the last process to exit revert everyone else's edits.
+# --------------------------------------------------------------------------- #
+
+class TestSettingsSaveMerge(unittest.TestCase):
+    def setUp(self) -> None:
+        import tempfile
+        self._skip_autosave = settings.skip_autosave
+        settings.skip_autosave = True
+        self._tmp = tempfile.TemporaryDirectory()
+        self.path = os.path.join(self._tmp.name, "host.yaml")
+        Settings(None).save(self.path)
+
+    def tearDown(self) -> None:
+        settings.skip_autosave = self._skip_autosave
+        self._tmp.cleanup()
+
+    def test_untouched_keys_keep_on_disk_edits(self) -> None:
+        stale = Settings(self.path)
+        editor = Settings(self.path)
+        editor.server_options.port = 12345
+        editor.update({"some_world_options": {"alpha": 1}})
+        editor.save()
+        stale.server_options.hint_cost = ServerOptions.HintCost(42)
+        stale.save()
+        reloaded = Settings(self.path)
+        self.assertEqual(reloaded.server_options.port, 12345)
+        self.assertEqual(reloaded.server_options.hint_cost, 42)
+        self.assertEqual(reloaded["some_world_options"], {"alpha": 1})
+
+    def test_second_save_does_not_reapply_old_change(self) -> None:
+        first = Settings(self.path)
+        first.server_options.hint_cost = ServerOptions.HintCost(42)
+        first.save()
+        other = Settings(self.path)
+        other.server_options.hint_cost = ServerOptions.HintCost(7)
+        other.save()
+        first.save()
+        self.assertEqual(Settings(self.path).server_options.hint_cost, 7)
+
+    def test_missing_file_gets_full_defaults(self) -> None:
+        os.unlink(self.path)
+        s = Settings(None)
+        s.server_options.port = 1
+        s.save(self.path)
+        reloaded = Settings(self.path)
+        self.assertEqual(reloaded.server_options.port, 1)
+        self.assertEqual(reloaded.server_options.hint_cost, ServerOptions.hint_cost)
+        self.assertFalse(os.path.exists(self.path + ".tmp"))
+
+    def test_unparsable_file_is_left_alone(self) -> None:
+        broken = "server_options:\n  port: [unterminated\n"
+        s = Settings(self.path)
+        s.server_options.port = 1
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write(broken)
+        with self.assertLogs(level="ERROR"):
+            s.save()
+        with open(self.path, encoding="utf-8") as f:
+            self.assertEqual(f.read(), broken)
+        self.assertFalse(os.path.exists(self.path + ".tmp"))
+
+    def test_repaired_backslash_file_is_rewritten_quoted(self) -> None:
+        with open(self.path, "w", encoding="utf-8") as f:
+            f.write('general_options:\n  output_path: "C:\\Users\\x\\out"\n')
+        s = Settings(self.path)
+        self.assertTrue(s.changed)
+        s.save()
+        with open(self.path, encoding="utf-8") as f:
+            self.assertIn("output_path: 'C:\\Users\\x\\out'", f.read())
+        self.assertEqual(vars(Settings(self.path).general_options)["output_path"], "C:\\Users\\x\\out")
+
+
+class TestServerPasswordAlias(unittest.TestCase):
+    """upstream's server_password was renamed to admin_password; host.yaml files and
+    multidata written before the rename still carry the old key."""
+
+    def test_legacy_key_feeds_admin_password(self) -> None:
+        opts = ServerOptions()
+        opts.update({"server_password": "legacy"})
+        self.assertEqual(opts.admin_password, "legacy")
+        self.assertNotIn("server_password", dict(opts.items()))
+
+    def test_admin_password_wins_over_legacy(self) -> None:
+        opts = ServerOptions()
+        opts.update({"admin_password": "new", "server_password": "old"})
+        self.assertEqual(opts.admin_password, "new")
+
+    def test_dump_omits_legacy_key(self) -> None:
+        s = Settings(None)
+        s.update({"server_options": {"server_password": "legacy"}})
+        out = io.StringIO()
+        s.dump(out)
+        self.assertNotIn("server_password", out.getvalue())
+        self.assertIn('admin_password: "legacy"', out.getvalue())
