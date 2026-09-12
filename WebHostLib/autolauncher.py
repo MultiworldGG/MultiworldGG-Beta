@@ -308,6 +308,7 @@ def cleanup(config: dict[str, Any] | None = None):
         for lobby in stale_lobbies:
             request_paths = [r.storage_path for r in lobby.apworld_requests]
             apworld_paths = [a.storage_path for a in lobby.apworlds]
+            apworld_paths.extend(a.storage_path for a in lobby.auxiliary_apworlds)
 
             for r in list(lobby.apworld_requests):
                 session.delete(r)

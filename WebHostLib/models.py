@@ -222,6 +222,12 @@ class Lobby(Base):
     apworld_requests: list["LobbyApworldRequest"] = relationship(
         "LobbyApworldRequest", back_populates="lobby", cascade="all, delete-orphan"
     )
+    meta_yaml: "LobbyMetaYaml | None" = relationship(
+        "LobbyMetaYaml", back_populates="lobby", uselist=False, cascade="all, delete-orphan"
+    )
+    auxiliary_apworlds: list["LobbyAuxiliaryApworld"] = relationship(
+        "LobbyAuxiliaryApworld", back_populates="lobby", cascade="all, delete-orphan"
+    )
 
 
 class LobbyPlayer(Base):
@@ -310,6 +316,33 @@ class LobbyApworldRequest(Base):
     lobby: Lobby = relationship("Lobby", back_populates="apworld_requests")
     yaml: LobbyYaml = relationship("LobbyYaml", back_populates="apworld_requests")
     requester: LobbyPlayer = relationship("LobbyPlayer", back_populates="apworld_requests")
+
+
+class LobbyMetaYaml(Base):
+    __tablename__ = "lobbymetayaml"
+
+    id: int = mapped_column(Integer, primary_key=True, autoincrement=True)
+    lobby_id: UUID = mapped_column(SA_UUID(as_uuid=True), ForeignKey("lobby.id"), nullable=False, unique=True)
+    # lazy=True equivalent
+    content: bytes = deferred(mapped_column("content", LargeBinary, nullable=False))
+    uploaded_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+
+    lobby: Lobby = relationship("Lobby", back_populates="meta_yaml")
+
+
+class LobbyAuxiliaryApworld(Base):
+    __tablename__ = "lobbyauxiliaryapworld"
+
+    id: int = mapped_column(Integer, primary_key=True, autoincrement=True)
+    lobby_id: UUID = mapped_column(SA_UUID(as_uuid=True), ForeignKey("lobby.id"), nullable=False, index=True)
+    game_name: str = mapped_column(String, nullable=False, index=True)
+    uploader: UUID = mapped_column(SA_UUID(as_uuid=True), nullable=False)
+    original_filename: str = mapped_column(String, nullable=False)
+    storage_path: str = mapped_column(String, nullable=False)
+    file_size: int = mapped_column(Integer, nullable=False, default=0)
+    uploaded_at: datetime = mapped_column(DateTime, nullable=False, default=utcnow)
+
+    lobby: Lobby = relationship("Lobby", back_populates="auxiliary_apworlds")
 
 
 class LobbyMessage(Base):
@@ -582,7 +615,8 @@ __all__ = [
     "db", "Base",
     "Slot", "Room", "Seed", "Command", "Generation", "GameDataPackage",
     "Lobby", "LobbyPlayer", "LobbyYaml", "LobbyApworld", "LobbyApworldRequest",
-    "LobbyMessage", "AvatarToken", "Avatar", "PasskeyCredential",
+    "LobbyMessage", "LobbyMetaYaml", "LobbyAuxiliaryApworld",
+    "AvatarToken", "Avatar", "PasskeyCredential",
     "RoomCoOwner", "LobbyCoOwner", "OwnershipInvite",
     "STATE_QUEUED", "STATE_STARTED", "STATE_ERROR",
     "LOBBY_OPEN", "LOBBY_GENERATING", "LOBBY_DONE", "LOBBY_CLOSED", "LOBBY_LOCKED",
