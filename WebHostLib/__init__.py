@@ -41,6 +41,9 @@ _UPLOAD_SUBFOLDERS = {"LOBBY_APWORLD_PATH": "lobby_apworlds", "AVATAR_UPLOAD_FOL
 DATA_FOLDER_KEYS = ("UPLOAD_FOLDER", "LOGS_FOLDER", "GENERATED_FOLDER", *_UPLOAD_SUBFOLDERS)
 
 app = Flask(__name__)
+# Set before any route registers. The auto-308 alternative builds its
+# Location from the proxied Host header, which can point at the upstream loopback.
+app.url_map.strict_slashes = False
 
 
 def resolve_paths(flask_app: Flask) -> None:
