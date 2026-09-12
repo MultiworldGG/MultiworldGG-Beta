@@ -125,7 +125,8 @@ class AutoWorldRegister(type):
             new_class.zip_path = pathlib.Path(new_class.__file__).parents[1]
         if "settings_key" not in dct:
             mod_name = new_class.__module__
-            world_folder_name = mod_name[7:].lower() if mod_name.startswith("worlds.") else mod_name.lower()
+            # folder name only, so a World defined in worlds/<folder>/<sub>.py shares its folder's section
+            world_folder_name = mod_name.split(".")[1].lower() if mod_name.startswith("worlds.") else mod_name.lower()
             new_class.settings_key = world_folder_name + "_options"
         new_class.__settings = None
         return new_class

@@ -8,7 +8,7 @@ import sys
 import textwrap
 import unittest
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import ClassVar, Optional, Tuple
 
 import settings
 from settings import Group, ServerOptions, Settings, _loaded_world_settings_names
@@ -170,6 +170,55 @@ class TestLoadedWorldSettingsNames(unittest.TestCase):
         self.assertIn("totally_unloaded_world_options", text)
         self.assertIn("alpha: 1", text)
         self.assertIn("universal_tracker", text)
+
+
+class TestWorldSettingsKey(unittest.TestCase):
+    """A World class defined in a submodule (worlds/<folder>/world.py) shares its
+    folder's host.yaml section instead of getting "<folder>.world_options"."""
+
+    def setUp(self) -> None:
+        import types
+        from unittest import mock
+
+        import BaseUtils
+        from worlds.AutoWorld import AutoWorldRegister, World
+
+        settings.skip_autosave = True
+        for name in ("worlds.keytest", "worlds.keytest.world"):
+            module = types.ModuleType(name)
+            module.__file__ = "/fake/" + name.replace(".", "/") + ".py"
+            self.addCleanup(sys.modules.pop, name, None)
+            sys.modules[name] = module
+
+        class KeyTestSettings(Group):
+            rom_file: str = "default.sfc"
+
+        with mock.patch.object(BaseUtils, "get_archipelago_json", side_effect=FileNotFoundError):
+            self.sub_world = type("KeyTestWorld", (World,), {
+                "__module__": "worlds.keytest.world", "game": "Key Test Sub",
+                "item_name_to_id": {}, "location_name_to_id": {},
+                "__annotations__": {"settings": ClassVar[KeyTestSettings]}})
+            self.init_world = type("KeyTestInitWorld", (World,), {
+                "__module__": "worlds.keytest", "game": "Key Test Init",
+                "item_name_to_id": {}, "location_name_to_id": {}})
+        # Settings.__getattribute__ imports the class back off its module
+        sys.modules["worlds.keytest.world"].KeyTestWorld = self.sub_world
+        for world in (self.sub_world, self.init_world):
+            self.addCleanup(AutoWorldRegister.world_types.pop, world.game, None)
+
+    def test_submodule_world_shares_folder_section(self) -> None:
+        from worlds.AutoWorld import AutoWorldRegister
+
+        self.assertEqual(self.sub_world.settings_key, "keytest_options")
+        self.assertEqual(self.init_world.settings_key, "keytest_options")
+        self.assertEqual(AutoWorldRegister.world_types["APQuest"].settings_key, "apquest_options")
+
+    def test_folder_section_materializes_for_submodule_world(self) -> None:
+        s = Settings(None)
+        s.update({"keytest_options": {"rom_file": "old.sfc"}})
+        group = s.keytest_options
+        self.assertIsInstance(group, Group)
+        self.assertEqual(group.rom_file, "old.sfc")
 
 
 # --------------------------------------------------------------------------- #
