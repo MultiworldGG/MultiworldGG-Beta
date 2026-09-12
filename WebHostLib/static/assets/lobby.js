@@ -1512,7 +1512,7 @@
 
     if (reopenBtn) {
         reopenBtn.addEventListener("click", () => {
-            if (!confirm("Reopen this lobby? The current seed and room data will be removed, but players, YAMLs, APWorlds, and settings will be kept.")) return;
+            if (!confirm("Reopen this lobby? The current seed and room stay available on your pages but will no longer be linked to this lobby. Players, YAMLs, APWorlds, and settings are kept.")) return;
 
             fetch(API_BASE + "/reopen", { method: "POST" })
                 .then(res => res.json())
