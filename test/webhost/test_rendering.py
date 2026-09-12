@@ -88,6 +88,14 @@ def test_play_checklist_is_ephemeral(env):
     assert 'data-tooltip="GO!"' in rendered
 
 
+def test_play_checklist_button_has_its_own_dismiss_control(env):
+    rendered = env.get_template("partials/play_checklist.html").render()
+
+    fab = re.search(r'<div class="mw-checklist-fab"[^>]*>(.*?)</div>', rendered, re.S).group(1)
+    assert 'aria-controls="play-checklist"' in fab
+    assert "data-checklist-dismiss" in fab
+
+
 # ---------------------------------------------------------------------------
 # render_markdown heading ids and self-links
 # ---------------------------------------------------------------------------

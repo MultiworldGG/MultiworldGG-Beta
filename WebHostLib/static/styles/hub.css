@@ -149,28 +149,59 @@
     bottom: 20px;
     z-index: 9000;
     display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    align-items: stretch;
     background: var(--mw-sys-color-primary);
     color: var(--mw-sys-color-white);
-    border: none;
     border-radius: var(--mw-radius-full);
-    padding: 12px 20px;
-    font-family: var(--mw-font-sans);
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
     box-shadow: 0 6px 20px var(--mw-sys-color-shadow-soft);
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: transform 0.15s ease;
 }
 
 .mw-checklist-fab:hover {
-    background: var(--mw-sys-color-primary-container);
     transform: translateY(-2px);
 }
 
-.mw-checklist-fab .mdi {
+.mw-checklist-fab[hidden] {
+    display: none;
+}
+
+.mw-checklist-fab-open,
+.mw-checklist-fab-dismiss {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: var(--mw-font-sans);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mw-checklist-fab-open:hover,
+.mw-checklist-fab-dismiss:hover {
+    background: var(--mw-sys-color-primary-container);
+}
+
+.mw-checklist-fab-open {
+    gap: 8px;
+    padding: 12px 16px 12px 20px;
+    border-radius: var(--mw-radius-full) 0 0 var(--mw-radius-full);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mw-checklist-fab-open .mdi {
     font-size: 24px;
+}
+
+.mw-checklist-fab-dismiss {
+    padding: 0 14px 0 10px;
+    border-left: 1px solid var(--mw-sys-color-primary-container);
+    border-radius: 0 var(--mw-radius-full) var(--mw-radius-full) 0;
+}
+
+.mw-checklist-fab-dismiss .mdi {
+    font-size: 20px;
 }
 
 .mw-checklist {

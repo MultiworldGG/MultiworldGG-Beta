@@ -1,11 +1,18 @@
-{# Pop-out setup checklist for /play. Ephemeral by design: nothing is stored
-   and every box clears when the panel closes.
+{# Pop-out setup checklist for /play. Ephemeral by design: nothing is stored,
+   every box clears when the panel closes, and hiding the button lasts for the
+   current page view only.
 
    Included by play_hub.html; styles live in styles/hub.css. #}
-<button type="button" class="mw-checklist-fab" id="play-checklist-fab"
-        aria-expanded="false" aria-controls="play-checklist">
-    <i class="mdi mdi-check-all"></i> Setup checklist
-</button>
+<div class="mw-checklist-fab" id="play-checklist-fab">
+    <button type="button" class="mw-checklist-fab-open" id="play-checklist-toggle"
+            aria-expanded="false" aria-controls="play-checklist">
+        <i class="mdi mdi-check-all"></i> Setup checklist
+    </button>
+    <button type="button" class="mw-checklist-fab-dismiss" data-checklist-dismiss
+            title="Hide this button" aria-label="Hide the setup checklist button">
+        <i class="mdi mdi-close"></i>
+    </button>
+</div>
 
 <div class="mw-checklist" id="play-checklist" role="dialog" aria-label="Setup checklist" tabindex="-1" hidden>
     <div class="mw-checklist-head">
@@ -44,8 +51,9 @@
 <script>
 (function () {
     const fab = document.getElementById('play-checklist-fab');
+    const toggle = document.getElementById('play-checklist-toggle');
     const panel = document.getElementById('play-checklist');
-    if (!fab || !panel) return;
+    if (!fab || !toggle || !panel) return;
     const boxes = Array.from(panel.querySelectorAll('input[type="checkbox"]'));
     const count = document.getElementById('play-checklist-count');
 
@@ -59,22 +67,27 @@
     }
     function open() {
         panel.hidden = false;
-        fab.setAttribute('aria-expanded', 'true');
+        toggle.setAttribute('aria-expanded', 'true');
         panel.focus({ preventScroll: true });
     }
     function close(refocus) {
         panel.hidden = true;
-        fab.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-expanded', 'false');
         reset();
-        if (refocus) fab.focus();
+        if (refocus) toggle.focus();
+    }
+    function dismiss() {
+        close(false);
+        fab.hidden = true;
     }
 
-    fab.addEventListener('click', () => panel.hidden ? open() : close(true));
+    toggle.addEventListener('click', () => panel.hidden ? open() : close(true));
+    fab.querySelectorAll('[data-checklist-dismiss]').forEach(el => el.addEventListener('click', dismiss));
     panel.querySelectorAll('[data-checklist-close]').forEach(el => el.addEventListener('click', () => close(true)));
     panel.querySelectorAll('[data-checklist-reset]').forEach(el => el.addEventListener('click', reset));
     boxes.forEach(b => b.addEventListener('change', updateCount));
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) close(true); });
-    window.addEventListener('pageshow', e => { if (e.persisted) close(false); });
+    window.addEventListener('pageshow', e => { if (e.persisted) { close(false); fab.hidden = false; } });
     reset();
 })();
 </script>
