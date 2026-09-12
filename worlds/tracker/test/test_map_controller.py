@@ -296,5 +296,52 @@ class TestLoadPack(unittest.TestCase):
         self.assertEqual(ctx.map_groups, [("Region", ["map1"])])
 
 
+class TestNarratedActivate(unittest.IsolatedAsyncioTestCase):
+    """With a frontend that draws loading statuses the pack loads after "Loading map pack..."
+    is on screen, the tracker refreshes onto the map, and the overlay drops."""
+
+    def _setup(self, events, load_pack):
+        async def show_loading_status(message):
+            events.append(("status", message))
+
+        app = SimpleNamespace(show_loading_status=show_loading_status, hide_loading=lambda: events.append(("hide",)))
+        ctx = _ctx(ui=app, updateTracker=lambda: events.append(("refresh",)))
+        controller = UTMapController(ctx, _core())
+        controller.prebuild_widget = lambda: None
+        controller.load_pack = load_pack
+        controller.set_map_visible = lambda visible: None
+        ctx.tracker_world = SimpleNamespace(
+            map_page_index=lambda _: 0, map_page_setting_key=None, location_setting_key=None)
+        return app, ctx, controller
+
+    async def test_activation_waits_for_the_status_then_refreshes_and_hides(self):
+        events = []
+        app, ctx, controller = self._setup(events, lambda: events.append(("load_pack",)))
+
+        controller.activate(app)
+        self.assertTrue(ctx._map_activation_pending)
+        self.assertFalse(ctx._map_activated)
+        controller.activate(app)
+        await ctx._map_activation_task
+
+        self.assertEqual(events, [("status", "Loading map pack..."), ("load_pack",), ("refresh",), ("hide",)])
+        self.assertTrue(ctx._map_activated)
+        self.assertFalse(ctx._map_activation_pending)
+
+    async def test_failed_pack_load_still_drops_the_overlay(self):
+        events = []
+
+        def failing_load_pack():
+            raise RuntimeError("bad pack")
+
+        app, ctx, controller = self._setup(events, failing_load_pack)
+        controller.activate(app)
+        with self.assertLogs("Client", level="ERROR"):
+            await ctx._map_activation_task
+        self.assertEqual(events[-1], ("hide",))
+        self.assertFalse(ctx._map_activation_pending)
+        self.assertFalse(ctx._map_activated)
+
+
 if __name__ == "__main__":
     unittest.main()

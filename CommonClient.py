@@ -1063,6 +1063,11 @@ class CommonContext(InitContext):
         """For custom package handling in subclasses."""
         pass
 
+    async def before_package(self, cmd: str, args: dict) -> None:
+        """Awaited by the server loop right before `on_package`, so work that must finish
+        before the packet is handled can still yield to the frontend (a frame draw, a worker
+        thread) instead of freezing it."""
+
     def on_user_say(self, text: str) -> typing.Optional[str]:
         """Gets called before sending a Say to the server from the user.
         Returned text is sent, or sending is aborted if None is returned."""
@@ -2011,6 +2016,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     else:
         logger.debug(f"unknown command {cmd}")
 
+    try:
+        await ctx.before_package(cmd, args)
+    except Exception:
+        logger.exception(f"before_package failed for cmd={cmd!r}")
     try:
         ctx.on_package(cmd, args)
     except Exception:

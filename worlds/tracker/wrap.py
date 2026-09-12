@@ -2,9 +2,10 @@
 
 When the launcher's "Universal Tracker" checkbox is set alongside a game
 module, ``CommonContext.__init__`` calls ``attach_tracker_overlay``: it
-installs a ``TrackerCore`` on the context, patches ``on_package`` to catch
-the first ``Connected`` packet, and registers overlay features (Tracker tab,
-periodic refresh) on ``ctx.feature_registry.features`` for ``ExtrasBuilder``.
+installs a ``TrackerCore`` on the context, patches ``before_package`` (yaml
+staging, narrated on the loading overlay) and ``on_package`` (generation) to
+catch the first ``Connected`` packet, and registers overlay features (Tracker
+tab, periodic refresh) on ``ctx.feature_registry.features`` for ``ExtrasBuilder``.
 """
 
 from __future__ import annotations
@@ -62,6 +63,19 @@ def attach_tracker_overlay(ctx) -> None:
 
     ctx.on_package = wrapped_on_package
 
+    original_before_package = getattr(ctx, "before_package", None)
+
+    async def wrapped_before_package(cmd: str, args: dict) -> None:
+        if original_before_package is not None:
+            await original_before_package(cmd, args)
+        if cmd == "Connected":
+            try:
+                await _prepare_connected(ctx, args)
+            except Exception:
+                logger.exception("Tracker overlay failed to prepare for the Connected packet")
+
+    ctx.before_package = wrapped_before_package
+
     registry = getattr(ctx, "feature_registry", None)
     if registry is not None:
         from .overlay_features import register_tracker_page_tab, register_tracker_map_tab
@@ -75,22 +89,49 @@ def attach_tracker_overlay(ctx) -> None:
         )
 
 
+def _connected_slot(args: dict) -> tuple[str, str] | None:
+    """(slot name, game) from the Connected packet, or None when slot_info lacks our slot."""
+    slot_entry = (args.get("slot_info") or {}).get(str(args.get("slot")))
+    return (slot_entry[0], slot_entry[1]) if slot_entry else None
+
+
+async def _prepare_connected(ctx, args: dict) -> None:
+    """Before ``on_package``: stage the slot's yaml off the loop thread and narrate the
+    coming generation on the loading overlay, so ``_handle_connected`` only blocks on it."""
+    from worlds import AutoWorld
+    from .loading import status_reporter
+
+    slot = _connected_slot(args)
+    if slot is None:
+        return
+    slot_name, game = slot
+    connected_cls = AutoWorld.AutoWorldRegister.world_types.get(game)
+    if connected_cls is None:
+        return
+    ctx.tracker_core.set_slot_params(game, ctx.slot, slot_name, ctx.team)
+    await ctx.tracker_core.prepare_generation(connected_cls, status_reporter(ctx))
+
+
 def _handle_connected(ctx, args: dict) -> None:
     """Populate ``tracker_core`` from the first ``Connected`` packet; mirrors the
-    standalone on_package Connected branch minus map/entrance/scout plumbing."""
+    standalone on_package Connected branch minus entrance/scout plumbing. Drops the
+    loading overlay when done unless the map pack load is still narrating."""
+    from .loading import finish_loading
+    try:
+        _load_connected_slot(ctx, args)
+    finally:
+        finish_loading(ctx)
+
+
+def _load_connected_slot(ctx, args: dict) -> None:
     from worlds import AutoWorld
 
-    slot_info = args.get("slot_info") or {}
-    slot_key = str(args.get("slot"))
-    slot_entry = slot_info.get(slot_key)
-    if not slot_entry:
-        logger.warning(
-            "Tracker overlay: Connected packet missing slot_info for slot %s",
-            slot_key,
-        )
+    slot = _connected_slot(args)
+    if slot is None:
+        logger.warning("Tracker overlay: Connected packet missing slot_info for slot %s", args.get("slot"))
         return
 
-    slot_name, game = slot_entry[0], slot_entry[1]
+    slot_name, game = slot
     ctx.tracker_core.set_slot_params(game, ctx.slot, slot_name, ctx.team)
 
     connected_cls = AutoWorld.AutoWorldRegister.world_types.get(game)
@@ -105,7 +146,7 @@ def _handle_connected(ctx, args: dict) -> None:
     raw_slot_data = args.get("slot_data") or {}
 
     # Worlds that can't rebuild from slot_data need a real generation against the
-    # user's YAML; deferred to Connected so the picker only fires for tracked games.
+    # user's YAML, staged by _prepare_connected; this call is the blocking part.
     from .TrackerCore import world_needs_yaml
     if world_needs_yaml(connected_cls) and ctx.tracker_core.launch_multiworld is None:
         ctx.tracker_core.run_generator(None, None)

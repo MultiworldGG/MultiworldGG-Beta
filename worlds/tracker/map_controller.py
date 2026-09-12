@@ -10,6 +10,7 @@ or an arbitrary game client with the tracker overlay attached.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import traceback
 from typing import Any, Union
@@ -120,6 +121,8 @@ class UTMapController:
         ctx._map_content = None
         ctx._show_map = False
         ctx._map_activated = False
+        ctx._map_activation_pending = False
+        ctx._map_activation_task = None
         if not hasattr(ctx, "auto_tab"):
             ctx.auto_tab = True
 
@@ -551,12 +554,35 @@ class UTMapController:
         block. Idempotent and a no-op without a live app or a known
         ``tracker_world`` -- safe to call from both the Connected handler
         (if the app is already live) and the Phase-2 overlay feature (if
-        Connected already ran)."""
+        Connected already ran). A frontend with a loading status gets
+        "Loading map pack..." drawn first; the pack then loads on a later
+        frame, the tracker refreshes onto the map, and the overlay drops."""
         ctx = self.ctx
-        if app is None or ctx.tracker_world is None or ctx._map_activated:
+        if app is None or ctx.tracker_world is None or ctx._map_activated or ctx._map_activation_pending:
             return
         if getattr(ctx, "ui", None) is None:
             ctx.ui = app
+        if getattr(app, "show_loading_status", None) is None:
+            self._activate_now(app)
+            return
+        ctx._map_activation_pending = True
+
+        async def narrated() -> None:
+            from .loading import finish_loading, show_status
+            try:
+                await show_status(ctx, "Loading map pack...")
+                self._activate_now(app)
+                _refresh_ctx(ctx)
+            except Exception:
+                logger.exception("Tracker map: activation failed")
+            finally:
+                ctx._map_activation_pending = False
+                finish_loading(ctx)
+
+        ctx._map_activation_task = asyncio.create_task(narrated())
+
+    def _activate_now(self, app) -> None:
+        ctx = self.ctx
         self.prebuild_widget()
         self.load_pack()
         if ctx.tracker_world:  # don't show the map if loading failed

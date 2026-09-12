@@ -1,4 +1,5 @@
 import importlib.metadata
+import asyncio
 import sys
 import types
 import unittest
@@ -358,3 +359,37 @@ class TestConnectedPersistsSlotName(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ctx.auth, "QVAxMjM0NTY3ODkwMTIzNA==")
         self.assertIn(("client", "last_username", "Player 2"), stored)
         self.assertNotIn(("client", "last_username", ctx.auth), stored)
+
+
+class TestBeforePackageHook(unittest.IsolatedAsyncioTestCase):
+    """The server loop awaits before_package ahead of on_package; a failure there is logged
+    and the packet is still handled."""
+
+    async def test_runs_before_on_package(self):
+        calls = []
+
+        class Ctx(CommonContext):
+            async def before_package(self, cmd, args):
+                await asyncio.sleep(0)
+                calls.append(("before", cmd))
+
+            def on_package(self, cmd, args):
+                calls.append(("on", cmd))
+
+        await process_server_cmd(Ctx(), {"cmd": "Unknown"})
+        self.assertEqual(calls, [("before", "Unknown"), ("on", "Unknown")])
+
+    async def test_failure_is_logged_and_the_packet_still_handled(self):
+        calls = []
+
+        class Ctx(CommonContext):
+            async def before_package(self, cmd, args):
+                raise RuntimeError("boom")
+
+            def on_package(self, cmd, args):
+                calls.append(cmd)
+
+        with self.assertLogs("Client", level="ERROR") as logs:
+            await process_server_cmd(Ctx(), {"cmd": "Unknown"})
+        self.assertEqual(calls, ["Unknown"])
+        self.assertIn("before_package failed", logs.output[0])

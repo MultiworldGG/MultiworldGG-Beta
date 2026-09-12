@@ -53,6 +53,15 @@ class FrontendProtocol(Protocol):
     def hide_loading(self) -> None: ...
     def is_on_console_screen(self) -> bool: ...
 
+    async def show_loading_status(self, message: str) -> None:
+        """Put the loading overlay up with `message` under the animation and return once a
+        frame has drawn it, so a blocking step announced this way is on screen before it
+        starts; `hide_loading` ends the sequence. The tracker narrates its Connected work
+        (yaml search, generation, map pack) through it. Feature-detected with getattr, so
+        frontends may omit it.
+        """
+        ...
+
     def show_error_dialog(self, title: str, message: str) -> Any:
         """Display a modal error to the user. Returns an opaque handle that
         can later be passed to `dismiss_error_dialog` to close the dialog
