@@ -336,7 +336,7 @@ def _download_and_install_win(asset: UpdateAsset, progress_callback: ProgressCal
     path = _download_update_asset(asset, ".exe", progress_callback)
     _verify_checksum(path, asset.checksum)
     subprocess.Popen(
-        [str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/RESTARTAPPLICATIONS", "/TASKS=deletelib"],
+        [str(path), "/SILENT", "/SUPPRESSMSGBOXES", "/TASKS=deletelib", "/relaunch=1"],
         shell=False,
     )
     os._exit(0)

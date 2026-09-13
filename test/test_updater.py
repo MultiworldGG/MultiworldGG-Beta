@@ -223,6 +223,15 @@ class TestUpdaterReleaseInfo(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "not newer"):
             Updater.download_and_install_update(release)
 
+    def test_windows_installer_requests_launcher_relaunch(self):
+        asset = Updater.UpdateAsset(WIN_INSTALLER, "https://example.invalid/win")
+        with patch.object(Updater, "_download_update_asset", return_value=Path("setup.exe")), \
+                patch.object(Updater.subprocess, "Popen") as popen, \
+                patch.object(Updater.os, "_exit") as exit_:
+            Updater._download_and_install_win(asset)
+        self.assertIn("/relaunch=1", popen.call_args.args[0])
+        exit_.assert_called_once_with(0)
+
     def test_appimage_helper_template_renders_script(self):
         script = Updater._render_helper_template(
             "appimage_update.sh.template",
