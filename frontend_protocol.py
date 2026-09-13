@@ -98,9 +98,17 @@ class FrontendProtocol(Protocol):
         """
         ...
 
+    def patch_client_type(self) -> str:
+        """The user's choice of client for a routed patch file when the command line
+        named none: "universal_tracker" attaches the tracker overlay to the game's
+        client, "text" launches it plain. Feature-detected with getattr; without it
+        (or on a falsy return) the patch launches plain.
+        """
+        ...
+
     def before_module_launch(self, module_name: str, **launch_kwargs) -> Any:
         """Notice that `module_name`'s client is about to launch with `launch_kwargs`
-        (`patch_file`, `server_address`, ...). May return an awaitable, which
+        (`patch_file`, `server_address`, `client_type`, ...). May return an awaitable, which
         `MultiWorld._route_module_when_ui_ready` awaits before launching so the
         frontend can put status on screen first. Feature-detected with getattr,
         so frontends may omit it.

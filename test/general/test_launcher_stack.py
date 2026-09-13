@@ -388,6 +388,23 @@ def test_resolve_route_routed_patch_stays_client(monkeypatch):
     assert os.environ["MWGG_GAME"] == "kh3"
 
 
+@pytest.mark.parametrize("client_type_argv, expected", [
+    (["--client-type", "universal_tracker"], "universal_tracker"),
+    (["--client-type", "text"], "text"),
+])
+def test_resolve_route_routed_patch_honors_explicit_client_type(client_type_argv, expected, monkeypatch):
+    """--client-type next to a patch file picks the tracker overlay for the
+    patch's client (universal_tracker) or launches it plain; the patch still
+    outranks the type for the route itself."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    args = _parsed_args(["seed.aplttp", *client_type_argv], patch_module="alttp",
+                        patch_file="C:\\seeds\\seed.aplttp")
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "alttp"
+    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.aplttp", "client_type": expected}
+
+
 def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
     """A launcher-role process (bare invocation) resolves no route and must
     not trip the guard or its warning."""
@@ -446,16 +463,19 @@ def _fake_frontend(ctx_server_address=None, with_dialog=True):
     return Frontend()
 
 
-def _routed_ready_callback(monkeypatch, app, **launch_kwargs):
-    """Route against `app` and return the ready_callback handed to
-    discover_and_launch_module."""
+def _routed_launch_kwargs(monkeypatch, app, **launch_kwargs):
+    """Route against `app` and return the kwargs handed to discover_and_launch_module."""
     import asyncio
     import frontend_protocol
     captured = {}
     monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
     monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
     asyncio.run(MultiWorld._route_module_when_ui_ready("albw", **launch_kwargs))
-    return captured["ready_callback"]
+    return captured
+
+
+def _routed_ready_callback(monkeypatch, app, **launch_kwargs):
+    return _routed_launch_kwargs(monkeypatch, app, **launch_kwargs)["ready_callback"]
 
 
 def test_route_ready_opens_connect_dialog_without_address(monkeypatch):
@@ -479,6 +499,94 @@ def test_route_ready_skips_connect_dialog_when_client_seeded_address(monkeypatch
     app = _fake_frontend(ctx_server_address="ws://localhost:38281")
     _routed_ready_callback(monkeypatch, app, client_type="game")()
     assert "open_connect_dialog" not in app.calls
+
+
+def _routed_patch_ready(monkeypatch, app, scenario):
+    """Route a patch launch against `app` and run `scenario(ready_callback)`
+    inside the same loop: the patch prompt is a loop timer."""
+    import asyncio
+    import frontend_protocol
+    monkeypatch.setattr(MultiWorld, "_PATCH_CONNECT_GRACE", 0.02)
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+
+    async def run():
+        await MultiWorld._route_module_when_ui_ready("alttp", patch_file="seed.aplttp")
+        await scenario(captured["ready_callback"])
+
+    asyncio.run(run())
+
+
+def test_route_patch_prompt_yields_to_metadata_seeded_address(monkeypatch):
+    """The SNI client seeds server_address from the patch metadata after the
+    ready callback; the prompt waits out the grace and finds it connecting."""
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        assert "open_connect_dialog" not in app.calls
+        app.ctx.server_address = "ws://localhost:38281"
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert app.calls[-1] == "hide_loading"
+
+
+def test_route_patch_prompt_yields_to_open_server_endpoint(monkeypatch):
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        app.ctx.server = object()
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert "open_connect_dialog" not in app.calls
+
+
+def test_route_patch_prompt_opens_when_nothing_connects(monkeypatch):
+    """A patch without a server in its metadata (local seed) still gets the dialog."""
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert app.calls[-1] == "open_connect_dialog"
+
+
+def test_route_patch_takes_client_type_from_frontend_preference(monkeypatch):
+    """A patch route leaves the client type open; the frontend's Settings
+    choice (patch_client_type) fills it so the tracker overlay attaches."""
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, patch_file="seed.aplttp")
+    assert kwargs["client_type"] == "universal_tracker"
+
+
+def test_route_patch_keeps_explicit_client_type_over_preference(monkeypatch):
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, patch_file="seed.aplttp", client_type="text")
+    assert kwargs["client_type"] == "text"
+
+
+def test_route_patch_without_preference_hook_leaves_client_type_open(monkeypatch):
+    """The TUI has no preference hook; _perform_module_launch's plain default applies."""
+    kwargs = _routed_launch_kwargs(monkeypatch, _fake_frontend(), patch_file="seed.aplttp")
+    assert "client_type" not in kwargs
+
+
+def test_route_preference_does_not_touch_direct_launches(monkeypatch):
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, client_type="game")
+    assert kwargs["client_type"] == "game"
 
 
 def test_route_ready_tolerates_frontend_without_dialog_hook(monkeypatch):
