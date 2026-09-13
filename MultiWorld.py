@@ -224,8 +224,9 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
     "universal_tracker" the standalone tracker (list "game" with it to instead
     attach the tracker overlay to the game's client), and "manual" the manual
     client (the selected manual game's module client when --game is given).
-    A routed patch file outranks all of it. "" is the game-agnostic client
-    sentinel (a valid route); None means no route.
+    A routed patch file outranks all of it (--client-type universal_tracker
+    still attaches the overlay to the patch's client). "" is the game-agnostic
+    client sentinel (a valid route); None means no route.
 
     Must run BEFORE InitContext is constructed: a client-role process with no
     resolvable route is re-assigned MWGG_ROLE="launcher" here, else it would
@@ -246,6 +247,11 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
             route_kwargs = {"patch_file": args.patch_file}
             if composed_address:
                 route_kwargs["server_address"] = composed_address
+            # An explicit --client-type decides the tracker overlay; otherwise
+            # the frontend's patch preference fills it in once the UI is up.
+            if client_types:
+                route_kwargs["client_type"] = ("universal_tracker" if "universal_tracker" in client_types
+                                               else "text")
         elif "text" in client_types:
             route_module = ""
             route_kwargs = {"server_address": composed_address,
@@ -306,6 +312,30 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
     return route_module, route_kwargs
 
 
+# Seconds a routed patch launch gets to seed its own server address (from the
+# file's metadata) before the connect dialog opens.
+_PATCH_CONNECT_GRACE = 2.0
+
+
+def _preferred_patch_client_type(app) -> "str | None":
+    """The frontend's Settings choice for a routed patch, "text" or
+    "universal_tracker"; None when the frontend has no preference hook."""
+    preference = getattr(app, "patch_client_type", None)
+    if not callable(preference):
+        return None
+    try:
+        return preference() or None
+    except Exception:
+        logging.getLogger("MultiWorld").exception("patch_client_type failed; launching the patch plain")
+        return None
+
+
+def _client_has_server(ctx) -> bool:
+    """The game context will connect on its own: an address seeded by --connect or
+    patch metadata (server_loop reads it), or an already open server endpoint."""
+    return bool(getattr(ctx, "server_address", None) or getattr(ctx, "server", None))
+
+
 async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
     """Launch a world module's client once the launcher frontend is up.
 
@@ -316,7 +346,13 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
 
     Without a launch-supplied server address the client must not connect on
     its own (a saved port is stale by the next room): once the client is up,
-    the frontend's connect dialog opens and the connect waits for its OK."""
+    the frontend's connect dialog opens and the connect waits for its OK. A
+    routed patch is the exception: its client may seed the address from the
+    file's metadata after the ready callback (the SNI client patches after
+    taking over the UI), so the dialog waits out _PATCH_CONNECT_GRACE and
+    stays closed for a client that connects on its own. A patch also takes
+    its client type (plain or tracker overlay) from the frontend's
+    patch_client_type preference unless --client-type named one."""
     from frontend_protocol import resolve_frontend_class
 
     logger = logging.getLogger("MultiWorld")
@@ -332,6 +368,11 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
     if app is None:
         logger.error(f"Frontend did not come up; cannot launch module {module_name}")
         return
+
+    if launch_kwargs.get("patch_file") and not launch_kwargs.get("client_type"):
+        preferred = _preferred_patch_client_type(app)
+        if preferred:
+            launch_kwargs["client_type"] = preferred
 
     pre_hook = getattr(app, "client_console_init", None)
     if callable(pre_hook):
@@ -352,6 +393,19 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
             logger.exception("before_module_launch failed; continuing module launch")
 
     prompt_for_server = not launch_kwargs.get("server_address")
+    prompt_delay = _PATCH_CONNECT_GRACE if launch_kwargs.get("patch_file") else 0
+
+    def prompt_unless_connected():
+        # app.ctx is the game context here (swapped in before the ready callback);
+        # a client that seeded its own address (patch metadata, --connect) keeps it.
+        if _client_has_server(app.ctx):
+            return
+        open_connect_dialog = getattr(app, "open_connect_dialog", None)
+        if callable(open_connect_dialog):
+            try:
+                open_connect_dialog()
+            except Exception:
+                logger.exception("Could not open the connect dialog after module launch")
 
     def ready_callback(*_cb_args):
         try:
@@ -366,15 +420,10 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
                 hide_loading()
         except Exception:
             logger.exception("Could not switch to the console screen after module launch")
-        # app.ctx is the game context here (swapped in before the ready callback);
-        # a client that seeded its own address (patch metadata, --connect) keeps it.
-        if prompt_for_server and not getattr(app.ctx, "server_address", None):
-            open_connect_dialog = getattr(app, "open_connect_dialog", None)
-            if callable(open_connect_dialog):
-                try:
-                    open_connect_dialog()
-                except Exception:
-                    logger.exception("Could not open the connect dialog after module launch")
+        if prompt_for_server and prompt_delay:
+            loop.call_later(prompt_delay, prompt_unless_connected)
+        elif prompt_for_server:
+            prompt_unless_connected()
 
     def error_callback(*_cb_args):
         logger.error(f"Failed to launch a client for module {module_name}")
