@@ -1075,6 +1075,69 @@ def test_check_for_updates_worlds_only_ignores_apworld_extracted_world():
         assert ModuleUpdate.check_for_updates(worlds_only=True) == []
 
 
+def test_check_for_updates_force_bypasses_igdb_throttle():
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb", return_value=True) as igdb, \
+            mock.patch.object(ModuleUpdate, "_get_game_index", return_value=None):
+        assert ModuleUpdate.check_for_updates(worlds_only=True, force=True) == []
+    igdb.assert_called_once_with(upgrade=True, force=True)
+
+
+# --------------------------------------------------------------------------- #
+# Utils._update_world_after_failed_launch / the deferred-launch failure path:
+# a failed world launch forces the index re-pull and restarts only when the
+# fresh index had a newer version of that world.
+# --------------------------------------------------------------------------- #
+def test_update_world_after_failed_launch_reinstalls_only_when_index_has_newer(monkeypatch):
+    installs = []
+    monkeypatch.setattr(ModuleUpdate, "check_for_updates",
+                        lambda worlds_only=False, force=False: ["worlds.albw"] if force else [])
+    monkeypatch.setattr(ModuleUpdate, "install_worlds",
+                        lambda worlds, **kw: installs.append(worlds) or ModuleUpdate.WorldInstallResult())
+
+    assert Utils._update_world_after_failed_launch("worlds.albw") is True
+    assert installs == [["worlds.albw"]]
+    assert Utils._update_world_after_failed_launch("worlds.other") is False
+    assert installs == [["worlds.albw"]]
+
+
+def test_update_world_after_failed_launch_false_when_install_fails(monkeypatch):
+    def _install(worlds, **kw):
+        result = ModuleUpdate.WorldInstallResult()
+        result.failed.extend(worlds)
+        return result
+
+    monkeypatch.setattr(ModuleUpdate, "check_for_updates", lambda **kw: ["worlds.albw"])
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", _install)
+    assert Utils._update_world_after_failed_launch("worlds.albw") is False
+
+    monkeypatch.setattr(ModuleUpdate, "check_for_updates", mock.Mock(side_effect=RuntimeError("offline")))
+    assert Utils._update_world_after_failed_launch("worlds.albw") is False
+
+
+def test_deferred_launch_failure_restarts_after_world_update(monkeypatch):
+    callbacks = []
+    monkeypatch.setattr(Utils.asyncio, "get_event_loop",
+                        lambda: types.SimpleNamespace(call_soon=callbacks.append))
+    restarted, errored = [], []
+    monkeypatch.setattr(Utils, "_restart_client_with_args", lambda: restarted.append(True))
+    monkeypatch.setattr(Utils, "_fire_pending_error_callback", lambda: errored.append(True))
+    monkeypatch.setattr(Utils, "_update_world_after_failed_launch", lambda module: module == "worlds.albw")
+
+    def _boom():
+        raise RuntimeError("The patch file was generated on a newer version of the apworld.")
+
+    Utils._defer_cli_launch(_boom, "worlds.albw", None, False, dep_install_module="worlds.albw")
+    [deferred] = callbacks
+    deferred()
+    assert restarted == [True] and errored == []
+
+    callbacks.clear()  # a relaunched client must surface the error instead of looping
+    Utils._defer_cli_launch(_boom, "worlds.albw", None, True, dep_install_module="worlds.albw")
+    [deferred] = callbacks
+    deferred()
+    assert restarted == [True] and errored == [True]
+
+
 def test_install_worlds_dep_broken_world_reinstalled_with_deps(hermetic_heal_store):
     dist = types.SimpleNamespace(version="1.0.0", requires=["missing-dep"])
     fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})

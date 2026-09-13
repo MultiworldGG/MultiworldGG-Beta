@@ -954,17 +954,17 @@ def _worlds_requiring_install(worlds: list[str], games: dict[str, dict[str, obje
             if _world_requires_install(_world_slug(world), games, installed_names, heal_attempts)]
 
 
-def check_for_updates(worlds_only: bool = False) -> List[str]:
+def check_for_updates(worlds_only: bool = False, force: bool = False) -> List[str]:
     """Return packages with newer versions (or, for worlds, missing deps) available.
 
-    For worlds: re-pull mwgg_igdb (throttled), then return installed worlds
+    For worlds: re-pull mwgg_igdb (once daily unless `force`), then return installed worlds
     that _world_requires_install flags — version behind the index tag or
     dependencies missing. Never-installed and apworld-extracted worlds (no
     dist) are not returned; they install on demand at launch.
     For non-world packages (dev only): query PyPI against requirements.txt entries.
     """
     if worlds_only:
-        install_mwgg_igdb(upgrade=True)
+        install_mwgg_igdb(upgrade=True, force=force)
         index = _get_game_index()
         if index is None:
             return []
