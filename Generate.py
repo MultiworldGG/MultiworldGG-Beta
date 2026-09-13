@@ -1091,6 +1091,23 @@ def dump_datapackage(modules: list[str]) -> int:
         return _y_emit({"ok": False, "error": f"{type(e).__name__}: {e}", "trace": traceback.format_exc()})
 
 
+def _console_is_interactive() -> bool:
+    """Both standard streams are terminals (a double-clicked exe or a shell run).
+    A launcher piping the output could never deliver the enter a prompt waits on."""
+    return all(stream is not None and stream.isatty() for stream in (sys.stdin, sys.stdout))
+
+
+def _report_generation_failure(exc: BaseException) -> None:
+    """Full traceback to the log file only: a FillError lists every placement, and
+    that much text written to a pipe deadlocks a launcher busy reading the other one."""
+    logging.exception("Generation failed", exc_info=exc, extra={"NoStream": True})
+    log_file = next((handler.baseFilename for handler in logging.getLogger().handlers
+                     if isinstance(handler, logging.FileHandler)), None)
+    summary = str(exc).splitlines()[0] if str(exc) else ""
+    where = f" (full traceback in {log_file})" if log_file else ""
+    logging.error(f"Generation failed: {type(exc).__name__}: {summary}{where}")
+
+
 if __name__ == '__main__':
     import atexit
     import sys
@@ -1102,14 +1119,19 @@ if __name__ == '__main__':
     if _EXPORT_DATAPACKAGE_MODE:
         sys.exit(dump_datapackage(mystery_argparse().export_datapackage))
 
-    confirmation = atexit.register(input, "Press enter to close.")
+    if _console_is_interactive():
+        atexit.register(input, "Press enter to close.")
     try:
         erargs, seed = main()
     except RuntimeError as e:
         logging.error(str(e))
         sys.exit(1)
     from Main import main as ERmain
-    multiworld = ERmain(erargs, seed)
+    try:
+        multiworld = ERmain(erargs, seed)
+    except Exception as e:
+        _report_generation_failure(e)
+        sys.exit(1)
     # if __debug__:
     #     import gc
     #     import sys
@@ -1120,4 +1142,4 @@ if __name__ == '__main__':
     #     assert not weak(), f"MultiWorld object was not de-allocated, it's referenced {sys.getrefcount(weak())} times." \
     #                        " This would be a memory leak."
     # in case of error-free exit should not need confirmation
-    atexit.unregister(confirmation)
+    atexit.unregister(input)
