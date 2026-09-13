@@ -3,6 +3,7 @@
 import importlib.util
 import io
 import json
+import logging
 import os
 import os.path
 import subprocess
@@ -643,3 +644,44 @@ class TestExitNeedsReloadConstantsMatch(unittest.TestCase):
             self.skipTest("mwgg_gui not available (unittests.yml CI does not install the GUI wheel)")
         self.assertEqual(Generate.EXIT_NEEDS_RELOAD, 10)
         self.assertEqual(gui_world_data._EXIT_NEEDS_RELOAD, Generate.EXIT_NEEDS_RELOAD)
+
+
+class _RecordingHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.records = []
+
+    def emit(self, record):
+        self.records.append(record)
+
+
+class TestGenerateFailureReporting(unittest.TestCase):
+    """The launcher pipes Generate's output: the "Press enter" prompt must stay off
+    and a FillError's placement dump must never reach the streams."""
+
+    def test_prompt_needs_both_streams_on_a_terminal(self):
+        tty = mock.Mock(isatty=mock.Mock(return_value=True))
+        pipe = mock.Mock(isatty=mock.Mock(return_value=False))
+        for stdin, stdout, expected in ((tty, tty, True), (tty, pipe, False), (pipe, tty, False), (None, tty, False)):
+            with mock.patch.object(sys, "stdin", stdin), mock.patch.object(sys, "stdout", stdout):
+                self.assertEqual(Generate._console_is_interactive(), expected)
+
+    def test_failure_report_keeps_the_placement_dump_off_the_stream(self):
+        from Fill import FillError
+        handler = _RecordingHandler()
+        root = logging.getLogger()
+        root.addHandler(handler)
+        try:
+            Generate._report_generation_failure(
+                FillError("No more spots to place 25 items.\nUnplaced items:\n" + "Sword (Player 1), " * 10_000))
+        finally:
+            root.removeHandler(handler)
+        with_traceback = [record for record in handler.records if record.exc_info]
+        self.assertEqual(len(with_traceback), 1)
+        self.assertTrue(with_traceback[0].NoStream)
+        summaries = [record for record in handler.records if not record.exc_info]
+        self.assertEqual(len(summaries), 1)
+        message = summaries[0].getMessage()
+        self.assertIn("FillError: No more spots to place 25 items.", message)
+        self.assertNotIn("Unplaced items", message)
+        self.assertLess(len(message), 500)
