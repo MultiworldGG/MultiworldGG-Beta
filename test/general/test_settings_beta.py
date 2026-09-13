@@ -16,11 +16,9 @@ from settings import Group, ServerOptions, Settings, _loaded_world_settings_name
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-class TestHostYamlBackslashRepair(unittest.TestCase):
-    """A hand-edited Windows path in double quotes ("C:\\Users\\...") is invalid
-    YAML; the loader re-reads such values literally instead of dropping the
-    whole config, and the dumper single-quotes backslash values so copied
-    styles stay literal."""
+class TestHostYamlBackslashes(unittest.TestCase):
+    """host.yaml backslashes load as forward slashes, so a hand-edited Windows path
+    in double quotes ("C:\\Users\\...") parses instead of dropping the whole config."""
 
     def _load(self, body: str) -> Settings:
         import tempfile
@@ -37,21 +35,13 @@ class TestHostYamlBackslashRepair(unittest.TestCase):
         # Windows path resolves to <cwd>/C:\... on POSIX; assert the stored literal.
         return vars(loaded.general_options)[key]
 
-    def test_unescaped_backslashes_read_literally(self) -> None:
+    def test_backslashes_read_as_forward_slashes(self) -> None:
         loaded = self._load('''
             general_options:
               output_path: "C:\\Users\\x\\new\\output"  # \\n and \\U alike
         ''')
-        self.assertEqual(self._stored(loaded, "output_path"), "C:\\Users\\x\\new\\output")
+        self.assertEqual(self._stored(loaded, "output_path"), "C:/Users/x/new/output")
         self.assertIsNotNone(loaded.filename)
-        self.assertTrue(loaded.changed)
-
-    def test_valid_escapes_untouched(self) -> None:
-        text = 'general_options:\n  output_path: "C:\\\\Users\\\\x"\n  player_files_path: "tab\\there"\n'
-        self.assertIsNone(settings._repair_unescaped_backslashes(text))
-        loaded = self._load(text)
-        self.assertEqual(self._stored(loaded, "output_path"), "C:\\Users\\x")
-        self.assertEqual(loaded.general_options.player_files_path, "tab\there")
 
     def test_other_errors_still_fall_back_to_defaults(self) -> None:
         with self.assertLogs(level="ERROR") as logs:
@@ -232,6 +222,17 @@ class _Tup(Tuple[int, ...]):
     """Bare tuple subclass so the annotation resolves to a real ``type``."""
 
 
+class TestPathEnvVarResolution(unittest.TestCase):
+    def test_env_var_path_is_not_rooted_under_user_path(self) -> None:
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"MWGG_TEST_HOME": tmp}):
+            opts = settings.GeneratorOptions()
+            opts.player_files_path = settings.GeneratorOptions.PlayerFilesPath("${MWGG_TEST_HOME}/multi_yaml")
+            self.assertEqual(os.path.normcase(opts.player_files_path),
+                             os.path.normcase(os.path.join(tmp, "multi_yaml")))
+
+
 class TestFilePathDefaultAccess(unittest.TestCase):
     def test_unset_file_path_resolves_to_directory_without_validation(self) -> None:
         class G(Group):
@@ -401,15 +402,18 @@ class TestSettingsSaveMerge(unittest.TestCase):
             self.assertEqual(f.read(), broken)
         self.assertFalse(os.path.exists(self.path + ".tmp"))
 
-    def test_repaired_backslash_file_is_rewritten_quoted(self) -> None:
-        with open(self.path, "w", encoding="utf-8") as f:
-            f.write('general_options:\n  output_path: "C:\\Users\\x\\out"\n')
+    def test_backslash_file_is_rewritten_with_forward_slashes(self) -> None:
+        full = Settings(None)
+        full.general_options.output_path = "C:\\Users\\x\\out"
+        full.save(self.path)
         s = Settings(self.path)
         self.assertTrue(s.changed)
         s.save()
         with open(self.path, encoding="utf-8") as f:
-            self.assertIn("output_path: 'C:\\Users\\x\\out'", f.read())
-        self.assertEqual(vars(Settings(self.path).general_options)["output_path"], "C:\\Users\\x\\out")
+            text = f.read()
+        self.assertNotIn("\\", text)
+        self.assertIn('output_path: "C:/Users/x/out"', text)
+        self.assertFalse(Settings(self.path).changed)
 
 
 class TestServerPasswordAlias(unittest.TestCase):
