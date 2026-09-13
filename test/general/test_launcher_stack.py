@@ -1915,6 +1915,16 @@ def test_inno_post_install_writes_variant_marker():
     assert "GetSelectedVariantToken" in text
 
 
+def test_inno_updater_relaunch_runs_launcher_as_original_user():
+    text = _read_inno_text()
+    entry = next(line for line in text.splitlines()
+                 if "Check: IsUpdaterRelaunch" in line and not line.lstrip().startswith(";"))
+    assert 'Filename: "{app}\\{#MyAppExeName}"' in entry
+    assert "runasoriginaluser" in entry
+    assert "skipifnotsilent" in entry
+    assert "{param:relaunch|0}" in text
+
+
 # --------------------------------------------------------------------------- #
 # tools/regen_inno_components.py wheel_downloads rendering: --from-json
 # fixtures so these don't touch the network.

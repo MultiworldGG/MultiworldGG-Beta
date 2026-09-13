@@ -501,9 +501,9 @@ Name: "{commondesktop}\{#MyAppName} Launcher"; Filename: "{app}\MultiworldGGLaun
 Filename: "winget"; Parameters: "install --id=astral-sh.uv -e --accept-source-agreements --accept-package-agreements"; Check: IsUvNeededViaWinget; StatusMsg: "Installing uv via winget..."; Flags: runhidden
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy ByPass -Command ""irm https://astral.sh/uv/install.ps1 | iex"""; Check: IsUvNeededViaPwsh; StatusMsg: "Installing uv via astral installer..."; Flags: runhidden
 
-; Filename: "{app}\MultiworldGG"; Description: "{cm:LaunchProgram,{#StringChange('Launcher', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-; Silent install from updater auto starts the launcher again
-; Filename: "{app}\MultiworldGG"; StatusMsg: "MultiworldGG ... done"; Flags: nowait skipifnotsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; Updater relaunch (/relaunch=1). Without runasoriginaluser a non-postinstall entry runs elevated.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait runasoriginaluser skipifnotsilent; Check: IsUpdaterRelaunch
 
 
 [UninstallDelete]
@@ -922,6 +922,11 @@ end;
 function ShouldShowDeleteLibTask: Boolean;
 begin
   Result := DirExists(ExpandConstant('{app}\lib'));
+end;
+
+function IsUpdaterRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
 end;
 
 function IsUvInstalled: Boolean;
