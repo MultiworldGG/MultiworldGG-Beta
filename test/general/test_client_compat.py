@@ -13,7 +13,7 @@ import websockets
 
 from websockets.asyncio.client import ClientConnection
 from websockets.asyncio.connection import Connection
-from websockets.frames import Close
+from websockets.frames import Close, CloseCode
 from websockets.protocol import State
 
 import ClientBuilder
@@ -361,9 +361,26 @@ def _closing_socket(exc: BaseException):
     return Socket()
 
 
+def _closed_socket(code: int, reason: str = ""):
+    """Stands in for a websocket the server closed cleanly: iteration ends without raising
+    and the close frame is left on the socket, as websockets does for 1000/1001."""
+    class Socket:
+        close_code = code
+        close_reason = reason
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise StopAsyncIteration
+
+    return Socket()
+
+
 class TestServerLoopReconnect(unittest.TestCase):
     """Auto-reconnect only chases a server that went away unexpectedly: never after a
-    fresh connect fails, never after the server said GOING_AWAY."""
+    fresh connect fails, never after the server said GOING_AWAY, and never once a
+    reconnect is refused."""
 
     def _run(self, ctx, connect, reconnect_attempt: bool = False) -> None:
         with mock.patch.object(CommonClient.websockets, "connect", connect):
@@ -374,9 +391,19 @@ class TestServerLoopReconnect(unittest.TestCase):
         raise ConnectionRefusedError()
 
     @staticmethod
+    async def _timed_out(address, **kwargs):
+        raise asyncio.TimeoutError()
+
+    @staticmethod
     def _closed_by(exc):
         async def connect(address, **kwargs):
             return _closing_socket(exc)
+        return connect
+
+    @staticmethod
+    def _closed_with(code, reason=""):
+        async def connect(address, **kwargs):
+            return _closed_socket(code, reason)
         return connect
 
     def test_wss_retry_schedules_one_reconnect(self):
@@ -386,7 +413,7 @@ class TestServerLoopReconnect(unittest.TestCase):
             attempts.append(address)
             if address.startswith("ws://"):
                 raise websockets.InvalidMessage("not a websocket upgrade")
-            raise ConnectionRefusedError()
+            raise asyncio.TimeoutError()
 
         ctx = _loop_ctx()
         self._run(ctx, connect, reconnect_attempt=True)
@@ -397,7 +424,7 @@ class TestServerLoopReconnect(unittest.TestCase):
 
     def test_no_reconnect_after_exit_event(self):
         ctx = _loop_ctx(exit_set=True)
-        self._run(ctx, self._refused, reconnect_attempt=True)
+        self._run(ctx, self._timed_out, reconnect_attempt=True)
         self.assertEqual(ctx.closed, 1)
         self.assertIsNone(ctx.autoreconnect_task)
 
@@ -409,6 +436,21 @@ class TestServerLoopReconnect(unittest.TestCase):
         self.assertIsNone(ctx.autoreconnect_task)
         self.assertTrue(any("/connect" in line for line in logs.output), logs.output)
 
+    def test_refused_reconnect_stops_retrying(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._refused, reconnect_attempt=True)
+        self.assertEqual(ctx.closed, 1)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("/connect" in line for line in logs.output), logs.output)
+
+    def test_transient_reconnect_failure_keeps_retrying(self):
+        ctx = _loop_ctx()
+        self._run(ctx, self._timed_out, reconnect_attempt=True)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+
     def test_unexpected_close_reconnects(self):
         ctx = _loop_ctx()
         self._run(ctx, self._closed_by(websockets.ConnectionClosedError(None, None)))
@@ -416,22 +458,35 @@ class TestServerLoopReconnect(unittest.TestCase):
         self.assertIsNotNone(ctx.autoreconnect_task)
 
     def test_server_going_away_does_not_reconnect(self):
-        close = Close(1001, "Shutting down due to inactivity")
         ctx = _loop_ctx()
         with self.assertLogs(CommonClient.logger, "INFO") as logs:
-            self._run(ctx, self._closed_by(websockets.ConnectionClosedOK(close, close, True)))
+            self._run(ctx, self._closed_with(CloseCode.GOING_AWAY, "Shutting down due to inactivity"))
         self.assertEqual(ctx.closed, 1)
         self.assertIsNone(ctx.autoreconnect_task)
         self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
         self.assertFalse(any("/me/rooms" in line for line in logs.output), logs.output)
 
+    def test_going_away_without_close_handshake_does_not_reconnect(self):
+        close = Close(CloseCode.GOING_AWAY, "Shutting down due to inactivity")
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_by(websockets.ConnectionClosedError(close, None)))
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
+
+    def test_clean_close_without_going_away_reconnects(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_with(CloseCode.NORMAL_CLOSURE))
+        self.assertIsNotNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Server closed the connection" in line for line in logs.output), logs.output)
+
     def test_webhost_going_away_points_at_the_rooms_page(self):
-        close = Close(1001, "Shutting down due to inactivity")
         ctx = _loop_ctx()
         ctx.server_tags = ["AP", "WebHost"]
         ctx.hostname = "mw.example.com"
         with self.assertLogs(CommonClient.logger, "INFO") as logs:
-            self._run(ctx, self._closed_by(websockets.ConnectionClosedOK(close, close, True)))
+            self._run(ctx, self._closed_with(CloseCode.GOING_AWAY, "Shutting down due to inactivity"))
         self.assertIsNone(ctx.autoreconnect_task)
         self.assertTrue(any(
             "Please resume the multiworld room at https://mw.example.com/me/rooms before typing /connect to reconnect"
