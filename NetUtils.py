@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import typing
 import enum
+import re
 import warnings
 from json import JSONEncoder, JSONDecoder
 
@@ -485,10 +486,14 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
         '''This returns only the text, without any color formatting for the plaintext map'''
         return node.get("text", "")
 
-def bbcode_gradient(start_color: str, end_color: str, text: str) -> str:
-    """Wrap each character of `text` in BBCode [color] tags, blending from start_color to end_color.
+_GRADIENT_TOKEN = re.compile(r"&(?:bl|br|amp);|.", re.DOTALL)
 
-    Whitespace is passed through untouched since it has nothing visible to color.
+
+def bbcode_gradient(start_color: str, end_color: str, text: str) -> str:
+    """Wrap each glyph of `text` in BBCode [color] tags, blending from start_color to end_color.
+
+    Whitespace is passed through untouched since it has nothing visible to color. Kivy escape
+    entities (&bl; &br; &amp;) stay whole: the markup parser only unescapes within one text run.
     """
     def parse(color: str) -> tuple[int, int, int]:
         return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4))
@@ -496,20 +501,21 @@ def bbcode_gradient(start_color: str, end_color: str, text: str) -> str:
     r1, g1, b1 = parse(start_color)
     r2, g2, b2 = parse(end_color)
 
-    visible = sum(1 for ch in text if not ch.isspace())
+    tokens = _GRADIENT_TOKEN.findall(text)
+    visible = sum(1 for tok in tokens if not tok.isspace())
     steps = max(visible - 1, 1)
 
     out = []
     i = 0
-    for ch in text:
-        if ch.isspace():
-            out.append(ch)
+    for tok in tokens:
+        if tok.isspace():
+            out.append(tok)
             continue
         t = i / steps
         r = round(r1 + (r2 - r1) * t)
         g = round(g1 + (g2 - g1) * t)
         b = round(b1 + (b2 - b1) * t)
-        out.append(f"[color={r:02x}{g:02x}{b:02x}]{ch}[/color]")
+        out.append(f"[color={r:02x}{g:02x}{b:02x}]{tok}[/color]")
         i += 1
     return "".join(out)
 
