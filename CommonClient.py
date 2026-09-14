@@ -1487,6 +1487,13 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
     def reconnect_hint() -> str:
         return ", type /connect to reconnect" if ctx.server_address else ""
 
+    def log_server_shutdown(reason: typing.Optional[str]) -> None:
+        shutdown = f"Server shut down: {reason or 'no reason given'}"
+        if "WebHost" in ctx.server_tags:
+            shutdown += (f". Please resume the multiworld room at https://{ctx.hostname}/me/rooms"
+                         " before typing /connect to reconnect")
+        logger.info(shutdown)
+
     username = f" with username {urllib.parse.urlparse(address).username}" if urllib.parse.urlparse(address).username else ""
     hostname = urllib.parse.urlparse(address).hostname
     port = str(urllib.parse.urlparse(address).port)
@@ -1495,8 +1502,9 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
     # the connection and schedule a reconnect, or the outer finally double-schedules.
     delegated = False
     # Auto-reconnect only chases a server that went away unexpectedly: a fresh connect that
-    # fails is a wrong address until the user says otherwise, and a server that sent
-    # GOING_AWAY shut down on purpose and will not come back on its own.
+    # fails is a wrong address until the user says otherwise, a server that sent GOING_AWAY
+    # shut down on purpose, and a refused connect has nothing listening until the room is
+    # reopened. None of those come back on their own.
     connected = False
     retry = reconnect_attempt
     try:
@@ -1513,17 +1521,20 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
             async for data in ctx.server.socket:
                 for msg in decode(data):
                     await process_server_cmd(ctx, msg)
+            # A clean close (1000/1001) ends the iteration without raising; the close frame
+            # is still on the socket. Only a failed close handshake reaches the except below.
+            if socket.close_code == CloseCode.GOING_AWAY:
+                retry = False
+                log_server_shutdown(socket.close_reason)
+            else:
+                logger.info(f"Server closed the connection: {socket.close_code} {socket.close_reason or ''}".rstrip())
         except asyncio.CancelledError:
             logger.info("Server loop cancelled during shutdown")
             raise
         except websockets.ConnectionClosed as e:
             if e.rcvd is not None and e.rcvd.code == CloseCode.GOING_AWAY:
                 retry = False
-                shutdown = f"Server shut down: {e.rcvd.reason or 'no reason given'}"
-                if "WebHost" in ctx.server_tags:
-                    shutdown += (f". Please resume the multiworld room at https://{ctx.hostname}/me/rooms"
-                                 " before typing /connect to reconnect")
-                logger.info(shutdown)
+                log_server_shutdown(e.rcvd.reason)
             else:
                 # Server dropped mid-session. Not a bug - no traceback.
                 logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
@@ -1545,6 +1556,7 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, 
             ctx.handle_connection_loss(f"Lost connection to the multiworld server due to InvalidMessage"
                                        f"{reconnect_hint()}")
     except ConnectionRefusedError:
+        retry = False
         ctx.handle_connection_loss("Server refused the connection. Verify that you have the correct address/port "
                                    "and that the room has been reopened if previously closed due to inactivity.")
     except websockets.InvalidURI:
