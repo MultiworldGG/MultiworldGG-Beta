@@ -7,6 +7,7 @@ delegating to _handle_color, while player_id/player_name and raw "color" nodes
 reach it unescaped (pinned below, see the note in NetUtils). hex_colormap values
 keep their leading '#'; TEXT_COLORS values are bare hex.
 """
+import re
 import unittest
 
 import pytest
@@ -67,6 +68,15 @@ class RefEmissionTest(_ParserTestBase):
                 out = self.parser([{"type": "item_name", "text": "Master Sword", "flags": flags}])
                 self.assertIn("[ref=0|Item Class: ", out)
                 self.assertNotIn("\n", out)
+
+    def test_gradient_keeps_escape_entities_whole(self) -> None:
+        # Kivy only unescapes &bl;/&br;/&amp; inside one text run, so a split entity renders literally.
+        out = self.parser([{"type": "item_name", "text": "The Grid [Sora] & Co", "flags": 0b00011}])
+        chunks = re.findall(r"\[color=[0-9a-f]{6}\]([^\[]*)\[/color\]", out)
+        self.assertGreater(len(chunks), 1, out)
+        self.assertNotIn("&", chunks, out)
+        for entity in ("&bl;", "&br;", "&amp;"):
+            self.assertIn(entity, chunks, out)
 
     def test_player_id_ref_carries_game_type_and_escaped_members(self) -> None:
         out = self.parser([{"type": "player_id", "text": "2"}])

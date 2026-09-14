@@ -1,11 +1,21 @@
+import json
+import os
+import subprocess
+import sys
+import textwrap
+import threading
 import unittest
 
+import Patch
 from worlds.AutoWorld import AutoWorldRegister
 from worlds.Files import (
     APAutoPatchInterface,
     AutoPatchRegister,
     ImproperlyConfiguredAutoPatchError,
 )
+
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_STUB_DIR = os.path.join(_REPO_ROOT, "test", "_stubs")
 
 
 class _RegistryGuard:
@@ -183,6 +193,52 @@ class TestPatches(unittest.TestCase):
                         pass
 
             self.assertIn("file extension", str(ctx.exception))
+
+
+class TestCreateRomFile(unittest.TestCase):
+    def test_patch_runs_inline_without_a_running_loop(self) -> None:
+        with _RegistryGuard():
+            calls: list[tuple[str, int]] = []
+
+            class _ProbePatch(APAutoPatchInterface):
+                game = "Offload Probe Game"
+                patch_file_ending = ".offloadprobe"
+                result_file_ending = ".out"
+
+                def patch(self, target: str) -> None:
+                    calls.append((target, threading.get_ident()))
+
+            meta, target = Patch.create_rom_file("seed.offloadprobe")
+
+        self.assertEqual(target, "seed.out")
+        self.assertEqual(calls, [("seed.out", threading.get_ident())])
+        self.assertEqual(meta, {"server": "", "player": None, "player_name": ""})
+
+    def test_running_loop_keeps_pumping_while_patch_runs(self) -> None:
+        # nest_asyncio patches asyncio process-wide, so the running-loop path is exercised in a child.
+        script = textwrap.dedent("""
+            import asyncio, json, threading
+            import nest_asyncio
+            import Patch
+
+            async def scenario():
+                loop = asyncio.get_running_loop()
+                released = threading.Event()
+                loop.call_soon(released.set)
+                pumped, worker = Patch._run_off_loop(lambda: (released.wait(5), threading.get_ident()))
+                print(json.dumps({"pumped": pumped, "worker": worker, "main": threading.get_ident()}))
+
+            loop = asyncio.new_event_loop()
+            nest_asyncio.apply(loop)
+            loop.run_until_complete(scenario())
+        """)
+        env = {**os.environ, "PYTHONPATH": os.pathsep.join([_STUB_DIR, _REPO_ROOT])}
+        proc = subprocess.run([sys.executable, "-c", script], cwd=_REPO_ROOT, env=env,
+                              capture_output=True, text=True, timeout=120, check=False)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        result = json.loads(proc.stdout.strip().splitlines()[-1])
+        self.assertTrue(result["pumped"], "loop callback never ran while the patch blocked")
+        self.assertNotEqual(result["worker"], result["main"])
 
 
 if __name__ == "__main__":
