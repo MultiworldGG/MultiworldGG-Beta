@@ -1,0 +1,3239 @@
+{
+  "2048": {
+    "components": [
+      {
+        "name": "2048 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a100d08babd7b068f4c7a3a5faf3da103f9ef4c117b974783d048d7dfc7c7b48",
+    "source": "archipelago.json",
+    "uploaded_sha256": "bf5f71614f8697bf3ad3f4d5fbdbc0b9be97ddfa18d51c7bde81cff81ee1ac31",
+    "wheel_filename": "worlds_2048-1.1.2-py3-none-any.whl",
+    "world_version": "1.1.2"
+  },
+  "adventure": {
+    "components": [
+      {
+        "name": "Adventure Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "260e8aab1c23bcc789a417db331f862b863d9177682ede047ed59cd55a8334df",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_adventure-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "against_the_storm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "78a592e4c948ef2d486ee02f7c0fab8bc432f5b9c27148d21d6260d37e157fc6",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1a8074c6f695f1705d807f44479c674c2e61cf5c481332f913070edaa1a7e52d",
+    "wheel_filename": "worlds_against_the_storm-1.2.1-py3-none-any.whl",
+    "world_version": "1.2.1"
+  },
+  "ahit": {
+    "components": [
+      {
+        "name": "A Hat in Time Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "aa22249ef83ef59b774d9029358e7c079725af7ecc517442b4d6069f97f47c2e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ahit-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "albw": {
+    "components": [
+      {
+        "name": "A Link Between Worlds Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "df31b6efd562b2a90fedf280b8da538ec5b5924500302f1232a12fb36b7c0f70",
+    "source": "archipelago.json",
+    "uploaded_sha256": "96ce32a31a6c351462432726ecfc5bec58e1754b939dbed364efe3734a0941c2",
+    "wheel_filename": "worlds_albw-0.3.6-py3-none-any.whl",
+    "world_version": "0.3.6"
+  },
+  "alttp": {
+    "components": [
+      {
+        "description": "Customize your ALttPR experience with sprites, color palettes, and more",
+        "name": "LttP Adjuster",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [
+      "maseya-z3pr==1.0.0rc1",
+      "xxtea==3.7.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "462a3e5a5017aa62fc1d3f559d1557993442e9b554117f95c2983d6cb47a9b3e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "462a3e5a5017aa62fc1d3f559d1557993442e9b554117f95c2983d6cb47a9b3e",
+    "wheel_filename": "worlds_alttp-5.1.0-py3-none-any.whl",
+    "world_version": "5.1.0"
+  },
+  "alttpr": {
+    "components": null,
+    "dependencies": [
+      "python-bps-continued",
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0fa12f2e9b5b27c03d02fa204fcaf68cd684a1d88315bad1188fc447f18e980e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "0fa12f2e9b5b27c03d02fa204fcaf68cd684a1d88315bad1188fc447f18e980e",
+    "wheel_filename": "worlds_alttpr-1.5.0-py3-none-any.whl",
+    "world_version": "1.5.0"
+  },
+  "am2r": {
+    "components": [
+      {
+        "name": "AM2R Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7dc99740c5c59ed5c387fdf94e6fef5326cc00eaaa911dba0e39136c00950cfb",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7dc99740c5c59ed5c387fdf94e6fef5326cc00eaaa911dba0e39136c00950cfb",
+    "wheel_filename": "worlds_am2r-1.4.6-py3-none-any.whl",
+    "world_version": "1.4.6"
+  },
+  "animal_well": {
+    "components": [
+      {
+        "name": "ANIMAL WELL Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pymem>=1.13.1",
+      "pywin32>=306; sys_platform == \"win32\""
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b0cc3778221eadcf460011ac90ca8875eb12168ac5172390193b4c74ced39845",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b0cc3778221eadcf460011ac90ca8875eb12168ac5172390193b4c74ced39845",
+    "wheel_filename": "worlds_animal_well-0.5.3-py3-none-any.whl",
+    "world_version": "0.5.3"
+  },
+  "apeescape": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "327b515685c43e700edf79065f98616b6f6ff5e472598ae2e2a9fea2009103d2",
+    "source": "archipelago.json",
+    "uploaded_sha256": "db3ff88a817b6f2c06d3bae5a9056efffa9cd7fcfd10ba4e8f486837ef7e8aec",
+    "wheel_filename": "worlds_apeescape-0.9.10-py3-none-any.whl",
+    "world_version": "0.9.10"
+  },
+  "apgo": {
+    "components": null,
+    "dependencies": [
+      "attrs"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "97055a66288861448797a4006a618ccad1324b843ffc36fe3127482ec614fcce",
+    "source": "archipelago.json",
+    "uploaded_sha256": "828ca3c1a24f5587dc5c8581fce9de2601cbc3c7725757dc915af7e2015e5477",
+    "wheel_filename": "worlds_apgo-0.7.0-py3-none-any.whl",
+    "world_version": "0.7.0"
+  },
+  "apquest": {
+    "components": [
+      {
+        "name": "APQuest Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "pynput"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b16d37bc49b9713be2722cce754826ab4b1627c020e119ba4c51993d69bd9be0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "9848d003a72ba5f2c3bb38beba3531acf795acd0c4aca8d602270e5e6b7aaa1c",
+    "wheel_filename": "worlds_apquest-2.0.0-py3-none-any.whl",
+    "world_version": "2.0.0"
+  },
+  "apsudoku": {
+    "_skipped": true,
+    "reason": "no source dir"
+  },
+  "aquaria": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6655d91f4dff4178ea2c36322611f866d6b7fa0eb0dc7302ee08741d11f214cd",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4a7d63215005d068220e72eb4478cdeed68a470a996be08ced03af3e12149995",
+    "wheel_filename": "worlds_aquaria-1.5.2-py3-none-any.whl",
+    "world_version": "1.5.2"
+  },
+  "archipelaballs": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "dc0c99114dd29e3136ff6aee10a12fce50082d04d7007297e3d4c5270bcb2bf7",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_archipelaballs-1.0.1-py3-none-any.whl",
+    "world_version": "1.0.1"
+  },
+  "archipidle": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "1626cdf2b6f2aeb69673b664cb45fb5e92487cf4a0daa90ddad3594e1e0834ac",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_archipidle-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "aus": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "17e74065bb102c2a93101ebe6341a90fa3b067f834eec5f6adcaa1d327b7c500",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_aus-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "balatro": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5e979a723c39bc63dd718d4ac4f5d9d7c51450aa6e108606f547a6d98c6eed9f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_balatro-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "banjo_tooie": {
+    "components": [
+      {
+        "name": "Banjo-Tooie Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "emu-loader @ git+https://github.com/Killklli/EmuLoader@v0.1.4"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "63968a249919449aba023c10271a0fdbe98a4cd548a24b365ec7b22f8f188c0e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "63968a249919449aba023c10271a0fdbe98a4cd548a24b365ec7b22f8f188c0e",
+    "wheel_filename": "worlds_banjo_tooie-4.13.1-py3-none-any.whl",
+    "world_version": "4.13.1"
+  },
+  "bfbb": {
+    "components": [
+      {
+        "name": "Battle for Bikini Bottom Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "pythonnet>=3.0.4",
+      "cffi>=1.17",
+      "pycparser>=2.21"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3ac7649666bb2793b2e581ce3f7a363b1b64486eaafa2a5e370511d3d5c7b064",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2e0545cb5e3896f237be014694d2ae41646875192211b2bae48cf4f22f3cd1a1",
+    "wheel_filename": "worlds_bfbb-1.2.5-py3-none-any.whl",
+    "world_version": "1.2.5"
+  },
+  "bksim": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f5c3d15a31a5435b627a5639c011578fe0800a6981ba2a195bbacd012aef88ea",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b33611c7acc81e35347ed9b11c4c40dc2f54fa7cf952b63836def08f6eb5b306",
+    "wheel_filename": "worlds_bksim-1.0.2-py3-none-any.whl",
+    "world_version": "1.0.2"
+  },
+  "blasphemous": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "07b702bc913a84b6f2a694783d3e21feb5104684779b5782c4e41dee65ced171",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_blasphemous-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "bomb_rush_cyberfunk": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e855b61e1b10b406719411c6cff7f1e234dbc862f3df3307e9038959a5c91f85",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1c331a94f93c0255edeba17ffdf64ab657daaedd33e298f64cb7aba78cdfed6a",
+    "wheel_filename": "worlds_bomb_rush_cyberfunk-1.0.6-py3-none-any.whl",
+    "world_version": "1.0.6"
+  },
+  "brotato": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "68fb6749f86e3a378c6e1908c227c7f1a7da4ea39665f452522576f23175a2c1",
+    "source": "archipelago.json",
+    "uploaded_sha256": "e424ca49cb171d609ceadc0cface303f68cd3e58728af58eac01efef4a96adbe",
+    "wheel_filename": "worlds_brotato-0.15.0-py3-none-any.whl",
+    "world_version": "0.15.0"
+  },
+  "bumpstik": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a5b268e6286491b2ada941085c9a587a2ab6085c538dbf89b7a107bad1e3b596",
+    "source": "archipelago.json",
+    "uploaded_sha256": "6190e0d639df78993ffd45e1c0cb818ef8519efa17308ad016dcac953711d55c",
+    "wheel_filename": "worlds_bumpstik-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "candybox2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "380a4baa9b28ab8bb4bac5e34f6b66dca38bbdf28390896a6c0f3b90a39c41a7",
+    "source": "archipelago.json",
+    "uploaded_sha256": "c6488227cd957dbd004657b039d12ab9d3cdb487f782c901d55006d05c242324",
+    "wheel_filename": "worlds_candybox2-1.20260822.1-py3-none-any.whl",
+    "world_version": "1.20260822.1"
+  },
+  "cat_quest": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5827dcbf63f5830b610707c76dd733dcd7b05ece756211a240cc2693a6ad51a8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4352408c6294bcec966e42014cc070f6771834892e9e994e27c2ae829b9cec1c",
+    "wheel_filename": "worlds_cat_quest-0.3.0-py3-none-any.whl",
+    "world_version": "0.3.0"
+  },
+  "cccharles": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0f74f4d01ec8060f21420f43207acff1a5168e2c055c7da1b5477da7c9f441dd",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_cccharles-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "celeste": {
+    "components": null,
+    "dependencies": [
+      "pandas>=2.0.3",
+      "openpyxl>=3.1.2"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8c49f3bbf5c04345a16565a953588fc4e7bcf94529849f52704e1d77678846dd",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_celeste-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "celeste64": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "cf9c7a9b1cab81741133ef0554c3603302f5a14738bd6fb652dc920f7ec1927c",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_celeste64-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "celeste_open_world": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c16d82afc8c43bc68ee7661b7726507afd58ccc6b647248426d36c8b46e880d4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_celeste_open_world-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "chainedechoes": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "676f7fd98b8b387826b89a9ca4c8fb65a6b72e103dee3c8c4e347ddca7d35ee3",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_chainedechoes-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "chatipelago": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "986c200054db0afea1a3c5c953a6140f5602d9736a4649a2481036da832bded6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_chatipelago-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "checksfinder": {
+    "components": [
+      {
+        "name": "ChecksFinder Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "104382567168d005c3c084f3ab4c93ae0fa566faee7b5d502060804b2400d711",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_checksfinder-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "civ_6": {
+    "components": [
+      {
+        "name": "Civ6 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b10aa45db1fb65462049183e22badd21564938b71afc55ceed012e38f024621d",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_civ_6-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "clique": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0731f74ce41299b510f072fe85394c30628cbce72b9b533e07c61583ae67b49d",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_clique-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "crosscode": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "71dc707637d7bf345ac37e1a281066828e2e60ce5cff98c85a89e050f8b0239f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "0c6f7a021dd74af54bba523ba2ff8032082a33c183b75f67c3c81e64aba2625d",
+    "wheel_filename": "worlds_crosscode-0.9.7-py3-none-any.whl",
+    "world_version": "0.9.7"
+  },
+  "crystal_project": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3263f022ba96b15fbd7dcd822601a562800dcca2a0096dd86a94e347c775644f",
+    "source": "archipelago.json",
+    "uploaded_sha256": "a09afe436407e26448fe2d663bde358129906b4bab34cd338b032a14515d399f",
+    "wheel_filename": "worlds_crystal_project-0.18.0-py3-none-any.whl",
+    "world_version": "0.18.0"
+  },
+  "ctjot": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a01b032edffc6518a46e7ffa44c43d4e57f06176bf862487492d7eca65d7f77e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ctjot-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "cuphead": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5229337f45a9af55080d29f5908a9a73fa06d22f84839d82f286363bb8c5ffdb",
+    "source": "archipelago.json",
+    "uploaded_sha256": "d5efb9a60dbb53aba29eb06bb700c126ca08daba97efc36d249b7f8037a8a773",
+    "wheel_filename": "worlds_cuphead-0.2.20021010-py3-none-any.whl",
+    "world_version": "0.2.20021010"
+  },
+  "cv64": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7c7c3adb972f8d25150b5aa5273a9ef86d9e1c138aff99ab3095d8fc6e3a88f6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_cv64-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "cv_dos": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6a91078ef0e419d854cbe2743daec9b58ddfd57593ea124a04a04fa074c1891c",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4608e758b9b7cf8c6df875dd3acd76dcfa4973a735a41866d62ba4822d9e9f8e",
+    "wheel_filename": "worlds_cv_dos-2.0.0-py3-none-any.whl",
+    "world_version": "2.0.0"
+  },
+  "cvcotm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6d619c9d42e34fce7ea005e49510ce0f5ee2322c8f6e1c5cab2ab974021b9fe7",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_cvcotm-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "dark_souls_2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d4a596b9887b5654c9a36dd45fdcb8282d1776a7b40f43ec38e0cfac5c54db45",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_dark_souls_2-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "dark_souls_3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c6ab56bf49063e5745cd2339eae9a3acbb87c3a7fb5242db34471b0fa50cde0c",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_dark_souls_3-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "deltarune": {
+    "components": [
+      {
+        "name": "DELTARUNE Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b955db912be42ead4c4200a8abb1b792f8e7342cbaebc4eb72f138de73e806f1",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_deltarune-2.2.1-py3-none-any.whl",
+    "world_version": "2.2.1"
+  },
+  "diddy_kong_racing": {
+    "components": [
+      {
+        "name": "Diddy Kong Racing Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3e45fae86c4dfdac24530a046ebc7dcaaac110794ae481159fb3885c8ac6fad0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1d241edf355fd8f2ca88c71f809e45eb1ccdab7554f4f53121d57c543d2d71c1",
+    "wheel_filename": "worlds_diddy_kong_racing-1.1.4-py3-none-any.whl",
+    "world_version": "1.1.4"
+  },
+  "dk64": {
+    "components": [
+      {
+        "name": "DK64 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "pyxdelta==0.2.3",
+      "pillow==12.1.1",
+      "emu-loader @ git+https://github.com/Killklli/EmuLoader.git#0.1.4",
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9a5b831b78fa7c8c576ce28ab775119518e895aa9464f71a12dc464c23d6369d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "9a5b831b78fa7c8c576ce28ab775119518e895aa9464f71a12dc464c23d6369d",
+    "wheel_filename": "worlds_dk64-1.5.8-py3-none-any.whl",
+    "world_version": "1.5.8"
+  },
+  "dkc": {
+    "components": [
+      {
+        "name": "DKC Manager",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "db3853a42959e6e8be88b2afbfcf9ce5ab1abe965ebf9c69163b7ed9b7973171",
+    "source": "archipelago.json",
+    "uploaded_sha256": "de03adf975ba63ef8f32a5dde36f639c3a28ca841013f20da5f77f88e5c56bc0",
+    "wheel_filename": "worlds_dkc-1.2.2-py3-none-any.whl",
+    "world_version": "1.2.2"
+  },
+  "dkc2": {
+    "components": [
+      {
+        "name": "DKC2 Manager",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a37eed2d8fa8e355d32f23bddc7c099a490509890bf360920660a2893e18a2d0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7b7ad7012c18d860a2be5a438106d569e6c52ba2455d11b010e8483d9b62ea80",
+    "wheel_filename": "worlds_dkc2-3.1.4-py3-none-any.whl",
+    "world_version": "3.1.4"
+  },
+  "dkc2_trivia": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7a8b854f2a3a65a0c9c7686a801074289f206e73dca4786a0609eb70d536afdf",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8f03173ba2a2163627d2ef1a72ea1ed4315180724c2e6897cc767f741af0e1f1",
+    "wheel_filename": "worlds_dkc2_trivia-0.2.0-py3-none-any.whl",
+    "world_version": "0.2.0"
+  },
+  "dktoluca": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "70a496df18f32fa0c5d175d3130361fd0ecd04567fb3bce65baec4f3c54d769f",
+    "source": "archipelago.json",
+    "uploaded_sha256": "d8e4ba92093f0b57309d97e43c0d10a858cab027475bfa819a393f474f7de7e4",
+    "wheel_filename": "worlds_dktoluca-1.0.1-py3-none-any.whl",
+    "world_version": "1.0.1"
+  },
+  "dlcquest": {
+    "components": null,
+    "dependencies": [
+      "importlib_resources"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "785fbe65ace91748eed814b7bfa7c7e0174f2fa8a74d48902b816050e0cf5175",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_dlcquest-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "dontstarvetogether": {
+    "components": [
+      {
+        "name": "Don't Starve Together Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8eb13264ed27fae9cdb02cc695d6272fcdfacd26c0963e9babdcfc81e50c06ed",
+    "source": "archipelago.json",
+    "uploaded_sha256": "f10f439e0d9215cb4a468f43688e3400c0a5c111ea578593a5f2482a704093fb",
+    "wheel_filename": "worlds_dontstarvetogether-1.3.2-py3-none-any.whl",
+    "world_version": "1.3.2"
+  },
+  "doom_1993": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "58057e79e148d8d8277e313ed944f17efa9699de0a0a88ab7d9ab51c8115470c",
+    "source": "index",
+    "uploaded_sha256": "c6151ff17582c6af2f8e5bc2160e16566f8827bffc935ee8362bc3221f83c3cb",
+    "wheel_filename": "worlds_doom_1993-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "doom_1993_beta": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3d9b5aeb35b84f560eb72da9b485454c5ed07f92f4dc7c76d6f59c8fb4df0853",
+    "source": "archipelago.json",
+    "uploaded_sha256": "3d9b5aeb35b84f560eb72da9b485454c5ed07f92f4dc7c76d6f59c8fb4df0853",
+    "wheel_filename": "worlds_doom_1993_beta-2.0.20260629-py3-none-any.whl",
+    "world_version": "2.0.20260629"
+  },
+  "doom_ii": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "73617438a4e5d14d20bddb983dd811d5c1ab9d6935e37d5cb4cbb6be24f5b665",
+    "source": "index",
+    "uploaded_sha256": "4f8fed42b9d2d48924301f646b8f983be14a8d622a05b658c66681054a1e6822",
+    "wheel_filename": "worlds_doom_ii-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "doom_ii_beta": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4888f867ad401f5ecd97a49aef3fcfba095a58ddc5e213355de50b6c7efb0022",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4888f867ad401f5ecd97a49aef3fcfba095a58ddc5e213355de50b6c7efb0022",
+    "wheel_filename": "worlds_doom_ii_beta-2.0.20260629-py3-none-any.whl",
+    "world_version": "2.0.20260629"
+  },
+  "doronko_wanko": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b6885de3f40c60a9431673a74e49c13f8183b6631b1bbd13f2e2940458b64415",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_doronko_wanko-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "dredge": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "dab8c77893fdf2b016e66d65af95b3d40ee0dacd88955be4171511242c621b1a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "e8c0dcd3c52c6997b6e37371e79ad043c6fb1679d75117a0da52bc5d6129445c",
+    "wheel_filename": "worlds_dredge-0.5.0-py3-none-any.whl",
+    "world_version": "0.5.0"
+  },
+  "dsr": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9af3616380ab114b2954be48a38c9cb007437707e09d70f7aedb19d44587a23d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4bef425548f804234474f9213e7d6c50b3fae1ecc253d12c9443098bfa16a46b",
+    "wheel_filename": "worlds_dsr-0.2.5-py3-none-any.whl",
+    "world_version": "0.2.5"
+  },
+  "duke3d": {
+    "components": null,
+    "dependencies": [
+      "importlib_resources"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6c4c17a8d4a59127f8ab87b090281a51a3e251b0902bc1d51756fea4d34a4495",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_duke3d-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "dw1": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b16ed95ab652b651d87022291e5b46599095b8f6a4b2a01f6428e61e56899fe9",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_dw1-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "earthbound": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "415aca56044c6006c602a7db98422df41386a8f8636147ac43d9785b7b2eb9e8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1ddd5637784b99d6462cc44c3103eb76bc5a4fcab0184fbe4b7a4dd12d6af414",
+    "wheel_filename": "worlds_earthbound-4.3.1-py3-none-any.whl",
+    "world_version": "4.3.1"
+  },
+  "enderlilies": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c36f2cc67abe1846d374e551b9de3e9416c6747eb8fc3fc0de7944fd073ef881",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_enderlilies-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "factorio": {
+    "components": [
+      {
+        "name": "Factorio Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "factorio-rcon-py==2.1.3"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a37359686d1793fb296e4a886f8e1a0018fc41ec72ad310fd498695a019634f4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_factorio-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "factorio_saws": {
+    "components": [
+      {
+        "name": "Factorio - Space Age Without Space Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "factorio-rcon-py>=2.1.3"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4a4e9dbf87f20fbb69fee7595f2ccbc59f86da496392ceed5c5a93b1c6eca2e4",
+    "source": "archipelago.json",
+    "uploaded_sha256": "e1d4ba65531a2a2b8092f491d41f15811cec4419fd924acf45c535992e105799",
+    "wheel_filename": "worlds_factorio_saws-0.9.4-py3-none-any.whl",
+    "world_version": "0.9.4"
+  },
+  "faxanadu": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6edd0fa6b7ee969eec45f6465ce652ad063b16b8d783071843ddb6380f45d45a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4e74662e3708402f297904a4f2972266793f5ae1144bb93f32fcbe1f6dffa833",
+    "wheel_filename": "worlds_faxanadu-0.3.0-py3-none-any.whl",
+    "world_version": "0.3.0"
+  },
+  "ff1": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8fe0011852471f2cd7477cf3fafa455cc206214761d47eaa4df556cd1e1268a6",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2ca609cc77acb4b224b58317de019478e5fd6f7d6800bb64a65f9873bec8abe0",
+    "wheel_filename": "worlds_ff1-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "ff4fe": {
+    "components": null,
+    "dependencies": [
+      "pillow==12.1.1",
+      "python-dotenv",
+      "lark",
+      "FreeEnterprise4 @ git+https://github.com/Rosalie-A/FreeEnterprise4@v8"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b4581e8ab414ca2fb20de1c7aed5119a50fc4fdc1e066f3b799e7eb717be63a4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "5b585fc111ec4327fc7f6d7ea0eaf858875e2ccc30d1212152b2e9f4d9b55297",
+    "wheel_filename": "worlds_ff4fe-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "ffmq": {
+    "components": null,
+    "dependencies": [
+      "msgpack"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ae55a012f24acad956f969199d2283068fb3162f6f5ff3aa95e88f5fcbefa24e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ffmq-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "ffta": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f5ac8f2de1c9b872589de586ab08c5cea7325135e46d89161f71f80243c4296b",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ffta-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "ffvcd": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "332f3035f40b11401b4721d96979205e2bd884718114638394c24d3a8547e973",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ffvcd-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "flipwitch": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "fc8fe49fcffab9157a7fb8cdffd971b4f8bbfd668f668884ea476b672b68cbb4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "92bce8f804b00b1c02d6453c28196b85fa6429dff11013e6d62ca8bbeed91523",
+    "wheel_filename": "worlds_flipwitch-1.1.8-py3-none-any.whl",
+    "world_version": "1.1.8"
+  },
+  "fm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0327b2f2829893a39817d1d6d4bc9de5478759d86bd4b3e9e29e3b238b7c89fb",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_fm-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "fnafb1": {
+    "_skipped": true,
+    "reason": "no source dir"
+  },
+  "frogmonster": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "fd311490599e841410b6fdfdcb037b1802138ff5c97a3795631ae97e4b98c553",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2b6693b23612fb05dca35c436668a5bc5335cb8038843dba8eb295bdc31f0308",
+    "wheel_filename": "worlds_frogmonster-0.2.5-py3-none-any.whl",
+    "world_version": "0.2.5"
+  },
+  "funi_raccoon": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "42eccd051a785d96aeb4fa47505f58f9a22846538237ad4c81273a3f8479eb9e",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_funi_raccoon-1.6.1-py3-none-any.whl",
+    "world_version": "1.6.1"
+  },
+  "getting_over_it": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4f47e129d2725158abb4c6089f855052cd6ee4ee59e6f6bc63e434eef4767f7e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_getting_over_it-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "gl": {
+    "components": [
+      {
+        "name": "Gauntlet Legends Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c3f07ec6af1973afa8c07c6a6fb9239afca9a8fe6bb41142cd1bab31c366eaf4",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_gl-2.1.7-py3-none-any.whl",
+    "world_version": "2.1.7"
+  },
+  "grinch": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9b20a41670ed5f84c695d13b22ae80630fd4309ecad6f68e67d250ad8f3dd637",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_grinch-1.6.2-py3-none-any.whl",
+    "world_version": "1.6.2"
+  },
+  "gstla": {
+    "components": null,
+    "dependencies": [
+      "requests >= 2.28.2"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2af4547fdcc9b81bb194574ee5103ab16bbc6500a1cfba8cb2024bb232d67cf5",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2dd9a35ad47ae22e55de41fcdaf3d64e9303da0af51491ae7d2c3c67d5ba543f",
+    "wheel_filename": "worlds_gstla-0.2.3-py3-none-any.whl",
+    "world_version": "0.2.3"
+  },
+  "gzdoom": {
+    "_skipped": true,
+    "reason": "no source dir"
+  },
+  "hades": {
+    "components": [
+      {
+        "name": "Hades Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6def3e6d01b0587a01dbdfe9b0fee1d6b734f085dcf888f9d0c1b2ebefa19b8e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "88f30fa564b6ca28eac00c12d5547ac66c441ba88f18d3de10a6b7e27e1e6dfa",
+    "wheel_filename": "worlds_hades-0.16.3-py3-none-any.whl",
+    "world_version": "0.16.3"
+  },
+  "hades2rogue": {
+    "components": [
+      {
+        "name": "Hades 2 Rogue Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "98c867620ce32ea8de52522cba002614775f4637be05729bb3fd054be06f93ec",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_hades2rogue-0.9.3-py3-none-any.whl",
+    "world_version": "0.9.3"
+  },
+  "hcniko": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b5ee1e7cd92937251aa74d6d7c45429ee2e93b063d9f128e0cb87942cd7e1c15",
+    "source": "archipelago.json",
+    "uploaded_sha256": "035f39a027c68865591a2a9ecd15562d8d07bcd18caa5eec0d225726b1dfce8c",
+    "wheel_filename": "worlds_hcniko-0.8.5-py3-none-any.whl",
+    "world_version": "0.8.5"
+  },
+  "heretic": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f92091f3d48e72a0ca240bdbcf9e199574962c47d06aed713549e0820636e36d",
+    "source": "index",
+    "uploaded_sha256": "8404fad2b2255cd555460927f70349ef7fafbaaef18de7f1379d5a249dc17896",
+    "wheel_filename": "worlds_heretic-0.5.2-py3-none-any.whl",
+    "world_version": "0.5.2"
+  },
+  "heretic_beta": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6b20e776e480de78699931dac84953d0a687fd7af0d7aff4de3b403e0b629a4f",
+    "source": "archipelago.json",
+    "uploaded_sha256": "6b20e776e480de78699931dac84953d0a687fd7af0d7aff4de3b403e0b629a4f",
+    "wheel_filename": "worlds_heretic_beta-2.0.20260629-py3-none-any.whl",
+    "world_version": "2.0.20260629"
+  },
+  "hitman_woa": {
+    "components": [
+      {
+        "name": "HITMAN World of Assassination Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "attrs"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7a62be45f0c055ee6509231e4297ef688e483d10d8d2fd5e45aacd41da5c448b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2cae73e2ae01e9221bb544984d7ccd365d8a0bc9dbae316a892bad0a04b109d2",
+    "wheel_filename": "worlds_hitman_woa-0.8.2-py3-none-any.whl",
+    "world_version": "0.8.2"
+  },
+  "hk": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8834a5d37b36aef1af69871529f6aaa3d571c16f51a61ebcd748091b51d9d6ce",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "daf12153b2c07a75d1da70421d9bec6600c83d8a16fc441d47499278a468c2c9",
+    "wheel_filename": "worlds_hk-1.1.4-py3-none-any.whl",
+    "world_version": "1.1.4"
+  },
+  "huniepop": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9e6d15faa993bf2b84e5da115e61628283eed7536fc3e0fa30fbf9956ddac423",
+    "source": "archipelago.json",
+    "uploaded_sha256": "cf10dae998ae655ec2c157b7038d04a89491ab566f01a0603f2bd8032ed76230",
+    "wheel_filename": "worlds_huniepop-2.3.1-py3-none-any.whl",
+    "world_version": "2.3.1"
+  },
+  "huniepop2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "cf9e9ead2aca7593de303a86b6ea0842d45797c106c4b67752f7270db3c7be15",
+    "source": "archipelago.json",
+    "uploaded_sha256": "83d5ea55d425380d6833a48fe95da69a725f1ae37e4b78ce626811cbc2292dda",
+    "wheel_filename": "worlds_huniepop2-3.1.0-py3-none-any.whl",
+    "world_version": "3.1.0"
+  },
+  "hylics2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2d9ef330ce55bce754ca35d0bcbf2601114f9cebbe951016881a50a7ddc739cf",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_hylics2-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "inscryption_beta": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "97c22ed06c573599e7e864a639165ee340841725429af16be3eb2e414732f84e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "409d79e062f11955464b3f5944a8e462405103a0bc975913caa493028ba63454",
+    "wheel_filename": "worlds_inscryption_beta-1.5.4-py3-none-any.whl",
+    "world_version": "1.5.4"
+  },
+  "into_the_breach": {
+    "components": null,
+    "dependencies": [
+      "python-sat"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "994547bf04b5dea69ba1c1519ba0afc84aefb79f7da9d3111cfeac2b4738872b",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "90ec54c66effee7739988516709d8ddf6c1b03df5fefaa4dae1ce68ad5897e1e",
+    "wheel_filename": "worlds_into_the_breach-0.15.18-py3-none-any.whl",
+    "world_version": "0.15.18"
+  },
+  "jakanddaxter": {
+    "components": [
+      {
+        "name": "Jak and Daxter Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "PyMemoryEditor>=2.0.1"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f8abfb8ba6cc149eea296dc39cf5650caaf3051cbba4626d36317c8dafc32238",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1a82c0c9c5885b088b970e499a1bb859bc70ae22effe32537d3a642bfce744eb",
+    "wheel_filename": "worlds_jakanddaxter-1.2.0-py3-none-any.whl",
+    "world_version": "1.2.0"
+  },
+  "jigsaw": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6b12b0d35923e0cdb8888de05278bbd01654806e51a0ca1ce10d1225090b89ef",
+    "source": "archipelago.json",
+    "uploaded_sha256": "a7980b4e2746118e001ddd20797de228c609c99cc35cfcdc24aabf8a5d1d7553",
+    "wheel_filename": "worlds_jigsaw-0.10.0-py3-none-any.whl",
+    "world_version": "0.10.0"
+  },
+  "k64": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "01a8d5cddc702a4c8220edfc9db8058012326902e75c7292dceca4e9761550de",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8b7575bb21f133eb51c2417d063e592d269145af7fad2a79b21117f2abb07e86",
+    "wheel_filename": "worlds_k64-0.4.0-py3-none-any.whl",
+    "world_version": "0.4.0"
+  },
+  "kdl3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3854262b77833473ec7ae91346b08f89ee066a9afbd4913678838e9be0ddaeaa",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_kdl3-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "kh1": {
+    "components": [
+      {
+        "name": "KH1 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c7f00be3012480796b016bdea22a595ed0a12f1f414635de33eb5704bfa44094",
+    "source": "archipelago.json",
+    "uploaded_sha256": "046d3984f601d105b5ecd396d97c847e9cbe700cbaadfef4b3898331e258a061",
+    "wheel_filename": "worlds_kh1-0.11.0-py3-none-any.whl",
+    "world_version": "0.11.0"
+  },
+  "kh2": {
+    "components": [
+      {
+        "name": "KH2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pymem>=1.10.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0a739aab5346cff29b0f5d62901321b27292107229cb4ad079da50477c542557",
+    "source": "archipelago.json",
+    "uploaded_sha256": "d5aa4ca41e6cb7dd4efbc477b18925f6e546cd8e0626f03b910c3b4aeb2340aa",
+    "wheel_filename": "worlds_kh2-2.0.0-py3-none-any.whl",
+    "world_version": "2.0.0"
+  },
+  "kindergarten_2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5a3e1e279d13bbd5e0f5d6283ca2facf44b89b0631c8fe7ae1fb3b9148babc62",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b29f6da7143a8dcc8b10b5b0312c92ea4293717e82fc6407f81fa016b6320782",
+    "wheel_filename": "worlds_kindergarten_2-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "ladx": {
+    "components": [
+      {
+        "name": "Links Awakening DX Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pillow"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [
+      "mapexport"
+    ],
+    "sha256": "5882e9971a1c8111efc9c80a8ef03471a3fbec18bd53285c62a0edcbe0bb93d0",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ladx-2.0.2-py3-none-any.whl",
+    "world_version": "2.0.2"
+  },
+  "ladx_beta": {
+    "components": [
+      {
+        "name": "Links Awakening DX Beta Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pillow"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [
+      "mapexport"
+    ],
+    "sha256": "cca44483f06c735295fd4cb4bbf9c3dbaeeaef161495e2be8350d1404a7d0780",
+    "source": "archipelago.json",
+    "uploaded_sha256": "31b1af204496964ebca4cbfeba61b6e1bf7cf99c4047b5e9dc7ef6948219f36b",
+    "wheel_filename": "worlds_ladx_beta-13.4.5-py3-none-any.whl",
+    "world_version": "13.4.5"
+  },
+  "landstalker": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e159a2cadb29bbb6bd71fbe3ab11dcfef53252fa9cde0720e4be52f9e343f5c7",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4ba5905d2a49f2f1a5afaccadb4da81d6c1914f1bad8b6ab7dd76613b6ada40a",
+    "wheel_filename": "worlds_landstalker-1.8.7-py3-none-any.whl",
+    "world_version": "1.8.7"
+  },
+  "lego_star_wars_tcs": {
+    "components": [
+      {
+        "name": "Lego Star Wars: The Complete Saga Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pymem>=1.10.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "006b4cea9f2e4f8b320962fe32c0454868a1191c22d9c52e7fcc1a7e69dfcdce",
+    "source": "archipelago.json",
+    "uploaded_sha256": "6efbc6fbb4fe9ded4becbdfe11edc9f558f60a3c075c95bcd448bf72bb402851",
+    "wheel_filename": "worlds_lego_star_wars_tcs-1.4.4-py3-none-any.whl",
+    "world_version": "1.4.4"
+  },
+  "lethal_company": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5453c26ba4f11346d5a9623ccb73695412244b023d096a136ee4b2aabe93de3e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "5453c26ba4f11346d5a9623ccb73695412244b023d096a136ee4b2aabe93de3e",
+    "wheel_filename": "worlds_lethal_company-0.7.13-py3-none-any.whl",
+    "world_version": "0.7.13"
+  },
+  "lingo": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "09d67f2b092e8fa2d2e8fb39d437550f0121e490b303d55bb8889cac1d32a20c",
+    "source": "archipelago.json",
+    "uploaded_sha256": "f01a40c26c5cb3435e990d405505ce671bf03351f57aef13217845e5ae059368",
+    "wheel_filename": "worlds_lingo-5.0.0-py3-none-any.whl",
+    "world_version": "5.0.0"
+  },
+  "lufia2ac": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f6b667d660ce15979dfdaa0e0ec045d9e88828a6f72c43de0c7dce23c841442a",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_lufia2ac-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "luigismansion": {
+    "components": [
+      {
+        "name": "Luigi's Mansion Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@abae309e05a8de4c2642e903611e65b4b124e1ce",
+      "gcbrickwork==3.0.5"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "10fa39cbd3b0f47f1b7f914a83139c51df2a14cae8490750e7e762fd33dff8a0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4a03c7bbc9d407ff7525d132e0a5f08e7a585b108d055a229a50b7f67be6fd12",
+    "wheel_filename": "worlds_luigismansion-0.6.4-py3-none-any.whl",
+    "world_version": "0.6.4"
+  },
+  "lunacid": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "249422f6b4cd950b79b18088e6c4dbdf559475bac17588610dffe7912c50f84e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_lunacid-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "madou": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5760a99a6fe4ccc8ff7b42a76a7938db838e3fe9f2c2347e8d33f68e18be06fb",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_madou-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "mario_kart_double_dash": {
+    "components": [
+      {
+        "name": "Mario Kart Double Dash Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "dolphin_memory_engine"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c1467fa0e607204904a14935b7d8213d338526b9576c7171c2e011a7222902bd",
+    "source": "archipelago.json",
+    "uploaded_sha256": "dd08c78a17111082e93af6af52e3cc66badf083bb3aadaa80d78a7dd159d72dd",
+    "wheel_filename": "worlds_mario_kart_double_dash-1.0.1-py3-none-any.whl",
+    "world_version": "1.0.1"
+  },
+  "marioland2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "cc503e0007f30bdbc43f91deaec8d751c8519002efd22ac7b8eee4e9c3d4893c",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_marioland2-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "megamix": {
+    "components": [
+      {
+        "name": "Mega Mix JSON Generator",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c0945d01b077fa0e9de34e2a4b4fbec7ca49982c9fe507522c8166362ca105ce",
+    "source": "archipelago.json",
+    "uploaded_sha256": "c9bc7c0625b061d160a550d4685898070050c096491921bb21571ac50931d243",
+    "wheel_filename": "worlds_megamix-1.5.1-py3-none-any.whl",
+    "world_version": "1.5.1"
+  },
+  "melee": {
+    "components": [
+      {
+        "name": "Super Smash Bros. Melee Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "dolphin_memory_engine"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "bc786cdf05bbd1a0ed87f1aac285e4fed6a444c707d63fe193e5ebde74e5ede8",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_melee-2.0.0-py3-none-any.whl",
+    "world_version": "2.0.0"
+  },
+  "meritous": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "33355a4871c7e9d2afcdcc668e207063a78fa16a08471d4767f6e2feca26c2a8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7c0ddf292e6b1101cecc059f5121ac5d0238f3de8c496d3637416a7376889429",
+    "wheel_filename": "worlds_meritous-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "messenger": {
+    "components": [
+      {
+        "description": "Launch The Messenger.\nInstalls and checks for updates for the randomizer.",
+        "name": "The Messenger",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "dce16000a609079b66ddb191a06c2fe20adb5eb87fa24999dc88ce2d2bd48aa8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "dce16000a609079b66ddb191a06c2fe20adb5eb87fa24999dc88ce2d2bd48aa8",
+    "wheel_filename": "worlds_messenger-0.16.0-py3-none-any.whl",
+    "world_version": "0.16.0"
+  },
+  "metroidfusion": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b9232506c15513ae4486ab444336922c07c6088b9fc793988d4b1a614e39dfe5",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_metroidfusion-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "metroidprime": {
+    "components": [
+      {
+        "name": "Metroid Prime Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "py-randomprime==1.30.4",
+      "ppc-asm==1.2.1"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d5caa10e11d9d263c1694ffd8bfa185a9caa8cf3f072113dfbb6836f92e4748b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1ca36b2bceeb81ca7668a795fea079696d768ea10fc3d9c25f73be2f6ea64856",
+    "wheel_filename": "worlds_metroidprime-0.5.4-py3-none-any.whl",
+    "world_version": "0.5.4"
+  },
+  "minecraft": {
+    "components": [
+      {
+        "name": "Minecraft Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "requests >= 2.28.1"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f3114fb0025ba59bcc9d11472e7134f0502647dfa506acec5204be036c62730b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "29e493fef46a43d6381ee6130dc3e5e05e262a613cb524d58a28d4de97588f0c",
+    "wheel_filename": "worlds_minecraft-0.1.7-py3-none-any.whl",
+    "world_version": "0.1.7"
+  },
+  "mk64": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "eb17479c3ab74c6ac81a33e2a7d60a7dd94ae86148b83bd44c48130c36ab731f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_mk64-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "mlss": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "34c518b9289c0ba21403b3d019f49f87c9dfcce8e18a4ad431a6c37f7c21c8b8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "cc3b50d0e5ce4d81d4cdefe1ca34e02ca6af7846e207fae54c3634abe0ebb85a",
+    "wheel_filename": "worlds_mlss-1.10.2-py3-none-any.whl",
+    "world_version": "1.10.2"
+  },
+  "mm2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "66ccd91d5fe72ce4a69bc363f67d0a7b8a30666fb85564f5588b33d880217e2a",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "2149875bd30dfbcdc261ba554fc9fab98cf28e721a5d656b6a6d068fd707e678",
+    "wheel_filename": "worlds_mm2-0.3.3-py3-none-any.whl",
+    "world_version": "0.3.3"
+  },
+  "mm3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f302d372b039722ca7cfdc5e64365bed672e06d5b0cabda5116a251a0a8a712d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "79a8974a1c93d6705852de3ffd9d6261ff6dccdce81d1382f3bccb312c9a8094",
+    "wheel_filename": "worlds_mm3-0.1.8-py3-none-any.whl",
+    "world_version": "0.1.8"
+  },
+  "mm_recomp": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6733b4dc0f4f5b2c7955517e594f0e3d967ffc436558ae488d2104281ddea62e",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_mm_recomp-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "mmbn3": {
+    "components": [
+      {
+        "name": "MMBN3 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "be12dfcc874caead7afb532708398464660d682fe76796d06eb4c0fc2d4dc89f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_mmbn3-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "mmx3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5ad2e8e09d81a27db16692f6ff5ed77424c3ee79e67af1b162897ff92d9d5a59",
+    "source": "archipelago.json",
+    "uploaded_sha256": "2de76f65c567b5bc1e1c56f333764d3c95153be5ccc9a564d0bcdfef0fa16814",
+    "wheel_filename": "worlds_mmx3-1.5.2-py3-none-any.whl",
+    "world_version": "1.5.2"
+  },
+  "momodoramoonlitfarewell": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "df888a06ab11a5123c8d78213e80c383f4a90307c9b32f3315cf43f02570155d",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_momodoramoonlitfarewell-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "monster_sanctuary": {
+    "components": null,
+    "dependencies": [
+      "importlib_resources"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "63452030ff26e92a6e65da1e108c96813d460152d66c9499263bff2a56eab884",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_monster_sanctuary-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "musedash": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c5eefcf6fd5c63041c408c550c0ce24e518910869ed0710323ab1ccbe7967a4d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "35e741de99aa70effdf581be47f7dc476d3eb806211683d5f552aee9997bc6b6",
+    "wheel_filename": "worlds_musedash-1.5.35-py3-none-any.whl",
+    "world_version": "1.5.35"
+  },
+  "mzm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5ce771e6cee3967e58bcaa322f11723b3e1868dad5e20ce257359bb12e47c8ca",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b7d31805b94dcce44686452994fece411a0a52a123385f211365072f7fadb313",
+    "wheel_filename": "worlds_mzm-0.5.3-py3-none-any.whl",
+    "world_version": "0.5.3"
+  },
+  "nine_sols": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5601a55b3d8fffdfd0c3e8c5668f4060cc5829ef52d2a5126cd73aa10f0b753b",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "5601a55b3d8fffdfd0c3e8c5668f4060cc5829ef52d2a5126cd73aa10f0b753b",
+    "wheel_filename": "worlds_nine_sols-0.6.3-py3-none-any.whl",
+    "world_version": "0.6.3"
+  },
+  "noita": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "38735fb1b810af2323af3c27705e1e7b8e345d610140b2e6d54fe04e818b9b53",
+    "source": "archipelago.json",
+    "uploaded_sha256": "fa54e55bbe472bd9f023a165df7f429fa22de42ba781f5b71046d2c9572b1351",
+    "wheel_filename": "worlds_noita-1.4.0-py3-none-any.whl",
+    "world_version": "1.4.0"
+  },
+  "oot": {
+    "components": [
+      {
+        "name": "Ocarina of Time Client",
+        "type": "client"
+      },
+      {
+        "name": "Ocarina of Time Adjuster",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9f7840a02b7c03f15880bc59988b021c66df8d4d076836d3a70c7c657ae98c57",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4d5c9d5f58a10e90555be9e2866b4469de1ecc94690f8a98f8a56464d712fe39",
+    "wheel_filename": "worlds_oot-9.1.0-py3-none-any.whl",
+    "world_version": "9.1.0"
+  },
+  "openrct2": {
+    "components": [
+      {
+        "name": "OpenRCT2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "093cfacb3fafc4478a1db1e3b7b20105bf6525b4b82761a21afc77d7e167c98d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "093cfacb3fafc4478a1db1e3b7b20105bf6525b4b82761a21afc77d7e167c98d",
+    "wheel_filename": "worlds_openrct2-0.1.22-py3-none-any.whl",
+    "world_version": "0.1.22"
+  },
+  "ori_wotw": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a9b5664ec72b6ba1d0f5170655a5ef812e1c742f923d9e63b3b259894a65fd4b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "e03753034b213425e638a258d951676d3acf8b383535216127a31c961ba351eb",
+    "wheel_filename": "worlds_ori_wotw-0.6.5-py3-none-any.whl",
+    "world_version": "0.6.5"
+  },
+  "oribf": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3c9d1122616edc285f1b960eb62ec9c18c7d29c476c4793f02a9cf756b05c13f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_oribf-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "osrs": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7a9e28a6a4e0a0500d4284ccf142a7f747d7bdd4e45993241e32d035157580b0",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_osrs-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "osu": {
+    "components": [
+      {
+        "name": "osu! Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "orjson>=3.9.10",
+      "requests"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b4c15902196836fd51ae0faf1cc9e4df902c9ec168cfc109a74f6170d17489b6",
+    "source": "archipelago.json",
+    "uploaded_sha256": "e975b22d68df7fbbb3910f2416e72d120a43be514431dc976d884a0a68e10dfc",
+    "wheel_filename": "worlds_osu-1.3.2-py3-none-any.whl",
+    "world_version": "1.3.2"
+  },
+  "outer_wilds": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "eda51337e46fef057675e82ec0d5e71fbe348c80338d9b7f236cb1556865199b",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "d7c4019560a340303dfb1565a14d8495662dcf371953d226092e6afbc28afce1",
+    "wheel_filename": "worlds_outer_wilds-1.2.2-py3-none-any.whl",
+    "world_version": "1.2.2"
+  },
+  "overcooked2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d2be70bd2c83b21fc58826140e43a196b3ecd9750e56a6f66aca83d08f8303b8",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_overcooked2-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "paint": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ee2ffe9fd1d8781ef64050d6da95599c0b5539e2027f7864000a318b04ff099d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "97aa91ce00e0a546a1d2eba6225ae916734904d869003a70284e5494cb8efa5b",
+    "wheel_filename": "worlds_paint-0.6.1-py3-none-any.whl",
+    "world_version": "0.6.1"
+  },
+  "papermario": {
+    "components": null,
+    "dependencies": [
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d40e40f9c98d530c346f2c947b3302f1f9cae088097c91e77183b21ee5b0a6a4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "dac157bcfc4330d764f5d62eae49665298ddd153a856b9f38298976147dc8346",
+    "wheel_filename": "worlds_papermario-0.0.2-py3-none-any.whl",
+    "world_version": "0.0.2"
+  },
+  "peak": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b63d0187763b075457ae382f93e76ee3002426d8bd5a3e57750083244d343292",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_peak-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "peaks_of_yore": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "48bf2655cb09c12a2c12d3f5c7d70baac58e471e91b3b3ee657c0b711e20c861",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_peaks_of_yore-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "peggle_deluxe": {
+    "components": [
+      {
+        "name": "Peggle Deluxe Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8d13342f7c4a6130a972e2b3bd416a03f5f50986bf6f622b578aa7ebb2d010c9",
+    "source": "archipelago.json",
+    "uploaded_sha256": "240cfa5b1dd2c95aaf6928646eb343f7b38341d0d607302ab75bf6b19d3e95da",
+    "wheel_filename": "worlds_peggle_deluxe-2.1.0-py3-none-any.whl",
+    "world_version": "2.1.0"
+  },
+  "peggle_nights": {
+    "components": [
+      {
+        "name": "Peggle Nights Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f6549223f46cbe8ee6d586b456a4d31fb8a4a17e79a4f20e31e49129466d49a1",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8a087da38a38c1f2739e8a75639b042382490992211bae1d4e0da5676f34111c",
+    "wheel_filename": "worlds_peggle_nights-1.2.0-py3-none-any.whl",
+    "world_version": "1.2.0"
+  },
+  "phoa": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "30f3f6c33de1974dc0433b1901391627d77048dd3b9d9ecac6d85f2874c13709",
+    "source": "archipelago.json",
+    "uploaded_sha256": "37d10e0435921db3a563985fd4562b40565cd9f3a461ae0c1310fa63f014ad9c",
+    "wheel_filename": "worlds_phoa-0.4.0-py3-none-any.whl",
+    "world_version": "0.4.0"
+  },
+  "pikuniku": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "40e0de406af0c56553ef51892549b4912fa2690a1277354b6ecf1b446047616e",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_pikuniku-0.3.1-py3-none-any.whl",
+    "world_version": "0.3.1"
+  },
+  "pinball_fx3": {
+    "components": [
+      {
+        "name": "Pinball FX3 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ecc12e5b861de6de4fe640769c16b8b4a5bd78a58afd02afd884c944ac7b7e05",
+    "source": "archipelago.json",
+    "uploaded_sha256": "6566ef9281e6a8d7d10905414289d7a191e859bf14795ad84c035475994454bb",
+    "wheel_filename": "worlds_pinball_fx3-1.3.0-py3-none-any.whl",
+    "world_version": "1.3.0"
+  },
+  "placidplasticducksim": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "50286150d460af77a11ba693dd8246a8727093d8a6ba59bd9900bbc10e888cc3",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4752cf0531fcb25b2a0a58646698608d4000340141393c0832aef89caba3684c",
+    "wheel_filename": "worlds_placidplasticducksim-0.3.2-py3-none-any.whl",
+    "world_version": "0.3.2"
+  },
+  "pmd_eos": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2d01d47b215c0c673e72808c2a53a207599eb207452cdf0df0e0622219f657ee",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7da3737a5b0b5d6dc68a1edcfdfdf9d92c5a4ce5d0ab4ebb6e06750f5e0aa929",
+    "wheel_filename": "worlds_pmd_eos-0.3.2-py3-none-any.whl",
+    "world_version": "0.3.2"
+  },
+  "poe": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "deaa603a093525497371fa5a1431c08712693c2c1b8d8f1d7d11ff0d3cf4f2a1",
+    "source": "archipelago.json",
+    "uploaded_sha256": "ca12934edb10889aa69c295761b26f38eb7a36edd7966553fdefb37acd3a956f",
+    "wheel_filename": "worlds_poe-2.2.1-py3-none-any.whl",
+    "world_version": "2.2.1"
+  },
+  "pokemon_crystal": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b366163ac4abeffe35a823d60b49fbb7a927f75ef901e7d457aff06096b30efe",
+    "source": "archipelago.json",
+    "uploaded_sha256": "6e1ba8a091fbfb2afc904aa830f83e5c4ca070b8c51f8cf500e1eaad7e881407",
+    "wheel_filename": "worlds_pokemon_crystal-5.4.6-py3-none-any.whl",
+    "world_version": "5.4.6"
+  },
+  "pokemon_emerald": {
+    "components": null,
+    "dependencies": [
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "fdcf3a919f7370562c021466362e1a5e5f4807d111db4bfc2f9f98cb437bd02b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "afdf45d6c503b117dd5179b3c2e14f3846cb66929ce1b9b97600d905152ab82e",
+    "wheel_filename": "worlds_pokemon_emerald-2.5.0-py3-none-any.whl",
+    "world_version": "2.5.0"
+  },
+  "pokemon_frlg": {
+    "components": null,
+    "dependencies": [
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a2ef66edcf8346045953bab3b99c79177a1ae0b581a34a8bb7e21342fb5adcf0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "a2ef66edcf8346045953bab3b99c79177a1ae0b581a34a8bb7e21342fb5adcf0",
+    "wheel_filename": "worlds_pokemon_frlg-1.1.2-py3-none-any.whl",
+    "world_version": "1.1.2"
+  },
+  "pokemon_rb": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9bbc3c93f4b20e33b5ad8266b52fc345361a301a3873ad6b1c64f461ea1c9e20",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_pokemon_rb-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "portal2": {
+    "components": [
+      {
+        "name": "Portal 2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "attrs"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5bf5f280f642ecc398f95310381c6171a5bd33661d661537d161058153875339",
+    "source": "archipelago.json",
+    "uploaded_sha256": "87d4d40844b0e879085129677c737a4cc3db59340c9c353de1dfd969d41ec6ec",
+    "wheel_filename": "worlds_portal2-0.8.0-py3-none-any.whl",
+    "world_version": "0.8.0"
+  },
+  "powerwashsimulator": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d011d1408ee86125e36e07ea40462a91cfae8f8f00ae804362b6c81bd78e17b0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "59e90e7852bb9e492cece5f03c04e66e3602b788714a4ae0db4cbf3cb0fe486f",
+    "wheel_filename": "worlds_powerwashsimulator-0.5.14-py3-none-any.whl",
+    "world_version": "0.5.14"
+  },
+  "pseudoregalia": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "dafff521cf4c14f77fbddb3719d7eab599ffb43d1d5047664ebd23c1c67b0040",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "7ff567cf07180ba6505976415e8814d9190198776efbfe9295b4520709487ba5",
+    "wheel_filename": "worlds_pseudoregalia-0.10.2-py3-none-any.whl",
+    "world_version": "0.10.2"
+  },
+  "quake": {
+    "components": null,
+    "dependencies": [
+      "importlib_resources"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2b937792c7cffda0bcf181ac8688d5cbb010aeb257b798e82e5baa27bd21481b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "5b096021a5012473b64e69e197c477409a9f7a4a33a0434fbe63763749c14919",
+    "wheel_filename": "worlds_quake-1.2.2-py3-none-any.whl",
+    "world_version": "1.2.2"
+  },
+  "rabi_ribi": {
+    "components": [
+      {
+        "name": "Rabi-Ribi Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pillow",
+      "setuptools"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "233809bf67721434ce06bad53c972f3f791d3a2ebdb310373dd529abcf5ee12f",
+    "source": "archipelago.json",
+    "uploaded_sha256": "69fb5923050fcf59b0fc769945035e99120c21d5b679dbca7133f17fb5d284a7",
+    "wheel_filename": "worlds_rabi_ribi-1.5.3-py3-none-any.whl",
+    "world_version": "1.5.3"
+  },
+  "rac2": {
+    "components": [
+      {
+        "name": "Ratchet & Clank 2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7971480e870cd1d0cf49421e8cd72820cb4ca385016b87a268b50eb9f84b7255",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7971480e870cd1d0cf49421e8cd72820cb4ca385016b87a268b50eb9f84b7255",
+    "wheel_filename": "worlds_rac2-0.6.4-py3-none-any.whl",
+    "world_version": "0.6.4"
+  },
+  "rac3": {
+    "components": [
+      {
+        "description": "Launch the Client for connecting to Ratchet and Clank 3 [PlayStation 2]",
+        "name": "Ratchet and Clank 3 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "bdd34f02b3c2abd3fce495bb89bf4ba0f020d0d7a8a7cf597f787c43f34df215",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4c6a17f32d90ba4ad80af0db9f61ad317dd933b584af749962244e47989e21aa",
+    "wheel_filename": "worlds_rac3-0.6.0-py3-none-any.whl",
+    "world_version": "0.6.0"
+  },
+  "raft": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "77028cb0eee46126b4e306a6ebd1d2c295f0d0be5abfd6316d9784d8e1c24ddc",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_raft-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "refunct": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8eabf76897e1c7964cc870d401cd23e064e5a890b40752027c63d5f168d41601",
+    "source": "archipelago.json",
+    "uploaded_sha256": "7b08b92ae9761869f0af750cffe0f383be6990d761d8867bec53dc86115f3796",
+    "wheel_filename": "worlds_refunct-1.7.0-py3-none-any.whl",
+    "world_version": "1.7.0"
+  },
+  "residentevil2remake": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c00e8a7bb82f079f2041af16a9783dfa9d6d05b3cae199dd4dab40072fecb522",
+    "source": "archipelago.json",
+    "uploaded_sha256": "dadc6d044b4014d2847ce0ad585736e5ae976079c3c92229c00ec5e1743e327b",
+    "wheel_filename": "worlds_residentevil2remake-0.3.5-py3-none-any.whl",
+    "world_version": "0.3.5"
+  },
+  "residentevil3remake": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e7f5693a90333832dfa4eda5c2279961c89e69aee2defb5ba85f44d2a40d70e4",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "06b7a712717472abc817686196a233c15204646ff7e78f4f49eb83403a449fd6",
+    "wheel_filename": "worlds_residentevil3remake-0.2.7-py3-none-any.whl",
+    "world_version": "0.2.7"
+  },
+  "rimworld": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3566c8a24395926ec3850e524470a29d506711f0a41ae7e7c6bdde30bf725ac6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_rimworld-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "rogue_legacy": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8c385831ea4f5ac96ea2f7438d3e7f379b628027e113b51b007cd3f11dc4ced5",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_rogue_legacy-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "ror1": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "501d8aa3d27e1078db6d3b10276057fb964e61ee70c0dd86fb960dfa9805db0c",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ror1-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "ror2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "bd72c2859410de2a1c0e17ad9bac1f9d377ad114f129d9e217bb81097508e4c9",
+    "source": "archipelago.json",
+    "uploaded_sha256": "aa0a71319bddf4276956e5e64c7c04f466f05c56a317569c639f25806c2fd3b7",
+    "wheel_filename": "worlds_ror2-1.5.0-py3-none-any.whl",
+    "world_version": "1.5.0"
+  },
+  "rotn": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c4cbb15c0402c201c16ee4bc0a80e0fe0aa70528bbc8604da89c3cb8f6d35e3d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "cf8ce2a63034da5e70a6992e0356ba018860bb80fbf3671562a09e409a786e43",
+    "wheel_filename": "worlds_rotn-0.15.0-py3-none-any.whl",
+    "world_version": "0.15.0"
+  },
+  "sa2b": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "230b43fca45862ea6a5bddcc90dfdb7b93f841fe6a4a7eb00eb72980b9748958",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_sa2b-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "sadx": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6799fd3b856cfa2ecc9a6058875e897a12aaeb8929638094bc6ce6a86a86adfe",
+    "source": "archipelago.json",
+    "uploaded_sha256": "d691ba493e42c6d088314c55ea514633a0639dfea165301e22c47fe0d10bc6e5",
+    "wheel_filename": "worlds_sadx-1.2.2-py3-none-any.whl",
+    "world_version": "1.2.2"
+  },
+  "satisfactory": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "63a0a303d59a21bf36851d6016fc66c69cc25ab06656079c727a27f08e6bed68",
+    "source": "archipelago.json",
+    "uploaded_sha256": "a172998844e95bd330df0ac6835ab9ea4ad189e40b071324d8ba004cddd6e3e4",
+    "wheel_filename": "worlds_satisfactory-2.3.1-py3-none-any.whl",
+    "world_version": "2.3.1"
+  },
+  "saving_princess": {
+    "components": [
+      {
+        "name": "Saving Princess Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3f1d6dbef13b4c35df0097dc810b42a80747ccd5e5370c16c01e4bffdea72fb1",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8bb881b1dd913d370c232ac3ae788c1e6a6a12d66eecfeb68e854ca957a095fd",
+    "wheel_filename": "worlds_saving_princess-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "sc2": {
+    "components": [
+      {
+        "name": "Starcraft 2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "nest-asyncio >= 1.5.5"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7849784c6919ab51fec45a84761e927a57ded6a2494441d1d967a1247cfcbea7",
+    "source": "archipelago.json",
+    "uploaded_sha256": "bf08569ac9ba756a377e28b2d6474c8df6d565d76f266231881113cd7d363e8a",
+    "wheel_filename": "worlds_sc2-4.0.0-py3-none-any.whl",
+    "world_version": "4.0.0"
+  },
+  "schedule_i": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9b86d37aef26d8431b2b11c561e4abb7ec53284fecc12d25b7913ffca4bfe92a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "427929751f01789cc9f0b3a27d394c5b0b110ca5b08c9b722fdb0eb026e49abb",
+    "wheel_filename": "worlds_schedule_i-3.6.4-py3-none-any.whl",
+    "world_version": "3.6.4"
+  },
+  "seaofthieves": {
+    "_skipped": true,
+    "reason": "no source dir"
+  },
+  "shapez": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2e4d36bd9b6ce988ab7590fd6d7c7ff92e63396fcce2de39c3c3873c3e5f1e35",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_shapez-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "shivers": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "aacc4fd600d1b12b25ff25146118f7cf03229955fde19be76e2d36adde6c01c0",
+    "source": "archipelago.json",
+    "uploaded_sha256": "f3525170d999d24d579400d299dd36e81b49b6dd5dac050a1aab5acf01de6331",
+    "wheel_filename": "worlds_shivers-2.7.5-py3-none-any.whl",
+    "world_version": "2.7.5"
+  },
+  "shorthike": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f3de998405f7996be87e249db32a3d7d5b3d24bf376ea93e52088e9d5c67f1d6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_shorthike-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "simpsonshitnrun": {
+    "components": [
+      {
+        "name": "Simpsons Hit & Run Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "a87047358e5f6ebd01f5a353e2cfcf0b2bf1af224309ecf1c7b8051f80a92b97",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "f4356aca2d0871c4ead955b2099f264be2cf71885c93acd507adb63165d5e361",
+    "wheel_filename": "worlds_simpsonshitnrun-0.5.4-py3-none-any.whl",
+    "world_version": "0.5.4"
+  },
+  "sims4": {
+    "components": [
+      {
+        "name": "The Sims 4 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "90d04eb79ba8b5eca0b153f7ee4932f49fe2a32d244a341c0e13394ac43b58d6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "2c43ae085a7bf8429ce21977fdcf2dfb4e77c1f176d1d424a3bbdc0be3ab365f",
+    "wheel_filename": "worlds_sims4-2.0.1-py3-none-any.whl",
+    "world_version": "2.0.1"
+  },
+  "skul": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "777f2254c82822de15b4a97f6b63341d03cb279ed2d8536739791c23af89768c",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_skul-1.0.2-py3-none-any.whl",
+    "world_version": "1.0.2"
+  },
+  "slime_rancher": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "df7b044f1988a4029608cb67331990c5541aac5ed1dd05b98eb413ddd9557d80",
+    "source": "archipelago.json",
+    "uploaded_sha256": "df7b044f1988a4029608cb67331990c5541aac5ed1dd05b98eb413ddd9557d80",
+    "wheel_filename": "worlds_slime_rancher-0.3.2-py3-none-any.whl",
+    "world_version": "0.3.2"
+  },
+  "sly1": {
+    "components": [
+      {
+        "name": "Sly 1 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "953526fc50e1f96c1d781256e2cb52871cbb27869bcf93a6f49ebcd17eafa5fe",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "f06143a0a952879dab98d8a3543f9b061d8ef0378380bab832cee5614e4f1f83",
+    "wheel_filename": "worlds_sly1-0.3.5-py3-none-any.whl",
+    "world_version": "0.3.5"
+  },
+  "sm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6b560684f55a68c83d54db4a074c130e99d145b4dc73448db0ac524d6ec0f39a",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_sm-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "sm64ex": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3e49a1ddd3b9dcd7c27f9f1069505fcd6960e2f94b8132eb8e72383fec598a9c",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_sm64ex-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "sm64hacks": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ed579a5a3960c25691a0a7cf7efe60f6cc1d52f80fb5c306243bac52aed77771",
+    "source": "archipelago.json",
+    "uploaded_sha256": "ed579a5a3960c25691a0a7cf7efe60f6cc1d52f80fb5c306243bac52aed77771",
+    "wheel_filename": "worlds_sm64hacks-1.1.11-py3-none-any.whl",
+    "world_version": "1.1.11"
+  },
+  "sm_map_rando": {
+    "components": null,
+    "dependencies": [
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp38-cp38-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.8'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp39-cp39-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.9'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp310-cp310-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.10'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp311-cp311-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.11'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp312-cp312-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.12'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp313-cp313-win_amd64.whl ; sys_platform == 'win32' and platform_machine == 'AMD64' and python_version == '3.13'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.8'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.9'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.10'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.11'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.12'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version == '3.13'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp38-cp38-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.8'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp39-cp39-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.9'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp310-cp310-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.10'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp311-cp311-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.11'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp312-cp312-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.12'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp313-cp313-manylinux_2_28_aarch64.whl ; sys_platform == 'linux' and platform_machine == 'aarch64' and python_version == '3.13'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp38-cp38-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.8'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp39-cp39-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.9'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp310-cp310-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.10'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp311-cp311-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.11'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp312-cp312-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.12'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp313-cp313-macosx_10_12_x86_64.whl ; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_version == '3.13'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp38-cp38-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.8'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp39-cp39-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.9'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp310-cp310-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.10'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp311-cp311-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.11'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp312-cp312-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.12'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/releases/download/v0.119.3/pysmmaprando-0.119.3-cp313-cp313-macosx_11_0_arm64.whl ; sys_platform == 'darwin' and platform_machine == 'arm64' and python_version == '3.13'",
+      "pysmmaprando @ https://github.com/lordlou/MapRandomizer/archive/refs/tags/v0.119.3.tar.gz ; python_version < '3.8' or python_version > '3.13' or (sys_platform != 'win32' and sys_platform != 'linux' and sys_platform != 'darwin') or (platform_machine != 'AMD64' and platform_machine != 'x86_64' and platform_machine != 'aarch64' and platform_machine != 'universal2' and platform_machine != 'arm64')"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "aaf61a07efc18c13167fa623850714af885210054e0ddbe5ca573094ec4371c3",
+    "source": "archipelago.json",
+    "uploaded_sha256": "4db9192517777f76de37fdf40ba954833ef33d3517241cb272701c540b4ef5d6",
+    "wheel_filename": "worlds_sm_map_rando-0.119.4-py3-none-any.whl",
+    "world_version": "0.119.4"
+  },
+  "smo": {
+    "components": [
+      {
+        "name": "Adi's Unofficial Super Mario Odyssey Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2efde96aa41649fc50e8ee4273c531a68255596e4e19a0b8161e1ad1ca714146",
+    "source": "archipelago.json",
+    "uploaded_sha256": "11860c67a421c5d95164e85d1ee5f6ddcde434aa0a7b3cb9bf703d1561b0ce20",
+    "wheel_filename": "worlds_smo-1.7.4-py3-none-any.whl",
+    "world_version": "1.7.4"
+  },
+  "sms": {
+    "components": [
+      {
+        "name": "Super Mario Sunshine Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@abae309e05a8de4c2642e903611e65b4b124e1ce"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8d9a124062f7cf46fe685c436ff8747c19dc43a55a9ff220bdeda9497f1e112c",
+    "source": "archipelago.json",
+    "uploaded_sha256": "59239e989a8b5645baf66dcba0deea7b81199dd8d4ceed8ee31dcfed97e93a8f",
+    "wheel_filename": "worlds_sms-0.6.2-py3-none-any.whl",
+    "world_version": "0.6.2"
+  },
+  "smw": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "426e81ae01c870e433bf48a3c1d71098578929cafd885194c6dd3e0aff3fbb20",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_smw-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "smz3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0c1c882e2923c25ddad23c4a20ad7b1b6ad578b85d11378b933a647dd3bd6b42",
+    "source": "archipelago.json",
+    "uploaded_sha256": "75d028d32a28ed20bab702779b6a4b6e50a1436eaf54d95f4cfa1a9a355b7de2",
+    "wheel_filename": "worlds_smz3-11.2.0-py3-none-any.whl",
+    "world_version": "11.2.0"
+  },
+  "soe": {
+    "components": null,
+    "dependencies": [
+      "pyevermizer==0.50.1"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0887b854e1181c17e662474190533f186b593a9169bb033c2f190b3b4426ca6e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "bd0a9dfa57e9c8441f8368e08b49c577aaede476cf4273ca53ff2e64563fc253",
+    "wheel_filename": "worlds_soe-0.50.1-py3-none-any.whl",
+    "world_version": "0.50.1"
+  },
+  "sonic_heroes": {
+    "components": null,
+    "dependencies": [
+      "importlib_resources",
+      "regex"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4e9d987d4cc6c1cd483090a3438d7d451aeb2e890240dfd2f1da065215b0de61",
+    "source": "archipelago.json",
+    "uploaded_sha256": "f8a505df34905841c032a186c974761fed536513b425c9bf2261a34b841ff264",
+    "wheel_filename": "worlds_sonic_heroes-2.1.0-py3-none-any.whl",
+    "world_version": "2.1.0"
+  },
+  "sotn": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "57c50f1e7a053f719023beb151af3aeac43bde098b729b6d09975770c1660c6b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "1a9f7c58c996055a2d4d6f8f8451b8c9e6bd6579c6ddf9a71e1b86650e3ee0d3",
+    "wheel_filename": "worlds_sotn-0.8.16-py3-none-any.whl",
+    "world_version": "0.8.16"
+  },
+  "spire": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c47e4edbb86d13c09b408aa49ff25ce85e160dcbd350fa277a597efe5a34e93c",
+    "source": "archipelago.json",
+    "uploaded_sha256": "97aeb7267340bd32c33719f18187d654479216cb256a77135541573b969ecba2",
+    "wheel_filename": "worlds_spire-2.3.5-py3-none-any.whl",
+    "world_version": "2.3.5"
+  },
+  "spyro3": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e14a267af76d19b45dbb3a619ff26091d647754e3f79543b2e739e345e42e560",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b5fb80cc3243811bcefe51ce5996596952ae6500a23966deb12e07b218c6e541",
+    "wheel_filename": "worlds_spyro3-1.3.5-py3-none-any.whl",
+    "world_version": "1.3.5"
+  },
+  "srb2": {
+    "components": [
+      {
+        "name": "Sonic Robo Blast 2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "54f259afeb4ba39705dee4eedc98257775c44d11716661b1b7a93a836687192a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "ad10a461cd3ba3abfd603b1e2acc77d800ce1ec25ee833fb83f646f94204cdcf",
+    "wheel_filename": "worlds_srb2-1.7.3-py3-none-any.whl",
+    "world_version": "1.7.3"
+  },
+  "ss": {
+    "components": [
+      {
+        "name": "Skyward Sword Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "dolphin-memory-engine>=1.3.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "9d3aaad54cfc1e5995cab2c9d3f62a2a66f5647162bd9525645060c03b62adf6",
+    "source": "archipelago.json",
+    "uploaded_sha256": "fe9bcabc176adaadf66328c19601b17f1c953dee9666e3f185d210d3e906ae18",
+    "wheel_filename": "worlds_ss-0.5.6-py3-none-any.whl",
+    "world_version": "0.5.6"
+  },
+  "star_fox_64": {
+    "components": [
+      {
+        "name": "Star Fox 64 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "234736a3ada251dd5dcc5f297b18b55c41aa0d2097e9f53580cb72a34e425bfe",
+    "source": "archipelago.json",
+    "uploaded_sha256": "bb1cf3dec8c83c0318a562c9fdebe2466f4b661e51b988561235f7d82d733d02",
+    "wheel_filename": "worlds_star_fox_64-0.4.1-py3-none-any.whl",
+    "world_version": "0.4.1"
+  },
+  "stardew_valley": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f1f94f5d64c54d77d0abd84efc101de34f8fef4ad0fb51958f05767f073f7767",
+    "source": "archipelago.json",
+    "uploaded_sha256": "c6f84445cdd2e96dfd18fc9392be39fb6511fa2afa641fbeea1ae45269e14de2",
+    "wheel_filename": "worlds_stardew_valley-8.1.5-py3-none-any.whl",
+    "world_version": "8.1.5"
+  },
+  "subnautica": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "bf4d811fb0b830731f4f5576ff3c2a2a7da410904d211efdefd462ed26c047d6",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_subnautica-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "swr": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5b4371f233582dbcb024d91d8ad62002952a2fdc7634e79a5a5fec5e150fb145",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_swr-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "taylorswift": {
+    "_skipped": true,
+    "reason": "no source dir"
+  },
+  "tboir": {
+    "components": [
+      {
+        "name": "Isaac Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c5178d3c923558e106a544712d6ec70f17407d31601e73622bcdc23e5faaaba8",
+    "source": "archipelago.json",
+    "uploaded_sha256": "789b042c9f2b36669df4fef36991c37382484daa54b4692cfae0a734cdf55041",
+    "wheel_filename": "worlds_tboir-0.4.3-py3-none-any.whl",
+    "world_version": "0.4.3"
+  },
+  "terraria": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "6fc4b27b2b4bdbd26e70b8f5df603bf6a9cf4445e2caab459810c17a3fc13575",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_terraria-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "tetrisattack": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b10698ea2044b8e3d8aa429a70a9d2d8e5a6587c9a1c1fd28383764123cf0098",
+    "source": "archipelago.json",
+    "uploaded_sha256": "740c16f5f4e440d5cb9035285fa76a73beaabf81735dc32f3507ce1bee03b6f7",
+    "wheel_filename": "worlds_tetrisattack-0.4.3-py3-none-any.whl",
+    "world_version": "0.4.3"
+  },
+  "timespinner": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4a458320f0ddcc916cce8f2e459bd369749c2d66470b8f3e329a058154dac938",
+    "source": "archipelago.json",
+    "uploaded_sha256": "f13cf9edb19f4239c9e850933fc28e57997499f290e8488a79f194ba1e63d813",
+    "wheel_filename": "worlds_timespinner-1.38.1-py3-none-any.whl",
+    "world_version": "1.38.1"
+  },
+  "tloz": {
+    "components": null,
+    "dependencies": [
+      "bsdiff4>=1.2.2"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3273844506618054c28e58e9da35c0974d56ccd234caef425fa938e116be7560",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b45b672410764c2d638fd210452e07385409e84239e0491a8a4424502a562168",
+    "wheel_filename": "worlds_tloz-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "tloz_ooa": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "bf44ce3d8ae84361414187e0a4c99423104099b69af0776117587fe995356ed7",
+    "source": "archipelago.json",
+    "uploaded_sha256": "fdf683b90fe8220bc14460cf60196ca36097f3b19e8645c6772bd2c6a3b9de65",
+    "wheel_filename": "worlds_tloz_ooa-1.1.2-py3-none-any.whl",
+    "world_version": "1.1.2"
+  },
+  "tloz_oos": {
+    "components": [
+      {
+        "description": "An UI to extract and manipulates Link's sprite in Oracle of Seasons and Ages.\nEditing the sprite should be done with an external program.",
+        "name": "TLOZ Oracle sprite editor",
+        "type": "tool"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8269a5e23c966c476ebd118076c9ab5d37daec87ed965a975b68a4270c489bf2",
+    "source": "archipelago.json",
+    "uploaded_sha256": "987e73ce3b4640febc04f274fc35d06119491142a051fbdd90f0dda8df8dbfa9",
+    "wheel_filename": "worlds_tloz_oos-20.1.13-py3-none-any.whl",
+    "world_version": "20.1.13"
+  },
+  "tloz_ph": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "09d9c3316bed036d96435c8382067656807b74b0db1b7914d876f5f238085d5e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "09d9c3316bed036d96435c8382067656807b74b0db1b7914d876f5f238085d5e",
+    "wheel_filename": "worlds_tloz_ph-0.9.7-py3-none-any.whl",
+    "world_version": "0.9.7"
+  },
+  "tloz_st": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "c94ab53b28af7a731115a670960d1622645e4ceaaa45efa701bb920835c83604",
+    "source": "archipelago.json",
+    "uploaded_sha256": "c94ab53b28af7a731115a670960d1622645e4ceaaa45efa701bb920835c83604",
+    "wheel_filename": "worlds_tloz_st-0.8.3-py3-none-any.whl",
+    "world_version": "0.8.3"
+  },
+  "tmc": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "1c549d98f0f917d1f6fdd8e1f565164cfb134a0f00775218037a4238a5030640",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8925d1433ce52e516bbc143702221694684feb8f99c91fd1b5c43a2546ee320e",
+    "wheel_filename": "worlds_tmc-0.3.1-py3-none-any.whl",
+    "world_version": "0.3.1"
+  },
+  "toontown": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "26ea7887d9aea956294866b3c234fb5151bce175c192149e16ca5dd23c909c2d",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "c9c329b42806bbaf404c85bd1fc67a0d2da6c3b1021f5d16929f588d03e881ca",
+    "wheel_filename": "worlds_toontown-0.20.0-py3-none-any.whl",
+    "world_version": "0.20.0"
+  },
+  "tp": {
+    "components": [
+      {
+        "name": "Twilight Princess Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "dolphin_memory_engine"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8f2c23c553f3de009a60c6922179d99623a97f8920c53c27b31a5766e043823c",
+    "source": "archipelago.json",
+    "uploaded_sha256": "c47f0835487f8cacc40ce0209e039cf0ed5923d43b144144c0254cac145c9b46",
+    "wheel_filename": "worlds_tp-0.3.0-py3-none-any.whl",
+    "world_version": "0.3.0"
+  },
+  "tracker": {
+    "components": [
+      {
+        "name": "Universal Tracker",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8a72b5e32c23d5aef0440cfef71720830d374365b8fa8f7762be4a5d3817f3a1",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_tracker-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "tracker_addons": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ba2ef05276b728e7e2dc7fa92335d353a73a6bc9f34e08dc345386012659db59",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_tracker_addons-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "trackmania": {
+    "components": [
+      {
+        "name": "Trackmania Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "70b739c7b7c2536fa81d24c91bb477df644b9d2d5e47501b91574df768afc1ca",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b83457d0fdc90f5a10e3a0ad03a605db2aa84620d3fe7770e9e4a48723bcfab3",
+    "wheel_filename": "worlds_trackmania-1.3.2-py3-none-any.whl",
+    "world_version": "1.3.2"
+  },
+  "ttyd": {
+    "components": [
+      {
+        "description": "Open the Paper Mario: The Thousand-Year Door client.",
+        "name": "TTYD Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "gclib[speedups] @ git+https://github.com/LagoLunatic/gclib.git@abae309e05a8de4c2642e903611e65b4b124e1ce"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "5006905bd86e76009e3338cf25fec0769720d27be7fda82fa6ee0997b71e6185",
+    "source": "archipelago.json",
+    "uploaded_sha256": "5006905bd86e76009e3338cf25fec0769720d27be7fda82fa6ee0997b71e6185",
+    "wheel_filename": "worlds_ttyd-0.13.0-py3-none-any.whl",
+    "world_version": "0.13.0"
+  },
+  "tunic": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "506f5e1cd0929e125022c3295864fa898056db93b9025d4ec29a8d09ca6e1f71",
+    "source": "archipelago.json",
+    "uploaded_sha256": "506f5e1cd0929e125022c3295864fa898056db93b9025d4ec29a8d09ca6e1f71",
+    "wheel_filename": "worlds_tunic-5.0.2-py3-none-any.whl",
+    "world_version": "5.0.2"
+  },
+  "tww": {
+    "components": [
+      {
+        "name": "The Wind Waker Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "dolphin-memory-engine>=1.3.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e92575aed57fb56829ca3f5fe8a93f2fa8c5899d6c6dcb557edcc6b7155b917e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "9c26d07059445e60c709af75b510406ef964f93a7c26fe546534b6dabc408a2e",
+    "wheel_filename": "worlds_tww-3.0.0-py3-none-any.whl",
+    "world_version": "3.0.0"
+  },
+  "tyrian": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "f44f37339319b709789d2b49f55c67968bf3f5d7e7869e44b4681e83a4040bcb",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8dfabeaf7f6d220ea90a8eae62a23ce994e33557502350ea3ae1c86766537fb5",
+    "wheel_filename": "worlds_tyrian-1.0.5-py3-none-any.whl",
+    "world_version": "1.0.5"
+  },
+  "ucg": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "80f2bd44c40f8fbbace3cf338f21987ffe0753e2fd511703fc34a8343bd29ef8",
+    "source": "archipelago.json",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_ucg-1.0.3-py3-none-any.whl",
+    "world_version": "1.0.3"
+  },
+  "ufo50": {
+    "components": [
+      {
+        "name": "UFO 50",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ee060fb29595e225d8b67da574df30a02ac6784397d866c5909df65ac907c176",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": "ee060fb29595e225d8b67da574df30a02ac6784397d866c5909df65ac907c176",
+    "wheel_filename": "worlds_ufo50-0.2.1-py3-none-any.whl",
+    "world_version": "0.2.1"
+  },
+  "ultrakill": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "ac9ed0826ed34015035621a972a094f367ed11eb5cb4a3505ba5f22c3bfbcded",
+    "source": "archipelago.json",
+    "uploaded_sha256": "abb6694d162a386e187d39cc123a9ae173739dab37a84f754d974cd983a6de08",
+    "wheel_filename": "worlds_ultrakill-3.5.6-py3-none-any.whl",
+    "world_version": "3.5.6"
+  },
+  "undertale": {
+    "components": [
+      {
+        "name": "Undertale Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8acda74d14ee5a12b3a4c3a2818a2a3fb05dd6cca8a9125e930d5a766f7cdf7a",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_undertale-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "v6": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "0ec9b86c4d1333bf4cf95ef272e0eef9297bed6816aec1bbf78fc55af06ed838",
+    "source": "archipelago.json",
+    "uploaded_sha256": "3018cc92f2152f7d3e54356c905bac0720f6d5c05475832d92049e7acfb4c87c",
+    "wheel_filename": "worlds_v6-0.5.1-py3-none-any.whl",
+    "world_version": "0.5.1"
+  },
+  "vampire_survivors": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e6c87245d03b349339a64ea0985506030f4d5296dd1ad432ddd2f5bdb2c7f34a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "679bc2a9cb5df4279d232470ec020a931d2f0bc471d3e53a71571bf3dc57462a",
+    "wheel_filename": "worlds_vampire_survivors-0.3.2-py3-none-any.whl",
+    "world_version": "0.3.2"
+  },
+  "waffles": {
+    "components": [
+      {
+        "name": "Waffles Manager",
+        "type": "adjuster"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "d821453dbca2a0a4c7bbcd37b8c7bf69354573f813531668e1f96066c5c48ee2",
+    "source": "archipelago.json",
+    "uploaded_sha256": "d427216165749967d6b96f49ccd424a360f80867c6dcf071c4a1b2a9fa9b580a",
+    "wheel_filename": "worlds_waffles-1.3.10-py3-none-any.whl",
+    "world_version": "1.3.10"
+  },
+  "wargroove": {
+    "components": [
+      {
+        "name": "Wargroove Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "e939fcf5b3c1e83abf9bd057bdbd41706308d1c81a47f9654b09fdfb718b72ab",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b52754edbe28cd0d54f35c3730c97a0669cf0d1969f51d953022d110c938c664",
+    "wheel_filename": "worlds_wargroove-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "wargroove2": {
+    "components": [
+      {
+        "name": "Wargroove 2 Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "65f22cfba69898ab4f2c45f12618e5e59c49d5b3d0f363702f5a317ec66faa7b",
+    "source": "archipelago.json",
+    "uploaded_sha256": "731ae5e1150d90ac26be3ec93c50aa092bf6774bb9cdab8defb79bcb5e86933b",
+    "wheel_filename": "worlds_wargroove2-1.1.10-py3-none-any.whl",
+    "world_version": "1.1.10"
+  },
+  "witness": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3c57d0d644e4fad6a0c58e9fb785c2df37df11ff4a6031604cf4dc11d79e39d2",
+    "source": "archipelago.json",
+    "uploaded_sha256": "ba3bb61b440171de06f6bbb6900ce6a593172bb401a7d078333f98afb9c1bb74",
+    "wheel_filename": "worlds_witness-8.0.0-py3-none-any.whl",
+    "world_version": "8.0.0"
+  },
+  "wl": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "261e8f67c42b2b6a3a4ac960e1d6468dab59002e4ce66fe4787544b57b2b665f",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_wl-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "wl4": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "7a90b8659528b403b11b0caf08b2c3702527f8fd86e065cdf719034edeeb4f8a",
+    "source": "archipelago.json",
+    "uploaded_sha256": "9b3f3d229aeed1f5fdf3fb78edd1a5fe35d482bf225e31cc6cd12bfb6b00c46a",
+    "wheel_filename": "worlds_wl4-3.4.0-py3-none-any.whl",
+    "world_version": "3.4.0"
+  },
+  "wordipelago": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "3376e58b254fb29371e3788993b1e6a009ae77c5ae44bbb0910cf6a0265ee4b3",
+    "source": "archipelago.json",
+    "uploaded_sha256": "05b3a78e91480ffbe48e0b78f3025240b7f04287b0aa980f8abeb4f5a218fbb2",
+    "wheel_filename": "worlds_wordipelago-1.0.1-py3-none-any.whl",
+    "world_version": "1.0.1"
+  },
+  "xenobladex": {
+    "components": [
+      {
+        "name": "Xenoblade X Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8cd02124baa61c82ffb1cecce06051a0da9ff91d0b4146d051730268fe68974e",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b16ea93e070508b9198f49537f5b6fb343f6996082fb16ffe48f7b326c9b84a2",
+    "wheel_filename": "worlds_xenobladex-0.2.10-py3-none-any.whl",
+    "world_version": "0.2.10"
+  },
+  "yachtdice": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "46ea4b75885d0849f1277faa1c515b9e77ae390fba397e4f4c8de85b824e4314",
+    "source": "archipelago.json",
+    "uploaded_sha256": "64979343c743fc377f9dc1e6673fa1632fb81a96b848c08a305637c0fdde8b72",
+    "wheel_filename": "worlds_yachtdice-2.3.3-py3-none-any.whl",
+    "world_version": "2.3.3"
+  },
+  "yellowtaxi": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b65f6b53c6488e1b3bdb08ef6a9d90253ae64cd20025fe4ad18312c3a508fcad",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b65f6b53c6488e1b3bdb08ef6a9d90253ae64cd20025fe4ad18312c3a508fcad",
+    "wheel_filename": "worlds_yellowtaxi-0.7.0-py3-none-any.whl",
+    "world_version": "0.7.0"
+  },
+  "yoshisisland": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "dab947d2e283c0bf36dbf01991335c2e3cc856587641757794856c53095cfc64",
+    "source": "archipelago.json",
+    "uploaded_sha256": "ebdfd5d3fa0d8e1b9290aa1321884a4083555715c4b2ae1440fd6e871aa4c637",
+    "wheel_filename": "worlds_yoshisisland-1.0.0-py3-none-any.whl",
+    "world_version": "1.0.0"
+  },
+  "yugioh06": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "2b952760451f3d55196a9bdfe887501270e1e42f84ea3266f1273f48c08b0fce",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_yugioh06-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "yugiohddm": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "b18ed21cfafe2bc100e0e232a962df8cc6b6f7f1a6e387ba9e149365292418b3",
+    "source": "archipelago.json",
+    "uploaded_sha256": "46de08b56bf441ee6edd60d4363ee48e4f5c3ffb509a192eac0155be3e55835f",
+    "wheel_filename": "worlds_yugiohddm-0.3.3-py3-none-any.whl",
+    "world_version": "0.3.3"
+  },
+  "zelda2": {
+    "components": null,
+    "dependencies": [],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "4d4ac489b3cbdf8b6ae472c473f241978dd2328553ba42a4caf5faf44ade13cc",
+    "source": "archipelago.json",
+    "uploaded_sha256": "8f9836cb65819a593b791e4777dc9114e13658fc25542a04a7b4e175605cb50e",
+    "wheel_filename": "worlds_zelda2-1.0.1-py3-none-any.whl",
+    "world_version": "1.0.1"
+  },
+  "zillion": {
+    "components": [
+      {
+        "name": "Zillion Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "zilliandomizer @ git+https://github.com/beauxq/zilliandomizer@96d9a20f8278cee64bb4db859fbd874e0f332d36#0.9.1",
+      "typing-extensions>=4.7, <5"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "67d031a868edac26b8a65a04a4d35897da33303d287695adfc031c5929a0ef44",
+    "source": "archipelago.json+index",
+    "uploaded_sha256": null,
+    "wheel_filename": "worlds_zillion-0.0.1-py3-none-any.whl",
+    "world_version": "0.0.1"
+  },
+  "zork_grand_inquisitor": {
+    "components": [
+      {
+        "name": "Zork Grand Inquisitor Client",
+        "type": "client"
+      }
+    ],
+    "dependencies": [
+      "Pymem>=1.13.0"
+    ],
+    "deps_rev": 2,
+    "dropped_deps": [],
+    "sha256": "8581c4ceb831c8eb6f9aec333c6c3e87f80d2607c9f1e5e60bc8ec6eba77ce1d",
+    "source": "archipelago.json",
+    "uploaded_sha256": "b610e608b48b355b5019ac2bc1277392d5064d28a32ff44209c4a2b09915cad2",
+    "wheel_filename": "worlds_zork_grand_inquisitor-2.2.0-py3-none-any.whl",
+    "world_version": "2.2.0"
+  }
+}
