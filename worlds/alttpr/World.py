@@ -9,6 +9,7 @@ import typing
 from BaseClasses import CollectionState, Entrance, Item, ItemClassification, Location, MultiWorld, Tutorial
 from Options import OptionError
 import settings
+from Utils import user_path
 from worlds.AutoWorld import LogicMixin, WebWorld, World
 from worlds.Files import APProcedurePatch
 from worlds.alttpr import Sprites
@@ -600,6 +601,33 @@ class ALttPRWorld(World):
                            self.options.disable_music.value, None, triforce_gfx, ow_palettes,
                            uw_palettes, reduce_flashing, shuffle_sfx, shuffle_sfxinstruments,
                            shuffle_songinstruments, self.options.msu_resume.value)
+
+
+    def get_sprite_file(self) -> str | None:
+        sprite_name = self.options.sprite.value.lower()
+        if sprite_name == "link":
+            return None
+        if not sprite_name in Sprites.sprites:
+            # This should never happen because validate_options also checks this, but better safe than sorry.
+            logger.error(f"Invalid sprite option {self.options.sprite.value}. No custom sprite will be applied.")
+            return None
+
+        sprite_dir = user_path("data", "sprites", "alttp", "remote")
+        if not os.path.exists(sprite_dir):
+            logger.warning(f"Sprite directory {sprite_dir} does not exist. No custom sprite will be applied.")
+            return None
+
+        sprite_file = os.path.join(sprite_dir, Sprites.sprites[sprite_name]["filename"])
+        if not os.path.exists(sprite_file):
+            # TODO: Do this asynchronously
+            try:
+                with urlopen(Sprites.sprites[sprite_name]["url"], timeout=10) as response, open(sprite_file, "wb") as out:
+                    shutil.copyfileobj(response, out)
+            except Exception as e:
+                logger.error(f"Could not download sprite {sprite_name} from {Sprites.sprites[sprite_name]['url']}: {e}. No custom sprite will be applied.")
+                return None
+
+        return sprite_file
 
 
     def modify_multidata(self, multidata: dict):
