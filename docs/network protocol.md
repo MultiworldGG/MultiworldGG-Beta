@@ -220,14 +220,12 @@ Sent to clients to provide what is known as a 'data package' which contains info
 Sent to clients after a client requested this message be sent to them, more info in the [Bounce](#Bounce) package.
 
 #### Arguments
-| Name     | Type        | Notes                                                                                                                                      |
-|----------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| teams    | list\[int\] | Optional. Teams this message is targeting. Default assumed value when the key is not present is own team.                                  |
-| games    | list\[str\] | Optional. Game names this message is targeting                                                                                             |
-| slots    | list\[int\] | Optional. Player slot IDs that this message is targeting                                                                                   |
-| tags     | list\[str\] | Optional. Client [Tags](#Tags) this message is targeting                                                                                   |
-| operator | str         | Optional. Specifies whether the "teams", games", "slots" and "tags" conditions are chained via "or", "and" or using the "legacy" operator. |
-| data     | dict        | Optional. The data in the [Bounce](#Bounce) package copied                                                                                 |
+| Name | Type | Notes |
+| ---- | ---- | ----- |
+| games | list\[str\] | Optional. Game names this message is targeting |
+| slots | list\[int\] | Optional. Player slot IDs that this message is targeting |
+| tags | list\[str\] | Optional. Client [Tags](#Tags) this message is targeting |
+| data | dict | Optional. The data in the [Bounce](#Bounce) package copied |
 
 ### InvalidPacket
 Sent to clients if the server caught a problem with a packet. This only occurs for errors that are explicitly checked for.
@@ -246,6 +244,7 @@ Sent to clients if the server caught a problem with a packet. This only occurs f
 | ---- | ----- |
 | cmd | `cmd` argument of the faulty packet that could not be parsed correctly. |
 | arguments | Arguments of the faulty packet which were not correct. |
+| permission | Client was not authenticated as admin, and command required admin permission. |
 
 ### Retrieved
 Sent to clients as a response the a [Get](#Get) package.
@@ -422,18 +421,16 @@ Send this message to the server, tell it which clients should receive the messag
 the message to all those targets to which the requirements ("teams", "games", "slots", "tags") apply according
 to the operator chosen:
 - "or": Conditions are chained with "or".
-- "and": Conditions are chained with "and". Important note: If a condition is empty, it evaluates as **True**.
+- "and": Conditions are chained with "and". (Important note: A completely missing key evaluates as **True**, whereas an empty list evaluates as **False**)
 - "legacy": Evaluates as `teams and (games or slots or tags)`.
 
 #### Arguments
-| Name     | Type        | Notes                                                                                                                                           |
-|----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| teams    | list\[int\] | Optional. Teams that should receive this message. Defaults to own team.                                                                         |
-| games    | list\[str\] | Optional. Game names that should receive this message                                                                                           |
-| slots    | list\[int\] | Optional. Player IDs that should receive this message                                                                                           |
-| tags     | list\[str\] | Optional. Client tags that should receive this message                                                                                          |
-| operator | str         | Optional. Controls how the "teams", games", "slots" and "tags" conditions are chained. Options are "or", "and" and "legacy". Default: "legacy". |
-| data     | dict        | Optional. Any data you want to send                                                                                                             |
+| Name | Type | Notes |
+| ------ | ----- | ------ |
+| games | list\[str\] | Optional. Game names that should receive this message |
+| slots | list\[int\] | Optional. Player IDs that should receive this message |
+| tags | list\[str\] | Optional. Client tags that should receive this message |
+| data | dict | Optional. Any data you want to send |
 
 ### Get
 Used to request a single or multiple values from the server's data storage, see the [Set](#Set) package for how to write values to the data storage. A Get package will be answered with a [Retrieved](#Retrieved) package.
@@ -458,6 +455,7 @@ Some special keys exist with specific return data, all of them have the prefix `
 ### Set
 Used to write data to the server's data storage, that data can then be shared across worlds or just saved for later. Values for keys in the data storage can be retrieved with a [Get](#Get) package, or monitored with a [SetNotify](#SetNotify) package.
 Keys that start with `_read_` cannot be set.
+Keys that start with `_admin_` require the client to be logged in as a room admin via `!admin login` before modifying.
 #### Arguments
 | Name       | Type                                                  | Notes                                                                                                                  |
 |------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
