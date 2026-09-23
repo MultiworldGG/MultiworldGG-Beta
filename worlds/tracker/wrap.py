@@ -260,6 +260,15 @@ def _enable_console_tracker_mode(app) -> None:
     appbar.tracker_mode = True
 
 
+def _feed(label: str, consumer) -> None:
+    """Run one refresh consumer. They are independent surfaces, so one that
+    raises must not stop the others from being fed."""
+    try:
+        consumer()
+    except Exception:
+        logger.exception("Tracker overlay: feeding the %s failed", label)
+
+
 def _refresh(ctx, app) -> None:
     """Push current ctx state into tracker_core, drive the tracker page
     labels, and ask the console to repaint."""
@@ -273,20 +282,21 @@ def _refresh(ctx, app) -> None:
     tracker_core.set_hints({})
     updateTracker_ret = tracker_core.updateTracker()
 
-    _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret)
+    _feed("tracker page labels",
+          lambda: _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret))
 
     console_screen = getattr(app, "console_screen", None)
     update_fn = getattr(console_screen, "update_tracker_locations", None) if console_screen else None
     if update_fn is not None:
-        update_fn()
+        _feed("console logic view", update_fn)
     # The hint table's In Logic column reads tracker_core, so rebuild it too.
     update_hints = getattr(app, "update_hints", None)
     if update_hints is not None:
-        update_hints()
+        _feed("hint table", update_hints)
 
     if app is not None:
         from worlds.tracker.gui import clear_stray_tooltips
-        clear_stray_tooltips()
+        _feed("tooltip sweep", clear_stray_tooltips)
 
 
 def _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret) -> None:
