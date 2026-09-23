@@ -164,6 +164,7 @@ def _load_connected_slot(ctx, args: dict) -> None:
         )
         return
 
+    ctx.use_split = getattr(ctx.tracker_core, "use_split", ctx.use_split)
     ctx._map_controller.build_tracker_world(connected_cls)
     if ctx.tracker_world is None:
         logger.info("Tracker overlay: %s declares no map page (no tracker_world), map tab skipped", game)

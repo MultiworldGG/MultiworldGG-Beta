@@ -27,7 +27,6 @@ logger = logging.getLogger("Client")
 
 if TYPE_CHECKING:
     from worlds.tracker import TrackerWorld
-    from worlds.tracker.TrackerClient import TrackerGameContext
 
 
 _DEFERRED_ENTRANCE_CHOICES = ["default", "on", "off"]
@@ -41,18 +40,13 @@ def _tracker_settings():
     return TrackerWorld.settings
 
 
-def _ctx() -> "TrackerGameContext | None":
-    """Return the live TrackerGameContext, if any."""
+def _ctx():
+    """The live context that carries a tracker map controller: a standalone
+    TrackerGameContext, or a game client with the overlay attached. The
+    launcher's InitContext has neither."""
     app = App.get_running_app()
-    if app is None:
-        return None
-    ctx = getattr(app, "ctx", None)
-    # Avoid clinging to the launcher's InitContext; we only care about a
-    # TrackerGameContext.
-    from worlds.tracker.TrackerClient import TrackerGameContext
-    if isinstance(ctx, TrackerGameContext):
-        return ctx
-    return None
+    ctx = getattr(app, "ctx", None) if app is not None else None
+    return ctx if getattr(ctx, "_map_controller", None) is not None else None
 
 
 def _save_settings():

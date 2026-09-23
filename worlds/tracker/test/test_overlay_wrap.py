@@ -273,6 +273,24 @@ class TestConnectedGeneration(unittest.TestCase):
 
         self.assertEqual(self._connect(NeedsYaml), ["run_generator", "initalize_tracker_core"])
 
+    def test_split_icon_setting_reaches_the_map(self):
+        """The map reads ctx.use_split at load time; the overlay has to copy the
+        host setting off tracker_core after generation, as the standalone client does."""
+        class YamlLess:
+            ut_can_gen_without_yaml = True
+
+        core = SimpleNamespace(
+            launch_multiworld=None, tracker_disabled=False, multiworld=object(), use_split=False,
+            set_slot_params=lambda *a: None, initalize_tracker_core=lambda *a: None,
+        )
+        ctx = _ctx(team=0, tracker_core=core, use_split=True, tracker_world=None, ui=None,
+                   _map_controller=SimpleNamespace(build_tracker_world=lambda cls: None))
+        args = {"slot": 3, "slot_info": {"3": ("me", "FakeGame")}, "slot_data": {}}
+        from worlds import AutoWorld
+        with mock.patch.dict(AutoWorld.AutoWorldRegister.world_types, {"FakeGame": YamlLess}):
+            wrap._handle_connected(ctx, args)
+        self.assertFalse(ctx.use_split)
+
 
 class TestBeforePackageHook(unittest.IsolatedAsyncioTestCase):
     """attach_tracker_overlay chains before_package after the context's own; Connected stages the

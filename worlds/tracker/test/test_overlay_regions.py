@@ -40,8 +40,10 @@ class _Region:
 
 
 class _MultiWorld:
-    def __init__(self, *regions: _Region):
+    def __init__(self, *regions: _Region, origin: str | None = None):
         self._regions = list(regions)
+        if origin is not None:
+            self.worlds = {1: SimpleNamespace(origin_region_name=origin)}
 
     def get_region(self, name: str, player_id: int) -> _Region:
         for region in self._regions:
@@ -105,6 +107,27 @@ class TestBranchDescent(unittest.TestCase):
         self.assertEqual(sorted(name for name, _ in branches["Branch0"]),
                          ["Check 0", "Deep Check"])
 
+    def test_expanded_region_keeps_its_own_locations(self):
+        """Fewer exits than min_branches makes the descent expand a child into
+        its children; the expanded child's own locations stay under its name."""
+        menu, root = _Region("Menu"), _Region("Root")
+        hub, leaf = _Region("Hub"), _Region("Leaf")
+        deep_a, deep_b = _Region("Deep A"), _Region("Deep B")
+        menu.connect(root)
+        root.connect(hub, leaf)
+        hub.connect(deep_a, deep_b)
+        hub.place("Hub Check", 100)
+        leaf.place("Leaf Check", 101)
+        deep_a.place("Deep A Check", 102)
+        deep_b.place("Deep B Check", 103)
+        core = _core(_MultiWorld(menu, root, hub, leaf, deep_a, deep_b),
+                     available=(100, 101, 102, 103))
+
+        branches = group_reachable_by_top_level_branch(core)
+
+        self.assertEqual([name for name, _ in branches], ["Deep A", "Deep B", "Hub", "Leaf"])
+        self.assertEqual(dict(branches)["Hub"], [("Hub Check", CATEGORY_DEFAULT)])
+
     def test_region_off_the_menu_graph_is_unreachable(self):
         multiworld, _children = _linear_world()
         orphan = _Region("Orphan")
@@ -116,6 +139,29 @@ class TestBranchDescent(unittest.TestCase):
 
         self.assertEqual(branches[-1][0], _UNREACHABLE)
         self.assertEqual(branches[-1][1], [("Orphan Check", CATEGORY_DEFAULT)])
+
+    def test_origin_region_comes_from_the_world(self):
+        """Manual worlds start at "Manual", APQuest at "Overworld"; none has a Menu."""
+        start, room = _Region("Overworld"), _Region("Room")
+        start.connect(room)
+        room.place("Room Check", 100)
+        core = _core(_MultiWorld(start, room, origin="Overworld"), available=(100,))
+
+        branches = group_reachable_by_top_level_branch(core)
+
+        self.assertEqual(branches, [("Room", [("Room Check", CATEGORY_DEFAULT)])])
+
+    def test_origin_region_locations_are_listed_under_its_name(self):
+        """A Manual world keeps every location in its origin region."""
+        start = _Region("Manual")
+        start.place("Check B", 101)
+        start.place("Check A", 100)
+        core = _core(_MultiWorld(start, origin="Manual"), available=(100, 101))
+
+        branches = group_reachable_by_top_level_branch(core)
+
+        self.assertEqual(branches, [("Manual", [
+            ("Check A", CATEGORY_DEFAULT), ("Check B", CATEGORY_DEFAULT)])])
 
     def test_no_menu_region_yields_nothing(self):
         region = _Region("Somewhere")
