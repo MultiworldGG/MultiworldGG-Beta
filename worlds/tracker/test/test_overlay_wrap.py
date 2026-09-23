@@ -118,6 +118,32 @@ class TestRefreshFeed(unittest.TestCase):
             wrap._refresh(ctx, app)
         self.assertEqual(calls, ["hints"])
 
+    def test_one_failing_consumer_does_not_starve_the_others(self):
+        """A throwing page-label update used to skip the console repaint and the
+        hint table, leaving the Logic view blank while the tracker page looked fine."""
+        core = SimpleNamespace(
+            multiworld=object(), player_id=1,
+            set_missing_locations=lambda v: None, set_items_received=lambda v: None,
+            set_hints=lambda v: None, updateTracker=lambda: None,
+        )
+        ctx = _ctx(tracker_core=core, items_received=[], missing_locations=set(),
+                   checked_locations=set(), locations_info={})
+        calls = []
+        app = SimpleNamespace(
+            console_screen=SimpleNamespace(
+                update_tracker_locations=lambda: calls.append("console")),
+            update_hints=lambda: calls.append("hints"),
+        )
+
+        def boom(*args):
+            raise RuntimeError("page labels blew up")
+
+        with mock.patch.object(wrap, "_update_tracker_page_labels", boom),                 mock.patch("worlds.tracker.gui.clear_stray_tooltips", lambda: None):
+            wrap._refresh(ctx, app)
+
+        self.assertEqual(calls, ["console", "hints"])
+
+
 
 class TestWrappedOnPackage(unittest.TestCase):
     def test_room_update_scouts_and_location_info_pokes(self):
