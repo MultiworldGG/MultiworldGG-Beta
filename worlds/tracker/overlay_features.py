@@ -105,9 +105,11 @@ def group_reachable_by_top_level_branch(
     which double as ``tracker_core.get_ut_color`` keys so the view can
     look up the matching hex without knowing the category semantics.
 
-    Seed branches come from ``_select_branch_seeds`` (descending past
-    Menu's single exit). Regions that don't connect back to Menu fall
-    into ``(Unreachable)``.
+    Seed branches come from ``_select_branch_seeds``, descending from the
+    world's ``origin_region_name`` region. The origin and any region the
+    descent stepped through keep their own locations under their own
+    name. Regions that don't connect back to the origin fall into
+    ``(Unreachable)``.
 
     Returns ``[(branch_name, [(location_name, category), ...]), ...]``
     sorted alphabetically by branch (``(Unreachable)`` last); each
@@ -129,14 +131,16 @@ def group_reachable_by_top_level_branch(
     if not include_glitched:
         glitched = set()
 
+    world = (getattr(multiworld, "worlds", None) or {}).get(player_id)
+    origin_name = getattr(world, "origin_region_name", "Menu")
     try:
-        menu = multiworld.get_region("Menu", player_id)
+        menu = multiworld.get_region(origin_name, player_id)
     except KeyError:
         return []
 
     seeds = _select_branch_seeds(menu, min_count=min_branches)
 
-    region_to_branch: dict[object, str] = {}
+    region_to_branch: dict[object, str] = {menu: menu.name}
     queue: deque = deque()
     for seed in seeds:
         if seed in region_to_branch:
@@ -149,15 +153,25 @@ def group_reachable_by_top_level_branch(
         branch = region_to_branch[region]
         for ex in region.exits:
             target = ex.connected_region
-            if target is None or target is menu or target in region_to_branch:
+            if target is None or target in region_to_branch:
                 continue
             region_to_branch[target] = branch
             queue.append(target)
 
+    # Regions between the origin and the seeds were expanded away by the
+    # descent; each keeps its own name so its locations are not unreachable.
+    queue.append(menu)
+    while queue:
+        region = queue.popleft()
+        for ex in region.exits:
+            target = ex.connected_region
+            if target is None or target in region_to_branch:
+                continue
+            region_to_branch[target] = target.name
+            queue.append(target)
+
     grouped: dict[str, list[tuple[str, str]]] = {}
     for region in multiworld.get_regions(player_id):
-        if region is menu:
-            continue
         branch_name = region_to_branch.get(region, _UNREACHABLE_BRANCH)
         for loc in region.locations or []:
             addr = loc.address
