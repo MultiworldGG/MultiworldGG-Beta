@@ -190,6 +190,8 @@ _ApLocationDeferred = None
 _APLocationMixed = None
 _APLocationSplit = None
 _VisualTracker = None
+_BoxStencil = None
+_ScrollWheelZoomScatterLayout = None
 
 
 def _ensure_widgets():
@@ -198,6 +200,7 @@ def _ensure_widgets():
     global _TrackerLayout, _TrackerTooltip, _TrackerView_cls, _CheckItem
     global _ApLocationIcon, _ApLocation, _ApLocationDeferred
     global _APLocationMixed, _APLocationSplit, _VisualTracker
+    global _BoxStencil, _ScrollWheelZoomScatterLayout
     if _widgets_built:
         return
 
@@ -205,6 +208,9 @@ def _ensure_widgets():
     from kvui import MDRecycleView, HoverBehavior
     from kivymd.uix.tooltip import MDTooltip
     from kivy.uix.widget import Widget
+    from kivy.uix.scatterlayout import ScatterLayout
+    from kivy.uix.stencilview import StencilView
+    from kivy.graphics.transformation import Matrix
     from kivy.properties import StringProperty, BooleanProperty, DictProperty, ColorProperty, ObjectProperty
     # Local subclass keeps Tracker.kv's `<ApAsyncImage>:` rule off every
     # other AsyncImage in the app.
@@ -222,6 +228,41 @@ def _ensure_widgets():
     from worlds import AutoWorld
 
     apname = instance_name if instance_name else "AP"
+
+    class BoxStencil(BoxLayout, StencilView):
+        pass
+
+    # ScatterLayout only zooms on a multi-finger pinch; this adds mouse-wheel zoom.
+    class ScrollWheelZoomScatterLayout(ScatterLayout):
+        zoomOutFactor = 1.1
+        zoomInFactor = 1 / zoomOutFactor
+
+        def on_touch_down(self, touch):
+            if self.parent and not self.parent.collide_point(*touch.pos):
+                return False
+            if touch.is_mouse_scrolling:
+                factor = self.zoomInFactor if touch.button == "scrollup" else self.zoomOutFactor
+                if self.scale_min <= self.scale * factor <= self.scale_max:
+                    mat = Matrix().scale(factor, factor, 1)
+                    self.apply_transform(mat, anchor=touch.pos)
+                return True
+            return super().on_touch_down(touch)
+
+        # Touches the scatter does not own must fall through, or it blocks clicks outside the stencil.
+        def on_touch_move(self, touch):
+            if touch in self._touches:
+                return super().on_touch_move(touch)
+            return False
+
+        def on_touch_up(self, touch):
+            if touch in self._touches:
+                return super().on_touch_up(touch)
+            return False
+
+        def recenter_view(self):
+            self.scale = 1.0
+            self.pos = (0, 0)
+            self.transform = Matrix()
 
     class CheckItem(BoxLayout):
         text = StringProperty()
@@ -499,6 +540,8 @@ def _ensure_widgets():
     _APLocationMixed = APLocationMixed
     _APLocationSplit = APLocationSplit
     _VisualTracker = VisualTracker
+    _BoxStencil = BoxStencil
+    _ScrollWheelZoomScatterLayout = ScrollWheelZoomScatterLayout
     _widgets_built = True
 
 
