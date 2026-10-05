@@ -332,6 +332,25 @@ def _ensure_widgets():
         def on_mouse_pos(self, window, pos):
             return super().on_mouse_pos(window, pos)
 
+        def on_mouse_update(self, *args):
+            # kivymd's bbox test ignores the map's canvas transforms and the zoom scatter.
+            if not self.allow_hover or not self.get_root_window():
+                return
+            pos = args[1]
+            inside = self._in_map_viewport(pos) and self.collide_point(*self.to_widget(*pos))
+            if inside == self.hovering:
+                return
+            self.hovering = self.hover_visible = inside
+            self.enter_point = pos if inside else None
+            self.border_point = pos
+            self.dispatch("on_enter" if inside else "on_leave")
+
+        def _in_map_viewport(self, pos):
+            stencil = self.parent
+            while stencil is not None and not isinstance(stencil, StencilView):
+                stencil = stencil.parent
+            return stencil is None or stencil.collide_point(*stencil.to_widget(*pos))
+
         def to_window(self, x, y):
             if self.border_point:
                 return self.border_point
