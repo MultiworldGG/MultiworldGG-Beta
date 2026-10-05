@@ -55,6 +55,7 @@ def _fake_frontend(with_dialog=True):
 class _Client(CommonContext):
     """World-client shape: server_auth is the login step RoomInfo triggers."""
     game = "Some Game"
+    items_handling = 0b111
 
     async def server_auth(self, password_requested: bool = False):
         await self.get_username()

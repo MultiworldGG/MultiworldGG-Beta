@@ -66,8 +66,9 @@ if __name__ == "__main__":
     ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
-    SlotType, LocationStore, MultiData, WorldVersionPin, Hint, HintStatus
+    SlotType, LocationStore, MultiData, WorldVersionPin, Hint, HintStatus, GamesPackage
 from BaseClasses import ItemClassification
+from apmw.multiserver.gamespackagecache import GamesPackageCache
 
 min_client_version = Version(0, 1, 6)
 colorama.just_fix_windows_console()
@@ -331,10 +332,11 @@ class Context:
     slot_info: typing.Dict[int, NetworkSlot]
     generator_version = Version(0, 0, 0)
     checksums: typing.Dict[str, str]
+    played_games: set[str]
     item_names: typing.Dict[str, typing.Dict[int, str]]
-    item_name_groups: typing.Dict[str, typing.Dict[str, typing.Set[str]]]
+    item_name_groups: typing.Dict[str, typing.Dict[str, list[str]]]
     location_names: typing.Dict[str, typing.Dict[int, str]]
-    location_name_groups: typing.Dict[str, typing.Dict[str, typing.Set[str]]]
+    location_name_groups: typing.Dict[str, typing.Dict[str, list[str]]]
     all_item_and_group_names: typing.Dict[str, typing.Set[str]]
     all_location_and_group_names: typing.Dict[str, typing.Set[str]]
     non_hintable_names: typing.Dict[str, typing.AbstractSet[str]]
@@ -342,13 +344,31 @@ class Context:
     allow_collecting_from: dict[int, dict[int, bool]]  # per team, the current collect_from value
     spheres: typing.List[typing.Dict[int, typing.Set[int]]]
     """ each sphere is { player: { location_id, ... } } """
+    games_package_cache: GamesPackageCache
     logger: logging.Logger
 
-    def __init__(self, host: str, port: int, admin_password: str, password: str, location_check_points: int,
-                 hint_cost: int, item_cheat: bool, release_mode: str = "disabled", collect_mode="disabled", hint_mode: str = "default",
-                 countdown_mode: str = "auto", remaining_mode: str = "disabled", release_threshold: int = 0, 
-                 auto_shutdown: typing.SupportsFloat = 0, compatibility: int = 2, log_network: bool = False, 
-                 logger: logging.Logger = logging.getLogger()):
+    def __init__(
+            self,
+            host: str,
+            port: int,
+            admin_password: str,
+            password: str,
+            location_check_points: int,
+            hint_cost: int,
+            item_cheat: bool,
+            release_mode: str = "disabled",
+            collect_mode="disabled",
+            hint_mode: str = "default",
+            countdown_mode: str = "auto",
+            remaining_mode: str = "disabled",
+            release_threshold: int = 0,
+            auto_shutdown: typing.SupportsFloat = 0,
+            compatibility: int = 2,
+            log_network: bool = False,
+            logger: logging.Logger = logging.getLogger(),
+            *,
+            games_package_cache: GamesPackageCache | None = None,
+    ) -> None:
         self.logger = logger
         super(Context, self).__init__()
         self.slot_info = {}
@@ -404,6 +424,7 @@ class Context:
         self.save_dirty = False
         self.tags = ['AP']
         self.games: typing.Dict[int, str] = {}
+        self.played_games = set()
         self.minimum_client_versions: typing.Dict[int, Version] = {}
         self.seed_name = ""
         self.groups = {}
@@ -416,9 +437,10 @@ class Context:
         self.spheres = []
         self.world_versions: typing.Dict[int, NetUtils.WorldVersionPin] = {}
         self.mwgg_index_tag: typing.Optional[str] = None
+        self.games_package_cache = games_package_cache or GamesPackageCache()
 
         # init empty to satisfy linter, I suppose
-        self.gamespackage = {}
+        self.reduced_games_package = {}
         self.checksums = {}
         self.item_name_groups = {}
         self.location_name_groups = {}
@@ -430,50 +452,11 @@ class Context:
             lambda: Utils.KeyedDefaultDict(lambda code: f'Unknown location (ID:{code})'))
         self.non_hintable_names = collections.defaultdict(frozenset)
 
-        self._load_game_data()
-
-    # Data package retrieval
-    def _load_game_data(self):
-        import worlds
-        self.gamespackage = worlds.network_data_package["games"]
-
-        self.item_name_groups = {world_name: world.item_name_groups for world_name, world in
-                                 worlds.AutoWorldRegister.world_types.items()}
-        self.location_name_groups = {world_name: world.location_name_groups for world_name, world in
-                                     worlds.AutoWorldRegister.world_types.items()}
-        for world_name, world in worlds.AutoWorldRegister.world_types.items():
-            self.non_hintable_names[world_name] = world.hint_blacklist
-
-        for game_package in self.gamespackage.values():
-            # remove groups from data sent to clients
-            del game_package["item_name_groups"]
-            del game_package["location_name_groups"]
-
-    def _init_game_data(self):
-        for game_name, game_package in self.gamespackage.items():
-            if "checksum" in game_package:
-                self.checksums[game_name] = game_package["checksum"]
-            for item_name, item_id in game_package["item_name_to_id"].items():
-                self.item_names[game_name][item_id] = item_name
-            for location_name, location_id in game_package["location_name_to_id"].items():
-                self.location_names[game_name][location_id] = location_name
-            self.all_item_and_group_names[game_name] = \
-                set(game_package["item_name_to_id"]) | set(self.item_name_groups.get(game_name, {}))
-            self.all_location_and_group_names[game_name] = \
-                set(game_package["location_name_to_id"]) | set(self.location_name_groups.get(game_name, []))
-
-        archipelago_item_names = self.item_names["Archipelago"]
-        archipelago_location_names = self.location_names["Archipelago"]
-        for game in [game_name for game_name in self.gamespackage if game_name != "Archipelago"]:
-            # Add MultiworldGG items and locations to each data package.
-            self.item_names[game].update(archipelago_item_names)
-            self.location_names[game].update(archipelago_location_names)
-
     def item_names_for_game(self, game: str) -> typing.Optional[typing.Dict[str, int]]:
-        return self.gamespackage[game]["item_name_to_id"] if game in self.gamespackage else None
+        return self.reduced_games_package[game]["item_name_to_id"] if game in self.reduced_games_package else None
 
     def location_names_for_game(self, game: str) -> typing.Optional[typing.Dict[str, int]]:
-        return self.gamespackage[game]["location_name_to_id"] if game in self.gamespackage else None
+        return self.reduced_games_package[game]["location_name_to_id"] if game in self.reduced_games_package else None
 
     # General networking
     async def send_msgs(self, endpoint: Endpoint, msgs: typing.Iterable[dict]) -> bool:
@@ -583,19 +566,17 @@ class Context:
             with open(multidatapath, 'rb') as f:
                 data = f.read()
 
-        self._load(self.decompress(data), {}, use_embedded_server_options)
+        self._load(self.decompress(data), use_embedded_server_options)
         self.data_filename = multidatapath
 
     @staticmethod
-    def decompress(data: bytes) -> dict:
+    def decompress(data: bytes) -> typing.Any:
         format_version = data[0]
         if format_version > 3:
             raise Utils.VersionException("Incompatible multidata.")
         return restricted_loads(zlib.decompress(data[1:]))
 
-    def _load(self, decoded_obj: MultiData, game_data_packages: typing.Dict[str, typing.Any],
-              use_embedded_server_options: bool):
-
+    def _load(self, decoded_obj: MultiData, use_embedded_server_options: bool) -> None:
         self.read_data = {}
         # there might be a better place to put this.
         race_mode = decoded_obj.get("race_mode", 0)
@@ -616,6 +597,7 @@ class Context:
 
         self.slot_info = decoded_obj["slot_info"]
         self.games = {slot: slot_info.game for slot, slot_info in self.slot_info.items()}
+        self.played_games = {"Archipelago"} | {self.games[x] for x in range(1, len(self.games) + 1)}
         self.groups = {slot: set(slot_info.group_members) for slot, slot_info in self.slot_info.items()
                        if slot_info.type == SlotType.group}
 
@@ -662,18 +644,11 @@ class Context:
             server_options = decoded_obj.get("server_options", {})
             self._set_options(server_options)
 
-        # embedded data package
-        for game_name, data in decoded_obj.get("datapackage", {}).items():
-            if game_name in game_data_packages:
-                data = game_data_packages[game_name]
-            self.logger.info(f"Loading embedded data package for game {game_name}")
-            self.gamespackage[game_name] = data
-            self.item_name_groups[game_name] = data["item_name_groups"]
-            if "location_name_groups" in data:
-                self.location_name_groups[game_name] = data["location_name_groups"]
-                del data["location_name_groups"]
-            del data["item_name_groups"]  # remove from data package, but keep in self.item_name_groups
+        # load and apply world data and (embedded) data package
+        self._load_world_data()
+        self._load_data_package(decoded_obj.get("datapackage", {}))
         self._init_game_data()
+
         for game_name, data in self.item_name_groups.items():
             self.read_data[f"item_name_groups_{game_name}"] = lambda lgame=game_name: self.item_name_groups[lgame]
         for game_name, data in self.location_name_groups.items():
@@ -686,6 +661,58 @@ class Context:
         self.world_versions = decoded_obj.get("world_versions", {})
         # mwgg_igdb release tag this seed was generated against; None on pre-feature seeds
         self.mwgg_index_tag = decoded_obj.get("mwgg_index_tag")
+
+    def _load_world_data(self) -> None:
+        import worlds
+
+        for world_name, world in worlds.AutoWorldRegister.world_types.items():
+            # TODO: move hint_blacklist into GamesPackage?
+            self.non_hintable_names[world_name] = world.hint_blacklist
+
+    def _load_data_package(self, data_package: dict[str, GamesPackage]) -> None:
+        """Populates reduced_games_package, item_name_groups, location_name_groups from static data and data_package"""
+        # NOTE: for worlds loaded from db, only checksum is set in GamesPackage, but this is handled by cache
+        for game_name in sorted(self.played_games):
+            if game_name in data_package:
+                self.logger.info(f"Loading embedded data package for game {game_name}")
+                data = self.games_package_cache.get(game_name, data_package[game_name])
+            else:
+                # NOTE: we still allow uploading a game without datapackage. Once that is changed, we could drop this.
+                try:
+                    data = self.games_package_cache.get_static(game_name)
+                except KeyError:
+                    raise Exception(f"Data package for {game_name} missing from Multidata") from None
+            (
+                self.reduced_games_package[game_name],
+                self.item_name_groups[game_name],
+                self.location_name_groups[game_name],
+            ) = data
+
+        del self.games_package_cache  # Not used past this point. Free memory.
+
+    def _init_game_data(self) -> None:
+        """Update internal values from previously loaded data packages"""
+        for game_name, game_package in self.reduced_games_package.items():
+            if game_name not in self.played_games:
+                continue
+            if "checksum" in game_package:
+                self.checksums[game_name] = game_package["checksum"]
+            # NOTE: we could save more memory by moving the stuff below to data package cache as well
+            for item_name, item_id in game_package["item_name_to_id"].items():
+                self.item_names[game_name][item_id] = item_name
+            for location_name, location_id in game_package["location_name_to_id"].items():
+                self.location_names[game_name][location_id] = location_name
+            self.all_item_and_group_names[game_name] = \
+                set(game_package["item_name_to_id"]) | set(self.item_name_groups[game_name])
+            self.all_location_and_group_names[game_name] = \
+                set(game_package["location_name_to_id"]) | set(self.location_name_groups.get(game_name, []))
+
+        archipelago_item_names = self.item_names["Archipelago"]
+        archipelago_location_names = self.location_names["Archipelago"]
+        for game in [game_name for game_name in self.reduced_games_package if game_name != "Archipelago"]:
+            # Add Archipelago items and locations to each data package.
+            self.item_names[game].update(archipelago_item_names)
+            self.location_names[game].update(archipelago_location_names)
 
     # saving
 
@@ -1056,9 +1083,6 @@ async def server(websocket: "ServerConnection", path: str = "/", ctx: Context = 
 
 
 async def on_client_connected(ctx: Context, client: Client):
-    games = {ctx.games[x] for x in range(1, len(ctx.games) + 1)}
-    games.add("Archipelago")
-
     # Collapse slot-keyed world_versions into a game-keyed map for the RoomInfo fan-out.
     # The client doesn't know its slot at RoomInfo time, so we key by game name.
     # Slots that share a game name share a version; last one written wins (they should agree).
@@ -1071,7 +1095,7 @@ async def on_client_connected(ctx: Context, client: Client):
     await ctx.send_msgs(client, [{
         'cmd': 'RoomInfo',
         'password': bool(ctx.password),
-        'games': games,
+        'games': sorted(ctx.played_games),
         # tags are for additional features in the communication.
         # Name them by feature or fork, as you feel is appropriate.
         'tags': ctx.tags,
@@ -1080,8 +1104,7 @@ async def on_client_connected(ctx: Context, client: Client):
         'permissions': get_permissions(ctx),
         'hint_cost': ctx.hint_cost,
         'location_check_points': ctx.location_check_points,
-        'datapackage_checksums': {game: game_data["checksum"] for game, game_data
-                                  in ctx.gamespackage.items() if game in games and "checksum" in game_data},
+        'datapackage_checksums': ctx.checksums,
         'seed_name': ctx.seed_name,
         'time': time.time(),
         'world_versions': game_world_versions,
@@ -2303,25 +2326,14 @@ async def process_client_cmd(ctx: Context, client: Client, args: dict):
             await ctx.send_msgs(client, reply)
 
     elif cmd == "GetDataPackage":
-        exclusions = args.get("exclusions", [])
         if "games" in args:
-            games = {name: game_data for name, game_data in ctx.gamespackage.items()
-                     if name in set(args.get("games", []))}
-            await ctx.send_msgs(client, [{"cmd": "DataPackage",
-                                          "data": {"games": games}}])
-        # TODO: remove exclusions behaviour around 0.5.0
-        elif exclusions:
-            exclusions = set(exclusions)
-            games = {name: game_data for name, game_data in ctx.gamespackage.items()
-                     if name not in exclusions}
-
-            package = {"games": games}
-            await ctx.send_msgs(client, [{"cmd": "DataPackage",
-                                          "data": package}])
-
+            requested_games = set(args["games"])
+            games = {name: data for name, data in ctx.reduced_games_package.items() if name in requested_games}
         else:
-            await ctx.send_msgs(client, [{"cmd": "DataPackage",
-                                          "data": {"games": ctx.gamespackage}}])
+            # Older clients request all games, optionally excluding packages they already have.
+            exclusions = set(args.get("exclusions", []))
+            games = {name: data for name, data in ctx.reduced_games_package.items() if name not in exclusions}
+        await ctx.send_msgs(client, [{"cmd": "DataPackage", "data": {"games": games}}])
 
     elif client.auth:
         if cmd == "ConnectUpdate":

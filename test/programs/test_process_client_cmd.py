@@ -19,6 +19,7 @@ import weakref
 
 import MultiServer
 from MultiServer import Context, Client, ServerCommandProcessor
+from apmw.multiserver.gamespackagecache import GamesPackageCache
 from NetUtils import LocationStore, NetworkSlot, SlotType, ClientStatus
 from Utils import Version
 
@@ -36,50 +37,21 @@ class FakeSocket:
         self.protocol = FakeSocket._Protocol()
 
 
-# A Context's constructor mutates the shared, process-global
-# `worlds.network_data_package` (it deletes the *_name_groups keys in place),
-# so it can only be built once per process. We build a single base Context and
-# reset the per-test mutable state in setUp instead of rebuilding it.
+# One base Context shared by the tests; build_context resets its per-test mutable state.
 _base_ctx: Context | None = None
 
 
-def _repair_data_package_groups() -> None:
-    """Re-add the group keys Context.__init__ deletes from the shared package.
-
-    Context._load_game_data does an in-place ``del`` of item_name_groups /
-    location_name_groups on the process-global ``worlds.network_data_package``.
-    A second Context construction (e.g. by another test file in the same
-    process) would then KeyError. We restore the keys before and after our own
-    construction so neither this file nor its neighbors is order-dependent.
-    The values are unused after load (groups come from the world classes).
-    """
-    import worlds
-    for game_package in worlds.network_data_package["games"].values():
-        game_package.setdefault("item_name_groups", {})
-        game_package.setdefault("location_name_groups", {})
-
-
-def setUpModule() -> None:
-    # Repair any damage a previously-run test file's Context left behind.
-    _repair_data_package_groups()
-
-
-def tearDownModule() -> None:
-    # Leave the shared package healthy for any test file that runs after us.
-    _repair_data_package_groups()
-
-
 def _make_base_context() -> Context:
-    _repair_data_package_groups()
     ctx = Context("", 0, "", "", location_check_points=1, hint_cost=0, item_cheat=True,
                   release_mode="disabled", collect_mode="disabled", compatibility=2)
-    _repair_data_package_groups()
 
-    # Register a synthetic game's name<->id tables via the real init path.
-    ctx.gamespackage[GAME] = {
+    # Register a synthetic game's name<->id tables via the real load path; Archipelago comes from static data.
+    ctx.played_games = {"Archipelago", GAME}
+    ctx._load_data_package({GAME: {
         "item_name_to_id": {"Sword": 100, "Shield": 101, "Bow": 102, "Link's Bow": 103},
         "location_name_to_id": {"Chest A": 10, "Chest B": 11, "Chest C": 20},
-    }
+        "item_name_groups": {},
+    }})
     ctx._init_game_data()
 
     ctx.games = {1: GAME, 2: GAME}
@@ -625,7 +597,7 @@ SLOT_PINS = {
 _LOAD_CLOBBERED = (
     "read_data", "generator_version", "minimum_client_versions", "slot_info", "games",
     "groups", "clients", "def_allow_collecting_from", "seed_name", "connect_names",
-    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "mwgg_index_tag",
+    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "mwgg_index_tag", "played_games",
     "player_names", "player_name_lookup",
 )
 
@@ -650,7 +622,8 @@ class TestWorldVersionPinFlow(unittest.TestCase):
             "minimum_versions": {"server": (0, 1, 6), "clients": {}},
             "seed_name": "TESTSEED",
             "spheres": [],
-            "datapackage": {},
+            "datapackage": {game: {"item_name_to_id": {}, "location_name_to_id": {}, "item_name_groups": {}}
+                            for game in ("Game A", "Game B")},
         }
         if with_pins:
             data["world_versions"] = {slot: dict(pin) for slot, pin in SLOT_PINS.items()}
@@ -663,7 +636,8 @@ class TestWorldVersionPinFlow(unittest.TestCase):
         saved["player_names"] = dict(ctx.player_names)
         saved["player_name_lookup"] = dict(ctx.player_name_lookup)
         try:
-            ctx._load(multidata, {}, False)
+            ctx.games_package_cache = GamesPackageCache()  # _load consumes it
+            ctx._load(multidata, False)
             self.loaded_world_versions = ctx.world_versions
             self.loaded_mwgg_index_tag = ctx.mwgg_index_tag
         finally:
@@ -804,7 +778,8 @@ class TestUpstreamServerOptionsInterop(unittest.TestCase):
         saved["player_names"] = dict(ctx.player_names)
         saved["player_name_lookup"] = dict(ctx.player_name_lookup)
         try:
-            ctx._load(multidata, {}, True)
+            ctx.games_package_cache = GamesPackageCache()  # _load consumes it
+            ctx._load(multidata, True)
             self.loaded_admin_password = ctx.admin_password
         finally:
             for attr, value in saved.items():
