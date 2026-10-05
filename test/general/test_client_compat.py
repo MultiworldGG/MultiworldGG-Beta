@@ -1,10 +1,14 @@
 """Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins, legacy make_gui() resolution); add new client-compat tests here."""
 
+import ast
 import asyncio
+import configparser
 import contextlib
+import logging
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from types import SimpleNamespace
 from unittest import mock
@@ -193,6 +197,82 @@ class TestKvuiTuiStandins(unittest.TestCase):
             "    raised = True\n"
             "assert raised, 'catch-all manufactured a dunder'\n"
         )
+
+
+# --------------------------------------------------------------------------- #
+# kvui GUI branch legacy config: upstream Manual clients override build_config
+# and call super().build_config(config), which never reaches GameManager's
+# __getattr__. GameManager is exec'd from source because importing the GUI
+# branch pulls in mwgg_gui and kivy.core.window, which opens an SDL window.
+# --------------------------------------------------------------------------- #
+
+class _KivyConfigParser(configparser.ConfigParser):
+    """kivy.config.ConfigParser surface used by _load_legacy_config and Manual's build_config."""
+
+    filename = None
+
+    def setdefaults(self, section: str, keyvalues: dict) -> None:
+        if not self.has_section(section):
+            self.add_section(section)
+        for key, value in keyvalues.items():
+            if not self.has_option(section, key):
+                self.set(section, key, value)
+
+    def write(self) -> None:
+        with open(self.filename, "w", encoding="utf-8") as f:
+            super().write(f)
+
+
+def _gui_game_manager() -> type:
+    with open(os.path.join(REPO_ROOT, "kvui.py"), encoding="utf-8") as f:
+        tree = ast.parse(f.read())
+    gui_branch = next(node for node in tree.body if isinstance(node, ast.If)).orelse
+    class_def = next(
+        node for node in gui_branch if isinstance(node, ast.ClassDef) and node.name == "GameManager"
+    )
+    namespace = {
+        "os": os, "logging": logging, "App": type("App", (), {}),
+        "KivyJSONtoTextParser": object, "MDNavigationItemBase": object, "Widget": object,
+    }
+    exec(compile(ast.Module(body=[class_def], type_ignores=[]), "kvui.py", "exec"), namespace)
+    return namespace["GameManager"]
+
+
+class TestKvuiLegacyConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.GameManager = _gui_game_manager()
+
+    def setUp(self) -> None:
+        patcher = mock.patch.dict(sys.modules, {"kivy.config": SimpleNamespace(ConfigParser=_KivyConfigParser)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.ini = os.path.join(tmp.name, "manual_client.ini")
+
+    def test_super_build_config_populates_sections(self) -> None:
+        ini = self.ini
+
+        class ManualManager(self.GameManager):
+            def get_application_config(self, defaultpath: str = "") -> str:
+                return ini
+
+            def build_config(self, config):
+                super().build_config(config)
+                config.setdefaults("manual", {"items_sorting_order": "default"})
+                config.setdefaults("universal-tracker", {"block_unreachable_location_press": "Yes"})
+
+        manager = ManualManager(ctx=None)
+        manager._load_legacy_config()
+        self.assertEqual(manager.config.sections(), ["manual", "universal-tracker"])
+        self.assertEqual(manager.config.get("manual", "items_sorting_order"), "default")
+        self.assertTrue(os.path.exists(ini), "world ini was not written")
+
+    def test_without_override_config_forwards_to_live_app(self) -> None:
+        manager = type("Plain", (self.GameManager,), {})(ctx=None)
+        manager._load_legacy_config()
+        self.assertNotIn("config", vars(manager))
 
 
 # --------------------------------------------------------------------------- #
