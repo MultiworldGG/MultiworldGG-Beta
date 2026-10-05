@@ -1,5 +1,6 @@
 """Launcher stack tests (entry points, components, spawn/routing, connect URLs, installer refs); add new launcher-stack tests here."""
 
+import asyncio
 import json
 import logging
 import os
@@ -203,6 +204,16 @@ def test_compose_connect_address_no_warning_without_colon(caplog):
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         MultiWorld._compose_connect_address("localhost:38281", "P1", "secret")
     assert not caplog.records
+
+
+def test_init_context_shutdown_when_gui_never_started():
+    """run_client's finally awaits shutdown() even when run_gui raised before creating ui_task."""
+    from CommonClient import InitContext
+
+    async def main():
+        await InitContext().shutdown()
+
+    asyncio.run(main())
 
 
 # --- _resolve_client_route: dead-client guard fallback matrix ---

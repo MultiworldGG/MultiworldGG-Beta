@@ -631,10 +631,43 @@ def _consume_wheel_cache() -> None:
         shutil.rmtree(consuming_dir, ignore_errors=True)
 
 
+# The frozen bundle ships the GUI stack; index wheels from before 2026-08-30 declared it
+# as deps, and a venv kivy_deps.* joins the bundle's pkgutil namespace and crashes kivy.
+_BUNDLED_GUI_DISTS = frozenset({
+    "asyncgui", "asynckivy", "kivy", "kivy-deps-angle", "kivy-deps-glew", "kivy-deps-sdl2",
+    "kivy-garden", "kivymd", "materialshapes", "materialyoucolor",
+})
+
+
+def _prune_bundled_gui_dists() -> None:
+    """Uninstall bundle-provided GUI dists from the worlds venv; best effort."""
+    if not is_frozen() or _skip_all_installs():
+        return
+    # uv refuses dist-info leftovers without a RECORD (interrupted uninstalls); skip them.
+    present = sorted({
+        name for info in Path(mwgg_venv_site_packages()).glob("*.dist-info")
+        if (name := re.sub(r"[-_.]+", "-", info.name.split("-", 1)[0]).lower()) in _BUNDLED_GUI_DISTS
+        and (info / "RECORD").is_file()
+    })
+    if not present:
+        return
+    try:
+        result = _uv_run(_uv_pip("uninstall", *present))
+    except subprocess.TimeoutExpired:
+        result = None
+    if result is None or result.returncode != 0:
+        stderr = (result.stderr if result else "timed out").strip()
+        logger.warning(f"Could not remove bundled GUI packages {present} from the worlds venv: {stderr}")
+        return
+    logger.info(f"Removed bundled GUI packages from the worlds venv: {present}")
+    invalidate_caches()
+
+
 # Marker peeked before the first mwgg_igdb install; claim/install runs after.
 _apply_wheel_cache_variant()
 _bootstrap_fresh_venv_mwgg_igdb()
 _consume_wheel_cache()
+_prune_bundled_gui_dists()
 
 
 # ── World install primitives ─────────────────────────────────────────────────
