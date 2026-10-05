@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import types
@@ -203,6 +204,60 @@ def test_compose_connect_address_no_warning_without_colon(caplog):
     with caplog.at_level(logging.WARNING, logger="MultiWorld"):
         MultiWorld._compose_connect_address("localhost:38281", "P1", "secret")
     assert not caplog.records
+
+
+# --- frozen KIVY_DATA_DIR mirror ---
+
+def _kivy_bundle(tmp_path, monkeypatch, mtime):
+    monkeypatch.setattr(MultiWorld, "write_path", lambda *p: os.path.join(tmp_path, "wp", *p))
+    src = tmp_path / "bundle"
+    (src / "images").mkdir(parents=True, exist_ok=True)
+    for path, text in ((src / "style.kv", f"style {mtime}"), (src / "images" / "defaulttheme-0.png", f"atlas {mtime}")):
+        path.write_text(text)
+        os.utime(path, (mtime, mtime))
+    return src, tmp_path / "wp" / "data" / "kivy" / "data"
+
+
+def test_kivy_data_mirror_resyncs_only_when_bundle_changes(tmp_path, monkeypatch):
+    """An unchanged bundle keeps mwgg_gui's recolored atlas; an upgrade re-syncs even with
+    older build mtimes; 0.7.x's write_path("kivy") files survive the old mirror's removal."""
+    src, dst = _kivy_bundle(tmp_path, monkeypatch, 1_000_000)
+    legacy = tmp_path / "wp" / "kivy"
+    (legacy / "data").mkdir(parents=True)
+    (legacy / "config.ini").write_text("0.7.x")
+
+    assert MultiWorld._ensure_writable_kivy_data(str(src)) == str(dst)
+    assert (dst / "style.kv").read_text() == "style 1000000"
+    assert not (legacy / "data").exists()
+    assert (legacy / "config.ini").read_text() == "0.7.x"
+
+    (dst / "images" / "defaulttheme-0.png").write_text("recolored")
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "recolored"
+
+    _kivy_bundle(tmp_path, monkeypatch, 900_000)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "style.kv").read_text() == "style 900000"
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "atlas 900000"
+
+
+def test_kivy_data_mirror_retries_after_locked_file(tmp_path, monkeypatch):
+    src, dst = _kivy_bundle(tmp_path, monkeypatch, 1_000_000)
+    copy2 = shutil.copy2
+
+    def locked_atlas(source, *args, **kwargs):
+        if source.endswith("defaulttheme-0.png"):
+            raise PermissionError(32, "in use")
+        return copy2(source, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "copy2", locked_atlas)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert not (dst / "style.kv").exists()
+
+    monkeypatch.setattr(shutil, "copy2", copy2)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "style.kv").exists()
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "atlas 1000000"
 
 
 # --- _resolve_client_route: dead-client guard fallback matrix ---
