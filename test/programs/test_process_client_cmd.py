@@ -328,6 +328,31 @@ class TestLocationChecks(unittest.TestCase):
         self.assertEqual(set(room_updates[-1]["checked_locations"]), {10})
 
 
+class TestLocationGroupFilter(unittest.TestCase):
+    """!missing / !checked take a location group name as the filter."""
+
+    def setUp(self) -> None:
+        self.ctx = build_context()
+        self.addCleanup(self.ctx.location_name_groups.__setitem__, GAME, self.ctx.location_name_groups[GAME])
+        self.ctx.location_name_groups[GAME] = {"Group A": ["Chest A"], "Group B": ["Chest B"]}
+        self.ctx.location_checks[0, 1] = {11}
+        self.out = []
+        self.messages = MultiServer.ClientMessageProcessor(self.ctx, make_client(self.ctx, slot=1))
+        self.messages.output_multiple = lambda texts: self.out.extend(texts)
+
+    def test_missing_filtered_by_group(self) -> None:
+        self.assertTrue(run_sync(lambda: self.messages("!missing Group A")))
+        self.assertEqual(self.out, ["Missing: Chest A", "Found 1 missing location checks, displaying 1 of them."])
+
+    def test_checked_filtered_by_group(self) -> None:
+        self.assertTrue(run_sync(lambda: self.messages("!checked Group B")))
+        self.assertEqual(self.out, ["Checked: Chest B", "Found 1 done location checks, displaying 1 of them."])
+
+    def test_group_excludes_locations_outside_it(self) -> None:
+        self.assertTrue(run_sync(lambda: self.messages("!missing Group B")))
+        self.assertEqual(self.out, ["Found 1 missing location checks, displaying 0 of them."])
+
+
 class TestSay(unittest.TestCase):
     def test_routes_text_to_message_processor(self) -> None:
         ctx = build_context()

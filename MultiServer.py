@@ -674,7 +674,7 @@ class Context:
         # NOTE: for worlds loaded from db, only checksum is set in GamesPackage, but this is handled by cache
         for game_name in sorted(self.played_games):
             if game_name in data_package:
-                self.logger.info(f"Loading embedded data package for game {game_name}")
+                self.logger.debug(f"Loading embedded data package for game {game_name}")
                 data = self.games_package_cache.get(game_name, data_package[game_name])
             else:
                 # NOTE: we still allow uploading a game without datapackage. Once that is changed, we could drop this.
@@ -1948,7 +1948,8 @@ class ClientMessageProcessor(CommonCommandProcessor):
             if filter_text:
                 location_groups = self.ctx.location_name_groups[self.ctx.games[self.client.slot]]
                 if filter_text in location_groups:  # location group name
-                    names = [name for name in names if name in location_groups[filter_text]]
+                    group = set(location_groups[filter_text])
+                    names = [name for name in names if name in group]
                 else:
                     names = [name for name in names if filter_text in name]
             texts = [f'Missing: {name}' for name in names]
@@ -1974,7 +1975,8 @@ class ClientMessageProcessor(CommonCommandProcessor):
             if filter_text:
                 location_groups = self.ctx.location_name_groups[self.ctx.games[self.client.slot]]
                 if filter_text in location_groups:  # location group name
-                    names = [name for name in names if name in location_groups[filter_text]]
+                    group = set(location_groups[filter_text])
+                    names = [name for name in names if name in group]
                 else:
                     names = [name for name in names if filter_text in name]
             texts = [f'Checked: {name}' for name in names]
