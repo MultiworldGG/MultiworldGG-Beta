@@ -15,6 +15,7 @@ import logging
 import traceback
 from typing import Any, Union
 
+from BaseClasses import LocationProgressType
 from Utils import open_filename
 from worlds import AutoWorld
 
@@ -301,6 +302,10 @@ class UTMapController:
         ctx = self.ctx
         if not ctx.ui or ctx.tracker_world is None:
             return
+        current_world = self.tracker_core.get_current_world()
+        if current_world is None:
+            logger.error("Tracker map: no generated world for this slot; map not loaded")
+            return
         if map_id is None:
             key = ctx.tracker_world.map_page_setting_key or f"{ctx.slot}_{ctx.team}_{UT_MAP_TAB_KEY}"
             map_id = ctx.tracker_world.map_page_index(ctx.stored_data.get(key, ""))
@@ -333,14 +338,14 @@ class UTMapController:
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_name_to_id
         if ctx.tracker_world.external_pack_key:
             from zipfile import is_zipfile
-            packRef = self.tracker_core.get_current_world().settings[ctx.tracker_world.external_pack_key]
+            packRef = current_world.settings[ctx.tracker_world.external_pack_key]
             if packRef and is_zipfile(packRef):
                 ctx.root_pack_path = f"ap:zip:{packRef}"
             else:
                 logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
                 return
         else:
-            PACK_NAME = self.tracker_core.get_current_world().__class__.__module__
+            PACK_NAME = current_world.__class__.__module__
             ctx.root_pack_path = f"ap:{PACK_NAME}/{ctx.tracker_world.map_page_folder}"
         ctx.ui.source = f"{ctx.root_pack_path}/{m['img']}"
         ctx.ui.loc_size = m["location_size"] if "location_size" in m else 65  # default location size per poptracker/src/core/map.h
@@ -348,8 +353,12 @@ class UTMapController:
         ctx.ui.loc_border = m["location_border_thickness"] if "location_border_thickness" in m else 8  # default location size per poptracker/src/core/map.h
         temp_locs = [location for location in ctx.locs]
         map_locs = []
-        hidden_locations = getattr(self.tracker_core.get_current_world(), "ut_map_page_hidden_locations", {})
-        current_hidden_locs = hidden_locations.get(m["name"], [])
+        hidden_locations = getattr(current_world, "ut_map_page_hidden_locations", {})
+        current_hidden_locs = set(hidden_locations.get(m["name"], []))
+        if getattr(self.tracker_core, "hide_excluded", False):
+            current_hidden_locs.update(loc.address for loc in current_world.get_locations()
+                                       if isinstance(loc.address, int)
+                                       and loc.progress_type == LocationProgressType.EXCLUDED)
         while temp_locs:
             temp_loc = temp_locs.pop()
             if "map_locations" in temp_loc:
@@ -397,7 +406,7 @@ class UTMapController:
                 else:
                     coords[maploc] = (seclist, size)
         entrance_cache = list(self.tracker_core.multiworld.regions.entrance_cache[self.tracker_core.player_id].keys())
-        hidden_entrances = getattr(self.tracker_core.get_current_world(), "ut_map_page_hidden_entrances", {})
+        hidden_entrances = getattr(current_world, "ut_map_page_hidden_entrances", {})
         current_hidden_entrances = hidden_entrances.get(m["name"], [])
         dcoords = {
             (map_loc["x"], map_loc["y"]): ([section["name"] for section in location["sections"]
@@ -433,8 +442,8 @@ class UTMapController:
                     dcoords[maploc] = (dcoords[maploc][0] + seclist, dcoords[maploc][1] or size)
                 else:
                     dcoords[maploc] = (seclist, size)
-        event_loc_cache = [loc.name for loc in self.tracker_core.get_current_world().get_locations() if loc.address is None and loc.parent_region is not None]
-        hidden_events = getattr(self.tracker_core.get_current_world(), "ut_map_page_hidden_events", {})
+        event_loc_cache = [loc.name for loc in current_world.get_locations() if loc.address is None and loc.parent_region is not None]
+        hidden_events = getattr(current_world, "ut_map_page_hidden_events", {})
         current_hidden_events = hidden_events.get(m["name"], [])
         dlcoords = {
             (map_loc["x"], map_loc["y"]): ([section["name"] for section in location["sections"] if

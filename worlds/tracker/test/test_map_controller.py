@@ -296,6 +296,61 @@ class TestLoadPack(unittest.TestCase):
         self.assertEqual(ctx.map_groups, [("Region", ["map1"])])
 
 
+class TestLoadMap(unittest.TestCase):
+    def _setup(self, current_world, hide_excluded=False):
+        captured = []
+        ctx = _ctx(ui=SimpleNamespace(), server_locations={1, 2, 3})
+        core = _core(current_world=current_world)
+        core.hide_excluded = hide_excluded
+        core.multiworld = SimpleNamespace(regions=SimpleNamespace(entrance_cache={1: {}}))
+        controller = UTMapController(ctx, core)
+        ctx.map_page_coords_func = lambda coords, *_: captured.append(coords) or ({}, {}, {})
+        ctx.tracker_world = SimpleNamespace(
+            external_pack_key="", map_page_folder="maps", poptracker_name_mapping=None,
+            poptracker_entrance_mapping=None, location_setting_key=None)
+        ctx.maps = [{"name": "map1", "img": "map1.png"}]
+        ctx.locs = [
+            {"name": "Area", "sections": [{"name": "Loc A"}, {"name": "Loc B"}],
+             "map_locations": [{"map": "map1", "x": 10, "y": 20}]},
+            {"name": "Area 2", "sections": [{"name": "Loc C"}],
+             "map_locations": [{"map": "map1", "x": 30, "y": 40}]},
+        ]
+        return ctx, controller, captured
+
+    def _world(self, hidden):
+        from BaseClasses import LocationProgressType
+        locations = [
+            SimpleNamespace(name="Loc A", address=1, progress_type=LocationProgressType.DEFAULT, parent_region=None),
+            SimpleNamespace(name="Loc B", address=2, progress_type=LocationProgressType.EXCLUDED, parent_region=None),
+            SimpleNamespace(name="Loc C", address=3, progress_type=LocationProgressType.EXCLUDED, parent_region=None),
+        ]
+        return SimpleNamespace(ut_map_page_hidden_locations=hidden, get_locations=lambda: locations)
+
+    def _load(self, controller):
+        world_types = {"TestGame": SimpleNamespace(location_name_to_id={"Loc A": 1, "Loc B": 2, "Loc C": 3})}
+        with mock.patch.dict("worlds.AutoWorld.AutoWorldRegister.world_types", world_types):
+            controller.load_map(0)
+
+    def test_missing_world_skips_map(self):
+        ctx, controller, captured = self._setup(current_world=None)
+        with self.assertLogs("Client", level="ERROR"):
+            self._load(controller)
+        self.assertIsNone(ctx.map_id)
+        self.assertEqual(captured, [])
+
+    def test_excluded_locations_shown_by_default(self):
+        _, controller, captured = self._setup(self._world({}))
+        self._load(controller)
+        self.assertEqual(captured, [{(10, 20): ([1, 2], None), (30, 40): ([3], None)}])
+
+    def test_hide_excluded_drops_excluded_sections_and_markers(self):
+        hidden = {"map1": []}
+        _, controller, captured = self._setup(self._world(hidden), hide_excluded=True)
+        self._load(controller)
+        self.assertEqual(captured, [{(10, 20): ([1], None)}])
+        self.assertEqual(hidden, {"map1": []})
+
+
 class TestNarratedActivate(unittest.IsolatedAsyncioTestCase):
     """With a frontend that draws loading statuses the pack loads after "Loading map pack..."
     is on screen, the tracker refreshes onto the map, and the overlay drops."""
