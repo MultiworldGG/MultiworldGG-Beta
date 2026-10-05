@@ -369,6 +369,7 @@ class InitContext:
     """Message box reporting a loss of connection"""
     _consolebox: typing.Any = None
     """Launcher window "console" box"""
+    ui_task: typing.Optional["asyncio.Task[None]"] = None
     def __init__(self):
         self.loop = asyncio.get_event_loop()
         self.exit_event = asyncio.Event()

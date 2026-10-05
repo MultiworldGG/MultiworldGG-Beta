@@ -92,6 +92,9 @@ if use_worlds_venv():
     venv_site_packages_path = mwgg_venv_site_packages()
     if venv_site_packages_path not in sys.path:
         sys.path.append(venv_site_packages_path)
+    # Frozen interpreters skip site.main(), leaving site.USER_BASE None; kivy_deps.* join() it at import.
+    import site
+    site.getuserbase()
 else:
     os.environ["KIVY_DATA_DIR"] = local_path("kivy", "data")
 os.environ["KIVY_HOME"] = write_path("data")

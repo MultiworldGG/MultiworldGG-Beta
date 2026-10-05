@@ -486,6 +486,58 @@ def test_bootstrap_fresh_venv_igdb_installs_and_invalidates_when_just_created(mo
     invalidate.assert_called_once_with()
 
 
+def _venv_with_dists(tmp_path, monkeypatch, *dist_infos):
+    for name in dist_infos:
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "RECORD").write_text("")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "mwgg_venv_site_packages", lambda *path: str(tmp_path))
+    monkeypatch.setattr(ModuleUpdate, "_uv_pip", lambda *args: list(args))
+
+
+def test_prune_bundled_gui_dists_uninstalls_only_the_gui_stack(tmp_path, monkeypatch):
+    _venv_with_dists(tmp_path, monkeypatch, "Kivy-2.3.1.dist-info", "kivy_deps.angle-0.4.0.dist-info",
+                     "Kivy_Garden-0.1.5.dist-info", "pillow-12.3.0.dist-info", "worlds_sc2-1.0.0.dist-info")
+    with mock.patch.object(ModuleUpdate, "_uv_run", return_value=subprocess.CompletedProcess([], 0, "", "")) as run, \
+            mock.patch.object(ModuleUpdate, "invalidate_caches") as invalidate:
+        ModuleUpdate._prune_bundled_gui_dists()
+    run.assert_called_once_with(["uninstall", "kivy", "kivy-deps-angle", "kivy-garden"])
+    invalidate.assert_called_once_with()
+
+
+def test_prune_bundled_gui_dists_noop_without_gui_dists(tmp_path, monkeypatch):
+    _venv_with_dists(tmp_path, monkeypatch, "pillow-12.3.0.dist-info", "worlds_sc2-1.0.0.dist-info")
+    with mock.patch.object(ModuleUpdate, "_uv_run") as run:
+        ModuleUpdate._prune_bundled_gui_dists()
+    run.assert_not_called()
+
+
+def test_prune_bundled_gui_dists_skips_leftovers_without_record(tmp_path, monkeypatch):
+    # uv exits 2 on a dist-info without RECORD, which would warn on every launch.
+    _venv_with_dists(tmp_path, monkeypatch)
+    (tmp_path / "kivy_deps.angle-0.4.0.dist-info" / "licenses").mkdir(parents=True)
+    with mock.patch.object(ModuleUpdate, "_uv_run") as run:
+        ModuleUpdate._prune_bundled_gui_dists()
+    run.assert_not_called()
+
+
+def test_prune_bundled_gui_dists_only_runs_frozen(tmp_path, monkeypatch):
+    _venv_with_dists(tmp_path, monkeypatch, "Kivy-2.3.1.dist-info")
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    with mock.patch.object(ModuleUpdate, "_uv_run") as run:
+        ModuleUpdate._prune_bundled_gui_dists()
+    run.assert_not_called()
+
+
+def test_prune_bundled_gui_dists_survives_uv_timeout(tmp_path, monkeypatch):
+    _venv_with_dists(tmp_path, monkeypatch, "kivy_deps.angle-0.4.0.dist-info")
+    with mock.patch.object(ModuleUpdate, "_uv_run", side_effect=subprocess.TimeoutExpired("uv", 120)), \
+            mock.patch.object(ModuleUpdate, "invalidate_caches") as invalidate:
+        ModuleUpdate._prune_bundled_gui_dists()
+    invalidate.assert_not_called()
+
+
 def test_register_custom_worlds_invalidates_import_caches(tmp_path, monkeypatch):
     """register_custom_worlds is one of the two first-launch call sites that
     import mwgg_igdb (via discover_custom_world_module); it must refresh the
