@@ -255,9 +255,12 @@ else:
                 manager.container = root_layout
                 manager.root_layout = root_layout
                 manager.grid = app.main_layout
-                # Upstream connect bar and tab strip have no live-app home; detached
-                # zero-size stand-ins keep legacy add_widget/collide_point calls harmless.
-                manager.connect_layout = MDBoxLayout(size_hint=(None, None), size=(0, 0))
+                # Frontends that host the upstream connect bar expose it as
+                # app.connect_layout; elsewhere it and the tab strip get detached
+                # zero-size stand-ins that keep legacy add_widget/collide_point calls harmless.
+                manager.connect_layout = getattr(app, "connect_layout", None)
+                if manager.connect_layout is None:
+                    manager.connect_layout = MDBoxLayout(size_hint=(None, None), size=(0, 0))
                 manager.tabs = MDBoxLayout(size_hint=(None, None), size=(0, 0))
                 manager._load_legacy_config()
 

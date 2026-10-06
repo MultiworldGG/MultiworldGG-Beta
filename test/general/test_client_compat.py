@@ -402,6 +402,54 @@ class TestLegacyManagerClassResolution(unittest.TestCase):
 
 
 # --------------------------------------------------------------------------- #
+# BizHawk attaches like SNI and the text client: launch() awaits the takeover
+# itself and titles the live app afterwards. A make_gui() override or a
+# run_gui() call (upstream's shape) would put it back on the legacy probe.
+# --------------------------------------------------------------------------- #
+
+class TestBizHawkDirectTakeover(unittest.TestCase):
+    def _launch(self, can_takeover: bool):
+        from worlds._bizhawk import context
+        seen = {}
+        errors = []
+
+        async def fake_takeover(ctx):
+            ctx.ui = SimpleNamespace(base_title="")
+            ctx.takeover_complete.set()
+
+        async def fake_watcher(ctx):
+            seen["ctx"] = ctx
+            ctx.exit_event.set()
+
+        with mock.patch.object(sys, "argv", ["BizHawkClient"]), \
+                mock.patch.object(context.Utils, "init_logging"), \
+                mock.patch.object(context.BizHawkClientContext, "_can_takeover_existing_ui",
+                                  return_value=can_takeover), \
+                mock.patch.object(context.BizHawkClientContext, "_takeover_existing_ui", fake_takeover), \
+                mock.patch.object(context.BizHawkClientContext, "run_gui",
+                                  side_effect=AssertionError("run_gui called")), \
+                mock.patch.object(context.BizHawkClientContext, "run_cli"), \
+                mock.patch.object(context, "_game_watcher", fake_watcher):
+            CommonClient._set_pending_launch_callbacks(None, lambda: errors.append(True))
+            context.launch()
+        return context, seen, errors
+
+    def test_context_keeps_the_common_make_gui(self) -> None:
+        from worlds._bizhawk.context import BizHawkClientContext
+        self.assertIs(BizHawkClientContext.make_gui, CommonClient.CommonContext.make_gui)
+
+    def test_launch_takes_over_and_titles_the_live_app(self) -> None:
+        context, seen, errors = self._launch(can_takeover=True)
+        self.assertEqual(seen["ctx"].ui.base_title, f"{context.apname} | BizHawk Client")
+        self.assertEqual(errors, [])
+
+    def test_launch_without_a_frontend_fires_the_error_callback(self) -> None:
+        _, seen, errors = self._launch(can_takeover=False)
+        self.assertEqual(errors, [True])
+        self.assertNotIn("ctx", seen)
+
+
+# --------------------------------------------------------------------------- #
 # server_loop retries ws:// as wss:// by recursing, so two finally blocks run
 # per connection attempt; only the innermost may close the connection and
 # schedule the auto-reconnect. Nothing is scheduled once the exit event is

@@ -14,7 +14,7 @@ from websockets.protocol import State
 
 import settings
 
-from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger, gui_enabled
+from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger
 import Patch
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -163,11 +163,6 @@ class BizHawkClientContext(CommonContext):
         if self.bizhawk_ctx.connection_status == ConnectionStatus.CONNECTED:
             if self._categorize_text(args) in self.text_passthrough_categories:
                 Utils.async_start(display_message(self.bizhawk_ctx, self.rawjsontotextparser(copy.deepcopy(args["data"]))))
-
-    def make_gui(self):
-        ui = super().make_gui()
-        ui.base_title = apname + " BizHawk Client"
-        return ui
 
     def on_package(self, cmd, args):
         if cmd == "Connected":
@@ -367,10 +362,15 @@ def launch(*launch_args: str) -> None:
                 args.connect = server
 
         ctx = BizHawkClientContext(args.connect, args.password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        if ctx._can_takeover_existing_ui():
+            await ctx._takeover_existing_ui()
+        else:
+            logger.critical("BizHawk client did not launch properly, exiting.")
+            ctx._error_callback()
+            return
 
-        if gui_enabled:
-            ctx.run_gui()
+        ctx.ui.base_title = apname + " | BizHawk Client"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
         ctx.run_cli()
 
         watcher_task = asyncio.create_task(_game_watcher(ctx), name="GameWatcher")
