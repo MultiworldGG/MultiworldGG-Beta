@@ -1,5 +1,8 @@
+import atexit
 import pathlib
+import shutil
 import sys
+import tempfile
 import warnings
 import os
 import json
@@ -16,6 +19,9 @@ os.environ["KIVY_NO_FILELOG"] = "1"
 os.environ["KIVY_NO_ARGS"] = "1"
 os.environ["KIVY_LOG_ENABLE"] = "0"
 os.environ["KIVY_WINDOW"] = "sdl2,headless"
+# Without KIVY_HOME, Kivy uses ~/.kivy and mwgg_gui would write the real write_path("data") config.
+os.environ["KIVY_HOME"] = tempfile.mkdtemp(prefix="mwgg-test-kivy-")
+atexit.register(shutil.rmtree, os.environ["KIVY_HOME"], True)
 
 import settings
 

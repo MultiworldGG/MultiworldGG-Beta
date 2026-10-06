@@ -54,31 +54,47 @@ def _ensure_writable_kivy_data(src: str) -> str:
 
     On the Linux AppImage (and macOS .app), `local_path(...)` resolves under a
     read-only mount, but Kivy needs to write to its data dir at startup
-    (recoloring `defaulttheme-0.png`). We mirror it under `write_path()`
-    (the parent of `mwgg_venv`) and re-sync whenever the bundled copy is newer.
+    (recoloring `defaulttheme-0.png`). We mirror it under KIVY_HOME
+    (`write_path("data")`) and re-sync whenever the bundled copy changes.
     """
     import shutil
-    dst = write_path("kivy", "data")
-    marker = "defaulttheme-0.png"
+    # Kivy resolves "data/..." (atlas://data/images, the default_font paths) against
+    # KIVY_DATA_DIR/.., so the mirror must itself be a dir named "data".
+    dst = write_path("data", "kivy", "data")
+    # mwgg_gui rewrites images/defaulttheme-0.png at runtime, so gate on style.kv; compare
+    # for inequality since bundle mtimes are the build clock, not the install time.
+    marker = "style.kv"
     src_marker = os.path.join(src, marker)
     dst_marker = os.path.join(dst, marker)
     needs_copy = not os.path.exists(dst_marker) or (
         os.path.exists(src_marker)
-        and os.path.getmtime(src_marker) > os.path.getmtime(dst_marker)
+        and os.path.getmtime(src_marker) != os.path.getmtime(dst_marker)
     )
     if needs_copy:
+        # Previous mirror location; the rest of write_path("kivy") is MultiworldGG 0.7.x's KIVY_HOME.
+        shutil.rmtree(write_path("kivy", "data"), ignore_errors=True)
+        try:
+            os.rmdir(write_path("kivy"))
+        except OSError:
+            pass  # absent, or still holds 0.7.x's files
+        complete = True
         # Overlay-copy, not rmtree+copytree: Windows raises PermissionError on files
-        # locked by another MWGG process; skipping is safe (bundled copy is identical).
+        # locked by another MWGG process.
         os.makedirs(dst, exist_ok=True)
         for root, _dirs, files in os.walk(src):
             rel = os.path.relpath(root, src)
             dst_root = dst if rel == "." else os.path.join(dst, rel)
             os.makedirs(dst_root, exist_ok=True)
             for name in files:
+                if rel == "." and name == marker:
+                    continue
                 try:
                     shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
                 except PermissionError:
-                    pass  # in use by another process; bundled copy is identical
+                    complete = False
+        # Marker last, so a partial sync retries on the next boot.
+        if complete:
+            shutil.copy2(src_marker, dst_marker)
     return dst
 
 
