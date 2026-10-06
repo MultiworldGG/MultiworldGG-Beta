@@ -271,13 +271,16 @@ else:
                 if previous_state is not None:
                     ctx._state = previous_state
 
+        def build_config(self, config) -> None:
+            """Target for subclasses' super().build_config(config); super() bypasses __getattr__."""
+
         def _load_legacy_config(self) -> None:
             """kivy App.load_config for a world's build_config/get_application_config
             overrides. Without one, `config` forwards to the live app's Kivy Config."""
             from kivy.config import ConfigParser
             cls = type(self)
-            build_config = getattr(cls, "build_config", None)
-            if build_config is None:
+            build_config = cls.build_config
+            if build_config is GameManager.build_config:
                 return
             config = ConfigParser()
             try:
