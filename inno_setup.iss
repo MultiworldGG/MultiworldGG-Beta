@@ -671,7 +671,7 @@ Root: HKCR; Subkey: "{#MyAppName}apalbwpatch";                     ValueData: "M
 Root: HKCR; Subkey: "{#MyAppName}apalbwpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                           ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apalbwpatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
-Root: HKCR; Subkey: "apalttpr";                                    ValueData: "{#MyAppName}alttpdoorspatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: ".apalttpr";                                   ValueData: "{#MyAppName}alttpdoorspatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}alttpdoorspatch";                     ValueData: "MultiworldGG A Link to the Past Doors Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}alttpdoorspatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                  ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}alttpdoorspatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";         ValueType: string;  ValueName: "";
