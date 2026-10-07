@@ -690,7 +690,7 @@ def apworld_module_name(zf: zipfile.ZipFile) -> str:
     """An apworld's module is its single top-level directory (LauncherComponents._install_apworld's
     rule), else the file stem."""
     directories = [f.name for f in zipfile.Path(zf).iterdir() if f.is_dir()]
-    return directories[0] if len(directories) == 1 else Path(zf.filename).stem
+    return directories[0] if len(directories) == 1 else Path(cast(str, zf.filename)).stem
 
 
 def find_custom_apworld(slug: str) -> Path:
