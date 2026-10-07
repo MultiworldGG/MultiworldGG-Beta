@@ -220,25 +220,26 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             with zipfile.ZipFile(file, 'r') as zipf:
                 apworld = APWorldContainer(file)
                 manifest = apworld.read_contents(zipf)
+                slug = ModuleUpdate.apworld_module_name(zipf)
 
             if manifest.get("game") in _unknown_worlds:
                 _worlds_to_load.append(apworld)
                 # Seed the in-memory GameIndex so get_module_for_game() lookups (notably
                 # Generate.roll_settings) resolve without re-scanning custom_worlds_dir.
-                if not GameIndex.get_game_name_for_module(file.stem):
+                if not GameIndex.get_game_name_for_module(slug):
                     index_entry = dict(manifest)
                     index_entry["game_name"] = manifest["game"]
-                    GameIndex.add_game(file.stem, index_entry)
+                    GameIndex.add_game(slug, index_entry)
                 continue
-            if f"worlds.{file.stem}" in custom_worlds:
+            if f"worlds.{slug}" in custom_worlds:
                 _worlds_to_load.append(apworld)
                 continue
-            if file.stem in _installed_versions:
+            if slug in _installed_versions:
                 apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
-                installed_version = tuplize_version(_installed_versions[file.stem])
+                installed_version = tuplize_version(_installed_versions[slug])
                 if apworld_version > installed_version:
                     # apworld wins: replace the installed-wheel entry with the apworld
-                    target = f"worlds.{file.stem}"
+                    target = f"worlds.{slug}"
                     try:
                         _worlds_to_load.remove(target)
                     except ValueError:
@@ -382,7 +383,7 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             return module_name
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
-            module_name = custom_world.stem
+            module_name = ModuleUpdate.apworld_module_name(custom_apworld)
             try:
                 manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
             except KeyError:
@@ -526,10 +527,8 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
             if custom_fallbacks:
                 # install_worlds() extracted these apworlds into the venv worlds dir (normal
                 # import now works); register them so game_name -> module lookups resolve.
-                custom_worlds_dir = ModuleUpdate.custom_worlds_dir
                 for target in custom_fallbacks:
-                    slug = target.removeprefix("worlds.")
-                    apworld_file = custom_worlds_dir / f"{slug}.apworld"
+                    apworld_file = ModuleUpdate.find_custom_apworld(target.removeprefix("worlds."))
                     try:
                         discover_custom_world_module(apworld_file)
                     except Exception as ie:

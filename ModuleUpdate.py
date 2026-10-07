@@ -686,6 +686,29 @@ def _venv_has_worlds() -> bool:  # pyright: ignore[reportUnusedFunction]
         return False
 
 
+def apworld_module_name(zf: zipfile.ZipFile) -> str:
+    """An apworld's module is its single top-level directory (LauncherComponents._install_apworld's
+    rule), else the file stem."""
+    directories = [f.name for f in zipfile.Path(zf).iterdir() if f.is_dir()]
+    return directories[0] if len(directories) == 1 else Path(cast(str, zf.filename)).stem
+
+
+def find_custom_apworld(slug: str) -> Path:
+    """custom_worlds/<slug>.apworld, else a hand-copied apworld (e.g. a versioned filename) whose
+    module is slug. Returns the canonical path when neither exists."""
+    apworld_file = custom_worlds_dir / f"{slug}.apworld"
+    if apworld_file.exists():
+        return apworld_file
+    for candidate in custom_worlds_dir.glob("*.apworld"):
+        try:
+            with zipfile.ZipFile(candidate) as zf:
+                if apworld_module_name(zf) == slug:
+                    return candidate
+        except (OSError, zipfile.BadZipFile):
+            continue
+    return apworld_file
+
+
 def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
     """Extract the `<slug>/` directory from apworld_file into the venv worlds dir.
     Returns True on success. Overwrites existing files in place rather than
@@ -1036,9 +1059,9 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     apworlds = WorldInstallResult()
 
     def fall_back_to_apworld(slug: str, target: str) -> None:
-        """Last resort after an install failure: extract custom_worlds/<slug>.apworld
+        """Last resort after an install failure: extract slug's custom_worlds apworld
         into the venv. Records the target as failed when that is not possible."""
-        apworld_file = custom_worlds_dir / f"{slug}.apworld"
+        apworld_file = find_custom_apworld(slug)
         if apworld_file.exists():
             logger.info(f"Found apworld file: {apworld_file}")
             if _install_apworld_to_venv(apworld_file, slug):

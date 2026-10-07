@@ -156,11 +156,13 @@ class APWorldContainer(APContainer):
         return manifest
 
     def sys_modules_import_apworld(self):
-        """Locate, register, and execute the apworld zipfile's `worlds.<stem>` module."""
+        """Locate, register, and execute the apworld zipfile's `worlds.<top-level folder>` module."""
         import sys
         import importlib.util
         from zipimport import zipimporter
-        name = f"worlds.{self.path.stem}"
+        from ModuleUpdate import apworld_module_name
+        with zipfile.ZipFile(self.path) as zf:
+            name = f"worlds.{apworld_module_name(zf)}"
         importer = zipimporter(str(self.path.absolute()))
         spec = importer.find_spec(name)
         if spec is None:
