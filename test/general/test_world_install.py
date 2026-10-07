@@ -515,8 +515,8 @@ def test_register_custom_worlds_invalidates_import_caches(tmp_path, monkeypatch)
 # --------------------------------------------------------------------------- #
 
 def _make_apworld(path, game_name: str, components: "list | None" = None,
-                  extra_members: "dict[str, bytes] | None" = None) -> None:
-    slug = Path(path).stem
+                  extra_members: "dict[str, bytes] | None" = None, module: "str | None" = None) -> None:
+    slug = module or Path(path).stem
     manifest: dict = {"game": game_name, "compatible_version": 5}
     if components is not None:
         manifest["components"] = components
@@ -592,6 +592,20 @@ def test_apworld_manifest_game_outranks_manual_game_json(tmp_path, monkeypatch):
     Utils.register_custom_worlds()
 
     assert GameIndex.get_game_name_for_module(slug) == "Manual_Autonauts_Hopop2"
+
+
+def test_versioned_apworld_filename_registers_under_its_folder(tmp_path, monkeypatch):
+    """A hand-copied apworld keeps its versioned filename; its module is the zip's single
+    top-level folder, so the indexed game's module mapping must not move to the stem."""
+    GameIndex.add_game("mmzero3", {"game_name": "Mega Man Zero 3"})
+    apworld = tmp_path / "mmzero3-0.3.6.apworld"
+    _make_apworld(apworld, "Mega Man Zero 3", module="mmzero3")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    assert Utils.register_custom_worlds() == ["mmzero3"]
+    assert GameIndex.get_module_for_game("Mega Man Zero 3") == "mmzero3"
+    assert "mmzero3-0.3.6" not in GameIndex.get_all_games()
+    assert ModuleUpdate.find_custom_apworld("mmzero3") == apworld
 
 
 def test_register_custom_worlds_tolerates_missing_dir(tmp_path, monkeypatch):
@@ -1211,6 +1225,21 @@ def test_install_worlds_failure_records_heal_marker_and_falls_back(hermetic_heal
 
     assert "worlds.foo" in result.failed
     assert ModuleUpdate._load_heal_attempts() == {"foo": WHEEL_URL}
+
+
+def test_install_worlds_falls_back_to_versioned_apworld_filename(hermetic_heal_store, tmp_path, monkeypatch):
+    apworld = tmp_path / "foo-1.2.3.apworld"
+    _make_apworld(apworld, "Foo", module="foo")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {})
+
+    with mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_install_apworld_to_venv", return_value=True) as extract, \
+            mock.patch.object(ModuleUpdate, "_prune_stale_apworld_extractions"):
+        result = ModuleUpdate.install_worlds(["worlds.foo"], with_deps=True)
+
+    extract.assert_called_once_with(apworld, "foo")
+    assert result == ["worlds.foo"]
 
 
 def test_prune_stale_extractions_skips_dist_backed_dirs(tmp_path, monkeypatch):

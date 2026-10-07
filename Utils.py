@@ -382,7 +382,7 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
             return module_name
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
-            module_name = custom_world.stem
+            module_name = ModuleUpdate.apworld_module_name(custom_apworld)
             try:
                 manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
             except KeyError:
@@ -526,10 +526,8 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
             if custom_fallbacks:
                 # install_worlds() extracted these apworlds into the venv worlds dir (normal
                 # import now works); register them so game_name -> module lookups resolve.
-                custom_worlds_dir = ModuleUpdate.custom_worlds_dir
                 for target in custom_fallbacks:
-                    slug = target.removeprefix("worlds.")
-                    apworld_file = custom_worlds_dir / f"{slug}.apworld"
+                    apworld_file = ModuleUpdate.find_custom_apworld(target.removeprefix("worlds."))
                     try:
                         discover_custom_world_module(apworld_file)
                     except Exception as ie:
