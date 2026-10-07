@@ -72,6 +72,9 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
+# Restarts read this, not sys.argv: _defer_cli_launch swaps sys.argv for the world client's lifetime.
+_startup_argv: typing.Tuple[str, ...] = tuple(sys.argv)
+
 _worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker"]
 
 def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
@@ -852,7 +855,7 @@ def _perform_module_launch(module_id: str, **kwargs):
 def _self_relaunch_argv() -> typing.List[str]:
     """argv that re-runs this process. Frozen argv[0] is the exe itself (== sys.executable);
     passing it again would land as MultiWorld's launch_file positional."""
-    return [sys.executable, *(sys.argv[1:] if is_frozen() else sys.argv)]
+    return [sys.executable, *(_startup_argv[1:] if is_frozen() else _startup_argv)]
 
 
 def exit_restart_for_update():

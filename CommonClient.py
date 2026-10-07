@@ -1690,7 +1690,7 @@ def _check_world_version_pin(ctx: CommonContext) -> None:
     # already in that relaunched process and the version STILL doesn't match, the pinned
     # wheel wasn't resolvable and the install fell back to latest. Warn and continue
     # rather than relaunch forever.
-    if "--no-restart" in sys.argv:
+    if "--no-restart" in Utils._startup_argv:
         logger.warning(
             f"[{ctx.game}] Could not apply pinned world version {want_str} "
             f"(installed: {installed_str or 'none'}); continuing without another relaunch."

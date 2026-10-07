@@ -1,6 +1,5 @@
 import importlib.metadata
 import asyncio
-import sys
 import types
 import unittest
 from contextlib import ExitStack
@@ -167,7 +166,7 @@ class TestWorldVersionPinDecision(unittest.TestCase):
         ctx = _pin_ctx()
         ctx.ui = _FakeConfirmUI()
         with mock.patch.object(self.settings_module, "get_settings", _pin_settings(True)), \
-                mock.patch.object(sys, "argv", ["client"]):
+                mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
         self.assertEqual(self.started, [("some_game", PIN_TAG, "1.2.3")])
         self.assertEqual(ctx.ui.dialogs, [])
@@ -175,7 +174,7 @@ class TestWorldVersionPinDecision(unittest.TestCase):
     def test_mismatch_offers_confirm_dialog(self):
         ctx = _pin_ctx()
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
         self.assertEqual(self.started, [])  # nothing until the user confirms
         self.assertEqual(len(ctx.ui.dialogs), 1)
@@ -187,7 +186,7 @@ class TestWorldVersionPinDecision(unittest.TestCase):
     def test_confirm_starts_downpatch(self):
         ctx = _pin_ctx()
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
             ctx.ui.dialogs[0]["callback"](True)
         self.assertEqual(self.started, [("some_game", PIN_TAG, "1.2.3")])
@@ -195,20 +194,20 @@ class TestWorldVersionPinDecision(unittest.TestCase):
     def test_decline_does_not_start_downpatch(self):
         ctx = _pin_ctx()
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
             ctx.ui.dialogs[0]["callback"](False)
         self.assertEqual(self.started, [])
 
     def test_no_dialog_capable_ui_degrades_to_notice(self):
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(_pin_ctx())  # ui=None
         self.assertEqual(self.started, [])
 
     def test_no_tag_does_not_offer_or_install(self):
         ctx = _pin_ctx(tag=None)
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
         self.assertEqual(self.started, [])
         self.assertEqual(ctx.ui.dialogs, [])
@@ -219,7 +218,7 @@ class TestWorldVersionPinDecision(unittest.TestCase):
         ctx = _pin_ctx()
         ctx.ui = _FakeConfirmUI()
         with mock.patch.object(self.settings_module, "get_settings", _pin_settings(True)), \
-                mock.patch.object(sys, "argv", ["client", "--no-restart"]):
+                mock.patch.object(Utils, "_startup_argv", ("client", "--no-restart")):
             self.check(ctx)
         self.assertEqual(self.started, [])
         self.assertEqual(ctx.ui.dialogs, [])
@@ -227,20 +226,20 @@ class TestWorldVersionPinDecision(unittest.TestCase):
     def test_custom_mismatch_is_report_only(self):
         ctx = _pin_ctx(custom=True)
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
         self.assertEqual(self.started, [])
         self.assertEqual(ctx.ui.dialogs, [])
 
     def test_no_game_is_noop(self):
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(_pin_ctx(game=None))
         self.assertEqual(self.started, [])
 
     def test_matching_version_is_noop(self):
         ctx = _pin_ctx(version=(1, 0, 0))  # == installed 1.0.0
         ctx.ui = _FakeConfirmUI()
-        with mock.patch.object(sys, "argv", ["client"]):
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
             self.check(ctx)
         self.assertEqual(self.started, [])
         self.assertEqual(ctx.ui.dialogs, [])
