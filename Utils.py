@@ -849,12 +849,18 @@ def _perform_module_launch(module_id: str, **kwargs):
                 logging.error(f"Error in error callback: {callback_error}")
         raise
 
+def _self_relaunch_argv() -> typing.List[str]:
+    """argv that re-runs this process. Frozen argv[0] is the exe itself (== sys.executable);
+    passing it again would land as MultiWorld's launch_file positional."""
+    return [sys.executable, *(sys.argv[1:] if is_frozen() else sys.argv)]
+
+
 def exit_restart_for_update():
     """
     Spawn a new process with the same arguments, then exit.
     The new process will have its splashscreen apply the updates.
     """
-    subprocess.Popen([sys.executable] + sys.argv,
+    subprocess.Popen(_self_relaunch_argv(),
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
 
@@ -871,10 +877,10 @@ def _restart_client_with_args():
     """Re-exec the client with the same argv plus --no-restart so a second
     launch failure surfaces an error instead of looping. Used when a world's
     transitive deps were missing and we just reinstalled them."""
-    new_argv = list(sys.argv)
+    new_argv = _self_relaunch_argv()
     if "--no-restart" not in new_argv:
         new_argv.append("--no-restart")
-    subprocess.Popen([sys.executable, *new_argv],
+    subprocess.Popen(new_argv,
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
     logger.info("Restarting client to pick up freshly installed dependencies...")

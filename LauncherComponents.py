@@ -378,7 +378,8 @@ def open_patch() -> None:
         Utils.messagebox("Error", str(e), error=True)
         return
     if filename:
-        spawn_client(launch_file=filename)
+        # No --client-type: "game" needs --game, and the child applies its patch preference.
+        spawn_client(launch_file=filename, client_type=())
 
 
 def browse_files() -> None:
