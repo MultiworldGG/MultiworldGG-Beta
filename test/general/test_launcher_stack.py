@@ -1192,7 +1192,7 @@ def test_restart_client_keeps_patch_as_launch_file(frozen, executable, argv, exp
     the child's launch_file and the patch an unrecognized argument."""
     monkeypatch.setattr(Utils, "is_frozen", lambda: frozen)
     monkeypatch.setattr(sys, "executable", executable)
-    monkeypatch.setattr(sys, "argv", argv)
+    monkeypatch.setattr(Utils, "_startup_argv", tuple(argv))
     spawned = []
     monkeypatch.setattr(Utils.subprocess, "Popen", lambda child_argv, **kwargs: spawned.append(child_argv))
 
@@ -1200,6 +1200,35 @@ def test_restart_client_keeps_patch_as_launch_file(frozen, executable, argv, exp
         Utils._restart_client_with_args()
 
     assert spawned == [expected]
+
+
+@pytest.mark.parametrize("frozen, prefix", [
+    (True, ["C:/MWGG/MultiworldGG.exe"]),
+    (False, ["python", "MultiWorld.py"]),
+])
+def test_deferred_launch_restart_relaunches_startup_argv(frozen, prefix, monkeypatch):
+    """A restart from inside the deferred launch, where sys.argv holds the world
+    client's --connect form, must re-run argv that MultiWorld's parser accepts."""
+    monkeypatch.setattr(Utils.asyncio, "get_event_loop",
+                        lambda: types.SimpleNamespace(call_soon=lambda callback: callback()))
+    monkeypatch.setattr(Utils, "is_frozen", lambda: frozen)
+    monkeypatch.setattr(sys, "executable", prefix[0])
+    monkeypatch.setattr(Utils, "_startup_argv", (prefix[-1], "--game", "kh3", "--server-address", "h:1",
+                                                 "--slot-name", "P1", "--client-type", "game"))
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda *args, **kwargs: None)
+    spawned = []
+    monkeypatch.setattr(Utils.subprocess, "Popen", lambda child_argv, **kwargs: spawned.append(child_argv))
+
+    def _missing_dep(*args):
+        raise ImportError("No module named 'kh3_dep'")
+
+    with pytest.raises(SystemExit):
+        Utils._defer_cli_launch(_missing_dep, "worlds.kh3", "P1@h:1", False, dep_install_module="worlds.kh3")
+
+    [child_argv] = spawned
+    assert child_argv[:len(prefix)] == prefix
+    args = MultiWorld.make_arg_parser().parse_args(child_argv[len(prefix):])
+    assert (args.game, args.server_address, args.slot_name, args.no_restart) == ("kh3", "h:1", "P1", True)
 
 
 # --- launch_exe: terminal detection, window-then-tab bucketing, env forwarding ---
