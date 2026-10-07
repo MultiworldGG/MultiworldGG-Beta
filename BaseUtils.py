@@ -838,7 +838,8 @@ def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Op
     if password is not None:
         argv += ["--password", password]
     client_types = [client_type] if isinstance(client_type, str) else list(client_type)
-    argv += ["--client-type", *client_types]
+    if client_types:
+        argv += ["--client-type", *client_types]
     if component is not None:
         if game is None:
             raise ValueError("spawn_client(component=...) requires game=")

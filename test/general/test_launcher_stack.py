@@ -431,14 +431,17 @@ def test_resolve_route_manual_sentinel_stays_client(monkeypatch):
     assert "MWGG_GAME" not in os.environ
 
 
-def test_resolve_route_routed_patch_stays_client(monkeypatch):
+@pytest.mark.parametrize("restart_argv, restarted", [([], False), (["--no-restart"], True)])
+def test_resolve_route_routed_patch_stays_client(restart_argv, restarted, monkeypatch):
+    """--no-restart (stamped by _restart_client_with_args) reaches the patch route
+    as _restarted, so a second failed launch errors instead of restarting again."""
     monkeypatch.setenv("MWGG_ROLE", "stale")
     monkeypatch.delenv("MWGG_GAME", raising=False)
-    args = _parsed_args(["seed.apkh3"], patch_module="kh3",
+    args = _parsed_args(["seed.apkh3", *restart_argv], patch_module="kh3",
                         patch_file="C:\\seeds\\seed.apkh3")
     route_module, route_kwargs = _resolve_with_role(args)
     assert route_module == "kh3"
-    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.apkh3"}
+    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.apkh3", "_restarted": restarted}
     assert os.environ["MWGG_ROLE"] == "client"
     assert os.environ["MWGG_GAME"] == "kh3"
 
@@ -457,7 +460,8 @@ def test_resolve_route_routed_patch_honors_explicit_client_type(client_type_argv
                         patch_file="C:\\seeds\\seed.aplttp")
     route_module, route_kwargs = _resolve_with_role(args)
     assert route_module == "alttp"
-    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.aplttp", "client_type": expected}
+    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.aplttp", "_restarted": False,
+                            "client_type": expected}
 
 
 def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
@@ -1139,7 +1143,9 @@ def test_spawn_client_component_requires_game(monkeypatch):
         BaseUtils.spawn_client(component="Map Tracker")
 
 
-def test_spawn_client_launch_file_is_positional_before_flags(monkeypatch):
+def _spawned_client_args(monkeypatch, spawn, launch_file):
+    """Run `spawn` against a fake Popen and parse the child's argv (from the
+    launch file on) with MultiWorld's own parser."""
     monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
     monkeypatch.setattr(BaseUtils, "is_windows", False)
     captured = {}
@@ -1149,12 +1155,51 @@ def test_spawn_client_launch_file_is_positional_before_flags(monkeypatch):
         return object()
 
     monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
-
-    BaseUtils.spawn_client(launch_file="C:/seed.apkh3")
-
+    spawn()
     argv = captured["argv"]
-    launch_index = argv.index("C:/seed.apkh3")
-    assert argv[launch_index + 1] == "--client-type"
+    return MultiWorld.make_arg_parser().parse_args(argv[argv.index(launch_file):])
+
+
+@pytest.mark.parametrize("client_type, parsed", [("text", ["text"]), ((), None)])
+def test_spawn_client_launch_file_is_positional_before_flags(client_type, parsed, monkeypatch):
+    """The positional precedes --client-type (nargs="+" would swallow it), and an
+    empty client_type omits the flag instead of passing it bare."""
+    args = _spawned_client_args(
+        monkeypatch, lambda: BaseUtils.spawn_client(launch_file="C:/seed.apkh3", client_type=client_type),
+        "C:/seed.apkh3")
+    assert args.launch_file == "C:/seed.apkh3"
+    assert args.client_type == parsed
+
+
+def test_open_patch_spawns_without_game_client_type(monkeypatch):
+    """main() exits 2 on --client-type game without --game, so a patch spawn must not
+    carry spawn_client's "game" default."""
+    monkeypatch.setattr(lc, "open_filename", lambda *args, **kwargs: "C:/seed.apnew")
+    args = _spawned_client_args(monkeypatch, lc.open_patch, "C:/seed.apnew")
+    assert args.launch_file == "C:/seed.apnew"
+    assert args.client_type is None
+    assert args.game is None
+
+
+@pytest.mark.parametrize("frozen, executable, argv, expected", [
+    (True, "C:/MWGG/MultiworldGG.exe", ["C:/MWGG/MultiworldGG.exe", "C:/seed.apnew"],
+     ["C:/MWGG/MultiworldGG.exe", "C:/seed.apnew", "--no-restart"]),
+    (False, "python", ["MultiWorld.py", "C:/seed.apnew"],
+     ["python", "MultiWorld.py", "C:/seed.apnew", "--no-restart"]),
+])
+def test_restart_client_keeps_patch_as_launch_file(frozen, executable, argv, expected, monkeypatch):
+    """Frozen argv[0] is the exe itself and must not be repeated, or the exe becomes
+    the child's launch_file and the patch an unrecognized argument."""
+    monkeypatch.setattr(Utils, "is_frozen", lambda: frozen)
+    monkeypatch.setattr(sys, "executable", executable)
+    monkeypatch.setattr(sys, "argv", argv)
+    spawned = []
+    monkeypatch.setattr(Utils.subprocess, "Popen", lambda child_argv, **kwargs: spawned.append(child_argv))
+
+    with pytest.raises(SystemExit):
+        Utils._restart_client_with_args()
+
+    assert spawned == [expected]
 
 
 # --- launch_exe: terminal detection, window-then-tab bucketing, env forwarding ---

@@ -260,7 +260,8 @@ def _resolve_client_route(args) -> "tuple[str | None, dict]":
             getattr(args, "password", None) if args else None)
         if args and getattr(args, "patch_module", None):
             route_module = args.patch_module
-            route_kwargs = {"patch_file": args.patch_file}
+            route_kwargs = {"patch_file": args.patch_file,
+                            "_restarted": getattr(args, "no_restart", False)}
             if composed_address:
                 route_kwargs["server_address"] = composed_address
             # An explicit --client-type decides the tracker overlay; otherwise
