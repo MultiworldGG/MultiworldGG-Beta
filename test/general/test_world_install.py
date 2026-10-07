@@ -25,6 +25,7 @@ import ModuleUpdate
 import MultiWorld
 import Updater
 import Utils
+from APContainer import APWorldContainer
 from mwgg_igdb import GameIndex
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -606,6 +607,47 @@ def test_versioned_apworld_filename_registers_under_its_folder(tmp_path, monkeyp
     assert GameIndex.get_module_for_game("Mega Man Zero 3") == "mmzero3"
     assert "mmzero3-0.3.6" not in GameIndex.get_all_games()
     assert ModuleUpdate.find_custom_apworld("mmzero3") == apworld
+
+
+def test_set_game_names_serves_versioned_apworld_fallback(tmp_path, monkeypatch):
+    GameIndex.add_game("foo", {"game_name": "Foo"})
+    apworld = tmp_path / "foo-1.2.3.apworld"
+    _make_apworld(apworld, "Foo", module="foo")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "install_worlds",
+                              return_value=ModuleUpdate.WorldInstallResult(["worlds.foo"])) as install:
+        Utils.set_game_names(["Foo"])
+
+    install.assert_called_once_with(["foo"])
+    assert [entry.path for entry in Utils.game_names()] == [apworld]
+
+
+def test_set_game_names_indexes_unlisted_versioned_apworld_under_its_folder(tmp_path, monkeypatch):
+    _make_apworld(tmp_path / "bar-2.0.0.apworld", "Bar", module="bar")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "install_worlds", return_value=ModuleUpdate.WorldInstallResult()):
+        Utils.set_game_names(["Bar"])
+
+    assert GameIndex.get_module_for_game("Bar") == "bar"
+    assert "bar-2.0.0" not in GameIndex.get_all_games()
+
+
+def test_versioned_apworld_imports_under_its_folder(tmp_path):
+    apworld = tmp_path / "foo-1.2.3.apworld"
+    _make_apworld(apworld, "Foo", module="foo", extra_members={"__init__.py": b"VALUE = 1\n"})
+    try:
+        module = APWorldContainer(apworld).sys_modules_import_apworld()
+        assert module.__name__ == "worlds.foo"
+        assert sys.modules["worlds.foo"] is module
+        assert module.VALUE == 1
+    finally:
+        sys.modules.pop("worlds.foo", None)
 
 
 def test_register_custom_worlds_tolerates_missing_dir(tmp_path, monkeypatch):
