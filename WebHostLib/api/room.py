@@ -19,7 +19,7 @@ def room_info(room_id: UUID) -> Dict[str, Any]:
         return game in worlds.Files.AutoPatchRegister.patch_types
 
     downloads = []
-    for slot in sorted(room.seed.slots):
+    for slot in sorted(room.seed.slots, key=lambda slot: slot.player_id):
         if slot.data and not supports_apdeltapatch(slot.game):
             slot_download = {
                 "slot": slot.player_id,
