@@ -564,12 +564,13 @@ status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "(avoid)",
     HintStatus.HINT_PRIORITY: "(priority)",
 }
+# Status colors must be TEXT_COLORS keys (rewritten per theme by mwgg_gui) with an ANSI entry in color_codes.
 status_colors: typing.Dict[HintStatus, str] = {
-    HintStatus.HINT_FOUND: "green",
-    HintStatus.HINT_UNSPECIFIED: "white",
-    HintStatus.HINT_NO_PRIORITY: "lightgray",
-    HintStatus.HINT_AVOID: "salmon",
-    HintStatus.HINT_PRIORITY: "gold",
+    HintStatus.HINT_FOUND: "location_color",
+    HintStatus.HINT_UNSPECIFIED: "default_color",
+    HintStatus.HINT_NO_PRIORITY: "regular_item_color",
+    HintStatus.HINT_AVOID: "trap_item_color",
+    HintStatus.HINT_PRIORITY: "progression_item_color",
 }
 ## HintStatus map is the location identifier/colors
 mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
@@ -578,9 +579,9 @@ mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
     MWGGUIHintStatus.HINT_BK_MODE: "(bk_mode)",
 }
 mwggui_status_colors: typing.Dict[MWGGUIHintStatus, str] = {
-    MWGGUIHintStatus.HINT_SHOP: "grey",
-    MWGGUIHintStatus.HINT_GOAL: "gold",
-    MWGGUIHintStatus.HINT_BK_MODE: "salmon",
+    MWGGUIHintStatus.HINT_SHOP: "regular_item_color",
+    MWGGUIHintStatus.HINT_GOAL: "progression_item_color",
+    MWGGUIHintStatus.HINT_BK_MODE: "trap_item_color",
 }
 
 def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Optional[str] = None, **kwargs):

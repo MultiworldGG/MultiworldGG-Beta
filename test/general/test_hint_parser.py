@@ -18,10 +18,13 @@ import pytest
 pytest.importorskip("kivy.utils")
 
 from NetUtils import (
+    Hint,
+    HintStatus,
     KivyMarkupJSONtoTextParser,
     NetworkSlot,
     SlotType,
     TEXT_COLORS,
+    status_names,
 )
 
 
@@ -156,6 +159,19 @@ class ColorTableTest(_ParserTestBase):
             self.parser([{"type": "color", "color": "red", "text": "warn"}]),
             "[color=#ff0000]warn[/color]",
         )
+
+
+class HintStatusColorTest(_ParserTestBase):
+    def test_status_suffix_follows_theme_switch(self) -> None:
+        # mwgg_gui pushes TEXT_COLORS into color_codes on a theme switch; the suffix arrives as a
+        # hint_status node from upstream servers and as a color node from Hint.as_network_message.
+        self.parser.color_codes.update(dict.fromkeys(TEXT_COLORS, "123456"))
+        for status in HintStatus:
+            with self.subTest(status=status.name):
+                hint_status_node = {"type": "hint_status", "hint_status": status, "text": status_names[status]}
+                wire_node = Hint(1, 1, 1, 1, False, status=status).as_network_message()["data"][-1]
+                for node in (hint_status_node, wire_node):
+                    self.assertEqual(self.parser([node]), f"[color=123456]{status_names[status]}[/color]")
 
 
 if __name__ == "__main__":
