@@ -1,5 +1,6 @@
 import importlib.metadata
 import asyncio
+import os
 import types
 import unittest
 from contextlib import ExitStack
@@ -156,6 +157,7 @@ class TestWorldVersionPinDecision(unittest.TestCase):
         self._stack.enter_context(mock.patch.object(
             CommonClient, "_start_downpatch",
             lambda ctx, slug, tag, want: self.started.append((slug, tag, want))))
+        self._stack.enter_context(mock.patch.dict(os.environ))
         self.check = CommonClient._check_world_version_pin
         self.settings_module = settings
 
@@ -243,6 +245,27 @@ class TestWorldVersionPinDecision(unittest.TestCase):
             self.check(ctx)
         self.assertEqual(self.started, [])
         self.assertEqual(ctx.ui.dialogs, [])
+
+    def test_matching_version_marks_world_room_pinned(self):
+        import ModuleUpdate
+        with mock.patch.object(Utils, "_startup_argv", ("client",)):
+            self.check(_pin_ctx(version=(1, 0, 0)))
+        self.assertEqual(ModuleUpdate._room_pinned_worlds(), {"some_game"})
+
+    def test_new_room_without_a_held_pin_clears_the_previous_rooms_pin(self):
+        import ModuleUpdate
+        rooms = {
+            "mismatch not installed": _pin_ctx(),
+            "custom pin": _pin_ctx(custom=True),
+            "no tag": _pin_ctx(tag=None),
+            "unset pin": _pin_ctx(version=(0, 0, 0)),
+            "no game": _pin_ctx(game=None),
+        }
+        for label, ctx in rooms.items():
+            with self.subTest(label), mock.patch.object(Utils, "_startup_argv", ("client",)):
+                os.environ[ModuleUpdate._ROOM_PINNED_WORLDS_ENV] = "some_game"
+                self.check(ctx)
+                self.assertEqual(ModuleUpdate._room_pinned_worlds(), set())
 
 
 class TestDownpatchAndRelaunch(unittest.IsolatedAsyncioTestCase):

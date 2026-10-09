@@ -1629,7 +1629,11 @@ def _check_world_version_pin(ctx: CommonContext) -> None:
       confirm dialog (falling back to a log notice when no dialog is available).
       Failures degrade to a warning; the client continues with whatever is installed.
     - generic text client (ctx.game is None): no-op.
+    Each connected room overwrites ModuleUpdate's room-pinned worlds: this world when it is
+    held at a managed pin (installed already, or by the downpatch), otherwise none.
     """
+    import ModuleUpdate
+    ModuleUpdate.set_room_pinned_worlds(())
     if ctx.game is None:
         return
     pin = ctx.world_versions.get(ctx.game)
@@ -1684,6 +1688,7 @@ def _check_world_version_pin(ctx: CommonContext) -> None:
         return
 
     if installed_str == want_str:
+        ModuleUpdate.set_room_pinned_worlds([slug])
         return  # already correct
 
     # One-shot guard: _restart_client_with_args re-execs with --no-restart. If we are
