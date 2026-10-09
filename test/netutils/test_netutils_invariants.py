@@ -8,10 +8,15 @@ from NetUtils import (
     Hint,
     HintStatus,
     JSONtoTextParser,
+    MWGGUIHintStatus,
     NetworkPlayer,
     NetworkSlot,
     Permission,
     SlotType,
+    TEXT_COLORS,
+    color_codes,
+    mwggui_status_colors,
+    status_colors,
 )
 
 
@@ -97,6 +102,18 @@ class HandleItemNameColorTest(unittest.TestCase):
         # 0 -> filler (regular), 0b10 -> useful
         self.assertEqual(self._color_for(0), "regular_item_color;")
         self.assertEqual(self._color_for(0b00010), "useful_item_color;")
+
+
+class HintStatusColorTest(unittest.TestCase):
+    def test_hint_status_colors_are_themed_names_with_ansi_codes(self) -> None:
+        # Kivy hex_colormap names (white, gold) are fixed hex and ignore the GUI's Light mode.
+        flags = (MWGGUIHintStatus.HINT_SHOP, MWGGUIHintStatus.HINT_GOAL, MWGGUIHintStatus.HINT_BK_MODE)
+        names = [status_colors.get(status) for status in HintStatus]
+        names += [mwggui_status_colors.get(flag) for flag in flags]
+        for name in names:
+            with self.subTest(name=name):
+                self.assertIn(name, TEXT_COLORS)
+                self.assertIn(name, color_codes)
 
 
 class SlotTypeTest(unittest.TestCase):
