@@ -206,7 +206,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
         custom_worlds = []
 
     # Snapshot installed-wheel versions for slugs already on _worlds_to_load.
-    # Used to honor the precedence rule: higher world_version wins, tie -> installed wheel.
+    # Used to honor the ModuleUpdate.custom_world_wins precedence rule.
     _installed_versions: dict[str, str] = {}
     for entry in _worlds_to_load:
         if isinstance(entry, str) and entry.startswith("worlds."):
@@ -238,9 +238,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 _worlds_to_load.append(apworld)
                 continue
             if slug in _installed_versions:
-                apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
-                installed_version = tuplize_version(_installed_versions[slug])
-                if apworld_version > installed_version:
+                if ModuleUpdate.custom_world_wins(manifest.get("world_version"), _installed_versions[slug]):
                     # apworld wins: replace the installed-wheel entry with the apworld
                     target = f"worlds.{slug}"
                     try:
@@ -248,7 +246,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                     except ValueError:
                         pass
                     _worlds_to_load.append(apworld)
-                # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
+                # installed wheel strictly newer -> it wins, leave _worlds_to_load alone
 
     # Game names _worlds_to_load can actually serve, as the loader will see it: a wheel
     # serves the game its summary advertises, an APWorldContainer its manifest .game.
@@ -558,6 +556,11 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         if error_callback:
             error_callback()
         update_logger.error(f"Module installation failed: {error}")
+
+    # Spawned clients skip update_worlds(): sync an apworld dropped in while the launcher ran.
+    custom_apworld = ModuleUpdate.find_custom_apworld(module_name.removeprefix("worlds."))
+    if custom_apworld.exists():
+        ModuleUpdate.sync_custom_world(custom_apworld)
 
     try:
         importlib.import_module(module_name)

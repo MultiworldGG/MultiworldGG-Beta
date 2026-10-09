@@ -41,7 +41,7 @@ from collections.abc import Iterable
 from typing import Any, List, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
-from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen
+from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, tuplize_version, Version
 
 
 # ── Platform & paths ─────────────────────────────────────────────────────────
@@ -709,6 +709,15 @@ def find_custom_apworld(slug: str) -> Path:
     return apworld_file
 
 
+# Written into an extracted apworld: identifies the file it was extracted from.
+_CUSTOM_SOURCE_MARKER = ".mwgg-custom-source"
+
+
+def _custom_source_id(apworld_file: Path) -> str:
+    source = apworld_file.stat()
+    return f"{source.st_size}:{source.st_mtime_ns}"
+
+
 def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
     """Extract the `<slug>/` directory from apworld_file into the venv worlds dir.
     Returns True on success. Overwrites existing files in place rather than
@@ -732,6 +741,7 @@ def _install_apworld_to_venv(apworld_file: Path, slug: str) -> bool:
             os.utime(target_dir, None)
         except OSError:
             pass
+        (target_dir / _CUSTOM_SOURCE_MARKER).write_text(_custom_source_id(apworld_file))
         logger.info(f"Extracted apworld {apworld_file} to {target_dir}")
         # Extend an already-imported worlds package's __path__ so the new module is
         # discoverable without a restart (worlds/__init__.py handles the startup case).
@@ -983,7 +993,8 @@ def check_for_updates(worlds_only: bool = False, force: bool = False) -> List[st
     For worlds: re-pull mwgg_igdb (once daily unless `force`), then return installed worlds
     that _world_requires_install flags — version behind the index tag or
     dependencies missing. Never-installed and apworld-extracted worlds (no
-    dist) are not returned; they install on demand at launch.
+    dist) are not returned; they install on demand at launch. Neither are
+    room-pinned worlds, so a relaunch keeps the downpatched version.
     For non-world packages (dev only): query PyPI against requirements.txt entries.
     """
     if worlds_only:
@@ -994,9 +1005,11 @@ def check_for_updates(worlds_only: bool = False, force: bool = False) -> List[st
         games: dict[str, dict[str, Any]] = index.get_all_games()
         installed_names = _installed_dist_names()
         heal_attempts = _load_heal_attempts()
+        room_pinned = _room_pinned_worlds()
         outdated = [
             f"worlds.{slug}" for slug in games
             if _world_dist(slug) is not None
+            and slug not in room_pinned
             and _world_requires_install(slug, games, installed_names, heal_attempts)
         ]
         logger.info(f"Worlds with available updates: {outdated}")
@@ -1165,9 +1178,91 @@ def install_worlds(worlds: List[str], update: bool = False, with_deps: bool = Fa
     return apworlds
 
 
+# A world_version at or below this is a placeholder: rebuilds pushed without a bump, or a
+# code default standing in for a missing one.
+_PLACEHOLDER_WORLD_VERSION = Version(0, 0, 1)
+
+
+def custom_world_wins(custom_version: Optional[str], venv_version: Optional[str]) -> bool:
+    """Precedence of a custom_worlds apworld over the venv copy of its world. The venv
+    copy wins only when its world_version is above 0.0.1 and strictly newer than a
+    custom world_version that is also above 0.0.1; otherwise the apworld wins (ties
+    included). A missing, null or empty world_version counts as a placeholder."""
+    if not venv_version:
+        return True
+    venv = tuplize_version(str(venv_version))
+    if venv <= _PLACEHOLDER_WORLD_VERSION or not custom_version:
+        return True
+    custom = tuplize_version(str(custom_version))
+    return custom >= venv or custom <= _PLACEHOLDER_WORLD_VERSION
+
+
+def _manifest_world_version(manifest_json: bytes) -> Optional[str]:
+    try:
+        version = json.loads(manifest_json)["world_version"]
+    except (KeyError, TypeError, ValueError):
+        return None
+    return str(version) if version else None
+
+
+def sync_custom_world(apworld_file: Path) -> bool:
+    """Extract a custom_worlds apworld over the venv copy of its world when
+    custom_world_wins, uninstalling a replaced wheel so the index update stops
+    reinstalling it. A world a room pin installed in this session is left alone.
+    Returns True when the venv holds this apworld."""
+    if _skip_all_installs():
+        return False
+    try:
+        source_id = _custom_source_id(apworld_file)
+        with zipfile.ZipFile(apworld_file) as zf:
+            slug = apworld_module_name(zf)
+            try:
+                custom_version = _manifest_world_version(zf.read(f"{slug}/archipelago.json"))
+            except KeyError:
+                custom_version = None
+    except (OSError, zipfile.BadZipFile) as e:
+        logger.warning(f"Skipping unreadable custom world {apworld_file}: {e}")
+        return False
+    if slug in _room_pinned_worlds():
+        logger.info(f"Keeping worlds.{slug} at the version the room pinned over {apworld_file}")
+        return False
+
+    target_dir = _venv_worlds_dir() / slug
+    dist = _world_dist(slug)
+    if dist is not None:
+        venv_version: Optional[str] = dist.version
+    else:
+        try:
+            if (target_dir / _CUSTOM_SOURCE_MARKER).read_text() == source_id:
+                return True
+        except OSError:
+            pass
+        try:
+            venv_version = _manifest_world_version((target_dir / "archipelago.json").read_bytes())
+        except OSError:
+            venv_version = None
+
+    if not custom_world_wins(custom_version, venv_version):
+        logger.info(f"Keeping worlds.{slug} {venv_version}: newer than {apworld_file} ({custom_version})")
+        return False
+    if dist is not None:
+        logger.info(f"Replacing installed worlds.{slug} {dist.version} with {apworld_file}")
+        uninstall_worlds([f"worlds.{slug}"])
+    if not _install_apworld_to_venv(apworld_file, slug):
+        return False
+    invalidate_caches()
+    return True
+
+
+def sync_custom_worlds() -> None:
+    for apworld_file in sorted(custom_worlds_dir.glob("*.apworld")):
+        sync_custom_world(apworld_file)
+
+
 def update_worlds() -> Optional[WorldInstallResult]:
     """Pull the latest mwgg_igdb, then reinstall every installed world whose
-    version no longer matches its index tag or whose dependencies are missing.
+    version no longer matches its index tag or whose dependencies are missing,
+    then sync custom_worlds apworlds over their venv copies.
 
     Platform- and freeze-neutral; the launcher runs this on every cold start,
     with the Windows splash fronting the same call. Returns None when nothing
@@ -1176,9 +1271,9 @@ def update_worlds() -> Optional[WorldInstallResult]:
     if _skip_all_installs():
         return None
     updates = check_for_updates(worlds_only=True)
-    if not updates:
-        return None
-    return install_worlds(updates)
+    result = install_worlds(updates) if updates else None
+    sync_custom_worlds()
+    return result
 
 
 # ── Room-pinned installs from a tagged index snapshot ────────────────────────
@@ -1252,12 +1347,31 @@ def module_location_from_tag(slug: str, tag: str) -> Optional[str]:
     return location if isinstance(location, str) and location else None
 
 
+# Worlds the client's current room pins. Inherited by the client's relaunch (and anything
+# it spawns), so sync_custom_world and the index update keep them at the pinned version.
+_ROOM_PINNED_WORLDS_ENV = "MWGG_ROOM_PINNED_WORLDS"
+
+
+def _room_pinned_worlds() -> set[str]:
+    return set(os.environ.get(_ROOM_PINNED_WORLDS_ENV, "").split(",")) - {""}
+
+
+def set_room_pinned_worlds(slugs: Iterable[str]) -> None:
+    """Replace the room-pinned worlds; every newly connected room overwrites them."""
+    pinned = ",".join(sorted(set(slugs)))
+    if pinned:
+        os.environ[_ROOM_PINNED_WORLDS_ENV] = pinned
+    else:
+        os.environ.pop(_ROOM_PINNED_WORLDS_ENV, None)
+
+
 def install_worlds_from_tag(slugs: list[str], tag: str, with_deps: bool = False) -> list[str]:
     """Install the given managed worlds at the versions recorded in the index `tag`.
 
     Reads each world's module_location from the tagged snapshot (the active mwgg_igdb is
     left untouched) and reinstalls only those whose installed version differs from the
     tagged one, with `--reinstall --no-cache` (NOT `--upgrade`, so a downgrade takes).
+    The worlds held at the tagged version become the room-pinned worlds.
     Returns the slugs that could not be resolved or installed.
     """
     if _skip_all_installs():
@@ -1294,6 +1408,7 @@ def install_worlds_from_tag(slugs: list[str], tag: str, with_deps: bool = False)
             failed.append(slug)
             continue
         logger.info(f"Installed worlds.{slug} from index tag {tag} ({want})")
+    set_room_pinned_worlds(slug for slug in map(_world_slug, slugs) if slug not in failed)
     _prune_stale_apworld_extractions()
     invalidate_caches()
     return failed

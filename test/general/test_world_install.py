@@ -1,5 +1,6 @@
 """World install/update tests (ModuleUpdate, custom_worlds scan, install_worlds, upgrader, set_game_names, Updater); add new world-install tests here."""
 
+import asyncio
 import datetime
 import importlib
 import importlib.metadata
@@ -168,6 +169,7 @@ def test_module_location_from_tag_snapshot_unavailable(monkeypatch):
 def tagged_install_calls(monkeypatch):
     """Capture the uv install arg-lists; stub out network/fs side effects."""
     calls: list = []
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "")  # undone after the test
     monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
     monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: TAGGED_GAMES)
     monkeypatch.setattr(ModuleUpdate, "_prune_stale_apworld_extractions", lambda *a, **k: None)
@@ -214,9 +216,19 @@ def test_from_tag_fresh_install_uses_no_deps(monkeypatch, tagged_install_calls):
 
 def test_from_tag_unresolved_world_reported_as_failed(monkeypatch, tagged_install_calls):
     monkeypatch.setattr(ModuleUpdate, "_load_tagged_index_games", lambda tag: {})  # alttp absent
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "alttp")  # a previous room's pin
     _set_installed_world_version(monkeypatch, "5.0.0")
     assert ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG) == ["alttp"]
     assert tagged_install_calls == []
+    assert ModuleUpdate._room_pinned_worlds() == set()
+
+
+@pytest.mark.parametrize("installed", ["5.0.0", "5.1.0"])
+def test_from_tag_overwrites_room_pinned_worlds(monkeypatch, tagged_install_calls, installed):
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "other_world")  # a previous room's pin
+    _set_installed_world_version(monkeypatch, installed)
+    ModuleUpdate.install_worlds_from_tag(["alttp"], INDEX_TAG)
+    assert ModuleUpdate._room_pinned_worlds() == {"alttp"}
 
 
 # --------------------------------------------------------------------------- #
@@ -516,11 +528,14 @@ def test_register_custom_worlds_invalidates_import_caches(tmp_path, monkeypatch)
 # --------------------------------------------------------------------------- #
 
 def _make_apworld(path, game_name: str, components: "list | None" = None,
-                  extra_members: "dict[str, bytes] | None" = None, module: "str | None" = None) -> None:
+                  extra_members: "dict[str, bytes] | None" = None, module: "str | None" = None,
+                  world_version: "str | None" = None) -> None:
     slug = module or Path(path).stem
     manifest: dict = {"game": game_name, "compatible_version": 5}
     if components is not None:
         manifest["components"] = components
+    if world_version is not None:
+        manifest["world_version"] = world_version
     with zipfile.ZipFile(path, "w") as zf:
         zf.writestr(f"{slug}/archipelago.json", json.dumps(manifest))
         for member, data in (extra_members or {}).items():
@@ -1119,6 +1134,18 @@ def test_check_for_updates_worlds_only_flags_dep_broken_world_at_current_tag():
         assert ModuleUpdate.check_for_updates(worlds_only=True) == ["worlds.foo"]
 
 
+def test_check_for_updates_worlds_only_ignores_room_pinned_world(monkeypatch):
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "foo")
+    dist = types.SimpleNamespace(version="0.9.0", requires=[])  # behind the 1.0.0 index tag
+    fake_index = types.SimpleNamespace(get_all_games=lambda: {"foo": {"module_location": WHEEL_URL}})
+    with mock.patch.object(ModuleUpdate, "install_mwgg_igdb", return_value=True), \
+            mock.patch.object(ModuleUpdate, "_get_game_index", return_value=fake_index), \
+            mock.patch.object(ModuleUpdate, "_world_dist", lambda slug: dist), \
+            mock.patch.object(ModuleUpdate, "_installed_dist_names", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "_load_heal_attempts", return_value={}):
+        assert ModuleUpdate.check_for_updates(worlds_only=True) == []
+
+
 def test_check_for_updates_worlds_only_ignores_apworld_extracted_world():
     # No dist -> never installed (or apworld-extracted, not pip-tracked); it
     # installs on demand at launch, not through the update-check path.
@@ -1601,10 +1628,12 @@ def test_update_worlds_skips_when_installs_disabled():
 def test_update_worlds_returns_none_when_current():
     with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
             mock.patch.object(ModuleUpdate, "check_for_updates", return_value=[]) as check, \
-            mock.patch.object(ModuleUpdate, "install_worlds") as install:
+            mock.patch.object(ModuleUpdate, "install_worlds") as install, \
+            mock.patch.object(ModuleUpdate, "sync_custom_worlds") as sync:
         assert ModuleUpdate.update_worlds() is None
     check.assert_called_once_with(worlds_only=True)
     install.assert_not_called()
+    sync.assert_called_once_with()
 
 
 def test_update_locked_skips_all_update_work_under_skip_update(monkeypatch):
@@ -1632,13 +1661,195 @@ def test_update_locked_runs_world_update_when_not_skipped(monkeypatch):
     igdb.assert_not_called()
 
 
-def test_update_worlds_installs_outdated_worlds():
+def test_update_worlds_installs_outdated_worlds_then_syncs_custom_worlds():
     result = ModuleUpdate.WorldInstallResult()
+    calls = mock.Mock()
+    calls.install_worlds.return_value = result
     with mock.patch.object(ModuleUpdate, "_skip_all_installs", return_value=False), \
             mock.patch.object(ModuleUpdate, "check_for_updates", return_value=["worlds.albw"]), \
-            mock.patch.object(ModuleUpdate, "install_worlds", return_value=result) as install:
+            mock.patch.object(ModuleUpdate, "install_worlds", calls.install_worlds), \
+            mock.patch.object(ModuleUpdate, "sync_custom_worlds", calls.sync_custom_worlds):
         assert ModuleUpdate.update_worlds() is result
-    install.assert_called_once_with(["worlds.albw"])
+    # A custom apworld must be compared against the freshly updated wheel, not the old one.
+    assert calls.mock_calls == [mock.call.install_worlds(["worlds.albw"]), mock.call.sync_custom_worlds()]
+
+
+# --------------------------------------------------------------------------- #
+# custom_worlds apworlds replace the venv copy of their world unless that copy
+# is strictly newer; an unversioned apworld always wins.
+# --------------------------------------------------------------------------- #
+
+@pytest.mark.parametrize(("custom_version", "venv_version", "wins"), [
+    # venv at or below 0.0.1 (or missing): the apworld wins.
+    ("1.0.0", None, True),
+    ("0.0.0", "0.0.0", True),
+    ("0.0.0", "0.0.1", True),
+    ("0.0.2", "0.0.1", True),
+    # venv above 0.0.1: a newer or equal apworld wins...
+    ("1.3.0", "1.2.0", True),
+    ("1.2.0", "1.2.0", True),
+    # ...an older apworld above 0.0.1 loses...
+    ("1.1.0", "1.2.0", False),
+    ("0.0.2", "1.2.0", False),
+    # ...an older apworld at or below 0.0.1 (or missing) wins.
+    ("0.0.1", "1.2.0", True),
+    ("0.0.0", "1.2.0", True),
+    (None, "99.0.0", True),
+    ("", "1.2.0", True),
+])
+def test_custom_world_wins_unless_venv_strictly_newer(custom_version, venv_version, wins):
+    assert ModuleUpdate.custom_world_wins(custom_version, venv_version) is wins
+
+
+@pytest.fixture
+def venv_worlds(tmp_path, monkeypatch):
+    """A writable stand-in venv worlds dir holding no world dists."""
+    worlds_dir = tmp_path / "venv_worlds"
+    monkeypatch.setattr(ModuleUpdate, "_venv_worlds_dir", lambda: worlds_dir)
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: None)
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "")
+    worlds_pkg = sys.modules.get("worlds")
+    if worlds_pkg is not None:
+        monkeypatch.setattr(worlds_pkg, "__path__", list(worlds_pkg.__path__))
+    return worlds_dir
+
+
+def _extracted_world(worlds_dir, slug, world_version, body):
+    world_dir = worlds_dir / slug
+    world_dir.mkdir(parents=True)
+    (world_dir / "archipelago.json").write_text(json.dumps({"game": "Foo", "world_version": world_version}))
+    (world_dir / "__init__.py").write_text(body)
+
+
+def test_sync_custom_world_overwrites_extraction_with_unversioned_apworld(tmp_path, venv_worlds):
+    _extracted_world(venv_worlds, "foo", "2.0.0", "VALUE = 0\n")
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", extra_members={"__init__.py": b"VALUE = 1\n"})
+
+    assert ModuleUpdate.sync_custom_world(apworld) is True
+    assert (venv_worlds / "foo" / "__init__.py").read_text() == "VALUE = 1\n"
+
+
+@pytest.mark.parametrize("raw_version", [b"null", b'""'])
+def test_sync_custom_world_null_or_empty_version_is_no_version(tmp_path, venv_worlds, raw_version):
+    _extracted_world(venv_worlds, "foo", "2.0.0", "VALUE = 0\n")
+    apworld = tmp_path / "foo.apworld"
+    with zipfile.ZipFile(apworld, "w") as zf:
+        zf.writestr("foo/archipelago.json", b'{"game": "Foo", "compatible_version": 5, "world_version": '
+                    + raw_version + b"}")
+        zf.writestr("foo/__init__.py", b"VALUE = 1\n")
+
+    assert ModuleUpdate.sync_custom_world(apworld) is True
+    assert (venv_worlds / "foo" / "__init__.py").read_text() == "VALUE = 1\n"
+
+
+def test_sync_custom_world_keeps_strictly_newer_extraction(tmp_path, venv_worlds):
+    _extracted_world(venv_worlds, "foo", "2.0.0", "VALUE = 0\n")
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", world_version="1.0.0", extra_members={"__init__.py": b"VALUE = 1\n"})
+
+    assert ModuleUpdate.sync_custom_world(apworld) is False
+    assert (venv_worlds / "foo" / "__init__.py").read_text() == "VALUE = 0\n"
+
+
+def test_sync_custom_world_reextracts_only_a_changed_file(tmp_path, venv_worlds):
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", extra_members={"__init__.py": b"VALUE = 1\n"})
+    assert ModuleUpdate.sync_custom_world(apworld) is True
+
+    with mock.patch.object(ModuleUpdate, "_install_apworld_to_venv") as extract:
+        assert ModuleUpdate.sync_custom_world(apworld) is True
+    extract.assert_not_called()
+
+    _make_apworld(apworld, "Foo", extra_members={"__init__.py": b"VALUE = 22\n"})
+    assert ModuleUpdate.sync_custom_world(apworld) is True
+    assert (venv_worlds / "foo" / "__init__.py").read_text() == "VALUE = 22\n"
+
+
+@pytest.mark.parametrize(("apworld_version", "wheel_version", "replaced"), [
+    (None, "1.2.0", True),
+    ("1.2.0", "1.2.0", True),
+    ("1.0.0", "1.2.0", False),
+    ("0.0.1", "1.2.0", True),
+    ("0.0.0", "0.0.1", True),
+])
+def test_sync_custom_world_against_installed_wheel(tmp_path, venv_worlds, monkeypatch,
+                                                   apworld_version, wheel_version, replaced):
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: types.SimpleNamespace(version=wheel_version))
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", world_version=apworld_version, extra_members={"__init__.py": b"VALUE = 1\n"})
+
+    with mock.patch.object(ModuleUpdate, "uninstall_worlds") as uninstall:
+        assert ModuleUpdate.sync_custom_world(apworld) is replaced
+
+    if replaced:
+        uninstall.assert_called_once_with(["worlds.foo"])
+        assert (venv_worlds / "foo" / "__init__.py").read_text() == "VALUE = 1\n"
+    else:
+        uninstall.assert_not_called()
+        assert not (venv_worlds / "foo").exists()
+
+
+def test_sync_custom_world_leaves_a_room_pinned_world_alone(tmp_path, venv_worlds, monkeypatch):
+    """A room pin's downpatch must survive the relaunched client's sync."""
+    monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "alttp,foo")
+    monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: types.SimpleNamespace(version="1.0.0"))
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", extra_members={"__init__.py": b"VALUE = 1\n"})
+
+    with mock.patch.object(ModuleUpdate, "uninstall_worlds") as uninstall:
+        assert ModuleUpdate.sync_custom_world(apworld) is False
+    uninstall.assert_not_called()
+    assert not (venv_worlds / "foo").exists()
+
+
+def test_sync_custom_world_is_inert_when_installs_are_disabled(tmp_path, venv_worlds, monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_skip_all_installs", lambda: True)
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", extra_members={"__init__.py": b"VALUE = 1\n"})
+
+    assert ModuleUpdate.sync_custom_world(apworld) is False
+    assert not venv_worlds.exists()
+
+
+@pytest.mark.parametrize(("apworld_version", "wheel_wins"), [(None, False), ("1.2.0", False), ("1.0.0", True)])
+def test_set_game_names_custom_apworld_precedence_over_wheel(tmp_path, monkeypatch, apworld_version, wheel_wins):
+    GameIndex.add_game("foo", {"game_name": "Foo"})
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo", world_version=apworld_version)
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+    real_distribution = importlib.metadata.distribution
+
+    def fake_distribution(name):
+        return types.SimpleNamespace(version="1.2.0") if name == "worlds.foo" else real_distribution(name)
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(importlib.metadata, "distribution", fake_distribution), \
+            mock.patch.object(ModuleUpdate, "install_worlds") as install:
+        Utils.set_game_names(["Foo"])
+
+    install.assert_not_called()
+    expected = "worlds.foo" if wheel_wins else apworld
+    assert [getattr(entry, "path", entry) for entry in Utils.game_names()] == [expected]
+
+
+def test_discover_and_launch_module_syncs_custom_apworld_before_import(tmp_path, monkeypatch):
+    apworld = tmp_path / "foo.apworld"
+    _make_apworld(apworld, "Foo")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    calls = []
+    monkeypatch.setattr(ModuleUpdate, "sync_custom_world", lambda path: calls.append(("sync", path)))
+    monkeypatch.setattr(Utils, "importlib", types.SimpleNamespace(
+        import_module=lambda name: calls.append(("import", name))))
+    monkeypatch.setattr(Utils, "_perform_module_launch", lambda module_id, **kwargs: calls.append(("launch", module_id)))
+
+    async def launch():
+        Utils.discover_and_launch_module("foo")
+
+    asyncio.run(launch())
+    assert calls == [("sync", apworld), ("import", "worlds.foo"), ("launch", "worlds.foo")]
 
 
 # --------------------------------------------------------------------------- #
