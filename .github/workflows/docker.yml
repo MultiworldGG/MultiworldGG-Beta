@@ -83,15 +83,14 @@ jobs:
       packages: write
     strategy:
       matrix:
+        # One image per Dockerfile target, published as <image>-<target>.
+        target: [web, hoster, generator, upgrader]
+        platform: [amd64, arm64]
         include:
           - platform: amd64
             runner: ubuntu-latest
-            suffix: amd64
-            cache-scope: amd64
           - platform: arm64
             runner: ubuntu-24.04-arm
-            suffix: arm64
-            cache-scope: arm64
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -112,7 +111,7 @@ jobs:
           readarray -t tags <<< "${{ needs.prepare.outputs.tags }}"
           suffixed=()
           for t in "${tags[@]}"; do
-            suffixed+=("$t-${{ matrix.suffix }}")
+            suffixed+=("${t%:*}-${{ matrix.target }}:${t##*:}-${{ matrix.platform }}")
           done
           echo "tags=$(IFS=','; echo "${suffixed[*]}")" >> $GITHUB_OUTPUT
 
@@ -121,12 +120,13 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          target: ${{ matrix.target }}
           platforms: linux/${{ matrix.platform }}
           push: true
           tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ needs.prepare.outputs.labels }}
-          cache-from: type=gha,scope=${{ matrix.cache-scope }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
+          cache-from: type=gha,scope=${{ matrix.target }}-${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.target }}-${{ matrix.platform }}
           provenance: false
 
   manifest:
@@ -135,6 +135,9 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        target: [web, hoster, generator, upgrader]
     steps:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2  # v4.0.0
@@ -147,7 +150,8 @@ jobs:
         run: |
           readarray -t tag_array <<< "${{ needs.prepare.outputs.tags }}"
 
-          for tag in "${tag_array[@]}"; do
+          for t in "${tag_array[@]}"; do
+            tag="${t%:*}-${{ matrix.target }}:${t##*:}"
             docker manifest create "$tag" \
               "$tag-amd64" \
               "$tag-arm64"

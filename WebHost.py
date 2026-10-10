@@ -18,7 +18,7 @@ ModuleUpdate.requirements_files.add(Path(local_path("WebHostLib", "requirements.
 INDEX_VARIANT = "ao"
 ModuleUpdate.set_variant(INDEX_VARIANT)
 # No install here: the mwgg_upgrader service is the sole writer of the shared
-# worlds venv. The web/multiworld containers mount it read-only and only read.
+# worlds venv. The web/hoster/generator containers mount it read-only and only read.
 
 # in case app gets imported by something like gunicorn
 import Utils
@@ -56,12 +56,10 @@ def _pony_config_to_sqlalchemy_uri(pony_config: dict) -> str:
         raise ValueError(f"Unsupported PONY provider: {provider!r}")
 
 
-def get_app() -> "Flask":
+def load_config(app: "Flask") -> None:
+    """Apply config.yaml and --config_override, then resolve the data folders and database URI."""
+    from WebHostLib import resolve_paths
 
-    from WebHostLib import register, cache, resolve_paths, app as raw_app
-    from WebHostLib.models import db, Base
-
-    app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
         import yaml
         app.config.from_file(configpath, yaml.safe_load)
@@ -75,10 +73,38 @@ def get_app() -> "Flask":
         import yaml
         app.config.from_file(os.path.abspath(args.config_override), yaml.safe_load)
         logging.info(f"Updated config from {args.config_override}")
+
+    resolve_paths(app)
+
+    # Convert legacy PONY config dict to a SQLAlchemy URI
+    pony_config = app.config.get("PONY", {})
+    app.config["SQLALCHEMY_DATABASE_URI"] = _pony_config_to_sqlalchemy_uri(pony_config)
+    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+
+
+def resolve_host_address(app: "Flask") -> None:
     if not app.config["HOST_ADDRESS"]:
         logging.info("Getting public IP, as HOST_ADDRESS is empty.")
         app.config["HOST_ADDRESS"] = Utils.get_public_ipv4()
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
+
+
+def init_db(app: "Flask") -> None:
+    from WebHostLib.models import db, Base
+
+    db.init_app(app)
+    # Create tables only for fresh databases (SQLite) or when explicitly requested.
+    # For production PostgreSQL deployments the schema is managed separately.
+    with app.app_context():
+        Base.metadata.create_all(db.engine)
+
+
+def get_app() -> "Flask":
+
+    from WebHostLib import register, cache, app
+
+    load_config(app)
+    resolve_host_address(app)
 
     # Refuse to boot on the hostname-derived SECRET_KEY default: it signs the
     # session cookie and is trivially guessable.
@@ -92,21 +118,9 @@ def get_app() -> "Flask":
             "in config.yaml to a random ≥32-byte value (try `openssl rand -hex 32`)."
         )
 
-    resolve_paths(app)
     register()
     cache.init_app(app)
-
-    # Convert legacy PONY config dict to a SQLAlchemy URI and initialise flask-sqlalchemy
-    pony_config = app.config.get("PONY", {})
-    db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
-    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
-    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
-    db.init_app(app)
-
-    # Create tables only for fresh databases (SQLite) or when explicitly requested.
-    # For production PostgreSQL deployments the schema is managed separately.
-    with app.app_context():
-        Base.metadata.create_all(db.engine)
+    init_db(app)
 
     return app
 
@@ -195,21 +209,8 @@ def find_docs_folder_recursive(root_dir, max_depth=3):
     
     return search_recursive(root_dir, 0)
 
-if __name__ == "__main__":
-    multiprocessing.freeze_support()
-    multiprocessing.set_start_method('spawn')
 
-    from WebHostLib.autolauncher import autohost, autogen, stop
-    from WebHostLib.options import create as create_options_files
-
-    app = get_app()
-
-    try:
-        from WebHostLib.lttpsprites import update_sprites_lttp
-        update_sprites_lttp(output_dir=app.config["GENERATED_FOLDER"])
-    except Exception as e:
-        logging.warning("Could not update LttP sprites: %s", e)
-
+def drop_invalid_webworlds() -> None:
     from worlds import AutoWorldRegister, network_data_package
 
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
@@ -218,23 +219,77 @@ if __name__ == "__main__":
         logging.error(f"Following worlds not loaded as they are invalid for WebHost: {invalid_worlds}")
     AutoWorldRegister.world_types = {k: v for k, v in AutoWorldRegister.world_types.items() if k not in invalid_worlds}
     network_data_package["games"] = {k: v for k, v in network_data_package["games"].items() if k not in invalid_worlds}
+
+
+def generate_static_files(app: "Flask") -> None:
+    """Write LttP sprites, option templates and world docs into GENERATED_FOLDER."""
+    from WebHostLib.options import create as create_options_files
+
+    try:
+        from WebHostLib.lttpsprites import update_sprites_lttp
+        update_sprites_lttp(output_dir=app.config["GENERATED_FOLDER"])
+    except Exception as e:
+        logging.warning("Could not update LttP sprites: %s", e)
+
+    drop_invalid_webworlds()
     create_options_files()
     copy_tutorials_files_to_static(app)
-    if app.config["SELFLAUNCH"]:
+
+
+def wait_for_shutdown() -> None:
+    from time import sleep
+    try:
+        while True:
+            sleep(1)  # wait for process to be killed
+    except (SystemExit, KeyboardInterrupt):
+        pass
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    multiprocessing.set_start_method('spawn')
+
+    parser = argparse.ArgumentParser(allow_abbrev=False)
+    parser.add_argument("--role", choices=("all", "static", "hoster", "generator"), default="all",
+                        help="all: the jobs config.yaml enables (SELFLAUNCH, SELFGEN, SELFHOST). "
+                             "static: create tables and write generated static files, then exit. "
+                             "hoster: host rooms. generator: run queued generations.")
+    role = parser.parse_known_args()[0].role
+    # Read by WebHostLib at import, which otherwise loads every world into this process.
+    os.environ["MWGG_WEBHOST_ROLE"] = role
+
+    from WebHostLib import app
+    from WebHostLib.autolauncher import autohost, autogen, stop
+
+    if role == "static":
+        load_config(app)
+        init_db(app)
+        generate_static_files(app)
+    elif role == "hoster":
+        load_config(app)
+        resolve_host_address(app)
+        drop_invalid_webworlds()
         autohost(app.config)
-    if app.config["SELFGEN"]:
+        wait_for_shutdown()
+        stop()
+    elif role == "generator":
+        load_config(app)
         autogen(app.config)
-    if app.config["SELFHOST"]:  # using WSGI, you just want to run get_app()
-        if app.config["DEBUG"]:
-            app.run(debug=True, port=app.config["PORT"])
-        else:
-            from waitress import serve
-            serve(app, port=app.config["PORT"], threads=app.config["WAITRESS_THREADS"])
+        wait_for_shutdown()
+        stop()
     else:
-        from time import sleep
-        try:
-            while True:
-                sleep(1)  # wait for process to be killed
-        except (SystemExit, KeyboardInterrupt):
-            pass
-    stop()  # stop worker threads
+        app = get_app()
+        generate_static_files(app)
+        if app.config["SELFLAUNCH"]:
+            autohost(app.config)
+        if app.config["SELFGEN"]:
+            autogen(app.config)
+        if app.config["SELFHOST"]:  # using WSGI, you just want to run get_app()
+            if app.config["DEBUG"]:
+                app.run(debug=True, port=app.config["PORT"])
+            else:
+                from waitress import serve
+                serve(app, port=app.config["PORT"], threads=app.config["WAITRESS_THREADS"])
+        else:
+            wait_for_shutdown()
+        stop()  # stop worker threads

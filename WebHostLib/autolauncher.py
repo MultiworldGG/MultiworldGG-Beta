@@ -346,7 +346,7 @@ def prune_avatars(config: dict[str, Any] | None = None) -> int:
     upload_dir = config.get("AVATAR_UPLOAD_FOLDER")
     if retention <= 0 or not upload_dir:
         return 0
-    from .avatars import prune_unreferenced_avatars
+    from .avatar_db import prune_unreferenced_avatars
     with Session(_get_engine()) as session:
         removed = prune_unreferenced_avatars(session, utcnow() - timedelta(days=retention), upload_dir)
     if removed:

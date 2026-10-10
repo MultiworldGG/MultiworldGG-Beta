@@ -12,24 +12,21 @@ each session's web uploads are owned by a stable per-session ``AvatarToken``
 (identified by its ``note``), and the currently-selected image is recorded in
 the new ``SessionAvatar`` table.
 """
-import os
 from urllib.parse import urlparse
 
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_limiter.util import get_remote_address
-from sqlalchemy import func, or_, select
+from sqlalchemy import select
 
 from Utils import utcnow
 from WebHostLib import app, limiter
 from WebHostLib.api.avatar import (
-    PNG_EXTENSION,
     AvatarUploadError,
     avatar_public_url,
     read_avatar_upload,
     store_avatar,
 )
 from WebHostLib.models import (
-    Avatar,
     AvatarToken,
     Lobby,
     LobbyPlayer,
@@ -285,56 +282,3 @@ def set_slot_avatar(tracker):
     commit()
     flash("Avatar set for this slot.", "success")
     return back
-
-
-def apply_slot_avatars_to_stored_data(session, room_id, stored_data: dict) -> None:
-    """Inject web-set slot avatars into a room's ``stored_data`` profile_data.
-
-    Called by the live room process at boot (customserver) so connected desktop
-    clients render web-set avatars. Takes an explicit SQLAlchemy session because
-    the room process isn't in a Flask request context, and mutates ``stored_data``
-    in place. Only explicit ``SlotAvatar`` rows are seeded - lobby-derived session
-    avatars stay web-only (the client carries its own via persistent storage).
-    """
-    rows = session.scalars(select(SlotAvatar).where(SlotAvatar.room_id == room_id)).all()
-    for row in rows:
-        if not row.avatar_url:
-            continue
-        key = f"profile_data_{row.team}_{row.slot}"
-        profile = stored_data.get(key)
-        profile = profile if isinstance(profile, dict) else {}
-        profile["avatar"] = row.avatar_url
-        stored_data[key] = profile
-
-
-def prune_unreferenced_avatars(session, cutoff, upload_dir: str) -> int:
-    """Delete avatars created before ``cutoff`` that nothing uses; returns the count.
-
-    Kept: every SessionAvatar/SlotAvatar target, and a client token's newest
-    upload (the desktop client persists only its latest URL). Takes an explicit
-    session because the autohost runs outside a request context.
-    """
-    newest = (
-        select(Avatar.owner_token_id, func.max(Avatar.created_at).label("created_at"))
-        .group_by(Avatar.owner_token_id)
-        .subquery()
-    )
-    stale = session.scalars(
-        select(Avatar)
-        .join(Avatar.owner_token)
-        .join(newest, Avatar.owner_token_id == newest.c.owner_token_id)
-        .where(
-            Avatar.created_at < cutoff,
-            or_(AvatarToken.note.is_not(None), Avatar.created_at < newest.c.created_at),
-            Avatar.id.not_in(select(SessionAvatar.avatar_id)),
-            Avatar.id.not_in(select(SlotAvatar.avatar_id)),
-        )
-    ).all()
-    for avatar in stale:
-        try:
-            os.remove(os.path.join(upload_dir, f"{avatar.id.hex}{PNG_EXTENSION}"))
-        except FileNotFoundError:
-            pass
-        session.delete(avatar)
-    session.commit()
-    return len(stale)

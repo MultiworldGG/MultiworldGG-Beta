@@ -293,7 +293,7 @@ class WebHostContext(Context):
         """Seed profile_data with web-set slot avatars so connected clients
         render them. Best-effort: a failure here must never block room boot."""
         try:
-            from WebHostLib.avatars import apply_slot_avatars_to_stored_data
+            from WebHostLib.avatar_db import apply_slot_avatars_to_stored_data
             with Session(WebHostContext._db_engine) as session:
                 apply_slot_avatars_to_stored_data(session, self.room_id, self.stored_data)
         except Exception:

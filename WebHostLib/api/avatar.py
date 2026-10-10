@@ -20,11 +20,11 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 from Utils import utcnow
 from WebHostLib import app, limiter
+from WebHostLib.avatar_db import PNG_EXTENSION
 from WebHostLib.models import Avatar, AvatarToken, commit
 from . import api_endpoints
 
 
-PNG_EXTENSION = ".png"
 HEX_ID_RE = re.compile(r"^[0-9a-f]{32}$")
 
 # Exposed-nudity labels emitted by the NudeNet sidecar (deploy/docker-compose.yml

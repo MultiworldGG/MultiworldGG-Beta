@@ -1,10 +1,7 @@
 # Refer to ../docs/webhost configuration sample.yaml
 
-# We'll be hosting VIA gunicorn
-SELFHOST: false
-# Start room and generator processes
-SELFLAUNCH: true
-JOB_THRESHOLD: 0
+# Read by the hoster and generator services on top of config.yaml. Their
+# --role picks the job, so SELFHOST/SELFLAUNCH/SELFGEN don't apply to them.
 
 # Maximum concurrent world gens
 GENERATORS: 3

@@ -15,8 +15,10 @@ from werkzeug.routing import BaseConverter
 from Utils import title_sorted, get_file_safe_name,world_list_sorted, set_game_names
 from mwgg_igdb import GameIndex
 # Must run before worlds is imported. Only the main process seeds the full IGDB
-# list (workers would OOM); workers narrow it per-job in autolauncher._mp_gen_game.
-if multiprocessing.current_process().name == "MainProcess":
+# list (workers would OOM); workers narrow it per-job in autolauncher._mp_gen_game,
+# so a generator's main process loads no worlds at all.
+if (multiprocessing.current_process().name == "MainProcess"
+        and os.environ.get("MWGG_WEBHOST_ROLE") != "generator"):
     set_game_names(list(GameIndex.game_names.keys()), strict=False)
     from worlds.AutoWorld import AutoWorldRegister
 

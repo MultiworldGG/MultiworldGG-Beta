@@ -353,7 +353,7 @@ def test_set_slot_avatar_missing_form_400(client, app, room_factory):
 # ---------------------------------------------------------------------------
 
 def test_apply_seeds_profile_data_avatar(app, room_factory):
-    from WebHostLib.avatars import apply_slot_avatars_to_stored_data
+    from WebHostLib.avatar_db import apply_slot_avatars_to_stored_data
     from WebHostLib.models import SlotAvatar, commit, db
     room = room_factory()
     avatar_id = _make_avatar(app)
@@ -372,7 +372,7 @@ def test_apply_seeds_profile_data_avatar(app, room_factory):
 
 
 def test_apply_skips_rows_without_url(app, room_factory):
-    from WebHostLib.avatars import apply_slot_avatars_to_stored_data
+    from WebHostLib.avatar_db import apply_slot_avatars_to_stored_data
     from WebHostLib.models import SlotAvatar, commit, db
     room = room_factory()
     avatar_id = _make_avatar(app)

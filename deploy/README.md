@@ -8,12 +8,18 @@ services:
   `mwgg_igdb` "ao" index + every world + the worlds' requirements), then
   exits. It is the *only* writer of the venv; every other service mounts it
   read-only and waits for this job to finish.
-- **static_sync** - run-once job that copies `WebHostLib/static` out of the
-  image into the `app_static` volume nginx serves, then exits. It re-runs on
-  every `up`, so a pulled or rebuilt image is what nginx serves.
-- **multiworld** - game-hosting process (`python WebHost.py
+- **static_sync** - run-once job from the web image: copies `WebHostLib/static`
+  into the `app_static` volume nginx serves, creates any missing database
+  tables, writes `generated/` (option templates, world docs, LttP sprites),
+  then exits. It re-runs on every `up`, so a pulled or rebuilt image is what
+  nginx serves.
+- **hoster** - room-hosting process (`python WebHost.py --role hoster
   --config_override selflaunch.yaml`). Uses host networking for the dynamic
-  port range games bind to.
+  port range games bind to. Also expires lobbies and prunes old avatars.
+- **generator** - runs queued generations (`python WebHost.py --role
+  generator --config_override selflaunch.yaml`). Scale it with `GENERATORS`
+  in `selflaunch.yaml`, not with replicas: every generator container claims
+  every queued generation.
 - **web** - Flask app under gunicorn, serving the lobby / generate /
   tracker / room views.
 - **nginx** - front proxy, serves static files and reverse-proxies the web
@@ -22,9 +28,22 @@ services:
   Apps. Loopback-only; exposed to the public internet via the host's nginx,
   not this compose stack.
 
-All app services share the same image (built once by the `multiworld`
-service's `build:` block, or pulled from GHCR). `multiworld` and `web` run as
-pure venv consumers with `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` installs.
+Each role has its own image, one `Dockerfile` target apiece, named
+`<MWGG_IMAGE_PREFIX>-<role>:<MWGG_IMAGE_TAG>` (default prefix
+`ghcr.io/multiworldgg/multiworldgg`, default tag `latest`; set both in a `.env`
+file next to `docker-compose.yml`):
+
+| Image | Runs | Carries |
+| --- | --- | --- |
+| `-upgrader` | `mwgg_upgrader` | Python, uv and git; none of the webhost code |
+| `-web` | `web`, `static_sync` | code + every webhost requirement + gunicorn |
+| `-hoster` | `hoster` | code + the worker requirements (no bokeh, scikit-learn, webauthn, ...) |
+| `-generator` | `generator` | the hoster's contents plus Enemizer (amd64) |
+
+All four share one Python base, which the worlds venv depends on: the venv
+the upgrader creates links to that interpreter. `web`, `hoster` and
+`generator` run as pure venv consumers with `SKIP_ALL_INSTALLS=1`; only
+`mwgg_upgrader` installs.
 
 Code always runs from the image; no service mounts a volume over `/app`. The
 image fixes where runtime data lives (Dockerfile `ENV MWGG_*`, overridable in
@@ -90,17 +109,17 @@ The app services see it at `/db/ap.db3` (`MWGG_DB_FILE` in the image; a
 ```bash
 sudo sqlite3 /var/lib/mwgg-db/ap.db3 ".backup '/var/backups/mwgg-ap-$(date +%F).db3'"
 ```
-Without `sqlite3` on the host, `docker compose stop web multiworld`, copy the
-file, then `docker compose start web multiworld`.
+Without `sqlite3` on the host, `docker compose stop web hoster generator`, copy
+the file, then `docker compose start web hoster generator`.
 
-**Restore:** stop `web` and `multiworld`, replace `/var/lib/mwgg-db/ap.db3`,
-start them again.
+**Restore:** stop `web`, `hoster` and `generator`, replace
+`/var/lib/mwgg-db/ap.db3`, start them again.
 
 ### 3. ROMs (optional)
 
 ROM-based worlds only generate when their base ROM is present. Put the ROMs in
 a host directory, point a `host.yaml` at them, and uncomment the two mounts on
-the `multiworld` service in `docker-compose.yml`:
+the `generator` service in `docker-compose.yml`:
 
 ```bash
 sudo mkdir -p /var/lib/mwgg-roms    # read-only in the container at /roms
@@ -119,7 +138,7 @@ Copy each `example_*` file to its production name and edit:
 | --- | --- | --- |
 | `example_config.yaml` | `config.yaml` | Webhost config: room limits, public hostname, DB credentials, etc. |
 | `example_gunicorn.conf.py` | `gunicorn.conf.py` | Gunicorn workers, threads, log format. |
-| `example_selflaunch.yaml` | `selflaunch.yaml` | Multiworld service config (game-hosting side). |
+| `example_selflaunch.yaml` | `selflaunch.yaml` | Hoster and generator config, read on top of `config.yaml` (`HOSTERS`, `GENERATORS`). |
 | `example_nginx.conf` | `nginx.conf` | The in-stack nginx config (front proxy). |
 | `example_github-bot.env` | `github-bot.env` | GitHub App IDs, webhook secret paths, etc. `chmod 0600`. |
 | `example_github-bot_nginx.conf` | (host nginx) | Snippet for the *host's* nginx (not this stack) - terminates TLS for `oliver.multiworld.gg` and proxies to `127.0.0.1:3000`. |
@@ -206,7 +225,7 @@ shared host; raise it only with headroom.
 ```bash
 docker compose build
 docker compose up -d
-docker compose logs --tail=300 multiworld web
+docker compose logs --tail=300 static_sync hoster generator web
 ```
 
 Expected log signature for a healthy cold start:
@@ -214,19 +233,21 @@ Expected log signature for a healthy cold start:
 - `mwgg_upgrader-1`: `Installing mwgg_igdb (ao)`, then ~200
   `Installing world: worlds.<slug>` lines as the venv is populated, then
   `mwgg_venv ready` and the container exits 0.
-- `static_sync-1`: no output, exits 0 within a second or two.
-- `multiworld-1` / `web-1`: held until `mwgg_upgrader` and `static_sync` exit
-  successfully (`service_completed_successfully`). Neither installs anything
-  (`SKIP_ALL_INSTALLS=1`) - they import worlds from the read-only venv.
-  `web-1` boots the `gunicorn` master then two workers (`preload_app = True`);
-  `multiworld-1` begins hosting.
+- `static_sync-1`: imports every world to write the option templates and
+  docs, then exits 0 (tens of seconds).
+- `hoster-1` / `generator-1` / `web-1`: held until `mwgg_upgrader` and
+  `static_sync` exit successfully (`service_completed_successfully`). None
+  installs anything (`SKIP_ALL_INSTALLS=1`) - they import worlds from the
+  read-only venv. `web-1` boots the `gunicorn` master then two workers
+  (`preload_app = True`); `hoster-1` begins hosting; `generator-1` loads no
+  worlds until a generation arrives.
 - `nginx-1`: ready for startup.
 - `mwgg-github-bot-1`: `Oliver the Multiworld Squirrel is listening … Karen Head 
    of Multiworld QA is running automations on the Index`, `Listening on
   http://0.0.0.0:3000`.
 
 Because a single `mwgg_upgrader` job owns all writes to the venv, the old
-multiworld/web install race is gone - the consumers just read the populated,
+consumer install race is gone - the consumers just read the populated,
 read-only venv. (The install lock at
 `/var/lib/mwgg/mwgg_venv/.mwgg-install.lock` still guards concurrent manual
 runs of the upgrader.)
@@ -238,7 +259,7 @@ For routine updates (new world releases, mwgg_igdb refresh, code changes):
 ```bash
 cd /opt/mwgg
 git pull
-docker compose build         # builds multiworld + github-bots + fuzz-image
+docker compose build         # builds the four app images + github-bots + fuzz-image
 docker compose up -d         # re-runs static_sync + mwgg_upgrader, recreates the rest
 docker image prune -f        # reclaim the images this rebuild just orphaned
 ```
@@ -250,13 +271,31 @@ refreshes nginx's copy of `WebHostLib/static` each time. No volume needs
 removing.
 
 `docker compose build` with no service rebuilds every service that has a build
-context - `multiworld`, `github-bots`, and `fuzz-image`; name one to rebuild just
-that (e.g. `docker compose build fuzz-image`). The trailing `docker image prune -f`
-is the part not to skip - see below.
+context - `mwgg_upgrader`, `web`, `hoster`, `generator`, `github-bots`, and
+`fuzz-image`; name one to rebuild just that (e.g. `docker compose build
+fuzz-image`). The trailing `docker image prune -f` is the part not to skip - see
+below.
+
+### Upgrading from the single-image layout
+
+Before the per-role images, one image ran as `multiworld` (rooms and
+generation) and `web`. The first `up` after upgrading must remove that
+container, or it keeps hosting every room alongside `hoster`:
+
+```bash
+docker compose up -d --remove-orphans
+```
+
+A `.env` that set `MULTIWORLD_IMAGE` needs `MWGG_IMAGE_PREFIX` /
+`MWGG_IMAGE_TAG` instead. An operator `selflaunch.yaml` keeps working: the
+`--role` flag replaces its `SELFHOST` / `SELFLAUNCH` / `SELFGEN` switches, and
+everything else in it (`HOSTERS`, `GENERATORS`, `SELFLAUNCHCERT` / `SELFLAUNCHKEY`, ...)
+is still read. Carry any mounts or env your `multiworld` service had (room
+certificates) over to `hoster`.
 
 ### Disk housekeeping (overlay2)
 
-The fuzz and `multiworld` images are multi-GB; every rebuild retags `:latest` and
+The fuzz and app images are multi-GB; every rebuild retags `:latest` and
 leaves the previous image **dangling**, and those orphaned layers pile up in
 `/var/lib/docker/overlay2` until the disk fills. Keep it bounded on two fronts:
 
@@ -355,7 +394,7 @@ full `docker compose up -d` also re-runs it (the app services wait for it via
   until it finishes. Re-running it re-checks every world and its dependencies
   for updates and upgrades only what's outdated (no force-reinstall), so most
   of the time is spent on network round-trips rather than installs.
-- **`Read-only file system` / venv write errors in `multiworld` or `web`.**
+- **`Read-only file system` / venv write errors in `hoster`, `generator` or `web`.**
   Expected and harmless: those services mount the venv read-only and run with
   `SKIP_ALL_INSTALLS=1`; only `mwgg_upgrader` may write it. If a world is
   genuinely missing, re-run `mwgg_upgrader` - don't loosen the mount.
