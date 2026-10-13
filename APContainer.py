@@ -129,15 +129,18 @@ class APWorldContainer(APContainer):
     
 
     def read_contents(self, opened_zipfile: zipfile.ZipFile) -> dict[str, Any]:
-        from Utils import tuplize_version, version_tuple
+        from Utils import tuplize_version, core_version_tuple
         try:
             manifest = super().read_contents(opened_zipfile)
         except KeyError as e:
-            # Feature gate: archipelago.json is optional for versions < 0.7.300
-            if version_tuple < (0, 7, 300):
-                # Return empty manifest, metadata will remain None
-                return {}
-            raise
+            # Feature gate: compatible_version is optional for versions < 0.7.300; hand-zipped
+            # apworlds lack it because a source archipelago.json must not define it.
+            # TODO: set to correct version when AP pushes this live
+            if core_version_tuple < (0, 7, 300) and e.args == ("compatible_version",):
+                with opened_zipfile.open(self.manifest_path) as f:
+                    manifest = json.load(f)
+            else:
+                raise
         if "game" in manifest:
             self.game = manifest["game"]
         for version_key in ("world_version", "minimum_ap_version", "maximum_ap_version"):

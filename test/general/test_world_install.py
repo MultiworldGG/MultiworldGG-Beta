@@ -599,6 +599,17 @@ def test_manual_apworld_without_manifest_gets_its_manual_game_id(tmp_path, monke
     assert GameIndex.get_game_name_for_module(slug) == "Manual_Autonauts_Hopop"
 
 
+def test_hand_zipped_apworld_without_compatible_version_registers(tmp_path, monkeypatch):
+    """A source archipelago.json must not define compatible_version, so hand-zipped apworlds lack it."""
+    with zipfile.ZipFile(tmp_path / "test_custom.apworld", "w") as zf:
+        zf.writestr("test_custom/archipelago.json",
+                    json.dumps({"game": "Test Custom Game", "world_version": "1.0.0"}))
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+
+    assert Utils.register_custom_worlds() == ["test_custom"]
+    assert GameIndex.get_game_name_for_module("test_custom") == "Test Custom Game"
+
+
 def test_apworld_manifest_game_outranks_manual_game_json(tmp_path, monkeypatch):
     slug = "manual_autonauts_hopop"
     _make_apworld(tmp_path / f"{slug}.apworld", "Manual_Autonauts_Hopop2",
