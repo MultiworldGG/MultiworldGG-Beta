@@ -285,6 +285,9 @@ def _refresh(ctx, app) -> None:
 
     _feed("tracker page labels",
           lambda: _update_tracker_page_labels(ctx, tracker_core, updateTracker_ret))
+    controller = getattr(ctx, "_map_controller", None)
+    if controller is not None:
+        _feed("item panels", lambda: controller.update_items(updateTracker_ret))
 
     console_screen = getattr(app, "console_screen", None)
     update_fn = getattr(console_screen, "update_tracker_locations", None) if console_screen else None

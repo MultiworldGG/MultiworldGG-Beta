@@ -29,7 +29,14 @@ def _ctx(**kwargs) -> SimpleNamespace:
 
 
 def _core(player_id=1, current_world=None):
-    return SimpleNamespace(player_id=player_id, get_current_world=lambda: current_world)
+    return SimpleNamespace(player_id=player_id, get_current_world=lambda: current_world, manual_items=[])
+
+
+def _activation_world(**kwargs) -> SimpleNamespace:
+    defaults = dict(map_page_maps=["map.json"], map_page_locations=["locations.json"],
+                    item_page_items=[], item_page_item_layouts=[])
+    defaults.update(kwargs)
+    return SimpleNamespace(**defaults)
 
 
 class TestBuildTrackerWorld(unittest.TestCase):
@@ -137,7 +144,7 @@ class TestActivate(unittest.TestCase):
         notified = []
         ctx = _ctx(set_notify=lambda *keys: notified.extend(keys))
         controller = self._stub_controller(ctx, _core())
-        ctx.tracker_world = SimpleNamespace(
+        ctx.tracker_world = _activation_world(
             map_page_index=lambda _: 0,
             map_page_setting_key=None,
             location_setting_key="icon_key",
@@ -156,7 +163,7 @@ class TestActivate(unittest.TestCase):
         ctx = _ctx()
         controller = self._stub_controller(ctx, _core())
         controller.load_pack = lambda: calls.__setitem__("load_pack", calls["load_pack"] + 1)
-        ctx.tracker_world = SimpleNamespace(
+        ctx.tracker_world = _activation_world(
             map_page_index=lambda _: 0, map_page_setting_key=None, location_setting_key=None)
 
         controller.activate(object())
@@ -169,7 +176,7 @@ class TestActivate(unittest.TestCase):
         even if load_pack invalidates tracker_world (e.g. bad external pack)."""
         ctx = _ctx()
         controller = self._stub_controller(ctx, _core())
-        ctx.tracker_world = SimpleNamespace(
+        ctx.tracker_world = _activation_world(
             map_page_index=lambda _: 0, map_page_setting_key=None, location_setting_key=None)
         shown = []
         controller.set_map_visible = lambda visible: shown.append(visible)
@@ -182,6 +189,27 @@ class TestActivate(unittest.TestCase):
 
         self.assertEqual(shown, [])
         self.assertIn("load_map", ctx.command_processor.commands)
+
+    def _shown_tabs(self, **world):
+        ctx = _ctx()
+        controller = self._stub_controller(ctx, _core())
+        shown = []
+        controller.set_map_visible = lambda visible: shown.append(("map", visible))
+        controller.set_items_visible = lambda visible: shown.append(("items", visible))
+        ctx.tracker_world = _activation_world(
+            map_page_index=lambda _: 0, map_page_setting_key=None, location_setting_key=None, **world)
+        controller.activate(object())
+        return shown
+
+    def test_map_tab_needs_maps_and_locations(self):
+        self.assertEqual(self._shown_tabs(), [("map", True)])
+        self.assertEqual(self._shown_tabs(map_page_locations=[]), [])
+
+    def test_item_tab_needs_items_and_layouts(self):
+        layouts = [object()]
+        self.assertEqual(self._shown_tabs(map_page_maps=[], item_page_items=["items.json"],
+                                          item_page_item_layouts=layouts), [("items", True)])
+        self.assertEqual(self._shown_tabs(map_page_maps=[], item_page_items=["items.json"]), [])
 
 
 class TestHandleStoredData(unittest.TestCase):
@@ -252,6 +280,7 @@ class TestDisconnect(unittest.TestCase):
         ctx.command_processor.commands["list_maps"] = cmd_list_maps
         ctx.coord_dict = {1: []}
         ctx._map_activated = True
+        ctx.logical_path_entrances.append("Door")
 
         controller.disconnect()
 
@@ -259,6 +288,7 @@ class TestDisconnect(unittest.TestCase):
         self.assertNotIn("load_map", ctx.command_processor.commands)
         self.assertNotIn("list_maps", ctx.command_processor.commands)
         self.assertFalse(ctx._map_activated)
+        self.assertEqual(ctx.logical_path_entrances, [])
 
     def test_safe_without_prior_activation(self):
         ctx = _ctx()
@@ -279,6 +309,8 @@ class TestLoadPack(unittest.TestCase):
             map_page_locations=["locations.json"],
             map_page_layouts=["layout.json"],
             map_page_groups=[("Region", ["map1"])],
+            item_page_items=[],
+            item_page_item_layouts=[],
         )
 
         fake_data = {
@@ -294,6 +326,23 @@ class TestLoadPack(unittest.TestCase):
         self.assertEqual(ctx.locs, [])
         self.assertEqual(ctx.layouts, [{}])
         self.assertEqual(ctx.map_groups, [("Region", ["map1"])])
+
+    def test_items_pages_reach_load_items_keyed_by_name(self):
+        ctx = _ctx(ui=None)
+        controller = UTMapController(ctx, _core(current_world=SimpleNamespace(settings=None)))
+        ctx.tracker_world = SimpleNamespace(
+            external_pack_key="", map_page_folder="maps", map_page_maps=[], map_page_locations=[],
+            map_page_layouts=[], map_page_groups=None, item_page_items=["items.json", ""],
+            item_page_item_layouts=[])
+        loaded = []
+        controller.load_items = loaded.append
+        fake_data = {"/maps/items.json": [{"name": "Sword", "type": "toggle"}, {"name": "Bomb", "type": "consumable"}]}
+        with mock.patch("worlds.tracker.map_controller.load_json",
+                        side_effect=lambda pack, path: fake_data[path]):
+            controller.load_pack()
+
+        self.assertEqual(loaded, [{"Sword": {"name": "Sword", "type": "toggle"},
+                                   "Bomb": {"name": "Bomb", "type": "consumable"}}])
 
 
 class TestLoadMap(unittest.TestCase):
@@ -331,6 +380,25 @@ class TestLoadMap(unittest.TestCase):
         with mock.patch.dict("worlds.AutoWorld.AutoWorldRegister.world_types", world_types):
             controller.load_map(0)
 
+    def test_item_page_without_maps_still_sets_pack_root(self):
+        class PackWorld:
+            pass
+        PackWorld.__module__ = "worlds.testgame"
+        ctx, controller, _ = self._setup(PackWorld())
+        ctx.maps = []
+        ctx.stored_data = {}
+        ctx.auto_tab = True
+        ctx.map_id = None
+        ctx.tracker_world.map_page_setting_key = None
+        ctx.tracker_world.map_page_index = lambda _: 0
+        ctx.tracker_world.item_page_items = ["items.json"]
+        ctx.tracker_world.item_page_item_layouts = [object()]
+
+        controller.load_map(None)
+
+        self.assertEqual(ctx.root_pack_path, "ap:worlds.testgame/maps")
+        self.assertIsNone(ctx.map_id)
+
     def test_missing_world_skips_map(self):
         ctx, controller, captured = self._setup(current_world=None)
         with self.assertLogs("Client", level="ERROR"):
@@ -351,6 +419,66 @@ class TestLoadMap(unittest.TestCase):
         self.assertEqual(hidden, {"map1": []})
 
 
+class TestItemPanels(unittest.TestCase):
+    def _controller(self):
+        events = []
+        ctx = _ctx(persist_seed_data=lambda: events.append("persist"),
+                   updateTracker=lambda: events.append("refresh"))
+        core = _core()
+        return ctx, core, UTMapController(ctx, core), events
+
+    def test_update_items_feeds_both_panels(self):
+        ctx, core, controller, _ = self._controller()
+        fed = []
+        ctx.map_page = SimpleNamespace(update_items=lambda inventory, manual: fed.append(("map", dict(inventory), manual)))
+        ctx.item_page = SimpleNamespace(update_items=lambda inventory, manual: fed.append(("items", dict(inventory), manual)))
+        core.manual_items.append("Bomb")
+
+        controller.update_items(SimpleNamespace(all_items={"Sword": 1}))
+
+        self.assertEqual(fed, [("map", {"Sword": 1}, ["Bomb"]), ("items", {"Sword": 1}, ["Bomb"])])
+
+    def test_update_items_without_panels_is_a_noop(self):
+        _, _, controller, _ = self._controller()
+        controller.update_items(SimpleNamespace(all_items={"Sword": 1}))
+
+    def test_manual_collect_uncollect_reset(self):
+        ctx, core, _, events = self._controller()
+        ctx.manually_collect_item("Bomb")
+        ctx.manually_collect_item("Bomb")
+        ctx.manually_collect_item("Sword")
+        self.assertEqual(core.manual_items, ["Bomb", "Bomb", "Sword"])
+        ctx.manually_uncollect_item("Bomb")
+        self.assertEqual(core.manual_items, ["Bomb", "Sword"])
+        ctx.manually_collect_item("Bomb")
+        ctx.manually_reset_item("Bomb")
+        self.assertEqual(core.manual_items, ["Sword"])
+        self.assertEqual(events, ["persist", "refresh"] * 6)
+
+    def test_uncollect_and_reset_of_uncollected_item_do_nothing(self):
+        ctx, core, _, events = self._controller()
+        ctx.manually_uncollect_item("Bomb")
+        ctx.manually_reset_item("Bomb")
+        self.assertEqual(core.manual_items, [])
+        self.assertEqual(events, [])
+
+    def test_manual_collect_on_overlay_refreshes_without_persisting(self):
+        refreshed = []
+        ctx = _ctx(tracker_overlay_refresh=lambda: refreshed.append(True))
+        core = _core()
+        UTMapController(ctx, core)
+        ctx.manually_collect_item("Bomb")
+        self.assertEqual(core.manual_items, ["Bomb"])
+        self.assertEqual(refreshed, [True])
+
+    def test_clear_path_drops_entrances_and_refreshes(self):
+        ctx, _, _, events = self._controller()
+        ctx.logical_path_entrances.extend(["Door", "Gate"])
+        ctx.clear_path()
+        self.assertEqual(ctx.logical_path_entrances, [])
+        self.assertEqual(events, ["refresh"])
+
+
 class TestNarratedActivate(unittest.IsolatedAsyncioTestCase):
     """With a frontend that draws loading statuses the pack loads after "Loading map pack..."
     is on screen, the tracker refreshes onto the map, and the overlay drops."""
@@ -365,7 +493,7 @@ class TestNarratedActivate(unittest.IsolatedAsyncioTestCase):
         controller.prebuild_widget = lambda: None
         controller.load_pack = load_pack
         controller.set_map_visible = lambda visible: None
-        ctx.tracker_world = SimpleNamespace(
+        ctx.tracker_world = _activation_world(
             map_page_index=lambda _: 0, map_page_setting_key=None, location_setting_key=None)
         return app, ctx, controller
 
