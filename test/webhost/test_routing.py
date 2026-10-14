@@ -9,7 +9,7 @@ redirect matrix) merges here later.
 
 The tutorial handler reads from ``static/generated/docs/<game>/<file>_<lang>.md``,
 which is populated by ``copy_tutorials_files_to_static`` at app startup. The
-session-scoped ``app`` fixture runs that copy step once (via ``get_app``), so
+session-scoped ``app`` fixture runs that copy step once per worker, so
 the on-disk Archipelago tutorial files (``setup_en.md`` etc.) are available.
 """
 from __future__ import annotations
@@ -476,7 +476,7 @@ class TestSetupAliasRoute:
 
     @pytest.fixture
     def docs_dir(self, app):
-        path = pathlib.Path(app.static_folder) / "generated" / "docs" / secure_filename(ALIAS_GAME)
+        path = pathlib.Path(app.config["GENERATED_FOLDER"]) / "docs" / secure_filename(ALIAS_GAME)
         path.mkdir(parents=True, exist_ok=True)
         yield path
         shutil.rmtree(path, ignore_errors=True)

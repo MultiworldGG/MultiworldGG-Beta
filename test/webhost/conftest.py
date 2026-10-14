@@ -19,7 +19,7 @@ from flask import has_app_context
 @pytest.fixture(scope="session")
 def app():
     from WebHostLib import app as raw_app
-    from WebHost import get_app
+    from WebHost import get_app, copy_tutorials_files_to_static
 
     raw_app.config["PONY"] = {
         "provider": "sqlite",
@@ -31,7 +31,7 @@ def app():
         "DEBUG": True,
     })
     try:
-        return get_app()
+        flask_app = get_app()
     except (AssertionError, ValueError) as e:
         # get_app() re-registers blueprints on the import-time WebHostLib.app; a second
         # call raises (AssertionError on older Flask, ValueError on newer). Either way the
@@ -39,7 +39,10 @@ def app():
         message = e.args[0] if e.args else ""
         if "register_blueprint" not in message and "already registered" not in message:
             raise
-        return raw_app
+        flask_app = raw_app
+    # Only WebHost's main copies the tutorials; the tutorial routes read the copies.
+    copy_tutorials_files_to_static(flask_app)
+    return flask_app
 
 
 @pytest.fixture

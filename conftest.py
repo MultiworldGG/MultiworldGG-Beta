@@ -13,6 +13,16 @@ _stub_dir = str(Path(__file__).parent / "test" / "_stubs")
 if _stub_dir not in sys.path:
     sys.path.insert(0, _stub_dir)
 
+# copy_tutorials_files_to_static rmtrees the generated folder, so xdist workers sharing one 404 each other's
+# tutorial reads. Must be set before WebHostLib is imported.
+if os.environ.get("PYTEST_XDIST_WORKER") and not os.environ.get("MWGG_GENERATED_FOLDER"):
+    import atexit
+    import shutil
+    import tempfile
+    _generated = tempfile.mkdtemp(prefix=f"mwgg-generated-{os.environ['PYTEST_XDIST_WORKER']}-")
+    os.environ["MWGG_GENERATED_FOLDER"] = _generated
+    atexit.register(shutil.rmtree, _generated, True)
+
 
 def pytest_configure(config):
     # AP_TEST_WORLDS implies `-m world` unless an explicit -m was given; the scoping itself lives in
