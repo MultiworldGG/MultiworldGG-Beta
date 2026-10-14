@@ -42,29 +42,29 @@ ITEMS_HANDLING = 0b111
 def get_ut_color(color: str)->str:
     if not gui_enabled:
         return "DD00FF"
-    from kvui import Widget
-    from typing import ClassVar
-    from kivy.properties import StringProperty
-    class UTTextColor(Widget):
-        in_logic: ClassVar[str] = StringProperty("")
-        glitched: ClassVar[str] = StringProperty("")
-        out_of_logic: ClassVar[str] = StringProperty("")
-        collected: ClassVar[str] = StringProperty("")
-        in_logic_glitched: ClassVar[str] = StringProperty("")
-        out_of_logic_glitched: ClassVar[str] = StringProperty("")
-        mixed_logic: ClassVar[str] = StringProperty("")
-        collected_light: ClassVar[str] = StringProperty("")
-        hinted: ClassVar[str] = StringProperty("")
-        hinted_in_logic: ClassVar[str] = StringProperty("")
-        hinted_out_of_logic: ClassVar[str] = StringProperty("")
-        hinted_glitched: ClassVar[str] = StringProperty("")
-        excluded: ClassVar[str] = StringProperty("")
-        excluded_glitched: ClassVar[str] = StringProperty("")
-        unconnected: ClassVar[str] = StringProperty("")
-        error: ClassVar[str] = StringProperty("")
-        default: ClassVar[str] = StringProperty("")
-        ut_status: ClassVar[str] = StringProperty("")
     if not hasattr(get_ut_color,"utTextColor"):
+        from kvui import Widget
+        from typing import ClassVar
+        from kivy.properties import StringProperty
+        class UTTextColor(Widget):
+            in_logic: ClassVar[str] = StringProperty("")
+            glitched: ClassVar[str] = StringProperty("")
+            out_of_logic: ClassVar[str] = StringProperty("")
+            collected: ClassVar[str] = StringProperty("")
+            in_logic_glitched: ClassVar[str] = StringProperty("")
+            out_of_logic_glitched: ClassVar[str] = StringProperty("")
+            mixed_logic: ClassVar[str] = StringProperty("")
+            collected_light: ClassVar[str] = StringProperty("")
+            hinted: ClassVar[str] = StringProperty("")
+            hinted_in_logic: ClassVar[str] = StringProperty("")
+            hinted_out_of_logic: ClassVar[str] = StringProperty("")
+            hinted_glitched: ClassVar[str] = StringProperty("")
+            excluded: ClassVar[str] = StringProperty("")
+            excluded_glitched: ClassVar[str] = StringProperty("")
+            unconnected: ClassVar[str] = StringProperty("")
+            error: ClassVar[str] = StringProperty("")
+            default: ClassVar[str] = StringProperty("")
+            ut_status: ClassVar[str] = StringProperty("")
         # Load Tracker.kv (its <UTTextColor>: rule supplies the hex codes) before
         # instantiating, or every color tag renders as `[color=]...[/color]`.
         from worlds.tracker.gui import load_tracker_kv
@@ -348,6 +348,7 @@ class TrackerGameContext(CommonContext):
     command_processor = TrackerCommandProcessor
     tracker_page = None
     map_page = None
+    item_page = None
     tracker_world: UTMapTabData | None = None
     coord_dict: dict[int, list] = {}
     deferred_dict: dict[str, list] = {}
@@ -365,6 +366,7 @@ class TrackerGameContext(CommonContext):
     re_gen_passthrough = None
     local_items: list[NetworkItem] = []
     waiting_on_entrances = False
+    logical_path_entrances: list[str] = []
 
     _auto_tab = True
 
@@ -489,7 +491,9 @@ class TrackerGameContext(CommonContext):
                 if not relevent_coords:
                     continue
                 temp_entrance = current_world.get_entrance(entrance_name)
-                if temp_entrance.can_reach(updateTracker_ret.state):
+                if temp_entrance.name in self.logical_path_entrances:
+                    status = "path"
+                elif temp_entrance.can_reach(updateTracker_ret.state):
                     if temp_entrance.connected_region:
                         status = "passed"
                     else:
@@ -512,6 +516,7 @@ class TrackerGameContext(CommonContext):
                     status = "impassable"
                 for coord in relevent_coords:
                     coord.update_status(loc.name, status)
+        self._map_controller.update_items(updateTracker_ret)
         if self.quit_after_update and not self.waiting_on_entrances:
             name = self.player_names[self.slot]
             if self.print_count:
@@ -762,17 +767,18 @@ class TrackerGameContext(CommonContext):
         current_world = self.tracker_core.get_current_world()
         if not current_world:
             return ""
+        nl = "\n"  # py 3.11 compat
         sReturn = ""
         if hasattr(current_world,"explain_rule"):
             docstring = inspect.getdoc(current_world.explain_rule)
             if docstring:
-                sReturn += f"explain overrides:\n    {'\n    '.join(docstring.split('\n'))}"
+                sReturn += f"explain overrides:{nl}    {f'{nl}    '.join(docstring.split(nl))}"
         if hasattr(current_world,"get_logical_path"):
             docstring = inspect.getdoc(current_world.get_logical_path)
             if docstring:
                 if sReturn:
                     sReturn += "\n"
-                sReturn += f"get_logical_path overrides:\n    {'\n    '.join(docstring.split('\n'))}"
+                sReturn += f"get_logical_path overrides:{nl}    {f'{nl}    '.join(docstring.split(nl))}"
 
         return sReturn
 
@@ -958,6 +964,9 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
         return
     if state:
         if relevent_region:
+
+            ctx.logical_path_entrances.clear()
+
             # stolen from core
             from BaseClasses import Region
             from typing import Tuple, Iterator
@@ -980,6 +989,7 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
             for k, v in paths:
                 if v:
                     ent = current_world.get_entrance(v)
+                    ctx.logical_path_entrances.append(v)
                     if hasattr(current_world,"explain_path"):
                         returned_json = current_world.explain_path(ent,state)
                         if returned_json is None:
@@ -1026,7 +1036,7 @@ def get_logical_path(ctx: TrackerGameContext, dest_name: str):
                     returned_json.append({"type":"text","text":":\n    "})
                     returned_json.extend(relevent_entrance.access_rule.explain_json(state))
                 ctx.print_json(returned_json)
-
+            ctx.updateTracker() #Lazy way to update the colors of the path entrances
         else:
             logger.info(f"{dest_name} not in logic")
 
@@ -1082,6 +1092,9 @@ async def main(args):
                 if ctx._map_tab_handle is not None:
                     ui.remove_client_tab(ctx._map_tab_handle)
                     ctx._map_tab_handle = None
+                if ctx._item_tab_handle is not None:
+                    ui.remove_client_tab(ctx._item_tab_handle)
+                    ctx._item_tab_handle = None
         except Exception:
             logger.exception("Failed to clean up tracker tabs on shutdown")
     await ctx.shutdown()

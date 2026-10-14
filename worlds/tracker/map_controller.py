@@ -121,6 +121,11 @@ class UTMapController:
         ctx._map_tab_handle = None
         ctx._map_content = None
         ctx._show_map = False
+        ctx.item_page = None
+        ctx._item_tab_handle = None
+        ctx._item_content = None
+        ctx._show_items = False
+        ctx.logical_path_entrances = []
         ctx._map_activated = False
         ctx._map_activation_pending = False
         ctx._map_activation_task = None
@@ -130,7 +135,12 @@ class UTMapController:
         ctx._map_controller = self
         ctx.load_map = self.load_map
         ctx.set_map_visible = self.set_map_visible
+        ctx.set_items_visible = self.set_items_visible
         ctx.update_location_icon_coords = self.update_location_icon_coords
+        ctx.manually_collect_item = self.manually_collect_item
+        ctx.manually_uncollect_item = self.manually_uncollect_item
+        ctx.manually_reset_item = self.manually_reset_item
+        ctx.clear_path = self.clear_path
 
     # ---------- pack/layout parsing ----------
 
@@ -223,6 +233,7 @@ class UTMapController:
         ctx.maps = []
         ctx.locs = []
         ctx.layouts = []
+        items = []
         if ctx.tracker_world.external_pack_key:
             assert current_world.settings
             try:
@@ -261,6 +272,10 @@ class UTMapController:
                             for layout_page in ctx.tracker_world.map_page_layouts:
                                 data = _try_load_pkg("layout page", f"/{ctx.tracker_world.map_page_folder}/{layout_page}")
                                 if data: ctx.layouts.append(data)
+                            for item_page in ctx.tracker_world.item_page_items:
+                                if item_page:
+                                    data = _try_load_pkg("items page", f"/{ctx.tracker_world.map_page_folder}/{item_page}")
+                                    if data: items += data
                         else:
                             for map_page in ctx.tracker_world.map_page_maps:
                                 data = _try_load_zip("map page", f"{map_page}")
@@ -271,6 +286,10 @@ class UTMapController:
                             for layout_page in ctx.tracker_world.map_page_layouts:
                                 data = _try_load_zip("layout page", f"{layout_page}")
                                 if data: ctx.layouts.append(data)
+                            for item_page in ctx.tracker_world.item_page_items:
+                                if item_page:
+                                    data = _try_load_zip("items page", f"{item_page}")
+                                    if data: items += data
                     else:
                         current_world.settings.update({ctx.tracker_world.external_pack_key: ""})  # failed to find a pack, prompt next launch
                         current_world.settings._changed = True
@@ -294,8 +313,40 @@ class UTMapController:
                 ctx.locs += load_json(PACK_NAME, f"/{ctx.tracker_world.map_page_folder}/{loc_page}")
             for layout_page in ctx.tracker_world.map_page_layouts:
                 ctx.layouts.append(load_json(PACK_NAME, f"/{ctx.tracker_world.map_page_folder}/{layout_page}"))
+            for item_page in ctx.tracker_world.item_page_items:
+                if item_page:
+                    items += load_json(PACK_NAME, f"/{ctx.tracker_world.map_page_folder}/{item_page}")
         self.parse_map_groups()
         self.load_map(None)
+        self.load_items({item["name"]: item for item in items})
+
+    def load_items(self, items: dict[str, dict]) -> None:
+        """Lay out the pack's items.json entries on the map page side panels
+        and, when the world defines one, the standalone Item Page."""
+        ctx = self.ctx
+        if ctx.map_page is not None:
+            ctx.map_page.load_items(ctx, items)
+        if ctx.tracker_world.item_page_items and ctx.tracker_world.item_page_item_layouts:
+            if ctx._item_content is None:
+                from .gui import build_item_view
+                ctx._item_content = build_item_view(ctx)
+            ctx._item_content.load_items(ctx, items)
+
+    def set_root_pack_path(self) -> bool:
+        ctx = self.ctx
+        current_world = self.tracker_core.get_current_world()
+        if ctx.tracker_world.external_pack_key:
+            from zipfile import is_zipfile
+            packRef = current_world.settings[ctx.tracker_world.external_pack_key]
+            if packRef and is_zipfile(packRef):
+                ctx.root_pack_path = f"ap:zip:{packRef}"
+            else:
+                logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
+                return False
+        else:
+            PACK_NAME = current_world.__class__.__module__
+            ctx.root_pack_path = f"ap:{PACK_NAME}/{ctx.tracker_world.map_page_folder}"
+        return True
 
     def load_map(self, map_id: Union[int, str, None]) -> None:
         """REMEMBER TO RUN UPDATE_TRACKER!"""
@@ -310,6 +361,9 @@ class UTMapController:
             key = ctx.tracker_world.map_page_setting_key or f"{ctx.slot}_{ctx.team}_{UT_MAP_TAB_KEY}"
             map_id = ctx.tracker_world.map_page_index(ctx.stored_data.get(key, ""))
             if not ctx.auto_tab or map_id < 0 or map_id >= len(ctx.maps):
+                # The item panels resolve their images against the pack root even without a map.
+                if ctx.tracker_world.item_page_items and ctx.tracker_world.item_page_item_layouts:
+                    self.set_root_pack_path()
                 return  # special case, don't load a new map
         if ctx.map_id is not None and ctx.map_id == map_id:
             return  # map already loaded
@@ -336,17 +390,8 @@ class UTMapController:
         else:
             ctx.ui.current_map = m["name"]
         location_name_to_id = AutoWorld.AutoWorldRegister.world_types[ctx.game].location_name_to_id
-        if ctx.tracker_world.external_pack_key:
-            from zipfile import is_zipfile
-            packRef = current_world.settings[ctx.tracker_world.external_pack_key]
-            if packRef and is_zipfile(packRef):
-                ctx.root_pack_path = f"ap:zip:{packRef}"
-            else:
-                logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
-                return
-        else:
-            PACK_NAME = current_world.__class__.__module__
-            ctx.root_pack_path = f"ap:{PACK_NAME}/{ctx.tracker_world.map_page_folder}"
+        if not self.set_root_pack_path():
+            return
         ctx.ui.source = f"{ctx.root_pack_path}/{m['img']}"
         ctx.ui.loc_size = m["location_size"] if "location_size" in m else 65  # default location size per poptracker/src/core/map.h
         ctx.ui.loc_icon_size = m["location_icon_size"] if "location_icon_size" in m else ctx.ui.loc_size
@@ -524,6 +569,66 @@ class UTMapController:
                 ctx.map_page_coords_func = _noop_coords
             ctx._show_map = False
 
+    def set_items_visible(self, visible: bool) -> None:
+        """Toggle the Item Page tab on the live UI; load_items builds its widget."""
+        ctx = self.ctx
+        if visible == ctx._show_items:
+            return
+        from kivymd.app import MDApp
+        ui = MDApp.get_running_app()
+        if ui is None:
+            return
+        if visible:
+            if ctx._item_tab_handle is None:
+                if ctx._item_content is None:
+                    return
+                ctx._item_tab_handle = ui.add_client_tab("items", ctx._item_content)
+            ctx.item_page = ctx._item_content
+            ctx._show_items = True
+        else:
+            if ctx._item_tab_handle is not None:
+                ui.remove_client_tab(ctx._item_tab_handle)
+                ctx._item_tab_handle = None
+                ctx._item_content = None
+            ctx.item_page = None
+            ctx._show_items = False
+
+    # ---------- item panels ----------
+
+    def update_items(self, updateTracker_ret) -> None:
+        ctx = self.ctx
+        inventory = updateTracker_ret.all_items.items()
+        if ctx.map_page is not None:
+            ctx.map_page.update_items(inventory, self.tracker_core.manual_items)
+        if ctx.item_page is not None:
+            ctx.item_page.update_items(inventory, self.tracker_core.manual_items)
+
+    def _manual_items_changed(self) -> None:
+        persist = getattr(self.ctx, "persist_seed_data", None)
+        if persist is not None:
+            persist()
+        _refresh_ctx(self.ctx)
+
+    def manually_collect_item(self, item_name: str) -> None:
+        self.tracker_core.manual_items.append(item_name)
+        self._manual_items_changed()
+
+    def manually_uncollect_item(self, item_name: str) -> None:
+        if item_name in self.tracker_core.manual_items:
+            self.tracker_core.manual_items.remove(item_name)
+            self._manual_items_changed()
+
+    def manually_reset_item(self, item_name: str) -> None:
+        if item_name in self.tracker_core.manual_items:
+            while item_name in self.tracker_core.manual_items:
+                self.tracker_core.manual_items.remove(item_name)
+            self._manual_items_changed()
+
+    def clear_path(self) -> None:
+        """Drop the /get_logical_path highlight from the map's entrances."""
+        self.ctx.logical_path_entrances.clear()
+        _refresh_ctx(self.ctx)
+
     def prebuild_widget(self) -> None:
         """Eagerly build the Map Page widget so ``map_page_coords_func`` is
         wired before ``load_pack``'s tail ``load_map(None)`` call runs.
@@ -595,7 +700,10 @@ class UTMapController:
         self.prebuild_widget()
         self.load_pack()
         if ctx.tracker_world:  # don't show the map if loading failed
-            self.set_map_visible(True)
+            if ctx.tracker_world.map_page_maps and ctx.tracker_world.map_page_locations:
+                self.set_map_visible(True)
+            if ctx.tracker_world.item_page_items and ctx.tracker_world.item_page_item_layouts:
+                self.set_items_visible(True)
             if ctx.tracker_world.map_page_index:
                 key = ctx.tracker_world.map_page_setting_key or f"{ctx.slot}_{ctx.team}_{UT_MAP_TAB_KEY}"
                 ctx.set_notify(key)
@@ -634,6 +742,8 @@ class UTMapController:
         ctx = self.ctx
         if getattr(ctx, "ui", None):
             self.set_map_visible(False)
+            self.set_items_visible(False)
+        ctx.logical_path_entrances = []
         if ctx.tracker_world:
             ctx.command_processor.commands.pop("load_map", None)
             ctx.command_processor.commands.pop("list_maps", None)
