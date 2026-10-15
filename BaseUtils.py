@@ -24,6 +24,7 @@ __all__ = ("Version",
            "is_windows",
            "is_frozen",
            "local_path",
+           "home_path",
            "user_path",
            "output_path",
            "cache_path",
@@ -220,7 +221,7 @@ def home_path(*path: str) -> str:
     elif sys.platform == 'darwin':
         try:
             import platformdirs
-            home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
+            home_path.cached_path = platformdirs.user_data_dir(instance_name, False)
         except (AttributeError, OSError, ImportError) as e:
             # Fallback for macOS if platformdirs fails
             import warnings
