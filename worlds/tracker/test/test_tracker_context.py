@@ -149,9 +149,15 @@ class TestStagePlayerYaml(unittest.TestCase):
         with mock.patch.object(self.mod, "open_filename", return_value=picked) as prompt:
             staged = self.core._stage_player_yaml(os.path.join(self.folder, "missing"))
         prompt.assert_called_once()
+        self.assertEqual(prompt.call_args.kwargs["suggest"], "")
         name, doc = self._staged(staged)
         self.assertEqual(name, "Someone.yaml")
         self.assertEqual(doc, {"name": "me", "game": "G", "G": {"opt": 2}})
+
+    def test_prompt_opens_inside_an_existing_players_folder(self):
+        with mock.patch.object(self.mod, "open_filename", return_value="") as prompt:
+            self.core._stage_player_yaml(self.folder)
+        self.assertEqual(prompt.call_args.kwargs["suggest"], os.path.join(self.folder, ""))
 
     def test_cancelled_prompt_stops_generation(self):
         with mock.patch.object(self.mod, "open_filename", return_value=""):
@@ -244,6 +250,7 @@ class TestPrepareGeneration(unittest.IsolatedAsyncioTestCase):
         with mock.patch.object(self.mod, "open_filename", return_value="") as prompt:
             await self.core.prepare_generation(type("NeedsYaml", (), {}), self.report)
         prompt.assert_called_once()
+        self.assertEqual(prompt.call_args.kwargs["suggest"], os.path.join(self.folder, ""))
         self.assertEqual(self.statuses, [f"Searching {self.folder} for me's yaml...",
                                          f"No yaml for me in {self.folder}; choose one in the file dialog..."])
         self.assertTrue(self.core.player_yaml_declined)

@@ -458,118 +458,104 @@ class WinFileUtils(_DesktopFileUtils):
             return self._fallback_save_file(title, filetypes, suggest)
 
 
+def _mac_folder(suggest: str) -> str:
+    """The existing folder a dialog should open in: ``suggest`` itself or its parent, else ""."""
+    for folder in (suggest, os.path.dirname(suggest)):
+        if folder and os.path.isdir(folder):
+            return folder
+    return ""
+
+
+def _run_osascript(body: str, *args: str) -> typing.Optional[str]:
+    """Runs ``body`` as an AppleScript run handler with ``args`` as ``argv``.
+
+    Returns:
+        stdout without the trailing newline, or None when the user cancelled.
+
+    Raises:
+        OSError: osascript failed for any other reason.
+    """
+    # No `tell application "System Events"`: it needs Automation consent the bundle never requests.
+    # No timeout: a slow pick would read as a cancel.
+    result = subprocess.run(["osascript", "-e", f"on run argv\nactivate\n{body}\nend run", *args],
+                            capture_output=True, text=True, encoding="utf-8")
+    if result.returncode == 0:
+        return result.stdout.rstrip("\n")
+    if "(-128)" in result.stderr:
+        return None
+    raise OSError(result.stderr.strip())
+
+
 class MacFileUtils(_DesktopFileUtils):
     """macOS-specific file utilities using AppleScript."""
-    
+
     def open_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "", multiple: bool = False) -> typing.Union[typing.Optional[str], typing.Optional[typing.List[str]]]:
         """macOS native file dialog using AppleScript."""
         try:
-            # Build AppleScript with optional multiple selection
-            multi_select = "with multiple selections allowed" if multiple else ""
-            applescript = f'''
-            tell application "System Events"
-                set filePaths to choose file with prompt "{title}" {multi_select}
-                set pathList to {{}}
-                repeat with filePath in filePaths
-                    set end of pathList to POSIX path of filePath
-                end repeat
-                return pathList
-            end tell
-            '''
-            
-            result = subprocess.run(['osascript', '-e', applescript], 
-                                  capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0:
-                output = result.stdout.strip()
-                if output:
-                    # Parse the AppleScript list output
-                    # Format: "file1, file2, file3"
-                    files = [f.strip() for f in output.split(',')]
-                    if len(files) == 1:
-                        print(f"Selected file: {files[0]}")
-                        return files[0] if not multiple else [files[0]]
-                    else:
-                        print(f"Selected {len(files)} files")
-                        return files
-                else:
-                    return None
-            else:
+            folder = _mac_folder(suggest)
+            choose = "choose file with prompt (item 1 of argv)"
+            if folder:
+                choose += " default location (POSIX file (item 2 of argv))"
+            if multiple:
+                choose += " with multiple selections allowed"
+            output = _run_osascript(f"set picked to ({choose}) as list\n"
+                                    "set out to {}\n"
+                                    "repeat with f in picked\n"
+                                    "set end of out to POSIX path of f\n"
+                                    "end repeat\n"
+                                    "set AppleScript's text item delimiters to linefeed\n"
+                                    "return out as text",
+                                    title, *([folder] if folder else []))
+            if not output:
                 print("No file selected.")
                 return None
-                
-        except subprocess.TimeoutExpired:
-            logging.warning("AppleScript file dialog timed out")
-            return None
+            files = output.split("\n")
+            if len(files) == 1:
+                print(f"Selected file: {files[0]}")
+                return files[0] if not multiple else [files[0]]
+            else:
+                print(f"Selected {len(files)} files")
+                return files
         except Exception as e:
             logging.error(f"AppleScript file dialog failed: {e}")
             return self._fallback_file(title, filetypes, suggest, multiple)
-    
+
     def open_directory(self, title: str, suggest: str = "") -> typing.Optional[str]:
         """macOS native directory dialog using AppleScript."""
         try:
-            # Build AppleScript for directory selection
-            applescript = f'''
-            tell application "System Events"
-                set folderPath to choose folder with prompt "{title}"
-                return POSIX path of folderPath
-            end tell
-            '''
-            
-            result = subprocess.run(['osascript', '-e', applescript], 
-                                  capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0:
-                dir_path = result.stdout.strip()
-                print(f"Selected directory: {dir_path}")
-                return dir_path
-            else:
+            folder = _mac_folder(suggest)
+            choose = "choose folder with prompt (item 1 of argv)"
+            if folder:
+                choose += " default location (POSIX file (item 2 of argv))"
+            dir_path = _run_osascript(f"return POSIX path of ({choose})", title, *([folder] if folder else []))
+            if not dir_path:
                 print("No directory selected.")
                 return None
-                
-        except subprocess.TimeoutExpired:
-            logging.warning("AppleScript directory dialog timed out")
-            return None
+            print(f"Selected directory: {dir_path}")
+            return dir_path
         except Exception as e:
             logging.error(f"AppleScript directory dialog failed: {e}")
             return self._fallback_directory(title, suggest)
-    
+
     def save_file_input_dialog(self, title: str, filetypes: typing.Iterable[typing.Tuple[str, typing.Iterable[str]]], suggest: str = "") \
         -> typing.Optional[str]:
         """macOS native save file dialog using AppleScript."""
         try:
-            # Build AppleScript for save file dialog
-            # Note: AppleScript doesn't have a direct "save file" dialog, so we use "choose file name"
-            # which opens a save dialog
-            initial_name = suggest if suggest else ""
-            applescript = f'''
-            tell application "System Events"
-                set savePath to choose file name with prompt "{title}" default name "{initial_name}"
-                return POSIX path of savePath
-            end tell
-            '''
-            
-            result = subprocess.run(['osascript', '-e', applescript], 
-                                  capture_output=True, text=True, timeout=30)
-            
-            if result.returncode == 0:
-                file_path = result.stdout.strip()
-                if file_path:
-                    print(f"Selected save file: {file_path}")
-                    return file_path
-                else:
-                    return None
-            else:
+            folder = _mac_folder(os.path.dirname(suggest))
+            choose = "choose file name with prompt (item 1 of argv) default name (item 2 of argv)"
+            if folder:
+                choose += " default location (POSIX file (item 3 of argv))"
+            file_path = _run_osascript(f"return POSIX path of ({choose})",
+                                       title, os.path.basename(suggest), *([folder] if folder else []))
+            if not file_path:
                 print("No file selected.")
                 return None
-                
-        except subprocess.TimeoutExpired:
-            logging.warning("AppleScript save file dialog timed out")
-            return None
+            print(f"Selected save file: {file_path}")
+            return file_path
         except Exception as e:
             logging.error(f"AppleScript save file dialog failed: {e}")
             return self._fallback_save_file(title, filetypes, suggest)
-    
+
 
 
 class LinuxFileUtils(_DesktopFileUtils):

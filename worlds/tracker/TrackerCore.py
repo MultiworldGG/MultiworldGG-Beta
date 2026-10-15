@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import inspect
+import os
 import pathlib
 import re
 import tempfile
@@ -400,7 +401,7 @@ class TrackerCore():
             if found is None:
                 await say(f"No yaml for {self.slot_name} in {folder or 'the Players folder'}; "
                           "choose one in the file dialog...")
-            staged = self.stage_player_yaml(found)
+            staged = self.stage_player_yaml(found, folder)
             if staged is None:
                 self.player_yaml_declined = True
                 return
@@ -409,17 +410,21 @@ class TrackerCore():
 
     def _stage_player_yaml(self, players_folder: str | None) -> str | None:
         found = find_player_yaml(players_folder, self.slot_name, self.game) if self.slot_name else None
-        return self.stage_player_yaml(found)
+        return self.stage_player_yaml(found, players_folder)
 
-    def stage_player_yaml(self, found: PlayerYaml | None) -> str | None:
+    def stage_player_yaml(self, found: PlayerYaml | None, players_folder: str | None = None) -> str | None:
         """Stages the scan's pick (prompting for a file when it found nothing) as the one document
         Generate will see, and returns the staging folder, or None when no usable yaml was chosen.
 
         Generate scans a folder, so the document goes alone into one stable cache dir; name and
         game are pinned to the server's so placeholder names and weighted games resolve to the slot.
+        The prompt opens in ``players_folder`` when it exists.
         """
         if found is None:
-            picked = open_filename(f"Select the YAML for {self.slot_name or 'tracking'}", [("YAML", ["*.yaml", "*.yml"])])
+            # trailing separator: zenity opens inside the folder instead of selecting it
+            suggest = os.path.join(players_folder, "") if players_folder and os.path.isdir(players_folder) else ""
+            picked = open_filename(f"Select the YAML for {self.slot_name or 'tracking'}", [("YAML", ["*.yaml", "*.yml"])],
+                                   suggest=suggest)
             if not picked:
                 self.add_log_line(TrackerLogLine("No YAML selected; tracking cannot start without one.", "",
                                                  TrackerLogLineGroup.UT_STATUS))
