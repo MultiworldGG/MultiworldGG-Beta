@@ -721,7 +721,7 @@ def _pinned_world_frontend(choice=True, dialog=True):
 
 
 def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="localhost:38281",
-                         install_ok=True, auto_install=False):
+                         install_ok=True, auto_install=False, **launch_kwargs):
     """Route a patch whose room pins Some Game 1.2.3 against `app`; returns the
     websocket opens, pin checks, installs and launch in the order they happened."""
     import asyncio
@@ -750,7 +750,7 @@ def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="
     monkeypatch.setattr(MultiWorld, "_auto_install_pinned_worlds", lambda: auto_install)
     monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
     monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: events.append("launch"))
-    asyncio.run(MultiWorld._route_module_when_ui_ready("some_game", patch_file=str(patch)))
+    asyncio.run(MultiWorld._route_module_when_ui_ready("some_game", patch_file=str(patch), **launch_kwargs))
     return events
 
 
@@ -783,6 +783,13 @@ def test_route_patch_matching_world_launches_without_install(monkeypatch, tmp_pa
     events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3")
     assert events == [*_PROBED, "launch"]
     assert app.calls == ["client_console_init"]
+
+
+def test_route_patch_probes_its_own_server_over_the_launch_address(monkeypatch, tmp_path):
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3",
+                                  server_address="P1@other.host:12345")
+    assert events == [*_PROBED, "launch"]
 
 
 def test_route_patch_without_server_skips_room_probe(monkeypatch, tmp_path):
