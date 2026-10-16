@@ -231,6 +231,40 @@ def test_from_tag_overwrites_room_pinned_worlds(monkeypatch, tagged_install_call
     assert ModuleUpdate._room_pinned_worlds() == {"alttp"}
 
 
+def _game_resolves_to(monkeypatch, slug):
+    from mwgg_igdb import GameIndex
+    monkeypatch.setattr(GameIndex, "get_module_for_game", lambda game_name, worlds=False: slug)
+
+
+@pytest.mark.parametrize("pin", [None, {}, {"version": None}, {"version": [0, 0, 0]}])
+def test_check_world_pin_ignores_unenforceable_pins(monkeypatch, pin):
+    _game_resolves_to(monkeypatch, "alttp")
+    assert ModuleUpdate.check_world_pin("A Link to the Past", pin, INDEX_TAG) is None
+
+
+def test_check_world_pin_resolves_installable_mismatch(monkeypatch):
+    _game_resolves_to(monkeypatch, "alttp")
+    _set_installed_world_version(monkeypatch, "5.1.0")
+    pin = ModuleUpdate.check_world_pin("A Link to the Past", {"version": [5, 0, 0], "custom": False}, INDEX_TAG)
+    assert pin == ModuleUpdate.WorldPinCheck("A Link to the Past", "5.0.0", "5.1.0", "alttp", INDEX_TAG, False)
+    assert not pin.matches
+    assert pin.installable
+
+
+@pytest.mark.parametrize("installed, custom, slug, tag", [
+    ("5.0.0", False, "alttp", INDEX_TAG),  # already at the pin
+    ("5.1.0", True, "alttp", INDEX_TAG),   # custom worlds are never installed
+    ("5.1.0", False, None, INDEX_TAG),     # the game has no index slug
+    ("5.1.0", False, "alttp", None),       # the room sent no index tag
+])
+def test_check_world_pin_not_installable(monkeypatch, installed, custom, slug, tag):
+    _game_resolves_to(monkeypatch, slug)
+    _set_installed_world_version(monkeypatch, installed)
+    pin = ModuleUpdate.check_world_pin("A Link to the Past", {"version": [5, 0, 0], "custom": custom}, tag)
+    assert pin is not None
+    assert not pin.installable
+
+
 # --------------------------------------------------------------------------- #
 # _detect_installed_variant / _resolve_variant
 # --------------------------------------------------------------------------- #
@@ -1792,7 +1826,7 @@ def test_sync_custom_world_against_installed_wheel(tmp_path, venv_worlds, monkey
 
 
 def test_sync_custom_world_leaves_a_room_pinned_world_alone(tmp_path, venv_worlds, monkeypatch):
-    """A room pin's downpatch must survive the relaunched client's sync."""
+    """A room-pinned install must survive the spawned client's sync."""
     monkeypatch.setenv(ModuleUpdate._ROOM_PINNED_WORLDS_ENV, "alttp,foo")
     monkeypatch.setattr(ModuleUpdate, "_world_dist", lambda slug: types.SimpleNamespace(version="1.0.0"))
     apworld = tmp_path / "foo.apworld"

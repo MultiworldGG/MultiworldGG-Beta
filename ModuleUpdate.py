@@ -38,7 +38,7 @@ if not logging.getLogger().hasHandlers() and sys.stdout:
 
 from pathlib import Path
 from collections.abc import Iterable
-from typing import Any, List, Optional, TypeVar, cast, override
+from typing import Any, List, NamedTuple, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
 from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, tuplize_version, Version
@@ -994,7 +994,7 @@ def check_for_updates(worlds_only: bool = False, force: bool = False) -> List[st
     that _world_requires_install flags — version behind the index tag or
     dependencies missing. Never-installed and apworld-extracted worlds (no
     dist) are not returned; they install on demand at launch. Neither are
-    room-pinned worlds, so a relaunch keeps the downpatched version.
+    room-pinned worlds, so a spawned client keeps the pinned version.
     For non-world packages (dev only): query PyPI against requirements.txt entries.
     """
     if worlds_only:
@@ -1363,6 +1363,51 @@ def set_room_pinned_worlds(slugs: Iterable[str]) -> None:
         os.environ[_ROOM_PINNED_WORLDS_ENV] = pinned
     else:
         os.environ.pop(_ROOM_PINNED_WORLDS_ENV, None)
+
+
+class WorldPinCheck(NamedTuple):
+    """A room's world version pin for one game, resolved against the installed world."""
+    game: str
+    want: str
+    installed: Optional[str]
+    slug: Optional[str]
+    tag: Optional[str]
+    custom: bool
+
+    @property
+    def matches(self) -> bool:
+        return self.installed == self.want
+
+    @property
+    def installable(self) -> bool:
+        """A mismatched managed pin that the room's index tag can install."""
+        return not self.matches and not self.custom and bool(self.slug) and bool(self.tag)
+
+
+def check_world_pin(game: str, pin: Optional[dict[str, Any]], tag: Optional[str]) -> Optional[WorldPinCheck]:
+    """Resolve RoomInfo's `world_versions[game]` pin and `mwgg_index_tag` against the installed world.
+
+    Returns None when the room pins nothing enforceable for `game` (no pin, or the unset 0.0.0).
+    """
+    if not pin:
+        return None
+    want: Any = pin.get("version")  # [maj, min, build] over the wire
+    if want is None:
+        return None
+    if isinstance(want, (list, tuple)):
+        want_str = ".".join(str(part) for part in cast("Iterable[Any]", want))
+    else:
+        want_str = str(want)
+    if want_str == "0.0.0":
+        return None
+    try:
+        from mwgg_igdb import GameIndex
+        slug: Optional[str] = GameIndex.get_module_for_game(game)
+    except Exception:
+        slug = None
+    dist = _world_dist(slug) if slug else None
+    return WorldPinCheck(game, want_str, dist.version if dist else None, slug or None, tag or None,
+                         bool(pin.get("custom", False)))
 
 
 def install_worlds_from_tag(slugs: list[str], tag: str, with_deps: bool = False) -> list[str]:
