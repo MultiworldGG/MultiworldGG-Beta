@@ -407,19 +407,26 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     return None
 
 
-def read_patch_game_name(patch_path: str) -> Optional[str]:
-    """Read the game name from a patch container's root archipelago.json.
+def read_patch_manifest(patch_path: str) -> Dict[str, Any]:
+    """Read a patch container's root archipelago.json.
 
     Every APContainer-derived patch format (.aplttp, .apkh3, .apemerald, ...)
-    is a zip with the manifest at the archive root. Returns None for anything
-    else (multidata, apworlds, stray files) so callers can fall back to
-    component-suffix routing."""
+    is a zip with the manifest at the archive root. Returns {} for anything
+    else (multidata, apworlds, stray files)."""
     try:
         with zipfile.ZipFile(patch_path, "r") as zf:
             manifest = json.loads(zf.read("archipelago.json").decode("utf-8"))
     except (OSError, zipfile.BadZipFile, KeyError, ValueError):
-        return None
-    game = manifest.get("game") if isinstance(manifest, dict) else None
+        return {}
+    return manifest if isinstance(manifest, dict) else {}
+
+
+def read_patch_game_name(patch_path: str) -> Optional[str]:
+    """Read the game name from a patch container's root archipelago.json.
+
+    Returns None for anything that is not a patch container so callers can
+    fall back to component-suffix routing."""
+    game = read_patch_manifest(patch_path).get("game")
     return game if isinstance(game, str) and game else None
 
 

@@ -264,18 +264,20 @@ def install_pinned_world(pin: "ModuleUpdate.WorldPinCheck") -> bool:
         return False
 
 
+def _ssl_context(address: str) -> Optional[ssl.SSLContext]:
+    if not address.startswith("wss://"):
+        return None
+    import certifi
+    return ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
+
+
 async def _attempt_verify(address: str, packet: dict) -> SlotVerifyResult:
     """Single websocket attempt against one URL. Caller handles fallback."""
     import websockets  # local import: launcher startup avoids ws import until needed
     from NetUtils import encode, decode
 
-    ssl_context: Optional[ssl.SSLContext] = None
-    if address.startswith("wss://"):
-        import certifi
-        ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
-
     socket = await websockets.connect(
-        address, ping_timeout=None, ping_interval=None, ssl=ssl_context,
+        address, ping_timeout=None, ping_interval=None, ssl=_ssl_context(address),
     )
     try:
         await socket.send(encode([packet]))
@@ -358,3 +360,41 @@ async def verify_slot(
     except Exception as exc:  # defensive: never let the launcher see a raw exception
         _verify_logger.exception("verify_slot crashed")
         return SlotVerifyResult(ok=False, transport_error=f"Unexpected error: {exc}")
+
+
+async def read_room_info(server: str, *, timeout: float = 10.0) -> Optional[dict]:
+    """Read the RoomInfo packet the server sends on open, without a Connect, so no
+    slot name or password is needed. Returns None when no address answers with one
+    within `timeout`; the socket is always closed before returning."""
+    import websockets
+    from NetUtils import decode
+
+    async def _read(address: str) -> Optional[dict]:
+        socket = await websockets.connect(
+            address, ping_timeout=None, ping_interval=None, ssl=_ssl_context(address),
+        )
+        try:
+            async for raw in socket:
+                for msg in decode(raw):
+                    if isinstance(msg, dict) and msg.get("cmd") == "RoomInfo":
+                        return msg
+            return None
+        finally:
+            try:
+                await socket.close()
+            except Exception:
+                pass
+
+    async def _run() -> Optional[dict]:
+        for address in _build_addresses(server):
+            try:
+                return await _read(address)
+            except (websockets.InvalidMessage, OSError):  # TLS mismatch, refused TCP, TLS error
+                continue
+        return None
+
+    try:
+        return await asyncio.wait_for(_run(), timeout=timeout)
+    except Exception as exc:
+        _verify_logger.info(f"Could not read RoomInfo from {server}: {exc!r}")
+        return None
