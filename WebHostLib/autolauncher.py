@@ -292,7 +292,7 @@ def cleanup(config: dict[str, Any] | None = None):
     if rooms_count or seeds_count or slots_count:
         logging.info(f"{rooms_count} Rooms, {seeds_count} Seeds and {slots_count} Slots have been deleted.")
 
-    # Clean up expired lobbies (closed for > 1 hour) and done lobbies (> 3 days old)
+    # Clean up unowned lobbies, expired lobbies (closed for > 1 hour) and done lobbies (> 3 days old)
     engine = _get_engine()
     with Session(engine) as session:
         now = utcnow()
@@ -300,6 +300,7 @@ def cleanup(config: dict[str, Any] | None = None):
         done_cutoff = now - timedelta(days=3)
         stale_lobbies = session.scalars(
             select(Lobby).where(
+                (Lobby.owner == null_owner) |
                 ((Lobby.state == LOBBY_CLOSED) & (Lobby.last_activity < closed_cutoff)) |
                 ((Lobby.state == LOBBY_DONE) & (Lobby.last_activity < done_cutoff))
             )

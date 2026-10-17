@@ -2117,15 +2117,20 @@ def lobby_close(lobby: UUID):
     if lobby.state == LOBBY_CLOSED:
         return jsonify({"error": "Lobby is already closed"}), 400
 
+    close_lobby(lobby)
+    commit()
+
+    return jsonify({"success": True})
+
+
+def close_lobby(lobby: Lobby) -> None:
+    """Close the lobby and tell its players the host left; the caller commits."""
     _cancel_all_pending_requests(lobby, "lobby was closed")
     lobby.state = LOBBY_CLOSED
     LobbyMessage(
         lobby_id=lobby.id, player_id=None, sender_name="System",
         content="The lobby was abandoned by the host.",
     )
-    commit()
-
-    return jsonify({"success": True})
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/reopen', methods=['POST'])

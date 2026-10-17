@@ -720,12 +720,18 @@
     border-bottom-right-radius: var(--mw-radius-lg);
     font-size: 17px;
     color: var(--mw-sys-color-on-surface-variant);
+}
+
+.mw-card-secondary a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: inherit;
     text-decoration: none;
 }
 
-.mw-card-secondary:hover {
+.mw-card-secondary a:hover {
     color: var(--mw-sys-color-secondary);
-    border-color: var(--mw-sys-color-outline);
 }
 
 .mw-card-secondary-muted {
@@ -733,8 +739,27 @@
     font-style: italic;
 }
 
-.mw-card-secondary-muted:hover {
+.mw-card-remove {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
     color: var(--mw-sys-color-on-surface-muted);
+    cursor: pointer;
+}
+
+.mw-card-remove:hover,
+.mw-card-remove:focus-visible {
+    color: var(--mw-sys-color-error);
+}
+
+.mw-card-remove:disabled {
+    cursor: progress;
+    opacity: 0.6;
 }
 
 /* Avatar management (/me/avatar) */

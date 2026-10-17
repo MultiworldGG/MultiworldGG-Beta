@@ -345,3 +345,174 @@ def test_owner_and_bot_visits_are_not_recorded(client, app, room_factory):
     response = client.get("/me/rooms")
     assert b"Share access" in response.data
     assert b"Joined" not in response.data
+
+
+# ---------------------------------------------------------------------------
+# Deleting from /me - co-owners take over; the last owner out marks for deletion
+# ---------------------------------------------------------------------------
+
+def _login(client, session_id):
+    with client.session_transaction() as session:
+        session["_id"] = session_id
+
+
+def _url(app, endpoint, **values):
+    with app.test_request_context():
+        return url_for(endpoint, **values)
+
+
+def _row(app, model, record_id):
+    from WebHostLib.models import db
+    with app.app_context():
+        return db.session.get(model, record_id)
+
+
+def _room_co_owners(app, room_id):
+    from WebHostLib.models import RoomCoOwner, db
+    with app.app_context():
+        return db.session.scalars(
+            select(RoomCoOwner.session_id).where(RoomCoOwner.room_id == room_id)
+        ).all()
+
+
+def test_last_owner_deleting_room_marks_it_and_404s(client, app, room_factory):
+    from WebHostLib.models import Room, UNOWNED
+
+    owner = uuid4()
+    snapshot = room_factory(owner=owner)
+    remove_url = _url(app, "api.remove_my_room", room=snapshot.id)
+    _login(client, owner)
+
+    assert client.delete(remove_url).status_code == 200
+    assert _row(app, Room, snapshot.id).owner == UNOWNED, "the row must stay in the DB, unowned"
+    with app.app_context():
+        assert Room.get(id=snapshot.id) is None
+    room_url = _url(app, "host_room", seed=snapshot.seed_id, room=snapshot.id)
+    assert client.get(room_url, headers=BROWSER).status_code == 404
+    assert client.delete(remove_url).status_code == 404
+
+
+def test_primary_deleting_room_hands_it_to_oldest_co_owner(client, app, room_factory):
+    from WebHostLib.models import OwnershipInvite, Room, RoomCoOwner, commit, db
+
+    owner, oldest, newest = uuid4(), uuid4(), uuid4()
+    snapshot = room_factory(owner=owner)
+    with app.app_context():
+        now = utcnow()
+        RoomCoOwner(room_id=snapshot.id, session_id=newest, granted_by=owner, granted_at=now)
+        RoomCoOwner(room_id=snapshot.id, session_id=oldest, granted_by=owner,
+                    granted_at=now - timedelta(days=1))
+        invite = OwnershipInvite(target_kind="room", target_id=snapshot.id, mode="transfer",
+                                 created_by=owner, expires_at=now + timedelta(days=1))
+        commit()
+        invite_token = invite.token
+    _login(client, owner)
+
+    assert client.delete(_url(app, "api.remove_my_room", room=snapshot.id)).status_code == 200
+    assert _row(app, Room, snapshot.id).owner == oldest
+    assert _room_co_owners(app, snapshot.id) == [newest]
+    with app.app_context():
+        assert db.session.get(OwnershipInvite, invite_token) is None, \
+            "the departed primary's pending transfer invite could still demote the new owner"
+    room_url = _url(app, "host_room", seed=snapshot.seed_id, room=snapshot.id)
+    assert client.get(room_url, headers=BROWSER).status_code == 200
+
+
+def test_co_owner_deleting_room_only_drops_own_access(client, app, room_factory):
+    from WebHostLib.models import Room, RoomCoOwner, commit
+
+    owner, co_owner = uuid4(), uuid4()
+    snapshot = room_factory(owner=owner)
+    with app.app_context():
+        RoomCoOwner(room_id=snapshot.id, session_id=co_owner, granted_by=owner)
+        commit()
+    _login(client, co_owner)
+
+    assert client.delete(_url(app, "api.remove_my_room", room=snapshot.id)).status_code == 200
+    assert _row(app, Room, snapshot.id).owner == owner
+    assert _room_co_owners(app, snapshot.id) == []
+
+
+def test_joined_room_remove_forgets_visit_only(client, app, room_factory):
+    from WebHostLib.dashboard import list_visited_rooms
+    from WebHostLib.models import Room
+
+    owner, visitor = uuid4(), uuid4()
+    snapshot = room_factory(owner=owner)
+    _visit_room(client, app, snapshot, visitor)
+
+    assert client.delete(_url(app, "api.remove_my_room", room=snapshot.id)).status_code == 200
+    assert _visitors(app, snapshot.id) == []
+    assert _row(app, Room, snapshot.id).owner == owner
+    with app.app_context():
+        assert list_visited_rooms(visitor) == []
+
+
+def test_joined_list_drops_room_once_all_owners_delete(client, app, room_factory):
+    from WebHostLib.dashboard import list_visited_rooms
+
+    owner, visitor = uuid4(), uuid4()
+    snapshot = room_factory(owner=owner)
+    _visit_room(client, app, snapshot, visitor)
+    _login(client, owner)
+
+    assert client.delete(_url(app, "api.remove_my_room", room=snapshot.id)).status_code == 200
+    with app.app_context():
+        assert list_visited_rooms(visitor) == []
+
+
+def test_stranger_cannot_delete(client, app, room_factory, make_lobby, seed_factory):
+    from WebHostLib.models import Lobby, Room, Seed
+
+    owner = uuid4()
+    room = room_factory(owner=owner)
+    lobby_id = make_lobby(owner)
+    seed = seed_factory(owner=owner)
+    _login(client, uuid4())
+
+    assert client.delete(_url(app, "api.remove_my_room", room=room.id)).status_code == 403
+    assert client.delete(_url(app, "api.remove_my_lobby", lobby=lobby_id)).status_code == 403
+    assert client.delete(_url(app, "api.remove_my_seed", seed=seed.id)).status_code == 403
+    assert _row(app, Room, room.id).owner == owner
+    assert _row(app, Lobby, lobby_id).owner == owner
+    assert _row(app, Seed, seed.id).owner == owner
+
+
+def test_last_owner_deleting_lobby_closes_marks_and_404s(client, app, make_lobby):
+    from WebHostLib.models import Lobby, LOBBY_CLOSED, UNOWNED
+
+    owner = uuid4()
+    lobby_id = make_lobby(owner)
+    _login(client, owner)
+
+    assert client.delete(_url(app, "api.remove_my_lobby", lobby=lobby_id)).status_code == 200
+    lobby = _row(app, Lobby, lobby_id)
+    assert lobby.owner == UNOWNED
+    assert lobby.state == LOBBY_CLOSED
+    assert client.get(_url(app, "lobby_view", lobby=lobby_id)).status_code == 404
+
+
+def test_deleting_seed_marks_it_and_404s_but_keeps_its_rooms(client, app, room_factory):
+    from WebHostLib.models import Seed, UNOWNED
+
+    owner = uuid4()
+    snapshot = room_factory(owner=owner)
+    _login(client, owner)
+
+    assert client.delete(_url(app, "api.remove_my_seed", seed=snapshot.seed_id)).status_code == 200
+    assert _row(app, Seed, snapshot.seed_id).owner == UNOWNED
+    assert client.get(_url(app, "view_seed", seed=snapshot.seed_id)).status_code == 404
+    room_url = _url(app, "host_room", seed=snapshot.seed_id, room=snapshot.id)
+    assert client.get(room_url, headers=BROWSER).status_code == 200
+
+
+def test_me_lists_render_delete_buttons(client, app, room_factory, make_lobby):
+    owner = uuid4()
+    room_factory(owner=owner)
+    make_lobby(owner)
+    _login(client, owner)
+
+    for page in ("/me/rooms", "/me/lobbies", "/me/seeds"):
+        response = client.get(page)
+        assert response.status_code == 200
+        assert b"data-me-remove" in response.data, page
