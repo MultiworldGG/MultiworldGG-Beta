@@ -52,14 +52,17 @@
                             {% endif %}
                         {% else %}
                             {% if patch.game == "Jigsaw" %}
-                            <a href="https://jigsaw-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}">
-                                Open game on jigsaw-ap.netlify.app</a>
+                            <a class="room-action-link"
+                               href="https://jigsaw-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}"
+                               data-tooltip="jigsaw-ap.netlify.app">Connect Game</a>
                             {% elif patch.game == "Isles of Trials" %}
-                            <a href="https://www.chromanyan.page/islestrialsap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True">
-                                Join room via chromanyan.page</a>
+                            <a class="room-action-link"
+                               href="https://www.chromanyan.page/islestrialsap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True"
+                               data-tooltip="chromanyan.page/islestrialsap">Connect Game</a>
                             {% elif patch.game == "Build a Jetpack" %}
-                            <a href="https://www.chromanyan.page/buildajetpackap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True">
-                                Join room via chromanyan.page</a>
+                            <a class="room-action-link"
+                               href="https://www.chromanyan.page/buildajetpackap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True"
+                               data-tooltip="chromanyan.page/buildajetpackap">Connect Game</a>
                             {% elif patch.game == "Candy Box 2" %}
                             <a class="room-action-link"
                                href="https://candybox2-ap.vicr123.com"
