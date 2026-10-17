@@ -15,7 +15,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from Utils import utcnow
-from .models import Lobby, Room, RoomVisit, Seed, commit, db
+from .models import Lobby, Room, RoomVisit, Seed, UNOWNED, commit, db
 
 
 # Matches the filter the legacy /me handler used.
@@ -99,7 +99,7 @@ def list_visited_rooms(session_id: UUID, exclude: Iterable[UUID] = ()) -> list[R
     rows = db.session.scalars(
         select(Room)
         .join(RoomVisit, RoomVisit.room_id == Room.id)
-        .where(RoomVisit.session_id == session_id)
+        .where(RoomVisit.session_id == session_id, Room.owner != UNOWNED)
         .order_by(Room.last_activity.desc())
     ).all()
     return [room for room in rows if room.id not in skip]

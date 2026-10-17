@@ -26,8 +26,10 @@ from .models import (
     Lobby,
     LobbyCoOwner,
     LOBBY_CLOSED,
+    OwnershipInvite,
     Room,
     RoomCoOwner,
+    UNOWNED,
     db,
 )
 
@@ -115,6 +117,45 @@ def list_authorized_lobbies(session_id: UUID, *, include_closed: bool = False) -
     if not include_closed:
         merged = [l for l in merged if l.state != LOBBY_CLOSED]
     return merged
+
+
+def release(record, session_id: UUID) -> bool:
+    """Drop session_id's ownership of a room, lobby or seed; the caller commits.
+
+    A co-owner loses its co-owner row. A primary owner revokes its pending
+    invites, then hands the record to the longest-standing co-owner or, with
+    none left, marks it for deletion by setting the owner to UNOWNED.
+
+    Returns:
+        True if the record is now marked for deletion.
+    """
+    if isinstance(record, Room):
+        co_table, target_col = RoomCoOwner, RoomCoOwner.room_id
+    elif isinstance(record, Lobby):
+        co_table, target_col = LobbyCoOwner, LobbyCoOwner.lobby_id
+    else:
+        co_table = target_col = None
+
+    if record.owner != session_id:
+        row = db.session.get(co_table, (record.id, session_id)) if co_table else None
+        if row is not None:
+            db.session.delete(row)
+        return False
+
+    if co_table:
+        for invite in db.session.scalars(select(OwnershipInvite).where(
+            OwnershipInvite.target_id == record.id, OwnershipInvite.consumed_at.is_(None),
+        )):
+            db.session.delete(invite)
+    successor = db.session.scalars(
+        select(co_table).where(target_col == record.id).order_by(co_table.granted_at).limit(1)
+    ).first() if co_table else None
+    if successor is None:
+        record.owner = UNOWNED
+        return True
+    record.owner = successor.session_id
+    db.session.delete(successor)
+    return False
 
 
 def _dedupe_by_id(*sequences: Iterable) -> list:

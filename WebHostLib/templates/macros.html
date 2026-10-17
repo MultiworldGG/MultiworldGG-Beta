@@ -106,3 +106,10 @@
     {%- set fallback = url_for('static', filename='static/branding/controller-icon.png') -%}
     <img{% if css_class %} class="{{ css_class }}"{% endif %} src="{{ url or fallback }}" alt="{{ alt }}"{% if size %} width="{{ size }}" height="{{ size }}"{% endif %} onerror="this.onerror=null;this.src='{{ fallback }}'" />
 {%- endmacro %}
+
+{#- /me list delete button; assets/meRemove.js confirms, sends DELETE to url, then drops the card. #}
+{% macro me_remove_button(url, confirm_text, label="Delete") -%}
+    <button type="button" class="mw-card-remove" data-me-remove="{{ url }}" data-confirm="{{ confirm_text }}">
+        <i class="mdi mdi-close"></i> {{ label }}
+    </button>
+{%- endmacro %}

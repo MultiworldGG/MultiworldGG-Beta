@@ -1,9 +1,11 @@
 {% extends 'pageWrapper.html' %}
 {% from 'header/breadcrumb.html' import breadcrumb %}
+{% from 'macros.html' import me_remove_button %}
 
 {% block head %}
     <title>My lobbies · MultiworldGG</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/me.css') }}" />
+    <script type="application/ecmascript" src="{{ url_for('static', filename='assets/meRemove.js') }}" defer></script>
 {% endblock %}
 
 {% block body %}
@@ -29,14 +31,19 @@
                 {% for lobby in lobbies %}
                     <div class="mw-card-cluster">
                         {% include 'partials/lobby_card.html' %}
-                        {% if lobby.owner == session_key %}
-                            <a href="{{ url_for('share_access', kind='lobby', target_id=lobby.id) }}"
-                               class="mw-card-secondary">
-                                <i class="mdi mdi-account-multiple"></i> Share access
-                            </a>
-                        {% else %}
-                            <span class="mw-card-secondary mw-card-secondary-muted">Co-owned</span>
-                        {% endif %}
+                        <div class="mw-card-secondary">
+                            {% if lobby.owner == session_key %}
+                                <a href="{{ url_for('share_access', kind='lobby', target_id=lobby.id) }}">
+                                    <i class="mdi mdi-account-multiple"></i> Share access
+                                </a>
+                                {{ me_remove_button(url_for('api.remove_my_lobby', lobby=lobby.id),
+                                    "Delete this lobby? If it has co-owners, one of them becomes the primary owner. Otherwise the lobby is closed, marked for deletion, and its link stops working.") }}
+                            {% else %}
+                                <span class="mw-card-secondary-muted">Co-owned</span>
+                                {{ me_remove_button(url_for('api.remove_my_lobby', lobby=lobby.id),
+                                    "Delete this lobby from your list? You lose shared access; the other owners keep it.") }}
+                            {% endif %}
+                        </div>
                     </div>
                 {% endfor %}
             </div>

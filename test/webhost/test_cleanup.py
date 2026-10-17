@@ -8,6 +8,9 @@ deletable once no Room references them, so an old Seed with a recent Room
 survives, while an old Seed whose only Room was deleted in the same pass goes
 with it. Slots of a deleted Seed are cascade-deleted.
 
+Lobbies marked for deletion from /me (owner set to the ``UUID(int=0)``
+sentinel) are deleted on the next pass whatever their state or age.
+
 Same harness as test_autolauncher_invariants.py: drive the real ``cleanup()``
 against the in-memory test database by monkeypatching the module-level
 ``_engine`` it reads through ``_get_engine()``, then assert the observable
@@ -33,13 +36,13 @@ def cleanup_on_test_db(app):
     """Point autolauncher.cleanup()'s engine at the test app's DB engine.
 
     Yields the ``cleanup`` callable; restores the previous ``_engine`` and
-    deletes any Room/Seed/Slot rows the test created, so nothing leaks into the
-    session-scoped test DB.
+    deletes any Lobby/Room/Seed/Slot rows the test created, so nothing leaks into
+    the session-scoped test DB.
     """
     import WebHostLib.autolauncher as autolauncher
-    from WebHostLib.models import db, commit, Room, Seed, Slot
+    from WebHostLib.models import db, commit, Lobby, Room, Seed, Slot
 
-    models = (Slot, Room, Seed)  # children before parents on teardown delete
+    models = (Lobby, Slot, Room, Seed)  # children before parents on teardown delete
     with app.app_context():
         engine = db.engine
         before = {M: {row.id for row in db.session.scalars(select(M)).all()} for M in models}
@@ -164,3 +167,18 @@ def test_cleanup_slots(app, cleanup_on_test_db):
             "recent Seed was wrongly deleted"
         assert db.session.get(Slot, ids["recent_slot"]) is not None, \
             "Slot of kept Seed was wrongly deleted"
+
+
+def test_cleanup_deletes_unowned_lobbies(app, make_lobby, cleanup_on_test_db):
+    """A fresh, open lobby goes once unowned; an owned one with the same state stays."""
+    from WebHostLib.models import db, Lobby, UNOWNED
+
+    unowned_id = make_lobby(UNOWNED)
+    owned_id = make_lobby(uuid4())
+
+    cleanup_on_test_db(DISABLED)
+
+    with app.app_context():
+        db.session.expire_all()
+        assert db.session.get(Lobby, unowned_id) is None, "unowned Lobby was not deleted"
+        assert db.session.get(Lobby, owned_id) is not None, "owned Lobby was wrongly deleted"

@@ -20,6 +20,9 @@ from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship, deferre
 
 from Utils import utcnow
 
+#: Owner of a Room/Seed/Lobby marked for deletion; autolauncher.cleanup() purges these rows.
+UNOWNED = UUID(int=0)
+
 
 # ---------------------------------------------------------------------------
 # SQLAlchemy setup
@@ -38,18 +41,24 @@ class Base(DeclarativeBase):
 
         Mirrors pony's Entity.get(field=value, ...).
         For primary-key lookups prefers Session.get() for identity-map hits.
+        Rows owned by UNOWNED are marked for deletion and come back as None,
+        so every route that 404s on a missing row also 404s on them.
         """
         from sqlalchemy import select as _select
         session = _get_session()
         # Fast path: single-column PK lookup goes through the identity map
         pk_cols = [c.key for c in cls.__table__.primary_key.columns]
         if len(pk_cols) == 1 and pk_cols[0] in kwargs and len(kwargs) == 1:
-            return session.get(cls, kwargs[pk_cols[0]])
-        stmt = _select(cls)
-        for attr, value in kwargs.items():
-            col = getattr(cls, attr)
-            stmt = stmt.where(col == value)
-        return session.scalars(stmt.limit(1)).first()
+            record = session.get(cls, kwargs[pk_cols[0]])
+        else:
+            stmt = _select(cls)
+            for attr, value in kwargs.items():
+                col = getattr(cls, attr)
+                stmt = stmt.where(col == value)
+            record = session.scalars(stmt.limit(1)).first()
+        if getattr(record, "owner", None) == UNOWNED:
+            return None
+        return record
 
     def delete(self) -> None:
         """Delete this instance from the session (mirrors pony's entity.delete())."""
@@ -618,6 +627,7 @@ __all__ = [
     "LobbyMessage", "LobbyMetaYaml", "LobbyAuxiliaryApworld",
     "AvatarToken", "Avatar", "PasskeyCredential",
     "RoomCoOwner", "LobbyCoOwner", "OwnershipInvite",
+    "UNOWNED",
     "STATE_QUEUED", "STATE_STARTED", "STATE_ERROR",
     "LOBBY_OPEN", "LOBBY_GENERATING", "LOBBY_DONE", "LOBBY_CLOSED", "LOBBY_LOCKED",
     "commit", "flush", "rollback",
