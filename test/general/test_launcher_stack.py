@@ -682,6 +682,131 @@ def test_route_awaits_launch_notice_and_reports_failure(monkeypatch):
     assert app.calls == ["client_console_init", "before_module_launch", "failed:papermario"]
 
 
+# --- _route_module_when_ui_ready: a patch room's pinned world installs before the launch ---
+
+_PINNED_WORLD = {"version": [1, 2, 3], "custom": False}
+_PINNED_TAG = "sixteen-2026.05.16"
+
+
+class _RoomInfoSocket:
+    """Websocket stand-in: the server sends RoomInfo on open, before any Connect."""
+
+    async def __aiter__(self):
+        from NetUtils import encode
+        yield encode([{"cmd": "RoomInfo", "world_versions": {"Some Game": _PINNED_WORLD},
+                       "mwgg_index_tag": _PINNED_TAG}])
+
+    async def close(self):
+        pass
+
+
+def _pinned_world_frontend(choice=True, dialog=True):
+    """`choice` answers the confirm dialog; None means the frontend could not show it."""
+    app = _fake_frontend()
+
+    def show_confirm_dialog(self, title, message, callback, ok_text="OK", cancel_text="Cancel"):
+        self.calls.append(f"confirm:{ok_text}")
+        if choice is None:
+            return None
+        callback(choice)
+        return object()
+
+    async def show_loading_status(self, message):
+        self.calls.append(f"status:{message}")
+
+    if dialog:
+        type(app).show_confirm_dialog = show_confirm_dialog
+    type(app).show_loading_status = show_loading_status
+    return app
+
+
+def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="localhost:38281",
+                         install_ok=True, auto_install=False, **launch_kwargs):
+    """Route a patch whose room pins Some Game 1.2.3 against `app`; returns the
+    websocket opens, pin checks, installs and launch in the order they happened."""
+    import asyncio
+    import frontend_protocol
+    import websockets
+    patch = tmp_path / "seed.apsome"
+    with zipfile.ZipFile(patch, "w") as zf:
+        zf.writestr("archipelago.json", json.dumps({"game": "Some Game", "server": server}))
+    events = []
+
+    async def connect(address, **kwargs):
+        events.append(f"open:{address}")
+        return _RoomInfoSocket()
+
+    def check_world_pin(game, pin, tag):
+        events.append(("check", game, pin, tag))
+        return ModuleUpdate.WorldPinCheck(game, "1.2.3", installed, "some_game", tag, False)
+
+    def install_pinned_world(pin):
+        events.append(f"install:{pin.want}")
+        return install_ok
+
+    monkeypatch.setattr(websockets, "connect", connect)
+    monkeypatch.setattr(ModuleUpdate, "check_world_pin", check_world_pin)
+    monkeypatch.setattr(frontend_protocol, "install_pinned_world", install_pinned_world)
+    monkeypatch.setattr(MultiWorld, "_auto_install_pinned_worlds", lambda: auto_install)
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: events.append("launch"))
+    asyncio.run(MultiWorld._route_module_when_ui_ready("some_game", patch_file=str(patch), **launch_kwargs))
+    return events
+
+
+_PROBED = ["open:ws://localhost:38281", ("check", "Some Game", _PINNED_WORLD, _PINNED_TAG)]
+
+
+@pytest.mark.parametrize("auto_install", [False, True])
+def test_route_patch_installs_room_pinned_world_before_launch(auto_install, monkeypatch, tmp_path):
+    """The room's RoomInfo pins another version of the patch's world: it installs
+    before the launch imports the world, asked unless auto_install_pinned_worlds."""
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, auto_install=auto_install)
+    assert events == [*_PROBED, "install:1.2.3", "launch"]
+    asked = [] if auto_install else ["confirm:Install 1.2.3"]
+    assert app.calls == ["client_console_init", *asked, "status:Installing Some Game 1.2.3..."]
+
+
+@pytest.mark.parametrize("choice, dialog", [(False, True), (None, True), (True, False)],
+                         ids=["declined", "dialog_not_shown", "no_dialog_hook"])
+def test_route_patch_keeps_installed_world_without_consent(choice, dialog, monkeypatch, tmp_path, caplog):
+    app = _pinned_world_frontend(choice=choice, dialog=dialog)
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        events = _pinned_patch_launch(monkeypatch, tmp_path, app)
+    assert events == [*_PROBED, "launch"]
+    assert "Keeping Some Game 1.0.0; the room expects 1.2.3." in caplog.text
+
+
+def test_route_patch_matching_world_launches_without_install(monkeypatch, tmp_path):
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3")
+    assert events == [*_PROBED, "launch"]
+    assert app.calls == ["client_console_init"]
+
+
+def test_route_patch_probes_its_own_server_over_the_launch_address(monkeypatch, tmp_path):
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3",
+                                  server_address="P1@other.host:12345")
+    assert events == [*_PROBED, "launch"]
+
+
+def test_route_patch_without_server_skips_room_probe(monkeypatch, tmp_path):
+    """A local seed's patch carries an empty server; nothing to probe."""
+    app = _pinned_world_frontend()
+    assert _pinned_patch_launch(monkeypatch, tmp_path, app, server="") == ["launch"]
+    assert app.calls == ["client_console_init"]
+
+
+def test_route_patch_install_failure_launches_installed_world(monkeypatch, tmp_path, caplog):
+    app = _pinned_world_frontend()
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        events = _pinned_patch_launch(monkeypatch, tmp_path, app, install_ok=False)
+    assert events == [*_PROBED, "install:1.2.3", "launch"]
+    assert "Could not install Some Game apworld 1.2.3; launching the installed version." in caplog.text
+
+
 # --- client-type combo validation ---
 
 @pytest.mark.parametrize("argv, message", [

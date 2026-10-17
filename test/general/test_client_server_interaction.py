@@ -154,3 +154,78 @@ class TestDeliberateShutdownReason(unittest.IsolatedAsyncioTestCase):
         MultiServer.ServerCommandProcessor._cmd_exit(SimpleNamespace(ctx=ctx))
         ctx.server.close.assert_called_once_with(reason=MultiServer.HOST_SHUTDOWN_REASON)
         self.assertTrue(ctx.exit_event.is_set())
+
+
+class _FakeVerifySocket:
+    """Websocket stand-in replaying server frames to the pre-flight verifier."""
+
+    def __init__(self, *messages):
+        from NetUtils import encode
+        self.frames = [encode([message]) for message in messages]
+
+    async def send(self, data):
+        pass
+
+    async def close(self):
+        pass
+
+    async def __aiter__(self):
+        for frame in self.frames:
+            yield frame
+
+
+class TestVerifySlotWorldPin(unittest.IsolatedAsyncioTestCase):
+    """The launcher pre-flight reports the room's world version pin, so the pinned world
+    installs before the client imports it."""
+
+    ROOM_INFO = {"cmd": "RoomInfo", "world_versions": {"Some Game": {"version": [1, 2, 3], "custom": False}},
+                 "mwgg_index_tag": "sixteen-2026.05.16"}
+
+    async def _verify(self, *messages):
+        import websockets
+        from frontend_protocol import verify_slot
+
+        async def _connect(*args, **kwargs):
+            return _FakeVerifySocket(*messages)
+
+        with mock.patch.object(websockets, "connect", _connect):
+            return await verify_slot("localhost:38281", "Player", None, "Some Game")
+
+    def _pin(self, installed):
+        import ModuleUpdate
+        return ModuleUpdate.WorldPinCheck("Some Game", "1.2.3", installed, "some_game", "sixteen-2026.05.16", False)
+
+    async def test_mismatched_pin_rides_on_the_verdict(self):
+        import ModuleUpdate
+        pin = self._pin("1.0.0")
+        with mock.patch.object(ModuleUpdate, "check_world_pin", return_value=pin) as check:
+            result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"})
+        self.assertTrue(result.ok)
+        self.assertEqual(result.world_pin, pin)
+        check.assert_called_once_with("Some Game", {"version": [1, 2, 3], "custom": False}, "sixteen-2026.05.16")
+
+    async def test_matching_or_unresolvable_pin_is_not_reported(self):
+        import ModuleUpdate
+        checks = {
+            "matching": mock.Mock(return_value=self._pin("1.2.3")),
+            "no pin": mock.Mock(return_value=None),
+            "lookup error": mock.Mock(side_effect=RuntimeError("index unavailable")),
+        }
+        for label, check in checks.items():
+            with self.subTest(label), mock.patch.object(ModuleUpdate, "check_world_pin", check):
+                result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"})
+                self.assertTrue(result.ok)
+                self.assertIsNone(result.world_pin)
+
+    def test_install_pinned_world_reports_success(self):
+        import ModuleUpdate
+        from frontend_protocol import install_pinned_world
+        outcomes = {
+            "installed": (mock.Mock(return_value=[]), True),
+            "failed": (mock.Mock(return_value=["some_game"]), False),
+            "raised": (mock.Mock(side_effect=RuntimeError("uv missing")), False),
+        }
+        for label, (install, expected) in outcomes.items():
+            with self.subTest(label), mock.patch.object(ModuleUpdate, "install_worlds_from_tag", install):
+                self.assertEqual(install_pinned_world(self._pin("1.0.0")), expected)
+                install.assert_called_once_with(["some_game"], "sixteen-2026.05.16")

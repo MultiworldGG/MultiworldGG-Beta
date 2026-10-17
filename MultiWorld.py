@@ -353,6 +353,69 @@ def _client_has_server(ctx) -> bool:
     return bool(getattr(ctx, "server_address", None) or getattr(ctx, "server", None))
 
 
+def _auto_install_pinned_worlds() -> bool:
+    try:
+        from settings import get_settings
+        return bool(get_settings().general_options.auto_install_pinned_worlds)
+    except Exception:
+        return False
+
+
+async def _confirm_pinned_world(app, pin) -> bool:
+    """Offer the room's world version in the frontend's confirm dialog; False when the
+    frontend has no dialog or the user keeps the installed version."""
+    confirm = getattr(app, "show_confirm_dialog", None)
+    if not callable(confirm):
+        return False
+    loop = asyncio.get_running_loop()
+    choice = loop.create_future()
+
+    def on_choice(confirmed: bool) -> None:
+        if not choice.done():
+            choice.set_result(bool(confirmed))
+
+    handle = confirm(
+        title="World Version Mismatch",
+        message=f"This room was generated with {pin.game} apworld {pin.want}, but you have "
+                f"{pin.installed or 'no version'} installed. A game patched with one version "
+                f"usually can't talk to the other. Install {pin.want} before launching?",
+        callback=lambda confirmed: loop.call_soon_threadsafe(on_choice, confirmed),
+        ok_text=f"Install {pin.want}",
+        cancel_text="Keep current")
+    return handle is not None and await choice
+
+
+async def _install_patch_room_world(app, patch_file: str) -> None:
+    """Install the world version the patch's room was generated with before the launch
+    imports the world: a client holding the world's modules and native libraries cannot
+    replace them. Only the room's RoomInfo is read, so no slot name or password is needed."""
+    import frontend_protocol
+    import ModuleUpdate
+    from Utils import read_patch_manifest
+
+    logger = logging.getLogger("MultiWorld")
+    manifest = read_patch_manifest(patch_file)
+    game, server = manifest.get("game"), manifest.get("server")
+    if not game or not server:
+        return
+    room_info = await frontend_protocol.read_room_info(server)
+    if not room_info:
+        return
+    pin = ModuleUpdate.check_world_pin(game, (room_info.get("world_versions") or {}).get(game),
+                                       room_info.get("mwgg_index_tag"))
+    # Custom and untagged mismatches are left to the client's notice after Connected.
+    if pin is None or not pin.installable:
+        return
+    if not _auto_install_pinned_worlds() and not await _confirm_pinned_world(app, pin):
+        logger.warning(f"Keeping {game} {pin.installed or 'none'}; the room expects {pin.want}.")
+        return
+    show_status = getattr(app, "show_loading_status", None)
+    if callable(show_status):
+        await show_status(f"Installing {game} {pin.want}...")
+    if not await asyncio.to_thread(frontend_protocol.install_pinned_world, pin):
+        logger.warning(f"Could not install {game} apworld {pin.want}; launching the installed version.")
+
+
 async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
     """Launch a world module's client once the launcher frontend is up.
 
@@ -369,7 +432,9 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
     taking over the UI), so the dialog waits out _PATCH_CONNECT_GRACE and
     stays closed for a client that connects on its own. A patch also takes
     its client type (plain or tracker overlay) from the frontend's
-    patch_client_type preference unless --client-type named one."""
+    patch_client_type preference unless --client-type named one, and first
+    installs the world version its room was generated with
+    (_install_patch_room_world)."""
     from frontend_protocol import resolve_frontend_class
 
     logger = logging.getLogger("MultiWorld")
@@ -397,6 +462,12 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
             pre_hook()
         except Exception:
             logger.exception("client_console_init failed; continuing module launch")
+
+    if launch_kwargs.get("patch_file"):
+        try:
+            await _install_patch_room_world(app, launch_kwargs["patch_file"])
+        except Exception:
+            logger.exception("Could not check the patch room's world version; launching the installed version")
 
     # Launch notice for the frontend (patch status on its loading overlay). Awaited
     # so a frame can draw before a synchronous patch blocks the loop.

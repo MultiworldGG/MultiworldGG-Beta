@@ -1589,170 +1589,42 @@ async def server_autoreconnect(ctx: CommonContext):
         ctx.server_task = asyncio.create_task(server_loop(ctx, reconnect_attempt=True), name="server loop")
 
 
-def _perform_pinned_install(game: str, slug: str, tag: str, want_str: str) -> bool:
-    """Blocking install of the tagged world version; True when a relaunch should follow."""
-    logger.info(
-        f"[{game}] Installing world version {want_str} from index tag {tag}..."
-    )
-    try:
-        import ModuleUpdate
-        failed = ModuleUpdate.install_worlds_from_tag([slug], tag)
-    except Exception as e:
-        logger.warning(f"[{game}] Install of worlds.{slug} from index tag {tag} failed: {e}")
-        return False
-    if slug in failed:
-        logger.warning(
-            f"[{game}] Could not install worlds.{slug} from index tag {tag}; "
-            f"continuing with the installed version."
-        )
-        return False
-    return True
-
-
-async def _downpatch_and_relaunch(game: str, slug: str, tag: str, want_str: str) -> None:
-    # Off-thread so the install (network + uv subprocess) doesn't freeze the UI/receive loop.
-    if await asyncio.to_thread(_perform_pinned_install, game, slug, tag, want_str):
-        # Module is already imported; the only clean way to load the new version is a relaunch.
-        Utils._restart_client_with_args()
-
-
-def _start_downpatch(ctx: CommonContext, slug: str, tag: str, want_str: str) -> None:
-    Utils.async_start(_downpatch_and_relaunch(ctx.game, slug, tag, want_str), name="world downpatch")
-
-
 def _check_world_version_pin(ctx: CommonContext) -> None:
-    """After Connected, check if this client's game has a world version pin and act.
+    """After Connected, report a mismatch between the room's world version pin and the
+    installed world.
 
-    - custom pin: emit a non-blocking user notice if the installed version differs; never install.
-    - managed pin and versions differ: with auto_install_pinned_worlds, install the pinned
-      version and relaunch without asking; otherwise offer the downpatch in a frontend
-      confirm dialog (falling back to a log notice when no dialog is available).
-      Failures degrade to a warning; the client continues with whatever is installed.
-    - generic text client (ctx.game is None): no-op.
-    Each connected room overwrites ModuleUpdate's room-pinned worlds: this world when it is
-    held at a managed pin (installed already, or by the downpatch), otherwise none.
+    The launcher's pre-flight (frontend_protocol.verify_slot) installs a managed pin before
+    the client imports the world; a running client holds the world's modules and native
+    libraries, so it never installs. Each connected room overwrites ModuleUpdate's
+    room-pinned worlds: this world when it is installed at a managed pin, otherwise none.
     """
     import ModuleUpdate
     ModuleUpdate.set_room_pinned_worlds(())
     if ctx.game is None:
         return
-    pin = ctx.world_versions.get(ctx.game)
-    if not pin:
+    pin = ModuleUpdate.check_world_pin(ctx.game, ctx.world_versions.get(ctx.game), ctx.mwgg_index_tag)
+    if pin is None:
         return
-
-    want_version: "typing.Any" = pin.get("version")  # [maj,min,build] from server (JSON array)
-    is_custom: bool = bool(pin.get("custom", False))
-
-    if want_version is None:
-        return
-
-    # Normalize to dot-string for comparison and display.
-    if isinstance(want_version, (list, tuple)):
-        want_str = ".".join(str(x) for x in want_version)
-    else:
-        want_str = str(want_version)
-
-    # An unset world_version (0.0.0) is not a real pin; nothing to enforce.
-    if want_str == "0.0.0":
-        return
-
-    # Determine installed version from importlib.metadata.
-    import importlib.metadata
-    try:
-        from mwgg_igdb import GameIndex
-        slug = GameIndex.get_module_for_game(ctx.game)
-    except Exception:
-        slug = None
-
-    installed_str: "typing.Optional[str]" = None
-    if slug:
-        try:
-            installed_str = importlib.metadata.distribution(f"worlds.{slug}").version
-        except importlib.metadata.PackageNotFoundError:
-            pass
-
-    if is_custom:
-        # Custom worlds: report-only, never install or relaunch.
-        if installed_str and installed_str != want_str:
+    if pin.custom:
+        if pin.installed and not pin.matches:
             logger.warning(
-                f"[{ctx.game}] Room was generated with custom world version {want_str}; "
-                f"you have {installed_str} installed. Behaviour may differ."
+                f"[{ctx.game}] Room was generated with custom world version {pin.want}; "
+                f"you have {pin.installed} installed. Behaviour may differ."
             )
         return
-
-    # Managed world: check if a pinned install + relaunch is needed.
-    if not slug:
+    if not pin.slug:
         logger.warning(
-            f"[{ctx.game}] Could not resolve an index slug; cannot verify world version pin {want_str}"
+            f"[{ctx.game}] Could not resolve an index slug; cannot verify world version pin {pin.want}"
         )
         return
-
-    if installed_str == want_str:
-        ModuleUpdate.set_room_pinned_worlds([slug])
-        return  # already correct
-
-    # One-shot guard: _restart_client_with_args re-execs with --no-restart. If we are
-    # already in that relaunched process and the version STILL doesn't match, the pinned
-    # wheel wasn't resolvable and the install fell back to latest. Warn and continue
-    # rather than relaunch forever.
-    if "--no-restart" in Utils._startup_argv:
-        logger.warning(
-            f"[{ctx.game}] Could not apply pinned world version {want_str} "
-            f"(installed: {installed_str or 'none'}); continuing without another relaunch."
-        )
+    if pin.matches:
+        ModuleUpdate.set_room_pinned_worlds([pin.slug])
         return
-
-    # Resolve the gen-time version from the room's igdb tag. We read this one world's
-    # module_location out of the tagged index snapshot and install just that wheel -- the
-    # installed/active mwgg_igdb is never overwritten.
-    tag = ctx.mwgg_index_tag
-    if not tag:
-        logger.warning(
-            f"[{ctx.game}] Room requires world version {want_str} "
-            f"(installed: {installed_str or 'none'}) but sent no igdb tag; "
-            f"cannot pin -- continuing with the installed version."
-        )
-        return
-
-    from settings import get_settings
-    try:
-        auto_install = bool(get_settings().general_options.auto_install_pinned_worlds)
-    except Exception:
-        auto_install = False
-
-    if auto_install:
-        logger.info(
-            f"[{ctx.game}] Room requires world version {want_str} "
-            f"(installed: {installed_str or 'none'}); installing it from index tag {tag} and restarting"
-        )
-        _start_downpatch(ctx, slug, tag, want_str)
-        return
-
-    prompt = (
-        f"This room was generated with {ctx.game} apworld {want_str}, but you have "
-        f"{installed_str or 'no version'} installed. A game patched with the older apworld "
-        f"usually can't talk to the newer one. Install {want_str} and relaunch the client?"
-    )
-    if ctx.ui is not None and hasattr(ctx.ui, "show_confirm_dialog"):
-        def _on_choice(confirmed: bool) -> None:
-            if confirmed:
-                _start_downpatch(ctx, slug, tag, want_str)
-            else:
-                logger.warning(
-                    f"[{ctx.game}] Keeping installed version {installed_str or 'none'}; "
-                    f"the room expects {want_str} -- version-specific features may misbehave."
-                )
-        ctx.ui.show_confirm_dialog(
-            title="World version mismatch",
-            message=prompt,
-            callback=_on_choice,
-            ok_text=f"Install {want_str} & relaunch",
-            cancel_text="Keep current",
-        )
-        return
+    fix = ("connect from the launcher to install it first" if pin.tag
+           else "the room sent no index tag to install it from")
     logger.warning(
-        prompt + " (no dialog available -- set auto_install_pinned_worlds: true in host.yaml "
-        "to do this automatically)"
+        f"[{ctx.game}] This room was generated with apworld {pin.want}, but you have "
+        f"{pin.installed or 'no version'} installed; version-specific features may misbehave -- {fix}."
     )
 
 
