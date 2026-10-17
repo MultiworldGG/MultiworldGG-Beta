@@ -44,3 +44,41 @@ class TestGenerateFromStagedYaml(unittest.TestCase):
         self.assertEqual(core.launch_multiworld.game[1], "APQuest")
         self.assertIn("Player7", core.launch_multiworld.world_name_lookup)
         self.assertEqual(os.listdir(os.path.join(self.cache, "ut_picked_yaml")), ["quest.yaml"])
+
+
+class TestYamllessGeneration(unittest.TestCase):
+    """ut_can_gen_without_yaml worlds generate from slot_data alone on Connected, never prompting."""
+
+    def setUp(self):
+        import sys
+        from worlds.AutoWorld import AutoWorldRegister
+        from worlds.tracker import TrackerCore
+        self.mod = TrackerCore
+        self.world_cls = AutoWorldRegister.world_types["APQuest"]
+        argv = sys.argv.copy()
+        self.addCleanup(lambda: setattr(sys, "argv", argv))
+        for patcher in (mock.patch.object(self.world_cls, "ut_can_gen_without_yaml", True, create=True),
+                        mock.patch.object(TrackerCore.TrackerCore, "cached_multiworlds", []),
+                        mock.patch.object(TrackerCore.TrackerCore, "cached_slot_data", []),
+                        mock.patch.object(TrackerCore, "open_filename", side_effect=AssertionError("prompted"))):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _connect(self, slot_data: dict):
+        core = self.mod.TrackerCore(logging.getLogger("test"), False, False)
+        core.set_slot_params("APQuest", 3, "Questy", 0)
+        core.initalize_tracker_core(self.world_cls, slot_data)
+        self.assertEqual(core.gen_error, "")
+        self.assertEqual(core.multiworld.game[core.player_id], "APQuest")
+        self.assertIn("Questy", core.multiworld.world_name_lookup)
+        return core
+
+    def test_slot_data_reaches_generation_as_passthrough(self):
+        core = self._connect({"hard_mode": 1})
+        self.assertEqual(core.multiworld.re_gen_passthrough, {"APQuest": {"hard_mode": 1}})
+
+    def test_static_interpret_slot_data_regenerates(self):
+        interpret = staticmethod(lambda slot_data: {**slot_data, "interpreted": True})
+        with mock.patch.object(self.world_cls, "interpret_slot_data", interpret, create=True):
+            core = self._connect({"hard_mode": 1})
+        self.assertEqual(core.multiworld.re_gen_passthrough, {"APQuest": {"hard_mode": 1, "interpreted": True}})

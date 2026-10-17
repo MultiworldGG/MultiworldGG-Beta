@@ -41,7 +41,7 @@ from collections.abc import Iterable
 from typing import Any, List, NamedTuple, Optional, TypeVar, cast, override
 
 from importlib import invalidate_caches
-from BaseUtils import local_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, tuplize_version, Version
+from BaseUtils import local_path, user_path, mwgg_venv_site_packages, use_worlds_venv, is_frozen, tuplize_version, Version
 
 
 # ── Platform & paths ─────────────────────────────────────────────────────────
@@ -148,11 +148,10 @@ requirements_files: RequirementsSet[Path] = RequirementsSet({core_constraints})
 worlds_files: dict[str, RequirementsSet[str]] = {"wheels": RequirementsSet(), "apworlds": RequirementsSet()}
 
 
-# custom_worlds lives next to the executable / source checkout: single source of
-# truth for the launch scan. Do NOT special-case frozen builds to write_path(),
-# or custom worlds silently stop being selectable.
+# Single source of truth for the launch scan, install and Generate. user_path is the
+# install dir when writable, else the user data dir (AppImage mount, macOS .app).
 def _resolve_custom_worlds_dir() -> Path:
-    return Path(local_path("custom_worlds"))
+    return Path(user_path("custom_worlds"))
 
 
 custom_worlds_dir = _resolve_custom_worlds_dir()

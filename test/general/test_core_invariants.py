@@ -5,12 +5,18 @@ import copy
 import io
 import os
 import pickle
+import sys
+import types
 import unittest
 from collections import Counter
 from dataclasses import dataclass
 from tempfile import TemporaryDirectory
 
+import pytest
+
+import BaseUtils
 import Generate
+import Utils
 from APContainer import APContainer, APPlayerContainer, container_version, parse_client_function
 from BaseClasses import ItemClassification
 from BaseUtils import Version, tuplize_version
@@ -165,6 +171,47 @@ class TestTuplizeVersionPrerelease(unittest.TestCase):
             self.assertEqual(tuplize_version("5rc1"), Version(5, 0, 0))
         finally:
             builtins.__import__ = real_import
+
+
+# --------------------------------------------------------------------------- #
+# BaseUtils data paths: Utils must share the same cached helpers, and the
+# macOS data dir is named after instance_name.
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def uncached_home_path():
+    saved = vars(BaseUtils.home_path).pop("cached_path", None)
+    yield
+    vars(BaseUtils.home_path).pop("cached_path", None)
+    if saved is not None:
+        BaseUtils.home_path.cached_path = saved
+
+
+def test_utils_reexports_baseutils_path_helpers():
+    for name in ("local_path", "home_path", "user_path", "cache_path"):
+        assert getattr(Utils, name) is getattr(BaseUtils, name), name
+
+
+def test_home_path_darwin_uses_instance_name(monkeypatch, tmp_path, uncached_home_path):
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setitem(sys.modules, "platformdirs", types.SimpleNamespace(
+        user_data_dir=lambda appname, appauthor: str(tmp_path / appname)))
+
+    expected = str(tmp_path / BaseUtils.instance_name / "logs")
+    assert BaseUtils.home_path("logs") == expected
+    assert Utils.home_path("logs") == expected
+
+
+def test_home_path_darwin_fallback_uses_instance_name(monkeypatch, tmp_path, uncached_home_path):
+    monkeypatch.setattr(sys, "platform", "darwin")
+    monkeypatch.setitem(sys.modules, "platformdirs", None)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))
+
+    with pytest.warns(UserWarning, match="platformdirs failed on macOS"):
+        result = BaseUtils.home_path()
+    assert result == f"{tmp_path}/Library/Application Support/{BaseUtils.instance_name}"
+    assert Utils.home_path() == result
 
 
 # --------------------------------------------------------------------------- #

@@ -783,23 +783,16 @@ def test_custom_apworld_scanned_indexed_and_searchable(tmp_path, monkeypatch):
     assert slug in available                   # custom world surfaced as selectable
 
 
-def test_custom_worlds_dir_is_executable_folder_even_when_frozen(monkeypatch):
-    """custom_worlds must resolve next to the executable / source checkout -- the
-    upstream location, and where users actually drop apworlds -- never to
-    write_path()/AppData. Splitting the scan dir from the launch dir is what makes
-    custom worlds silently un-selectable in frozen builds.
-
-    The is_frozen() mock is a tripwire: it has no effect on the current resolver,
-    but if anyone reintroduces an `if is_frozen(): write_path(...)` branch this test
-    fails because the resolved dir would jump to write_path under the mock.
-    """
-    from BaseUtils import write_path
-    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: True)
+def test_custom_worlds_dir_follows_user_path(tmp_path, monkeypatch):
+    """custom_worlds resolves under user_path, as upstream: the install dir when it is
+    writable, the user data dir when it is not (AppImage mount, macOS .app bundle)."""
+    import BaseUtils
+    monkeypatch.setattr(BaseUtils.user_path, "cached_path", str(tmp_path), raising=False)
 
     resolved = ModuleUpdate._resolve_custom_worlds_dir()
 
-    assert resolved == Path(ModuleUpdate.local_path("custom_worlds"))
-    assert resolved != Path(write_path("custom_worlds"))
+    assert resolved == tmp_path / "custom_worlds"
+    assert resolved != Path(ModuleUpdate.local_path("custom_worlds"))
 
 
 def test_world_tool_entries_finds_declared_tools(tmp_path, monkeypatch):
