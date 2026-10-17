@@ -119,6 +119,16 @@ class APContainer:
         }
 
 
+def _manual_apworld_manifest(opened_zipfile: zipfile.ZipFile) -> Optional[dict[str, Any]]:
+    """Manual apworlds ship no archipelago.json; their game id is Manual_<game>_<creator>."""
+    from ModuleUpdate import apworld_module_name
+    try:
+        game = json.loads(opened_zipfile.read(f"{apworld_module_name(opened_zipfile)}/data/game.json"))
+        return {"game": f"Manual_{game['game']}_{game['creator']}"}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
 class APWorldContainer(APContainer):
     """A zipfile containing a world implementation."""
     game: str | None = None
@@ -133,11 +143,13 @@ class APWorldContainer(APContainer):
         try:
             manifest = super().read_contents(opened_zipfile)
         except KeyError as e:
-            # Feature gate: archipelago.json is optional for versions < 0.7.300
-            if version_tuple < (0, 7, 300):
-                # Return empty manifest, metadata will remain None
-                return {}
-            raise
+            manifest = _manual_apworld_manifest(opened_zipfile)
+            if manifest is None:
+                # Feature gate: archipelago.json is optional for versions < 0.7.300
+                if version_tuple < (0, 7, 300):
+                    # Return empty manifest, metadata will remain None
+                    return {}
+                raise
         if "game" in manifest:
             self.game = manifest["game"]
         for version_key in ("world_version", "minimum_ap_version", "maximum_ap_version"):
