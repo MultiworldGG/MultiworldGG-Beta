@@ -1,17 +1,128 @@
-{% extends 'pageWrapper.html' %}
-{% import "macros.html" as macros %}
-{% set show_footer = True %}
-
-{% block head %}
-    <title>Page Not Found (404)</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/404.css") }}" />
-{% endblock %}
-
-{% block body %}
-    {% include 'header/oceanHeader.html' %}
-    <div id="page-not-found" class="grass-island">
-        <h1>This page is out of logic!</h1>
-        The page you're looking for doesn&apos;t exist.<br />
-        <a href="/">Click here to return to safety.</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<link rel="icon" href="https://img.prismativerse.com/mwgg_favicon.ico">
+<title>Internal Server Error 500</title>
+<style>
+  :root {
+    --bg: #0f0612;
+    --surface: #1a0a20;
+    --outline: #36193f;
+    --text: #e8d8e8;
+    --muted: #a87890;
+    --pink: #ea166c;
+    --gold: #ffdd5a;
+    --link: #f04b6f;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .mw-stripe {
+    height: 6px;
+    background: #ea166c;
+    background-image: repeating-linear-gradient(
+      90deg,
+      #ea166c 0,
+      #ea166c 14px,
+      #a01049 14px,
+      #a01049 28px
+      );
+  }
+  .card {
+    max-width: 560px;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 16px;
+    padding: 40px 36px 32px;
+    text-align: center;
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .55);
+  }
+  .logo { 
+    width: min(320px, 90%); 
+    height: auto; 
+    margin-bottom: 20px; 
+    filter: drop-shadow(0px 0px 20px rgba(234, 22, 108, .45));
+  }
+  .code {
+    font-size: 84px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 2px;
+    color: var(--pink);
+    text-shadow: 0 0 34px rgba(234, 22, 108, .45);
+    margin-top: 10px;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin-bottom: 26px;
+  }
+  .button_img {
+    width: 60%;
+    max-width: 140px;
+    display: inline-block;
+    vertical-align: bottom;
+  }
+  .actions { display: flex; max-width: 540px; gap: 12px; justify-content: center; }
+  .btn {
+    display: flex;
+    justify-content: center;
+    padding: 0px 10px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #ffffff;
+    background: var(--pink);
+    min-width: 100px;
+    min-height: 40px;
+  }
+  .btn.alt {
+    background: transparent;
+    color: var(--link);
+    border: 1px solid var(--outline);
+  }
+  .btn:hover { filter: brightness(1.12); }
+</style>
+</head>
+<body>
+  <main class="card">
+    <a href="https://multiworld.gg">
+	<img class="logo" src="https://img.prismativerse.com/multiworldgg-logo.webp" alt="MultiworldGG">
+	</a>
+	<div class="mw-stripe"> </div>
+    <div class="code">404</div>
+<h1>This page is out of logic!</h1>
+    <p>Sorry, this location isn't part of the region map for this browser world. You're going to have to save and quit to get back.</p>
+    <div class="actions">
+        <a class="btn alt" href="https://discord.multiworld.gg">
+        <img class="button_img" src="https://img.prismativerse.com/discord.svg" alt="discord">
+        </a>
+        <a class="btn" href="https://github.com/MultiworldGG/MultiworldGG">
+        <img class="button_img" src="https://img.prismativerse.com/github.svg" alt="github">
+        </a>
     </div>
-{% endblock %}
+  </main>
+</body>
+</html>

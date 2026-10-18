@@ -17,7 +17,8 @@ from json import dumps, loads
 
 import Utils
 from settings import Settings
-from websockets.client import connect as websockets_connect, WebSocketClientProtocol
+from websockets.asyncio.client import connect as websockets_connect, ClientConnection
+from websockets.protocol import State
 from websockets.exceptions import ConnectionClosed, WebSocketException
 
 if typing.TYPE_CHECKING:
@@ -26,6 +27,7 @@ if typing.TYPE_CHECKING:
 snes_logger = logging.getLogger("SNES")
 
 _global_snes_reconnect_delay = 5
+_NO_DEVICE_HINT_DELAY = 30
 
 
 class SNESState(enum.IntEnum):
@@ -77,7 +79,7 @@ def launch_sni() -> None:
             f"please start it yourself if it is not running")
 
 
-async def _snes_connect(ctx: "SNIContext", address: str, retry: bool = True) -> WebSocketClientProtocol:
+async def _snes_connect(ctx: "SNIContext", address: str, retry: bool = True) -> ClientConnection:
     address = f"ws://{address}" if "://" not in address else address
     snes_logger.info("Connecting to SNI at %s ..." % address)
     seen_problems: typing.Set[str] = set()
@@ -116,18 +118,23 @@ async def get_snes_devices(ctx: "SNIContext") -> typing.List[str]:
 
     if not devices:
         snes_logger.info('No SNES device found. Please connect a SNES device to SNI.')
+        hint_due: typing.Optional[float] = time.monotonic() + _NO_DEVICE_HINT_DELAY
         while not devices and not ctx.exit_event.is_set():
             await asyncio.sleep(0.1)
             await socket.send(dumps(DeviceList_Request))
             reply = loads(await socket.recv())
             devices = reply['Results'] if 'Results' in reply and len(reply['Results']) > 0 else []
+            if not devices and hint_due is not None and time.monotonic() >= hint_due:
+                snes_logger.error(f"Still no SNES device after {_NO_DEVICE_HINT_DELAY} seconds. Double check you're "
+                                  "running the correct emulator; only one works properly with this SNI setup.")
+                hint_due = None
     if devices:
         await verify_snes_app(socket)
     await socket.close()
     return sorted(devices)
 
 
-async def verify_snes_app(socket: WebSocketClientProtocol) -> None:
+async def verify_snes_app(socket: ClientConnection) -> None:
     AppVersion_Request = {
         "Opcode": "AppVersion",
     }
@@ -176,7 +183,7 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
                 for idx, availableDevice in enumerate(devices):
                     snes_logger.info(str(idx + 1) + ": " + availableDevice)
 
-            elif (deviceIndex < 0) or (deviceIndex - 1) > device_count:
+            elif deviceIndex < 1 or deviceIndex > device_count:
                 snes_logger.warning("SNES device number out of range")
 
             else:
@@ -202,11 +209,11 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
     except Exception as e:
         ctx.snes_state = SNESState.SNES_DISCONNECTED
         if task_alive(recv_task):
-            if not ctx.snes_socket.closed:
+            if ctx.snes_socket.state is not State.CLOSED:
                 await ctx.snes_socket.close()
         else:
             if ctx.snes_socket is not None:
-                if not ctx.snes_socket.closed:
+                if ctx.snes_socket.state is not State.CLOSED:
                     await ctx.snes_socket.close()
                 ctx.snes_socket = None
         snes_logger.error(f"Error connecting to snes ({e}), retrying in {_global_snes_reconnect_delay} seconds")
@@ -219,7 +226,7 @@ async def snes_connect(ctx: "SNIContext", address: str, deviceIndex: int = -1) -
 
 async def snes_disconnect(ctx: "SNIContext") -> None:
     if ctx.snes_socket:
-        if not ctx.snes_socket.closed:
+        if ctx.snes_socket.state is not State.CLOSED:
             await ctx.snes_socket.close()
         ctx.snes_socket = None
 
@@ -250,7 +257,7 @@ async def snes_recv_loop(ctx: "SNIContext") -> None:
         snes_logger.error("Lost connection to the snes, type /snes to reconnect")
     finally:
         socket, ctx.snes_socket = ctx.snes_socket, None
-        if socket is not None and not socket.closed:
+        if socket is not None and socket.state is not State.CLOSED:
             await socket.close()
 
         ctx.snes_state = SNESState.SNES_DISCONNECTED
@@ -272,8 +279,7 @@ async def snes_read(ctx: "SNIContext", address: int, size: int) -> typing.Option
         if (
             ctx.snes_state != SNESState.SNES_ATTACHED or
             ctx.snes_socket is None or
-            not ctx.snes_socket.open or
-            ctx.snes_socket.closed
+            ctx.snes_socket.state is not State.OPEN
         ):
             return None
 
@@ -299,7 +305,7 @@ async def snes_read(ctx: "SNIContext", address: int, size: int) -> typing.Option
             if len(data):
                 snes_logger.error(str(data))
                 snes_logger.warning('Communication Failure with SNI')
-            if ctx.snes_socket is not None and not ctx.snes_socket.closed:
+            if ctx.snes_socket is not None and ctx.snes_socket.state is not State.CLOSED:
                 await ctx.snes_socket.close()
             return None
 
@@ -313,7 +319,7 @@ async def snes_write(ctx: "SNIContext", write_list: typing.List[typing.Tuple[int
         await ctx.snes_request_lock.acquire()
 
         if ctx.snes_state != SNESState.SNES_ATTACHED or ctx.snes_socket is None or \
-                not ctx.snes_socket.open or ctx.snes_socket.closed:
+                ctx.snes_socket.state is not State.OPEN:
             return False
 
         PutAddress_Request: SNESRequest = {"Opcode": "PutAddress", "Operands": [], 'Space': 'SNES'}

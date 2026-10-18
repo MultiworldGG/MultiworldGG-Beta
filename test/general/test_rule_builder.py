@@ -12,6 +12,7 @@ from rule_builder.field_resolvers import FieldResolver, FromOption, FromWorldAtt
 from rule_builder.options import Operator, OptionFilter
 from rule_builder.rules import (
     And,
+    AtLeast,
     CanReachEntrance,
     CanReachLocation,
     CanReachRegion,
@@ -37,6 +38,7 @@ from worlds.AutoWorld import AutoWorldRegister, World
 
 class CachedCollectionState(CollectionState):
     rule_builder_cache: dict[int, dict[int, bool]]  # pyright: ignore[reportUninitializedInstanceVariable]
+    rule_builder_deferred_item_dependency_updates: dict[int, set[str]]  # pyright: ignore[reportUninitializedInstanceVariable]
 
 
 class ToggleOption(Toggle):
@@ -159,6 +161,18 @@ class CachedRuleBuilderTestCase(RuleBuilderTestCase):
 @classvar_matrix(
     rules=(
         (
+            And(),
+            True_.Resolved(player=1)
+        ),
+        (
+            Or(),
+            False_.Resolved(player=1)
+        ),
+        (
+            Has("A", 0),
+            True_.Resolved(player=1)
+        ),
+        (
             And(Has("A", 1), Has("A", 2)),
             Has.Resolved("A", 2, player=1),
         ),
@@ -249,6 +263,40 @@ class CachedRuleBuilderTestCase(RuleBuilderTestCase):
         (
             Or(HasAnyCount({"A": 1, "B": 2}), HasAnyCount({"A": 2, "B": 2})),
             HasAnyCount.Resolved((("A", 1), ("B", 2)), player=1),
+        ),
+        (
+            AtLeast(0, Has("A")),
+            True_.Resolved(player=1),
+        ),
+        (
+            AtLeast(3, True_(), Has("A"), Has("B"), Has("C")),
+            AtLeast.Resolved(
+                (Has.Resolved("A", player=1), Has.Resolved("B", player=1), Has.Resolved("C", player=1)), 2, player=1
+            ),
+        ),
+        (
+            AtLeast(2, False_(), Has("A"), Has("B"), Has("C")),
+            AtLeast.Resolved(
+                (Has.Resolved("A", player=1), Has.Resolved("B", player=1), Has.Resolved("C", player=1)), 2, player=1
+            ),
+        ),
+        (
+            AtLeast(2, True_(), True_(), Has("A")),
+            True_.Resolved(player=1),
+        ),
+        (
+            AtLeast(3, Has("A"), Has("B")),
+            False_.Resolved(player=1),
+        ),
+        (
+            # This test will fail when Or(Rule, Rule) will be optimized to Rule
+            AtLeast(1, Rule(), Rule()),
+            Or.Resolved((Rule.Resolved(player=1), Rule.Resolved(player=1)), player=1),
+        ),
+        (
+            # This test will fail when And(Rule, Rule) will be optimized to Rule
+            AtLeast(2, Rule(), Rule()),
+            And.Resolved((Rule.Resolved(player=1), Rule.Resolved(player=1)), player=1),
         ),
     )
 )
@@ -416,6 +464,15 @@ class TestHashes(RuleBuilderTestCase):
         rule2 = HasAll("2", "2", "2", "1")
         self.assertEqual(hash(rule1.resolve(world)), hash(rule2.resolve(world)))
 
+    def test_hash_collision(self) -> None:
+        multiworld = setup_solo_multiworld(self.world_cls, steps=("generate_early",), seed=0)
+        world = multiworld.worlds[1]
+        rule1 = Has("A", count=1).resolve(world)
+        rule2 = Has("A", count=1 << 61).resolve(world)
+        self.assertEqual(hash(rule1), hash(rule2))
+        self.assertNotEqual(rule1, rule2)
+        self.assertNotEqual(id(rule1), id(rule2))
+
 
 class TestCaching(CachedRuleBuilderTestCase):
     multiworld: MultiWorld  # pyright: ignore[reportUninitializedInstanceVariable]
@@ -454,50 +511,90 @@ class TestCaching(CachedRuleBuilderTestCase):
         world.register_rule_builder_dependencies()
 
     def test_item_cache_busting(self) -> None:
+        rule_builder_cache = self.state.rule_builder_cache[1]
         location = self.world.get_location("Location 4")
         self.state.collect(self.world.create_item("Item 1"))  # access to region 2
         self.state.collect(self.world.create_item("Item 2"))  # item directly needed
-        self.assertFalse(location.can_reach(self.state))  # populates cache
-        self.assertFalse(self.state.rule_builder_cache[1][id(location.access_rule)])
 
-        self.state.collect(self.world.create_item("Item 3"))  # clears cache, item directly needed
-        self.assertNotIn(id(location.access_rule), self.state.rule_builder_cache[1])
+        self.assertNotIn(id(location.access_rule), rule_builder_cache)
+        self.assertFalse(location.can_reach(self.state))  # populates cache
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule's result is cached
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cached result is False
+
+        deferred_updates = self.state.rule_builder_deferred_item_dependency_updates[1]
+        self.state.collect(self.world.create_item("Item 3"))  # item directly needed
+        self.assertIn("Item 3", deferred_updates)  # cache update is deferred until the rule is called
+
+        # cache is unchanged due to the deferred update
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule result is still cached
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cached result is still False
+
+        # cache gets cleared and then updated during the can_reach
         self.assertTrue(location.can_reach(self.state))
-        self.assertTrue(self.state.rule_builder_cache[1][id(location.access_rule)])
-        self.state.collect(self.world.create_item("Item 3"))  # does not clear cache as rule is already true
-        self.assertTrue(self.state.rule_builder_cache[1][id(location.access_rule)])
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule result is still cached
+        self.assertTrue(rule_builder_cache[id(location.access_rule)])  # cached result is now True
+
+        self.state.collect(self.world.create_item("Item 3"))
+        self.assertIn("Item 3", deferred_updates)  # cache update is deferred until the rule is called
+        # can_reach does not process deferred updates because the rule is already True
+        self.assertTrue(location.can_reach(self.state))
+        self.assertIn("Item 3", deferred_updates)
+        self.assertTrue(rule_builder_cache[id(location.access_rule)])  # cached result is still True
 
     def test_region_cache_busting(self) -> None:
+        rule_builder_cache = self.state.rule_builder_cache[1]
         location = self.world.get_location("Location 2")
         self.state.collect(self.world.create_item("Item 2"))  # item directly needed for location rule
+        self.assertNotIn(id(location.access_rule), rule_builder_cache)
         self.assertFalse(location.can_reach(self.state))  # populates cache
-        self.assertFalse(self.state.rule_builder_cache[1][id(location.access_rule)])
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule's result is cached
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cached result is False
 
-        self.state.collect(self.world.create_item("Item 1"))  # clears cache, item only needed for region 2 access
-        # cache gets cleared during the can_reach
+        deferred_updates = self.state.rule_builder_deferred_item_dependency_updates[1]
+        self.state.collect(self.world.create_item("Item 1"))  # item only needed for region 2 access
+        self.assertIn("Item 1", deferred_updates)  # cache update is deferred until the rule is called
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cache is still False due to deferred update
+        # cache gets cleared and then updated during the can_reach
         self.assertTrue(location.can_reach(self.state))
-        self.assertTrue(self.state.rule_builder_cache[1][id(location.access_rule)])
+        self.assertNotIn("Item 1", deferred_updates)
+        self.assertTrue(rule_builder_cache[id(location.access_rule)])
 
     def test_location_cache_busting(self) -> None:
+        rule_builder_cache = self.state.rule_builder_cache[1]
         location = self.world.get_location("Location 5")
         self.state.collect(self.world.create_item("Item 1"))  # access to region 2
         self.state.collect(self.world.create_item("Item 3"))  # access to region 3
+        self.assertNotIn(id(location.access_rule), rule_builder_cache)
         self.assertFalse(location.can_reach(self.state))  # populates cache
-        self.assertFalse(self.state.rule_builder_cache[1][id(location.access_rule)])
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule's result is cached
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cached result is False
 
-        self.state.collect(self.world.create_item("Item 2"))  # clears cache, item only needed for location 2 access
-        self.assertNotIn(id(location.access_rule), self.state.rule_builder_cache[1])
+        deferred_updates = self.state.rule_builder_deferred_item_dependency_updates[1]
+        self.state.collect(self.world.create_item("Item 2"))  # item only needed for location 2 access
+        self.assertIn("Item 2", deferred_updates)  # cache update is deferred until the rule is called
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cache is still False  due to deferred update
+        # cache gets cleared and then updated during the can_reach
         self.assertTrue(location.can_reach(self.state))
+        self.assertNotIn("Item 2", deferred_updates)
+        self.assertTrue(rule_builder_cache[id(location.access_rule)])
 
     def test_entrance_cache_busting(self) -> None:
+        rule_builder_cache = self.state.rule_builder_cache[1]
         location = self.world.get_location("Location 6")
         self.state.collect(self.world.create_item("Item 2"))  # item directly needed for location rule
+        self.assertNotIn(id(location.access_rule), rule_builder_cache)
         self.assertFalse(location.can_reach(self.state))  # populates cache
-        self.assertFalse(self.state.rule_builder_cache[1][id(location.access_rule)])
+        self.assertIn(id(location.access_rule), rule_builder_cache)  # rule's result is cached
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cached result is False
 
-        self.state.collect(self.world.create_item("Item 1"))  # clears cache, item only needed for entrance access
-        self.assertNotIn(id(location.access_rule), self.state.rule_builder_cache[1])
+        deferred_updates = self.state.rule_builder_deferred_item_dependency_updates[1]
+        self.state.collect(self.world.create_item("Item 1"))  # item only needed for entrance access
+        self.assertIn("Item 1", deferred_updates)  # cache update is deferred until the rule is called
+        self.assertFalse(rule_builder_cache[id(location.access_rule)])  # cache is still False  due to deferred update
+        # cache gets cleared and then updated during the can_reach
         self.assertTrue(location.can_reach(self.state))
+        self.assertNotIn("Item 1", deferred_updates)
+        self.assertTrue(rule_builder_cache[id(location.access_rule)])
 
     def test_has_skips_cache(self) -> None:
         entrance = self.world.get_entrance("Region 1 -> Region 2")
@@ -621,6 +718,24 @@ class TestRules(RuleBuilderTestCase):
         self.assertTrue(resolved_rule(self.state))
         self.state.remove(item)
         self.assertFalse(resolved_rule(self.state))
+
+    def test_at_least(self) -> None:
+        # Has has to be relied on as True_ and False_ would be optimized out
+        rule = AtLeast(2, Has("Item 1"), Has("Item 1"), Has("Item 2"), Has("Item 3"))
+        resolved_rule = rule.resolve(self.world)
+        self.world.register_rule_dependencies(resolved_rule)
+        item1 = self.world.create_item("Item 1")
+        item2 = self.world.create_item("Item 2")
+        item3 = self.world.create_item("Item 3")
+        self.assertFalse(resolved_rule(self.state))
+        self.state.collect(item1)
+        self.assertTrue(resolved_rule(self.state))
+        self.state.collect(item2)
+        self.assertTrue(resolved_rule(self.state))
+        self.state.remove(item1)
+        self.assertFalse(resolved_rule(self.state))
+        self.state.collect(item3)
+        self.assertTrue(resolved_rule(self.state))
 
     def test_has_all(self) -> None:
         rule = HasAll("Item 1", "Item 2")
@@ -797,8 +912,13 @@ class TestSerialization(RuleBuilderTestCase):
                 OptionFilter(ChoiceOption, ChoiceOption.option_second, "ge"),
             ],
         ),
+        AtLeast(
+            FromWorldAttr("instance_data.at_least_requirement"),
+            Has("i15", count=2),
+            HasGroup("g2", count=3),
+        ),
         CanReachEntrance("e1"),
-        HasGroupUnique("g2", count=5),
+        HasGroupUnique("g3", count=5),
     )
 
     rule_dict: ClassVar[dict[str, Any]] = {
@@ -923,6 +1043,29 @@ class TestSerialization(RuleBuilderTestCase):
                 ],
             },
             {
+                "rule": "AtLeast",
+                "options": [],
+                "filtered_resolution": False,
+                "count": {"resolver": "FromWorldAttr", "name": "instance_data.at_least_requirement"},
+                "children": [
+                    {
+                        "rule": "Has",
+                        "options": [],
+                        "filtered_resolution": False,
+                        "args": {
+                            "item_name": "i15",
+                            "count": 2,
+                        },
+                    },
+                    {
+                        "rule": "HasGroup",
+                        "options": [],
+                        "filtered_resolution": False,
+                        "args": {"item_name_group": "g2", "count": 3},
+                    },
+                ],
+            },
+            {
                 "rule": "CanReachEntrance",
                 "options": [],
                 "filtered_resolution": False,
@@ -932,7 +1075,7 @@ class TestSerialization(RuleBuilderTestCase):
                 "rule": "HasGroupUnique",
                 "options": [],
                 "filtered_resolution": False,
-                "args": {"item_name_group": "g2", "count": 5},
+                "args": {"item_name_group": "g3", "count": 5},
             },
         ],
     }
@@ -964,9 +1107,15 @@ class TestExplain(RuleBuilderTestCase):
                 ),
                 player=1,
             ),
-            HasAllCounts.Resolved((("Item 6", 1), ("Item 7", 5)), player=1),
-            HasAnyCount.Resolved((("Item 8", 2), ("Item 9", 3)), player=1),
-            HasFromList.Resolved(("Item 10", "Item 11", "Item 12"), count=2, player=1),
+            AtLeast.Resolved(
+                children=(
+                    HasAllCounts.Resolved((("Item 6", 1), ("Item 7", 5)), player=1),
+                    HasAnyCount.Resolved((("Item 8", 2), ("Item 9", 3)), player=1),
+                    HasFromList.Resolved(("Item 10", "Item 11", "Item 12"), count=2, player=1),
+                ),
+                count=2,
+                player=1,
+            ),
             HasFromListUnique.Resolved(("Item 13", "Item 14"), player=1),
             HasGroup.Resolved("Group 1", ("Item 15", "Item 16", "Item 17"), player=1),
             HasGroupUnique.Resolved("Group 2", ("Item 18", "Item 19"), count=2, player=1),
@@ -1031,6 +1180,9 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
+            {"type": "text", "text": "At least "},
+            {"type": "color", "color": "cyan", "text": "0/2"},
+            {"type": "text", "text": " of ("},
             {"type": "text", "text": "Missing "},
             {"type": "color", "color": "cyan", "text": "some"},
             {"type": "text", "text": " of ("},
@@ -1041,7 +1193,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "salmon", "text": "Item 7"},
             {"type": "text", "text": " x5"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Missing "},
             {"type": "color", "color": "cyan", "text": "all"},
             {"type": "text", "text": " of ("},
@@ -1052,7 +1204,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "salmon", "text": "Item 9"},
             {"type": "text", "text": " x3"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "salmon", "text": "0/2"},
             {"type": "text", "text": " items from ("},
@@ -1062,6 +1214,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "salmon", "text": "Item 11"},
             {"type": "text", "text": ", "},
             {"type": "color", "color": "salmon", "text": "Item 12"},
+            {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
             {"type": "text", "text": "Has "},
@@ -1129,6 +1282,9 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
+            {"type": "text", "text": "At least "},
+            {"type": "color", "color": "cyan", "text": "3/2"},
+            {"type": "text", "text": " of ("},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "cyan", "text": "all"},
             {"type": "text", "text": " of ("},
@@ -1139,7 +1295,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "green", "text": "Item 7"},
             {"type": "text", "text": " x5"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "cyan", "text": "some"},
             {"type": "text", "text": " of ("},
@@ -1150,7 +1306,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "green", "text": "Item 9"},
             {"type": "text", "text": " x3"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "green", "text": "30/2"},
             {"type": "text", "text": " items from ("},
@@ -1160,6 +1316,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "green", "text": "Item 11"},
             {"type": "text", "text": ", "},
             {"type": "color", "color": "green", "text": "Item 12"},
+            {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
             {"type": "text", "text": "Has "},
@@ -1195,7 +1352,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "salmon", "text": "False"},
             {"type": "text", "text": ")"},
         ]
-        assert self.resolved_rule.explain_json(self.state) == expected
+        self.assertEqual(self.resolved_rule.explain_json(self.state), expected)
 
     def test_explain_json_without_state(self) -> None:
         expected: list[JSONMessagePart] = [
@@ -1223,6 +1380,9 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
+            {"type": "text", "text": "At least "},
+            {"type": "color", "color": "cyan", "text": "2"},
+            {"type": "text", "text": " of ("},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "cyan", "text": "all"},
             {"type": "text", "text": " of ("},
@@ -1232,7 +1392,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "item_name", "flags": 1, "text": "Item 7", "player": 1},
             {"type": "text", "text": " x5"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "cyan", "text": "any"},
             {"type": "text", "text": " of ("},
@@ -1242,7 +1402,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "item_name", "flags": 1, "text": "Item 9", "player": 1},
             {"type": "text", "text": " x3"},
             {"type": "text", "text": ")"},
-            {"type": "text", "text": " & "},
+            {"type": "text", "text": ", "},
             {"type": "text", "text": "Has "},
             {"type": "color", "color": "cyan", "text": "2"},
             {"type": "text", "text": "x items from ("},
@@ -1251,6 +1411,7 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "item_name", "flags": 1, "text": "Item 11", "player": 1},
             {"type": "text", "text": ", "},
             {"type": "item_name", "flags": 1, "text": "Item 12", "player": 1},
+            {"type": "text", "text": ")"},
             {"type": "text", "text": ")"},
             {"type": "text", "text": " & "},
             {"type": "text", "text": "Has "},
@@ -1285,16 +1446,16 @@ class TestExplain(RuleBuilderTestCase):
             {"type": "color", "color": "salmon", "text": "False"},
             {"type": "text", "text": ")"},
         ]
-        assert self.resolved_rule.explain_json() == expected
+        self.assertEqual(self.resolved_rule.explain_json(), expected)
 
     def test_explain_str_with_state_no_items(self) -> None:
         expected = (
             "((Missing 4x Item 1",
             "| Missing some of (Missing: Item 2, Item 3)",
             "| Missing all of (Missing: Item 4, Item 5))",
-            "& Missing some of (Missing: Item 6 x1, Item 7 x5)",
-            "& Missing all of (Missing: Item 8 x2, Item 9 x3)",
-            "& Has 0/2 items from (Missing: Item 10, Item 11, Item 12)",
+            "& At least 0/2 of (Missing some of (Missing: Item 6 x1, Item 7 x5),",
+            "Missing all of (Missing: Item 8 x2, Item 9 x3),",
+            "Has 0/2 items from (Missing: Item 10, Item 11, Item 12))",
             "& Has 0/1 unique items from (Missing: Item 13, Item 14)",
             "& Has 0/1 items from Group 1",
             "& Has 0/2 unique items from Group 2",
@@ -1304,7 +1465,7 @@ class TestExplain(RuleBuilderTestCase):
             "& True",
             "& False)",
         )
-        assert self.resolved_rule.explain_str(self.state) == " ".join(expected)
+        self.assertEqual(self.resolved_rule.explain_str(self.state), " ".join(expected))
 
     def test_explain_str_with_state_all_items(self) -> None:
         self._collect_all()
@@ -1313,9 +1474,9 @@ class TestExplain(RuleBuilderTestCase):
             "((Has 4x Item 1",
             "| Has all of (Found: Item 2, Item 3)",
             "| Has some of (Found: Item 4, Item 5))",
-            "& Has all of (Found: Item 6 x1, Item 7 x5)",
-            "& Has some of (Found: Item 8 x2, Item 9 x3)",
-            "& Has 30/2 items from (Found: Item 10, Item 11, Item 12)",
+            "& At least 3/2 of (Has all of (Found: Item 6 x1, Item 7 x5),",
+            "Has some of (Found: Item 8 x2, Item 9 x3),",
+            "Has 30/2 items from (Found: Item 10, Item 11, Item 12))",
             "& Has 2/1 unique items from (Found: Item 13, Item 14)",
             "& Has 30/1 items from Group 1",
             "& Has 2/2 unique items from Group 2",
@@ -1325,16 +1486,16 @@ class TestExplain(RuleBuilderTestCase):
             "& True",
             "& False)",
         )
-        assert self.resolved_rule.explain_str(self.state) == " ".join(expected)
+        self.assertEqual(self.resolved_rule.explain_str(self.state), " ".join(expected))
 
     def test_explain_str_without_state(self) -> None:
         expected = (
             "((Has 4x Item 1",
             "| Has all of (Item 2, Item 3)",
             "| Has any of (Item 4, Item 5))",
-            "& Has all of (Item 6 x1, Item 7 x5)",
-            "& Has any of (Item 8 x2, Item 9 x3)",
-            "& Has 2x items from (Item 10, Item 11, Item 12)",
+            "& At least 2 of (Has all of (Item 6 x1, Item 7 x5),",
+            "Has any of (Item 8 x2, Item 9 x3),",
+            "Has 2x items from (Item 10, Item 11, Item 12))",
             "& Has a unique item from (Item 13, Item 14)",
             "& Has an item from Group 1",
             "& Has 2x unique items from Group 2",
@@ -1344,16 +1505,16 @@ class TestExplain(RuleBuilderTestCase):
             "& True",
             "& False)",
         )
-        assert self.resolved_rule.explain_str() == " ".join(expected)
+        self.assertEqual(self.resolved_rule.explain_str(), " ".join(expected))
 
     def test_str(self) -> None:
         expected = (
             "((Has 4x Item 1",
             "| Has all of (Item 2, Item 3)",
             "| Has any of (Item 4, Item 5))",
-            "& Has all of (Item 6 x1, Item 7 x5)",
-            "& Has any of (Item 8 x2, Item 9 x3)",
-            "& Has 2x items from (Item 10, Item 11, Item 12)",
+            "& At least 2 of (Has all of (Item 6 x1, Item 7 x5),",
+            "Has any of (Item 8 x2, Item 9 x3),",
+            "Has 2x items from (Item 10, Item 11, Item 12))",
             "& Has a unique item from (Item 13, Item 14)",
             "& Has an item from Group 1",
             "& Has 2x unique items from Group 2",
@@ -1363,7 +1524,7 @@ class TestExplain(RuleBuilderTestCase):
             "& True",
             "& False)",
         )
-        assert str(self.resolved_rule) == " ".join(expected)
+        self.assertEqual(str(self.resolved_rule), " ".join(expected))
 
 
 @classvar_matrix(

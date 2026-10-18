@@ -1,4 +1,5 @@
 {% extends "tablepage.html" %}
+{% from "macros.html" import avatar_img %}
 {% block head %}
     {{ super() }}
     <title>{{ player_name }}&apos;s Tracker</title>
@@ -8,9 +9,24 @@
 {% endblock %}
 
 {% block body %}
-    {% include "header/dirtHeader.html" %}
+    {% include 'header/baseHeader.html' %}
 
     <div id="tracker-navigation">
+        <div class="tracker-slot-avatar">
+            {{ avatar_img(avatar_url, alt=player_name ~ "'s avatar", css_class="slot-avatar-large", size=32) }}
+            <details class="avatar-setter">
+                <summary class="avatar-setter-toggle">Set avatar</summary>
+                <form class="avatar-setter-panel"
+                      action="{{ url_for('set_slot_avatar', tracker=room.tracker) }}"
+                      method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="team" value="{{ team }}" />
+                    <input type="hidden" name="slot" value="{{ player }}" />
+                    <label for="avatar-image">Upload an image, or leave the file empty to reuse your own avatar:</label>
+                    <input id="avatar-image" type="file" name="image" accept="image/*" />
+                    <button type="submit">Set avatar</button>
+                </form>
+            </details>
+        </div>
         <div class="tracker-navigation-bar">
             <a
                 class="tracker-navigation-button"
@@ -31,7 +47,7 @@
 
     <div id="tracker-wrapper" data-tracker="{{ room.tracker | suuid }}/{{ team }}/{{ player }}" data-second="{{ saving_second }}">
         <div id="tracker-header-bar">
-            <input placeholder="Search" id="search" />
+            <input placeholder="Search" id="search" aria-label="Search items and locations" />
             <div class="info">This tracker will automatically update itself periodically.</div>
         </div>
         <div id="tables-container">
@@ -129,10 +145,16 @@
                                     </a>
                                 {% endif %}
                             </td>
-                            <td>{{ item_id_to_name[games[(team, hint.receiving_player)]][hint.item] }}</td>
-                            <td>{{ location_id_to_name[games[(team, hint.finding_player)]][hint.location] }}</td>
+                            <td>
+                                {% if hint.item_hidden %}
+                                    Hidden ({{ hint.item_classification }})
+                                {% else %}
+                                    {{ item_id_to_name[games[(team, hint.receiving_player)]][hint.item] }}
+                                {% endif %}
+                            </td>
+                            <td>{% if hint.hidden %}Hidden{% else %}{{ location_id_to_name[games[(team, hint.finding_player)]][hint.location] }}{% endif %}</td>
                             <td>{{ games[(team, hint.finding_player)] }}</td>
-                            <td>{% if hint.entrance %}{{ hint.entrance }}{% else %}Vanilla{% endif %}</td>
+                            <td>{% if hint.hidden %}Hidden{% elif hint.entrance %}{{ hint.entrance }}{% else %}Vanilla{% endif %}</td>
                             <td class="center-column">{% if hint.found %}✔{% endif %}</td>
                         </tr>
                     {%- endfor -%}

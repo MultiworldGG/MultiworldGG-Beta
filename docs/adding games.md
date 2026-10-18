@@ -72,14 +72,20 @@ with additional Components in order to automatically add them to the Launcher. M
 `icon` and `description` can be used to customize display in the Launcher UI, and `file_identifier` can be used to
 launch by file.
 
-Additionally, if you use `func` you have access to LauncherComponent.launch or launch_subprocess to run your
-function as a subprocesses that can be utilized side by side other clients.
+The Launcher is its own standalone process again; anything it launches (clients, the server, tools, etc.) runs as
+a **separate OS process**. A `func` Component itself still runs inside the Launcher process though, so if your
+function has its own long-running lifecycle (e.g. it opens its own window and blocks), use
+`LauncherComponents.launch`/`launch_subprocess` to spawn it in a subprocess instead of blocking the Launcher UI:
 ```py
 def my_func(*args: str):
 	from .client import run_client
-	LauncherComponent.launch(run_client, name="My Client", args=args)
+	from worlds.LauncherComponents import launch
+	launch(run_client, name="My Client", args=args)
 ```
 
+If your Component points at a frozen executable (`frozen_name`) instead of a `func`, that name must exactly match
+a built executable -- see `BaseUtils.FROZEN_TARGETS` for the monorepo's own executables -- and the match is
+case-sensitive on Linux/macOS even though Windows doesn't care.
 
 ## World
 
@@ -92,7 +98,9 @@ for setup).
 
 The base World class can be found in [AutoWorld](/worlds/AutoWorld.py). Methods available for your world to call 
 during generation can be found in [BaseClasses](/BaseClasses.py) and [Fill](/Fill.py). Some examples and documentation 
-regarding the API can be found in the [world api doc](/docs/world%20api.md).
+regarding the API can be found in the [world api doc](/docs/world%20api.md), and the [APQuest](/worlds/apquest/) world
+is a complete world implementation that functions as an introduction to world development.
+
 ### Hard Requirements
 
 A bare minimum world implementation must satisfy the following requirements:
@@ -101,7 +109,7 @@ A bare minimum world implementation must satisfy the following requirements:
 * The `/worlds/{game}` folder contains an `__init__.py`
 * Any subfolders within `/worlds/{game}` that contain `*.py` files also contain an `__init__.py` for frozen build 
   packaging
-* The game folder has at least one game_info doc named with follow the format `{language_code}_{game_name}.md`
+* The game folder has at least one game_info doc named following the format `{language_code}_{game_name}.md`
 * The game folder has at least one setup doc
 * There must be a `World` subclass in your game folder (typically in `/worlds/{game}/__init__.py`) where you create 
   your world and define all of its rules and features

@@ -11,19 +11,28 @@ from uuid import UUID
 
 from flask import request, session, jsonify, send_file
 from markupsafe import Markup
-from pony.orm import commit, count, select, flush
+from sqlalchemy import select, func
 
 from Utils import tuplize_version, Version, utcnow
 from WebHostLib.api import api_endpoints
-from WebHostLib.check import get_yaml_data, roll_options
+from WebHostLib.check import get_yaml_data, parse_meta_yaml, roll_options
 from WebHostLib.models import (
-    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyApworldRequest, Room,
+    db, commit, flush,
+    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyApworldRequest,
+    LobbyAuxiliaryApworld, LobbyMetaYaml,
+    Room, Seed, Generation,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
-    Generation, Seed, uuid4,
+    uuid4,
 )
+from WebHostLib.short_id import assign_short_id
+from WebHostLib.ownership import is_authorized
 from WebHostLib import app, limiter
 
-APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB — leaves headroom under 64 MB global limit
+APWORLD_MAX_SIZE = 60 * 1024 * 1024  # 60 MB - leaves headroom under 64 MB global limit
+LOBBY_LOCAL_GENERATION_YAML_LIMIT = 25
+AUXILIARY_APWORLD_LIMIT = 5
+META_YAML_MAX_SIZE = 1024 * 1024
+YAML_PLAYER_NAME_MAX_LENGTH = 16
 
 def _safe_zip_name(name: str) -> str:
     """Replace characters that are problematic in ZIP entry names."""
@@ -40,7 +49,75 @@ def _has_name_template(name: str) -> bool:
     return bool(_NAME_TEMPLATE_RE.search(name))
 
 
-def _delete_apworld_file(apworld: LobbyApworld) -> None:
+def _player_name_length_error(name, filename: str, player_count: int) -> str | None:
+    """Check every selectable name, allowing templates that fit after expansion.
+
+    Use the lobby's slot count as a bound on player and occurrence numbers, so
+    names cannot overflow when generation reorders slots or rerolls weights.
+    """
+    from Generate import SafeFormatter
+
+    if isinstance(name, dict):
+        names = [candidate for candidate, weight in name.items() if int(weight) > 0]
+    elif isinstance(name, list):
+        names = name
+    else:
+        names = [name]
+    for candidate in names:
+        candidate = candidate or os.path.splitext(os.path.basename(filename))[0]
+        if not isinstance(candidate, str):
+            return f"Player name in '{filename}' must be a string."
+        try:
+            # Match Generate.handle_name's expansion, but measure before its truncation.
+            template = "%".join(part.replace("%number%", "{number}").replace("%player%", "{player}")
+                                for part in candidate.split("%%"))
+            optional_number = player_count if player_count > 1 else ''
+            expanded = SafeFormatter().vformat(template, (), {
+                "number": player_count, "NUMBER": optional_number,
+                "player": player_count, "PLAYER": optional_number,
+            }).strip()
+        except (ValueError, TypeError) as exc:
+            return f"Invalid player name '{candidate}' in '{filename}': {exc}"
+        if len(expanded) > YAML_PLAYER_NAME_MAX_LENGTH:
+            detail = f"currently {len(expanded)}"
+            if expanded != candidate.strip():
+                detail = f"up to {len(expanded)} after expanding placeholders for {player_count} slots"
+            return (f"Player name '{candidate}' in '{filename}' must be "
+                    f"{YAML_PLAYER_NAME_MAX_LENGTH} characters or fewer ({detail}).")
+    return None
+
+
+def _yaml_player_name_length_error(options: dict[str, bytes], player_count: int) -> str | None:
+    from Utils import parse_yamls
+
+    for filename, content in options.items():
+        try:
+            for document in parse_yamls(content):
+                if not isinstance(document, dict):
+                    continue  # The existing option validator handles malformed documents.
+                names = [document.get('name')]
+                # Linked options and triggers may replace or extend the root name weights.
+                option_sets = list(document.get('linked_options', [])) + list(document.get('triggers', []))
+                games = document.get('game', '')
+                if isinstance(games, str):
+                    games = [games]
+                for game in games:
+                    category = document.get(game)
+                    if isinstance(category, dict):
+                        option_sets.extend(category.get('triggers', []))
+                for option_set in option_sets:
+                    root_options = option_set.get('options', {}).get(None, {})
+                    names.extend(value for key, value in root_options.items() if key in ('name', '+name'))
+                for name in names:
+                    error = _player_name_length_error(name, filename, player_count)
+                    if error:
+                        return error
+        except (ValueError, TypeError, AttributeError, yaml.YAMLError) as exc:
+            return f"Could not validate player name in '{filename}': {exc}"
+    return None
+
+
+def _delete_apworld_file(apworld: LobbyApworld | LobbyAuxiliaryApworld) -> None:
     """Delete the apworld file from the filesystem, ignoring errors.
     Also removes the lobby subdirectory if it is now empty."""
     path = apworld.storage_path
@@ -67,8 +144,8 @@ def _delete_pending_apworld_file(storage_path: str) -> None:
 
 def _lobby_system_message(lobby: Lobby, content: str) -> None:
     LobbyMessage(
-        lobby=lobby,
-        player=None,
+        lobby_id=lobby.id,
+        player_id=None,
         sender_name="System",
         content=content,
     )
@@ -80,7 +157,9 @@ def _cleanup_apworld_request(request_record: LobbyApworldRequest) -> None:
 
 
 def _cancel_pending_requests_for_yaml(yaml_record: LobbyYaml, reason: str) -> int:
-    requests = select(r for r in LobbyApworldRequest if r.yaml == yaml_record)[:]
+    requests = db.session.scalars(
+        select(LobbyApworldRequest).where(LobbyApworldRequest.yaml_id == yaml_record.id)
+    ).all()
     if not requests:
         return 0
     lobby = yaml_record.lobby
@@ -97,10 +176,12 @@ def _cancel_pending_requests_for_yaml(yaml_record: LobbyYaml, reason: str) -> in
 
 
 def _cancel_pending_requests_for_game(lobby: Lobby, game_name: str, reason: str) -> int:
-    requests = select(
-        r for r in LobbyApworldRequest
-        if r.lobby == lobby and r.game_name == game_name
-    )[:]
+    requests = db.session.scalars(
+        select(LobbyApworldRequest).where(
+            LobbyApworldRequest.lobby_id == lobby.id,
+            LobbyApworldRequest.game_name == game_name,
+        )
+    ).all()
     if not requests:
         return 0
     for req in requests:
@@ -113,7 +194,9 @@ def _cancel_pending_requests_for_game(lobby: Lobby, game_name: str, reason: str)
 
 
 def _cancel_all_pending_requests(lobby: Lobby, reason: str) -> int:
-    requests = select(r for r in LobbyApworldRequest if r.lobby == lobby)[:]
+    requests = db.session.scalars(
+        select(LobbyApworldRequest).where(LobbyApworldRequest.lobby_id == lobby.id)
+    ).all()
     if not requests:
         return 0
     for req in requests:
@@ -138,6 +221,19 @@ def _yaml_requires_newer_world(requires_json: str | None, world_version: Version
     return _version_mismatch_direction(requires_json, world_version) == "newer"
 
 
+def _auxiliary_apworlds(lobby: Lobby, game_name: str | None = None) -> list[LobbyAuxiliaryApworld]:
+    stmt = select(LobbyAuxiliaryApworld).where(LobbyAuxiliaryApworld.lobby_id == lobby.id)
+    if game_name is not None:
+        stmt = stmt.where(LobbyAuxiliaryApworld.game_name == game_name)
+    return db.session.scalars(stmt.order_by(LobbyAuxiliaryApworld.id)).all()
+
+
+def _delete_auxiliary_apworlds_for_game(lobby: Lobby, game_name: str) -> None:
+    for auxiliary in _auxiliary_apworlds(lobby, game_name):
+        _delete_apworld_file(auxiliary)
+        auxiliary.delete()
+
+
 def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> None:
     current = LobbyYaml.get(id=yaml_record.id)
     if not current:
@@ -146,9 +242,17 @@ def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> No
     owner = yaml_record.player
     lobby = yaml_record.lobby
     filename = yaml_record.filename
+    game_name = yaml_record.yaml_game
     owner_name = owner.player_name
     _cleanup_yaml_apworld(yaml_record)
     yaml_record.delete()
+    # Auxiliary files belong to the world, not the YAML: keep them while any YAML for it remains.
+    if game_name and not db.session.scalar(
+        select(func.count()).select_from(LobbyYaml).where(
+            LobbyYaml.lobby_id == lobby.id, LobbyYaml.yaml_game == game_name,
+        )
+    ):
+        _delete_auxiliary_apworlds_for_game(lobby, game_name)
     owner.is_ready = False
     if reason:
         _lobby_system_message(
@@ -157,8 +261,9 @@ def _delete_yaml_record(yaml_record: LobbyYaml, reason: str | None = None) -> No
         )
 
 
-def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
-    active_apworld = yaml_record.apworld
+def _handle_removed_active_apworld(yaml_record: LobbyYaml, active_apworld: "LobbyApworld | None" = None) -> None:
+    if active_apworld is None:
+        active_apworld = yaml_record.apworld
     if not active_apworld:
         return
 
@@ -166,12 +271,13 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
     game_name = active_apworld.game_name
     removed_version = active_apworld.world_version
 
-    same_game_yamls = select(
-        y for y in LobbyYaml
-        if y.lobby == lobby
-        and y.yaml_game == game_name
-        and y.id != yaml_record.id
-    ).order_by(LobbyYaml.id)[:]
+    same_game_yamls = db.session.scalars(
+        select(LobbyYaml).where(
+            LobbyYaml.lobby_id == lobby.id,
+            LobbyYaml.yaml_game == game_name,
+            LobbyYaml.id != yaml_record.id,
+        ).order_by(LobbyYaml.id)
+    ).all()
     server_world_version = _server_world_version_for_game(game_name)
     removed_by_name = yaml_record.player.player_name if yaml_record.player else "a player"
     remaining_players = sorted({
@@ -192,7 +298,7 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
             _lobby_system_message(
                 lobby,
                 f"{remaining_players[0]}: the APWorld that replaced yours was removed "
-                f"after {removed_by_name}'s YAML was deleted. You may upload another APWorld.",
+                f"after {removed_by_name}'s YAML was deleted. You can upload your APWorld again.",
             )
         elif remaining_players:
             _lobby_system_message(
@@ -237,8 +343,13 @@ def _handle_removed_active_apworld(yaml_record: LobbyYaml) -> None:
 def _cleanup_yaml_apworld(yaml_record: LobbyYaml) -> None:
     """Delete dependent APWorld/APWorld-request data for a YAML before deleting the YAML itself."""
     _cancel_pending_requests_for_yaml(yaml_record, "requester YAML was removed")
-    if yaml_record.apworld:
-        _handle_removed_active_apworld(yaml_record)
+    # Use yaml_id FK (LobbyApworld -> LobbyYaml) rather than apworld_id (LobbyYaml -> LobbyApworld)
+    # because apworld_id may not be populated by all code paths.
+    owned_apworld = db.session.scalars(
+        select(LobbyApworld).where(LobbyApworld.yaml_id == yaml_record.id)
+    ).first()
+    if owned_apworld:
+        _handle_removed_active_apworld(yaml_record, owned_apworld)
 
 
 def _extract_game_info(content) -> tuple[str, str, str | None]:
@@ -271,7 +382,6 @@ def _extract_game_info(content) -> tuple[str, str, str | None]:
                 if games_req and isinstance(games_req, dict) and game in games_req:
                     constraint = games_req[game]
                     if isinstance(constraint, str):
-                        # A bare version string means "designed for this exact version"
                         requires_version = json.dumps({"exact": constraint})
                     elif isinstance(constraint, dict):
                         # Explicit min/max dict from the YAML
@@ -369,7 +479,7 @@ def _check_version_constraint(requires_json: str | None, server_version: Version
                         f"server has v{server_version.as_simple_string()}")
             if exact_ver < server_version:
                 return (f"designed for v{constraint['exact']}, server has "
-                        f"v{server_version.as_simple_string()} — consider regenerating your YAML "
+                        f"v{server_version.as_simple_string()} - consider regenerating your YAML "
                         f"from the player options page.")
         if "min" in constraint:
             min_ver = tuplize_version(str(constraint["min"]))
@@ -379,7 +489,7 @@ def _check_version_constraint(requires_json: str | None, server_version: Version
             max_ver = tuplize_version(str(constraint["max"]))
             if max_ver < server_version:
                 return (f"requires ≤v{constraint['max']}, server has "
-                        f"v{server_version.as_simple_string()} — consider regenerating your YAML "
+                        f"v{server_version.as_simple_string()} - consider regenerating your YAML "
                         f"from the player options page.")
     except Exception:
         pass
@@ -405,6 +515,45 @@ def _is_manual_apworld(original_filename: str, apworld_data: bytes) -> bool:
             )
     except Exception:
         return False
+
+
+def _apworld_package_root(apworld_data: bytes) -> str | None:
+    """Return the top-level package folder an APWorld expects its filename to match."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(apworld_data)) as apzip:
+            roots_with_init: set[str] = set()
+            for name in apzip.namelist():
+                parts = [part for part in name.replace("\\", "/").split("/") if part]
+                if len(parts) != 2:
+                    continue
+                root, filename = parts
+                if filename == "__init__.py":
+                    roots_with_init.add(root)
+    except Exception:
+        return None
+
+    if len(roots_with_init) == 1:
+        return next(iter(roots_with_init))
+    return None
+
+
+def _apworld_package_filename(apworld: LobbyApworld, apworld_data: bytes | None = None) -> str:
+    """Name APWorlds in host packages by their import package, except manuals keep their uploaded filename."""
+    if apworld.game_name.startswith("Manual_"):
+        return _safe_zip_name(os.path.basename(apworld.original_filename))
+
+    package_root = _apworld_package_root(apworld_data) if apworld_data else None
+    if package_root:
+        filename = _safe_zip_name(package_root)
+    else:
+        original_filename = os.path.basename(apworld.original_filename)
+        if original_filename.lower().endswith(".apworld"):
+            return _safe_zip_name(original_filename)
+        filename = _safe_zip_name(apworld.game_name)
+
+    if not filename.lower().endswith(".apworld"):
+        filename = f"{filename}.apworld"
+    return filename
 
 
 def _parse_apworld_upload(apworld_data: bytes, original_filename: str = "") -> tuple[str, str | None]:
@@ -460,10 +609,12 @@ def _parse_apworld_upload(apworld_data: bytes, original_filename: str = "") -> t
 
 
 def _active_apworld_for_game(lobby: Lobby, game_name: str) -> LobbyApworld | None:
-    return select(
-        a for a in LobbyApworld
-        if a.lobby == lobby and a.game_name == game_name
-    ).order_by(lambda a: a.id).first()
+    return db.session.scalars(
+        select(LobbyApworld).where(
+            LobbyApworld.lobby_id == lobby.id,
+            LobbyApworld.game_name == game_name,
+        ).order_by(LobbyApworld.id)
+    ).first()
 
 
 def _apworld_lobby_dir(lobby: Lobby) -> str:
@@ -562,10 +713,12 @@ def _build_apworld_impact_preview(
     world_version: str | None,
 ) -> tuple[dict, str, Version | None]:
     game_name = yaml_record.yaml_game or ""
-    same_game_yamls = select(
-        y for y in LobbyYaml
-        if y.lobby == lobby and y.yaml_game == game_name
-    ).order_by(LobbyYaml.id)[:]
+    same_game_yamls = db.session.scalars(
+        select(LobbyYaml).where(
+            LobbyYaml.lobby_id == lobby.id,
+            LobbyYaml.yaml_game == game_name,
+        ).order_by(LobbyYaml.id)
+    ).all()
 
     parsed_world_version = None
     if world_version is not None:
@@ -588,7 +741,7 @@ def _build_apworld_impact_preview(
 
     other_player_yaml_ids = [
         y.id for y in same_game_yamls
-        if y.player != yaml_record.player
+        if y.player_id != yaml_record.player_id
     ]
     all_impacted_players = sorted({
         y.player.player_name
@@ -638,7 +791,7 @@ def _build_apworld_impact_preview(
         "same_game_yamls": [
             {
                 "id": y.id,
-                "player_id": y.player.id,
+                "player_id": y.player_id,
                 "requires_game_version": y.requires_game_version,
             }
             for y in same_game_yamls
@@ -663,10 +816,12 @@ def _replace_active_apworld(
     apworld_dir = _apworld_lobby_dir(lobby)
     storage_path = _safe_storage_path(apworld_dir, f"{yaml_record.id}.apworld")
 
-    existing_apworlds = select(
-        a for a in LobbyApworld
-        if a.lobby == lobby and a.game_name == game_name
-    )[:]
+    existing_apworlds = db.session.scalars(
+        select(LobbyApworld).where(
+            LobbyApworld.lobby_id == lobby.id,
+            LobbyApworld.game_name == game_name,
+        )
+    ).all()
     for existing in existing_apworlds:
         _delete_apworld_file(existing)
         existing.delete()
@@ -675,8 +830,8 @@ def _replace_active_apworld(
         out.write(apworld_data)
 
     LobbyApworld(
-        lobby=lobby,
-        yaml=yaml_record,
+        lobby_id=lobby.id,
+        yaml_id=yaml_record.id,
         game_name=game_name,
         original_filename=original_filename,
         storage_path=storage_path,
@@ -689,7 +844,7 @@ def _replace_active_apworld(
         if victim_yaml_id == yaml_record.id:
             continue
         victim = LobbyYaml.get(id=victim_yaml_id)
-        if victim and victim.lobby == lobby and victim.yaml_game == game_name:
+        if victim and victim.lobby_id == lobby.id and victim.yaml_game == game_name:
             _delete_yaml_record(
                 victim,
                 f"incompatible with APWorld v{world_version}" if world_version else
@@ -714,9 +869,9 @@ def _create_pending_apworld_request(
         out.write(apworld_data)
 
     request_record = LobbyApworldRequest(
-        lobby=lobby,
-        yaml=yaml_record,
-        requester=player,
+        lobby_id=lobby.id,
+        yaml_id=yaml_record.id,
+        requester_id=player.id,
         game_name=yaml_record.yaml_game or "",
         original_filename=original_filename,
         storage_path=temp_path,
@@ -783,7 +938,42 @@ def _expire_lobby_if_needed(lobby: Lobby) -> None:
 
 
 def _get_player_in_lobby(lobby: Lobby) -> LobbyPlayer | None:
-    return LobbyPlayer.get(lobby=lobby, session_id=session["_id"])
+    return db.session.scalars(
+        select(LobbyPlayer).where(
+            LobbyPlayer.lobby_id == lobby.id,
+            LobbyPlayer.session_id == session["_id"],
+        ).limit(1)
+    ).first()
+
+
+def _auxiliary_apworld_games() -> list[str]:
+    """Configured world-name prefixes whose YAMLs may carry auxiliary APWorlds."""
+    return [prefix for prefix in (app.config.get("LOBBY_AUXILIARY_APWORLD_GAMES") or [])
+            if isinstance(prefix, str) and prefix]
+
+
+def _can_remove_auxiliary(lobby: Lobby, auxiliary: LobbyAuxiliaryApworld) -> bool:
+    session_id = session.get("_id")
+    return session_id is not None and (auxiliary.uploader == session_id or is_authorized(lobby, session_id))
+
+
+def _meta_yaml_content(lobby: Lobby) -> bytes:
+    content = lobby.meta_yaml.content
+    return bytes(content) if isinstance(content, (memoryview, bytearray)) else content
+
+
+def _get_lobby_owner_name(lobby: Lobby) -> str | None:
+    owner_player = LobbyPlayer.get(lobby=lobby, session_id=lobby.owner)
+    return owner_player.player_name if owner_player else None
+
+
+def _lobby_meta_with_host_display_name(lobby: Lobby) -> dict:
+    meta = json.loads(lobby.meta)
+    owner_name = _get_lobby_owner_name(lobby)
+    if owner_name and meta.get("host_display_name") != owner_name:
+        meta["host_display_name"] = owner_name
+        lobby.meta = json.dumps(meta)
+    return meta
 
 
 @api_endpoints.route('/lobbies/eligible', methods=['GET'])
@@ -793,7 +983,9 @@ def eligible_lobbies():
     if not session_id:
         return jsonify([])
 
-    memberships = select(p for p in LobbyPlayer if p.session_id == session_id)[:]
+    memberships = db.session.scalars(
+        select(LobbyPlayer).where(LobbyPlayer.session_id == session_id)
+    ).all()
     result = []
     expired_any = False
     for player in memberships:
@@ -806,8 +998,7 @@ def eligible_lobbies():
             continue
         remaining = lobby.max_yamls_per_player - len(player.yamls)
         if remaining > 0:
-            owner_player = LobbyPlayer.get(lobby=lobby, session_id=lobby.owner)
-            owner_name = owner_player.player_name if owner_player else "Unknown"
+            owner_name = _get_lobby_owner_name(lobby) or "Unknown"
             result.append({
                 "id": str(lobby.id),
                 "title": lobby.title,
@@ -830,7 +1021,9 @@ def lobby_ping(lobby: UUID):
     if lobby.state != old_state:
         commit()
 
-    latest_msg_id = select(max(m.id) for m in LobbyMessage if m.lobby == lobby).first() or 0
+    latest_msg_id = db.session.scalar(
+        select(func.max(LobbyMessage.id)).where(LobbyMessage.lobby_id == lobby.id)
+    ) or 0
     version = f"{int(lobby.last_activity.timestamp() * 1000)}-{latest_msg_id}"
 
     return jsonify({"state": lobby.state, "version": version})
@@ -849,36 +1042,42 @@ def lobby_status(lobby: UUID):
 
     after_message_id = request.args.get('after_message', 0, type=int)
 
-    player_rows = select(
-        p for p in LobbyPlayer if p.lobby == lobby
-    ).order_by(LobbyPlayer.joined_at)[:]
+    player_rows = db.session.scalars(
+        select(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id).order_by(LobbyPlayer.joined_at)
+    ).all()
 
     from worlds.AutoWorld import AutoWorldRegister
     yamls_by_player: dict[int, list] = {}
-    yaml_player_map = select(
-        (y.id, y.filename, y.yaml_player_name, y.yaml_game, y.player.id, y.is_custom, y.requires_game_version)
-        for y in LobbyYaml if y.lobby == lobby
-    ).order_by(lambda i, f, n, g, p, ic, rv: i)[:]
+    yaml_rows = db.session.execute(
+        select(
+            LobbyYaml.id, LobbyYaml.filename, LobbyYaml.yaml_player_name,
+            LobbyYaml.yaml_game, LobbyYaml.player_id, LobbyYaml.is_custom,
+            LobbyYaml.requires_game_version,
+        ).where(LobbyYaml.lobby_id == lobby.id).order_by(LobbyYaml.id)
+    ).all()
 
-    yaml_ids_with_pending_request = set(select(
-        r.yaml.id for r in LobbyApworldRequest if r.lobby == lobby
-    )[:])
+    yaml_ids_with_pending_request = set(db.session.scalars(
+        select(LobbyApworldRequest.yaml_id).where(LobbyApworldRequest.lobby_id == lobby.id)
+    ).all())
 
-    apworlds_list = select(a for a in LobbyApworld if a.lobby == lobby)[:]
+    apworlds_list = db.session.scalars(
+        select(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+    ).all()
     apworld_by_yaml_id = {}
     apworld_by_game: dict[str, dict] = {}
     for a in apworlds_list:
         entry = {"game_name": a.game_name, "filename": a.original_filename,
                  "file_size": a.file_size, "world_version": a.world_version}
-        apworld_by_yaml_id[a.yaml.id] = entry
+        apworld_by_yaml_id[a.yaml_id] = entry
         apworld_by_game.setdefault(a.game_name, entry)
 
-    has_custom = False
-    for y_id, y_filename, y_pname, y_game, p_id, y_is_custom, y_requires_version in yaml_player_map:
+    auxiliaries = _auxiliary_apworlds(lobby)
+    has_custom = bool(auxiliaries)
+    for y_id, y_filename, y_pname, y_game, p_id, y_is_custom, y_requires_version in yaml_rows:
         if y_is_custom:
             has_custom = True
         elif y_id in apworld_by_yaml_id:
-            # Standard YAML with an upgrade apworld uploaded — also requires local generation
+            # Standard YAML with an upgrade apworld uploaded - also requires local generation
             has_custom = True
         yaml_info = {"id": y_id, "filename": y_filename, "is_custom": y_is_custom}
         if y_pname:
@@ -892,6 +1091,18 @@ def lobby_status(lobby: UUID):
             yaml_info["apworld_is_own"] = True
         elif y_game and y_game in apworld_by_game:
             yaml_info["apworld"] = apworld_by_game[y_game]
+        active_apworld_info = yaml_info.get("apworld")
+        if active_apworld_info and y_requires_version and active_apworld_info.get("world_version"):
+            try:
+                active_apworld_version = tuplize_version(str(active_apworld_info["world_version"]))
+                if _version_mismatch_direction(y_requires_version, active_apworld_version):
+                    yaml_info["apworld_version_warning"] = (
+                        f"requires v{_required_version_label(y_requires_version)}, "
+                        f"APWorld has v{active_apworld_info['world_version']}"
+                    )
+                    yaml_info["apworld_replacement_required"] = True
+            except Exception:
+                pass
         if y_id in yaml_ids_with_pending_request:
             yaml_info["apworld_request_pending"] = True
         if y_requires_version:
@@ -923,28 +1134,36 @@ def lobby_status(lobby: UUID):
             "yamls": yamls_by_player.get(p.id, []),
         })
 
-    messages = select(
-        m for m in LobbyMessage
-        if m.lobby == lobby and m.id > after_message_id
-    ).order_by(LobbyMessage.id)[:200]
+    messages = db.session.scalars(
+        select(LobbyMessage).where(
+            LobbyMessage.lobby_id == lobby.id,
+            LobbyMessage.id > after_message_id,
+        ).order_by(LobbyMessage.id).limit(200)
+    ).all()
 
     message_list = [{
         "id": m.id,
         "sender": m.sender_name,
         "content": m.content,
         "time": m.sent_at.isoformat() + "Z",
-        "system": m.player is None,
+        "system": m.player_id is None,
     } for m in messages]
 
-    total_yamls = len(yaml_player_map)
+    total_yamls = len(yaml_rows)
 
-    latest_msg_id = select(max(m.id) for m in LobbyMessage if m.lobby == lobby).first() or 0
+    latest_msg_id = db.session.scalar(
+        select(func.max(LobbyMessage.id)).where(LobbyMessage.lobby_id == lobby.id)
+    ) or 0
     version = f"{int(lobby.last_activity.timestamp() * 1000)}-{latest_msg_id}"
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
-    pending_request_count = count(r for r in LobbyApworldRequest if r.lobby == lobby)
+    pending_request_count = db.session.scalar(
+        select(func.count()).select_from(LobbyApworldRequest).where(
+            LobbyApworldRequest.lobby_id == lobby.id
+        )
+    ) or 0
 
     result = {
         "state": lobby.state,
@@ -959,14 +1178,25 @@ def lobby_status(lobby: UUID):
         "max_players": lobby.max_players,
         "timeout_minutes": lobby.timeout_minutes,
         "allow_custom_apworlds": lobby.allow_custom_apworlds,
+        "unlisted": bool(meta.get("unlisted")),
+        "meta_yaml": {"filename": "meta.yaml", "uploaded_at": lobby.meta_yaml.uploaded_at.isoformat() + "Z"}
+                     if lobby.meta_yaml else None,
+        "auxiliary_apworld_games": _auxiliary_apworld_games(),
+        "auxiliary_apworld_limit": AUXILIARY_APWORLD_LIMIT,
+        "auxiliary_apworlds": [
+            {"id": a.id, "game_name": a.game_name, "filename": a.original_filename,
+             "file_size": a.file_size, "can_delete": _can_remove_auxiliary(lobby, a)}
+            for a in auxiliaries
+        ],
         "has_custom": has_custom,
+        "force_local_generation": has_custom or total_yamls > LOBBY_LOCAL_GENERATION_YAML_LIMIT,
         "race": lobby.race,
         "server_opts": server_opts,
         "gen_opts": gen_opts,
         "pending_request_count": pending_request_count,
         "last_activity": lobby.last_activity.isoformat() + "Z",
         "apworlds": [
-            {"yaml_id": a.yaml.id, "game_name": a.game_name,
+            {"yaml_id": a.yaml_id, "game_name": a.game_name,
              "filename": a.original_filename, "file_size": a.file_size,
              "world_version": a.world_version}
             for a in apworlds_list
@@ -975,31 +1205,33 @@ def lobby_status(lobby: UUID):
 
     if lobby.state == LOBBY_DONE:
         from WebHostLib import to_url
-        if lobby.seed:
-            result["seed_id"] = to_url(lobby.seed.id)
-        if lobby.room:
-            result["room_id"] = to_url(lobby.room.id)
+        if lobby.seed_id:
+            result["seed_id"] = to_url(lobby.seed_id)
+        if lobby.room_id:
+            result["room_id"] = to_url(lobby.room_id)
         session_id = session.get("_id")
-        is_owner = session_id == lobby.owner
+        is_owner = is_authorized(lobby, session_id) if session_id else False
         if is_owner:
-            pw = server_opts.get("server_password")
+            pw = server_opts.get("admin_password")
             if pw:
-                result["server_password"] = pw
+                result["admin_password"] = pw
 
     if lobby.state == LOBBY_GENERATING and lobby.generation_id:
         gen_id = lobby.generation_id
         seed = Seed.get(id=gen_id)
         if seed:
             if lobby.state == LOBBY_GENERATING:
-                lobby.seed = seed
-                room = Room(seed=seed, owner=lobby.owner, tracker=uuid4())
-                lobby.room = room
+                lobby.seed_id = seed.id
+                room = Room(seed_id=seed.id, owner=lobby.owner, tracker=uuid4())
+                assign_short_id(db.session, room)
+                flush()
+                lobby.room_id = room.id
                 lobby.state = LOBBY_DONE
                 lobby.generation_id = None
                 _cancel_all_pending_requests(lobby, "lobby finished generation")
                 LobbyMessage(
-                    lobby=lobby,
-                    player=None,
+                    lobby_id=lobby.id,
+                    player_id=None,
                     sender_name="System",
                     content="Seed generated! Room is ready.",
                 )
@@ -1009,10 +1241,10 @@ def lobby_status(lobby: UUID):
                     return jsonify(result)
             from WebHostLib import to_url
             result["state"] = LOBBY_DONE
-            if lobby.seed:
-                result["seed_id"] = to_url(lobby.seed.id)
-            if lobby.room:
-                result["room_id"] = to_url(lobby.room.id)
+            if lobby.seed_id:
+                result["seed_id"] = to_url(lobby.seed_id)
+            if lobby.room_id:
+                result["room_id"] = to_url(lobby.room_id)
         else:
             gen = Generation.get(id=gen_id)
             if gen and gen.state == -1:  # STATE_ERROR
@@ -1021,8 +1253,8 @@ def lobby_status(lobby: UUID):
                 lobby.state = LOBBY_OPEN
                 lobby.generation_id = None
                 LobbyMessage(
-                    lobby=lobby,
-                    player=None,
+                    lobby_id=lobby.id,
+                    player_id=None,
                     sender_name="System",
                     content=f"Generation failed: {error}",
                 )
@@ -1033,8 +1265,8 @@ def lobby_status(lobby: UUID):
                 lobby.state = LOBBY_OPEN
                 lobby.generation_id = None
                 LobbyMessage(
-                    lobby=lobby,
-                    player=None,
+                    lobby_id=lobby.id,
+                    player_id=None,
                     sender_name="System",
                     content="Generation failed unexpectedly. Please try again.",
                 )
@@ -1052,7 +1284,10 @@ def lobby_upload_yaml(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
+    old_state = lobby.state
     _expire_lobby_if_needed(lobby)
+    if lobby.state != old_state:
+        commit()
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not accepting uploads"}), 400
 
@@ -1069,12 +1304,12 @@ def lobby_upload_yaml(lobby: UUID):
 
     files = request.files.getlist('file')
     if not files:
-        return jsonify({"error": "No file provided"}), 400 
+        return jsonify({"error": "No file provided"}), 400
     remaining = lobby.max_yamls_per_player - current_count
     if len(files) > remaining:
         return jsonify({"error": f"You can only upload {remaining} more YAML(s)"}), 400
 
-    # Reject zip files — zips are only accepted at the pregenerated-game upload step.
+    # Reject zip files - zips are only accepted at the pregenerated-game upload step.
     for f in files:
         if f.filename.endswith(".zip"):
             return jsonify({"error": f"'{f.filename}' is a .zip file. "
@@ -1097,6 +1332,18 @@ def lobby_upload_yaml(lobby: UUID):
             }), 400
     options = expanded
 
+    existing_yamls = db.session.scalars(
+        select(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id)
+    ).all()
+    player_count = len(existing_yamls) + len(options)
+    name_error = _yaml_player_name_length_error(options, player_count)
+    if not name_error:
+        # Adding slots can increase the number of digits in an existing template.
+        name_error = _yaml_player_name_length_error(
+            {f"{y.id}/{y.filename}": y.content for y in existing_yamls}, player_count)
+    if name_error:
+        return jsonify({"error": name_error}), 400
+
     force_custom_filenames = set(request.form.getlist("force_custom_file"))
 
     from worlds.AutoWorld import AutoWorldRegister
@@ -1110,7 +1357,7 @@ def lobby_upload_yaml(lobby: UUID):
         requires_versions[filename] = requires_version
 
         if game and game not in AutoWorldRegister.world_types:
-            # Completely unknown game — always requires custom APWorld
+            # Completely unknown game - always requires custom APWorld
             if not lobby.allow_custom_apworlds:
                 return jsonify({
                     "error": f"Game '{game}' is not supported on this server. "
@@ -1121,7 +1368,7 @@ def lobby_upload_yaml(lobby: UUID):
             custom_info[filename] = (player_name, game)
 
         elif game and requires_version:
-            # Known game but YAML declares a version requirement — check it
+            # Known game but YAML declares a version requirement - check it
             server_wv = AutoWorldRegister.world_types[game].world_version
             direction = _version_mismatch_direction(requires_version, server_wv)
 
@@ -1140,7 +1387,7 @@ def lobby_upload_yaml(lobby: UUID):
                 upgrade_info[filename] = (player_name, game)
 
             elif direction == "older":
-                # YAML was built for an older world than the server has — accept it either way,
+                # YAML was built for an older world than the server has - accept it either way,
                 # the version_warning in status will surface the mismatch to the user.
                 standard_options[filename] = content
 
@@ -1159,7 +1406,7 @@ def lobby_upload_yaml(lobby: UUID):
                 standard_options[filename] = content
                 standard_info[filename] = (player_name, game or "")
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     plando_options = set(meta.get("plando_options", []))
     new_names: dict[str, str] = {}
     new_games: dict[str, str] = {}
@@ -1206,6 +1453,9 @@ def lobby_upload_yaml(lobby: UUID):
     # Check for duplicates within the uploaded batch
     seen_names: dict[str, str] = {}
     for filename, name in new_names.items():
+        name_error = _player_name_length_error(name, filename, player_count)
+        if name_error:
+            return jsonify({"error": name_error}), 400
         if _has_name_template(name):
             continue
         if name in seen_names:
@@ -1216,10 +1466,7 @@ def lobby_upload_yaml(lobby: UUID):
         seen_names[name] = filename
 
     # Check against existing YAMLs in the lobby
-    existing_names = set(select(
-        y.yaml_player_name for y in LobbyYaml
-        if y.lobby == lobby and y.yaml_player_name is not None
-    )[:])
+    existing_names = {y.yaml_player_name for y in existing_yamls if y.yaml_player_name}
     for filename, name in new_names.items():
         if _has_name_template(name):
             continue
@@ -1229,7 +1476,7 @@ def lobby_upload_yaml(lobby: UUID):
             }), 400
 
     active_apworld_games: dict[str, tuple[str, str | None]] = {}
-    for a in select(a for a in LobbyApworld if a.lobby == lobby):
+    for a in db.session.scalars(select(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)).all():
         server_ver = _server_world_version_for_game(a.game_name)
         server_label = f"v{server_ver.as_simple_string()}" if server_ver else None
         apworld_label = f"v{a.world_version}" if a.world_version else "custom"
@@ -1270,8 +1517,8 @@ def lobby_upload_yaml(lobby: UUID):
             active_apworld_notices.append(f"{game}: custom APWorld {diff}")
 
         yaml_record = LobbyYaml(
-            lobby=lobby,
-            player=player,
+            lobby_id=lobby.id,
+            player_id=player.id,
             filename=filename,
             yaml_player_name=new_names.get(filename),
             yaml_game=game,
@@ -1292,8 +1539,8 @@ def lobby_upload_yaml(lobby: UUID):
     player.is_ready = False
     if uploaded:
         LobbyMessage(
-            lobby=lobby,
-            player=None,
+            lobby_id=lobby.id,
+            player_id=None,
             sender_name="System",
             content=f"{player.player_name} uploaded {len(uploaded)} YAML(s): {', '.join(yaml_summaries)}.",
         )
@@ -1319,7 +1566,7 @@ def lobby_download_yaml(lobby: UUID, yaml_id: int):
         return jsonify({"error": "Lobby not found"}), 404
 
     yaml_record = LobbyYaml.get(id=yaml_id)
-    if not yaml_record or yaml_record.lobby != lobby:
+    if not yaml_record or yaml_record.lobby_id != lobby.id:
         return jsonify({"error": "YAML not found"}), 404
 
     player = _get_player_in_lobby(lobby)
@@ -1357,17 +1604,17 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
         return jsonify({"error": "Cannot modify YAMLs in current lobby state"}), 400
 
     yaml_record = LobbyYaml.get(id=yaml_id)
-    if not yaml_record or yaml_record.lobby != lobby:
+    if not yaml_record or yaml_record.lobby_id != lobby.id:
         return jsonify({"error": "YAML not found"}), 404
 
     player = _get_player_in_lobby(lobby)
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
 
     # Only the YAML owner or lobby owner can delete
-    if not player or (yaml_record.player != player and not is_owner):
+    if not player or (yaml_record.player_id != player.id and not is_owner):
         return jsonify({"error": "Permission denied"}), 403
 
-    if yaml_record.player == player:
+    if yaml_record.player_id == player.id:
         delete_reason = "manually removed"
     else:
         deleter_name = player.player_name if player else "Host"
@@ -1380,6 +1627,43 @@ def lobby_delete_yaml(lobby: UUID, yaml_id: int):
     return jsonify({"success": True})
 
 
+@api_endpoints.route('/lobby/<suuid:lobby>/yamls', methods=['DELETE'])
+def lobby_delete_all_yamls(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+
+    if not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "Only the lobby owner can remove all YAMLs"}), 403
+
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot modify YAMLs in current lobby state"}), 400
+
+    yaml_records = db.session.scalars(
+        select(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id)
+    ).all()
+    deleted_count = len(yaml_records)
+    for yaml_record in yaml_records:
+        _delete_yaml_record(yaml_record)
+
+    if deleted_count:
+        owner_name = db.session.scalar(
+            select(LobbyPlayer.player_name)
+            .where(LobbyPlayer.lobby_id == lobby.id, LobbyPlayer.session_id == lobby.owner)
+            .limit(1)
+        ) or "Host"
+        LobbyMessage(
+            lobby_id=lobby.id,
+            player_id=None,
+            sender_name="System",
+            content=f"All YAMLs were removed by host {owner_name}.",
+        )
+        lobby.last_activity = utcnow()
+        commit()
+
+    return jsonify({"success": True, "deleted_count": deleted_count})
+
+
 @api_endpoints.route('/lobby/<suuid:lobby>/message/<int:message_id>', methods=['DELETE'])
 @limiter.limit("30 per minute")
 def lobby_delete_message(lobby: UUID, message_id: int):
@@ -1387,20 +1671,20 @@ def lobby_delete_message(lobby: UUID, message_id: int):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can delete messages"}), 403
 
     msg = LobbyMessage.get(id=message_id)
-    if not msg or msg.lobby != lobby:
+    if not msg or msg.lobby_id != lobby.id:
         return jsonify({"error": "Message not found"}), 404
 
-    if msg.player is None:
+    if msg.player_id is None:
         return jsonify({"error": "Cannot delete system messages"}), 400
 
     owner_player = _get_player_in_lobby(lobby)
     owner_name = owner_player.player_name if owner_player else "Host"
 
-    msg.player = None
+    msg.player_id = None
     msg.sender_name = "System"
     msg.content = f"Message deleted by {owner_name}."
     lobby.last_activity = utcnow()
@@ -1430,8 +1714,8 @@ def lobby_chat(lobby: UUID):
         return jsonify({"error": "Message too long (max 500 characters)"}), 400
 
     msg = LobbyMessage(
-        lobby=lobby,
-        player=player,
+        lobby_id=lobby.id,
+        player_id=player.id,
         sender_name=player.player_name,
         content=content,
     )
@@ -1461,19 +1745,27 @@ def lobby_toggle_ready(lobby: UUID):
     if not player:
         return jsonify({"error": "You are not in this lobby"}), 403
 
-    if not player.is_ready and not select(y for y in LobbyYaml if y.lobby == lobby and y.player == player).exists():
+    has_yaml = db.session.scalar(
+        select(func.count()).select_from(LobbyYaml).where(
+            LobbyYaml.lobby_id == lobby.id,
+            LobbyYaml.player_id == player.id,
+        )
+    ) or 0
+    if not player.is_ready and not has_yaml:
         return jsonify({"error": "Upload at least one YAML before marking ready"}), 400
 
     player.is_ready = not player.is_ready
     lobby.last_activity = utcnow()
 
-    all_players = select(p for p in LobbyPlayer if p.lobby == lobby)[:]
+    all_players = db.session.scalars(
+        select(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
+    ).all()
     ready_count = sum(1 for p in all_players if p.is_ready)
     total_count = len(all_players)
     status = "ready" if player.is_ready else "not ready"
     LobbyMessage(
-        lobby=lobby,
-        player=None,
+        lobby_id=lobby.id,
+        player_id=None,
         sender_name="System",
         content=f"{player.player_name} is {status} ({ready_count}/{total_count})",
     )
@@ -1488,24 +1780,45 @@ def lobby_generate(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can generate"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not in a state to generate"}), 400
 
     # Block generation when custom YAMLs are present, or when any YAML has an upgrade apworld
-    custom_yamls = select(y for y in LobbyYaml if y.lobby == lobby and y.is_custom)[:]
-    upgrade_apworlds = select(a for a in LobbyApworld if a.lobby == lobby and not a.yaml.is_custom)[:]
-    if custom_yamls or upgrade_apworlds:
+    custom_yamls = db.session.scalars(
+        select(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id, LobbyYaml.is_custom == True)
+    ).all()
+    upgrade_apworlds = db.session.scalars(
+        select(LobbyApworld).where(
+            LobbyApworld.lobby_id == lobby.id,
+        ).where(
+            LobbyApworld.yaml_id.in_(
+                select(LobbyYaml.id).where(
+                    LobbyYaml.lobby_id == lobby.id,
+                    LobbyYaml.is_custom == False,
+                )
+            )
+        )
+    ).all()
+    if custom_yamls or upgrade_apworlds or _auxiliary_apworlds(lobby):
         return jsonify({
             "error": "Cannot generate: lobby contains custom APWorld YAMLs. "
                      "Use 'Download Package' to generate locally, then upload the result."
         }), 400
 
-    all_yamls = select(y for y in LobbyYaml if y.lobby == lobby).order_by(LobbyYaml.id)[:]
+    all_yamls = db.session.scalars(
+        select(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id).order_by(LobbyYaml.id)
+    ).all()
     if not all_yamls:
         return jsonify({"error": "No YAMLs uploaded yet"}), 400
+
+    if len(all_yamls) > LOBBY_LOCAL_GENERATION_YAML_LIMIT:
+        return jsonify({
+            "error": f"Lobbies with more than {LOBBY_LOCAL_GENERATION_YAML_LIMIT} YAMLs must be generated locally. "
+                     "Use 'Download Package', generate locally, then upload the result."
+        }), 400
 
     if len(all_yamls) > app.config["MAX_ROLL"]:
         return jsonify({
@@ -1517,25 +1830,38 @@ def lobby_generate(lobby: UUID):
         unique_key = f"{yaml_record.player.player_name}_{yaml_record.id}_{yaml_record.filename}"
         options[unique_key] = yaml_record.content
 
+    name_error = _yaml_player_name_length_error(options, len(all_yamls))
+    if name_error:
+        return jsonify({"error": name_error}), 400
+
     # Validate all options together
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
     plando_options = set(meta.get("plando_options", []))
-    results, gen_options = roll_options(options, plando_options)
+    try:
+        meta_weights = parse_meta_yaml(_meta_yaml_content(lobby)) if lobby.meta_yaml else None
+    except (ValueError, TypeError, yaml.YAMLError) as exc:
+        return jsonify({"error": f"Invalid meta.yaml: {exc}"}), 400
+    results, gen_options = roll_options(options, plando_options, meta_weights=meta_weights)
 
     errors = {k: v for k, v in results.items() if isinstance(v, str)}
     if errors:
         error_msg = "; ".join(errors.values())
         LobbyMessage(
-            lobby=lobby, player=None, sender_name="System",
+            lobby_id=lobby.id, player_id=None, sender_name="System",
             content=f"Generation validation failed: {error_msg}",
         )
         commit()
         return jsonify({"error": error_msg}), 400
 
+    for filename, rolled_opts in gen_options.items():
+        name_error = _player_name_length_error(getattr(rolled_opts, 'name', None), filename, len(all_yamls))
+        if name_error:
+            return jsonify({"error": name_error}), 400
+
     pre_generate_state = lobby.state
     lobby.state = LOBBY_GENERATING
     LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
+        lobby_id=lobby.id, player_id=None, sender_name="System",
         content="Seed generation started...",
     )
     lobby.last_activity = utcnow()
@@ -1544,6 +1870,10 @@ def lobby_generate(lobby: UUID):
     from pickle import PicklingError
     from Utils import restricted_dumps
     try:
+        # Stash the per-player game list in meta so the autogen worker can
+        # call set_game_names BEFORE restricted_loads imports worlds
+        gen_games = [vars(opts).get("game") for opts in gen_options.values()]
+        meta = {**meta, "games": [g for g in gen_games if g]}
         gen = Generation(
             options=restricted_dumps({name: vars(opts) for name, opts in gen_options.items()}),
             meta=json.dumps(meta),
@@ -1557,7 +1887,7 @@ def lobby_generate(lobby: UUID):
         lobby.state = pre_generate_state
         lobby.generation_id = None
         LobbyMessage(
-            lobby=lobby, player=None, sender_name="System",
+            lobby_id=lobby.id, player_id=None, sender_name="System",
             content=f"Generation failed: {e}",
         )
         commit()
@@ -1572,7 +1902,7 @@ def lobby_update_settings(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can update settings"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -1599,14 +1929,16 @@ def lobby_update_settings(lobby: UUID):
 
     if "max_yamls_per_player" in data:
         try:
-            new_max_yamls = max(1, min(int(data["max_yamls_per_player"]), 20))
-            counts = select(
-                (y.player.id, count(y))
-                for y in LobbyYaml if y.lobby == lobby and y.player is not None
-            )[:]
+            new_max_yamls = max(1, min(int(data["max_yamls_per_player"]), 100))
+            counts = db.session.execute(
+                select(LobbyYaml.player_id, func.count(LobbyYaml.id)).where(
+                    LobbyYaml.lobby_id == lobby.id,
+                    LobbyYaml.player_id.isnot(None),
+                ).group_by(LobbyYaml.player_id)
+            ).all()
             max_currently_held = max((c for _, c in counts), default=0)
             if new_max_yamls < max_currently_held:
-                return jsonify({"error": f"Cannot lower max YAMLs below {max_currently_held} — a player already has that many."}), 400
+                return jsonify({"error": f"Cannot lower max YAMLs below {max_currently_held} - a player already has that many."}), 400
             lobby.max_yamls_per_player = new_max_yamls
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid max_yamls_per_player"}), 400
@@ -1615,9 +1947,11 @@ def lobby_update_settings(lobby: UUID):
         try:
             new_max = max(0, min(int(data["max_players"]), 100))
             if new_max > 0:
-                current_count = count(p for p in LobbyPlayer if p.lobby == lobby)
+                current_count = db.session.scalar(
+                    select(func.count()).select_from(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
+                ) or 0
                 if new_max < current_count:
-                    return jsonify({"error": f"Cannot set max players to {new_max} — lobby already has {current_count} players."}), 400
+                    return jsonify({"error": f"Cannot set max players to {new_max} - lobby already has {current_count} players."}), 400
             lobby.max_players = new_max
         except (ValueError, TypeError):
             return jsonify({"error": "Invalid max_players"}), 400
@@ -1632,6 +1966,9 @@ def lobby_update_settings(lobby: UUID):
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
 
+    if "unlisted" in data:
+        meta["unlisted"] = bool(data["unlisted"])
+
     _release  = {"auto", "goal", "auto-enabled", "enabled", "disabled"}
     _collect  = {"auto", "goal", "auto-enabled", "enabled", "disabled"}
     _remaining = {"goal", "enabled", "disabled"}
@@ -1642,6 +1979,11 @@ def lobby_update_settings(lobby: UUID):
         server_opts["release_mode"] = data["release_mode"]
     if data.get("collect_mode") in _collect:
         server_opts["collect_mode"] = data["collect_mode"]
+    if "release_threshold" in data:
+        try:
+            server_opts["release_threshold"] = max(0, min(int(data["release_threshold"]), 100))
+        except (ValueError, TypeError):
+            pass
     if data.get("remaining_mode") in _remaining:
         if lobby.race:
             server_opts["remaining_mode"] = "disabled"
@@ -1654,7 +1996,7 @@ def lobby_update_settings(lobby: UUID):
 
     if "hint_cost" in data:
         try:
-            server_opts["hint_cost"] = max(0, min(int(data["hint_cost"]), 105))
+            server_opts["hint_cost"] = max(0, min(int(data["hint_cost"]), 100))
         except (ValueError, TypeError):
             pass
 
@@ -1667,14 +2009,20 @@ def lobby_update_settings(lobby: UUID):
         except (ValueError, TypeError):
             pass
 
+    if "progression_equalization" in data:
+        try:
+            gen_opts["progression_equalization"] = max(0, min(int(data["progression_equalization"]), 100))
+        except (ValueError, TypeError):
+            pass
+
     meta["server_options"] = server_opts
     meta["generator_options"] = gen_opts
     lobby.meta = json.dumps(meta)
     lobby.last_activity = utcnow()
 
     LobbyMessage(
-        lobby=lobby,
-        player=None,
+        lobby_id=lobby.id,
+        player_id=None,
         sender_name="System",
         content=(
             "Lobby settings were updated by the host. Custom APWorlds have been enabled."
@@ -1706,13 +2054,13 @@ def lobby_leave(lobby: UUID):
 
     name = player.player_name
     for m in player.messages:
-        m.player = None
+        m.player_id = None
     for y in list(player.yamls):
         _delete_yaml_record(y, "player left the lobby")
     player.delete()
 
     LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
+        lobby_id=lobby.id, player_id=None, sender_name="System",
         content=f"{name} left the lobby.",
     )
     lobby.last_activity = utcnow()
@@ -1727,14 +2075,14 @@ def lobby_kick(lobby: UUID, player_id: int):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can kick players"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Cannot kick players in current state"}), 400
 
     target = LobbyPlayer.get(id=player_id)
-    if not target or target.lobby != lobby:
+    if not target or target.lobby_id != lobby.id:
         return jsonify({"error": "Player not found"}), 404
 
     if target.session_id == lobby.owner:
@@ -1742,13 +2090,13 @@ def lobby_kick(lobby: UUID, player_id: int):
 
     name = target.player_name
     for m in target.messages:
-        m.player = None
+        m.player_id = None
     for y in list(target.yamls):
         _delete_yaml_record(y, "player was kicked from the lobby")
     target.delete()
 
     LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
+        lobby_id=lobby.id, player_id=None, sender_name="System",
         content=f"{name} was kicked from the lobby.",
     )
     lobby.last_activity = utcnow()
@@ -1763,21 +2111,26 @@ def lobby_close(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can close the lobby"}), 403
 
     if lobby.state == LOBBY_CLOSED:
         return jsonify({"error": "Lobby is already closed"}), 400
 
-    _cancel_all_pending_requests(lobby, "lobby was closed")
-    lobby.state = LOBBY_CLOSED
-    LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
-        content="The lobby was abandoned by the host.",
-    )
+    close_lobby(lobby)
     commit()
 
     return jsonify({"success": True})
+
+
+def close_lobby(lobby: Lobby) -> None:
+    """Close the lobby and tell its players the host left; the caller commits."""
+    _cancel_all_pending_requests(lobby, "lobby was closed")
+    lobby.state = LOBBY_CLOSED
+    LobbyMessage(
+        lobby_id=lobby.id, player_id=None, sender_name="System",
+        content="The lobby was abandoned by the host.",
+    )
 
 
 @api_endpoints.route('/lobby/<suuid:lobby>/reopen', methods=['POST'])
@@ -1786,33 +2139,27 @@ def lobby_reopen(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can reopen the lobby"}), 403
 
     if lobby.state != LOBBY_DONE:
         return jsonify({"error": "Only finished lobbies can be reopened"}), 400
 
-    room = lobby.room
-    seed = lobby.seed
-    lobby.room = None
-    lobby.seed = None
+    lobby.room_id = None
+    lobby.seed_id = None
     lobby.generation_id = None
     lobby.state = LOBBY_OPEN
     lobby.last_activity = utcnow()
 
-    for player in select(p for p in LobbyPlayer if p.lobby == lobby):
+    for player in db.session.scalars(
+        select(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
+    ).all():
         player.is_ready = False
 
-    if room:
-        room.delete()
-    if seed and not seed.rooms and not seed.lobbies:
-        for slot in list(seed.slots):
-            slot.delete()
-        seed.delete()
-
     LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
-        content="The lobby has been reopened by the host. Previous seed and room data were removed.",
+        lobby_id=lobby.id, player_id=None, sender_name="System",
+        content="The lobby has been reopened by the host. The previous seed and room stay available "
+                "but are no longer linked to this lobby.",
     )
     commit()
 
@@ -1825,7 +2172,7 @@ def lobby_lock(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can lock/unlock the lobby"}), 403
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
@@ -1834,13 +2181,13 @@ def lobby_lock(lobby: UUID):
     if lobby.state == LOBBY_OPEN:
         lobby.state = LOBBY_LOCKED
         LobbyMessage(
-            lobby=lobby, player=None, sender_name="System",
+            lobby_id=lobby.id, player_id=None, sender_name="System",
             content="The lobby has been locked by the host. New players can no longer join.",
         )
     else:
         lobby.state = LOBBY_OPEN
         LobbyMessage(
-            lobby=lobby, player=None, sender_name="System",
+            lobby_id=lobby.id, player_id=None, sender_name="System",
             content="The lobby has been unlocked by the host.",
         )
 
@@ -1868,10 +2215,10 @@ def lobby_upload_apworld(lobby: UUID, yaml_id: int):
         return jsonify({"error": "You are not in this lobby"}), 403
 
     yaml_record = LobbyYaml.get(id=yaml_id)
-    if not yaml_record or yaml_record.lobby != lobby:
+    if not yaml_record or yaml_record.lobby_id != lobby.id:
         return jsonify({"error": "YAML not found"}), 404
 
-    if yaml_record.player != player:
+    if yaml_record.player_id != player.id:
         return jsonify({"error": "You can only upload an APWorld for your own YAML"}), 403
 
     content_length = request.content_length
@@ -1989,7 +2336,7 @@ def lobby_upload_apworld(lobby: UUID, yaml_id: int):
             "mode": "preview",
         }), 409
 
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
     affects_other_players = bool(preview["affects_other_players"])
     confirm_impact = (request.form.get("confirm_impact") or "").strip().lower() in {"1", "true", "yes"}
 
@@ -2076,16 +2423,20 @@ def lobby_apworld_requests(lobby: UUID):
     if not player:
         return jsonify({"error": "You are not in this lobby"}), 403
 
-    is_owner = lobby.owner == session["_id"]
+    is_owner = is_authorized(lobby, session["_id"])
     if is_owner:
-        rows = select(
-            r for r in LobbyApworldRequest if r.lobby == lobby
-        ).order_by(LobbyApworldRequest.submitted_at)[:]
+        rows = db.session.scalars(
+            select(LobbyApworldRequest).where(
+                LobbyApworldRequest.lobby_id == lobby.id
+            ).order_by(LobbyApworldRequest.submitted_at)
+        ).all()
     else:
-        rows = select(
-            r for r in LobbyApworldRequest
-            if r.lobby == lobby and r.requester == player
-        ).order_by(LobbyApworldRequest.submitted_at)[:]
+        rows = db.session.scalars(
+            select(LobbyApworldRequest).where(
+                LobbyApworldRequest.lobby_id == lobby.id,
+                LobbyApworldRequest.requester_id == player.id,
+            ).order_by(LobbyApworldRequest.submitted_at)
+        ).all()
 
     return jsonify({
         "requests": [_serialize_apworld_request(r) for r in rows],
@@ -2098,13 +2449,13 @@ def lobby_apworld_request_approve(lobby: UUID, request_id: int):
     lobby = Lobby.get(id=lobby)
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can approve requests"}), 403
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not accepting APWorld changes"}), 400
 
     request_record = LobbyApworldRequest.get(id=request_id)
-    if not request_record or request_record.lobby != lobby:
+    if not request_record or request_record.lobby_id != lobby.id:
         return jsonify({"error": "Request not found"}), 404
 
     payload = request.get_json(silent=True) or {}
@@ -2188,11 +2539,11 @@ def lobby_apworld_request_reject(lobby: UUID, request_id: int):
     lobby = Lobby.get(id=lobby)
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can reject requests"}), 403
 
     request_record = LobbyApworldRequest.get(id=request_id)
-    if not request_record or request_record.lobby != lobby:
+    if not request_record or request_record.lobby_id != lobby.id:
         return jsonify({"error": "Request not found"}), 404
 
     requester_name = request_record.requester.player_name
@@ -2218,11 +2569,11 @@ def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
         return jsonify({"error": "You are not in this lobby"}), 403
 
     request_record = LobbyApworldRequest.get(id=request_id)
-    if not request_record or request_record.lobby != lobby:
+    if not request_record or request_record.lobby_id != lobby.id:
         return jsonify({"error": "Request not found"}), 404
 
-    is_owner = lobby.owner == session["_id"]
-    if not is_owner and request_record.requester != player:
+    is_owner = is_authorized(lobby, session["_id"])
+    if not is_owner and request_record.requester_id != player.id:
         return jsonify({"error": "Permission denied"}), 403
 
     actor = player.player_name
@@ -2238,7 +2589,147 @@ def lobby_apworld_request_cancel(lobby: UUID, request_id: int):
     return jsonify({"success": True})
 
 
+def _reset_lobby_readiness(lobby: Lobby, game_name: str | None = None) -> None:
+    for player in lobby.players:
+        if game_name is None or any(y.yaml_game == game_name for y in player.yamls):
+            player.is_ready = False
+    lobby.last_activity = utcnow()
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/meta-yaml', methods=['GET', 'POST', 'DELETE'])
+def lobby_meta_yaml(lobby: UUID):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if not _get_player_in_lobby(lobby):
+        return jsonify({"error": "You must be in this lobby to access meta.yaml"}), 403
+    if request.method == 'GET':
+        if not lobby.meta_yaml:
+            return jsonify({"error": "No meta.yaml uploaded"}), 404
+        view_only = request.args.get("view") == "1"
+        return send_file(io.BytesIO(_meta_yaml_content(lobby)), download_name="meta.yaml",
+                         as_attachment=not view_only,
+                         mimetype="text/plain; charset=utf-8" if view_only else "application/x-yaml")
+    if not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "Only the lobby owner can change meta.yaml"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot change meta.yaml after generation has started"}), 400
+    if request.method == 'DELETE':
+        if not lobby.meta_yaml:
+            return jsonify({"error": "No meta.yaml uploaded"}), 404
+        lobby.meta_yaml = None
+        action = "removed"
+    else:
+        upload = request.files.get('file')
+        if not upload or not upload.filename.lower().endswith(('.yaml', '.yml')):
+            return jsonify({"error": "Upload a YAML file"}), 400
+        content = upload.read(META_YAML_MAX_SIZE + 1)
+        if len(content) > META_YAML_MAX_SIZE:
+            return jsonify({"error": "meta.yaml must be at most 1 MB"}), 400
+        try:
+            parse_meta_yaml(content)
+        except (ValueError, TypeError, yaml.YAMLError) as exc:
+            return jsonify({"error": f"Invalid meta.yaml: {exc}"}), 400
+        action = "replaced" if lobby.meta_yaml else "uploaded"
+        if lobby.meta_yaml:
+            lobby.meta_yaml.content = content
+            lobby.meta_yaml.uploaded_at = utcnow()
+        else:
+            LobbyMetaYaml(lobby=lobby, content=content)
+    _reset_lobby_readiness(lobby)
+    _lobby_system_message(lobby, f"Host {action} meta.yaml. Player readiness has been reset.")
+    commit()
+    return jsonify({"status": action})
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/auxiliary-apworld/<int:yaml_id>', methods=['POST'])
+@limiter.limit("30 per hour")
+def lobby_upload_auxiliary_apworld(lobby: UUID, yaml_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    player = _get_player_in_lobby(lobby)
+    if not player:
+        return jsonify({"error": "You must be in this lobby to upload an auxiliary APWorld"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Lobby is not accepting uploads"}), 400
+    yaml_record = LobbyYaml.get(id=yaml_id)
+    if not yaml_record or yaml_record.lobby_id != lobby.id:
+        return jsonify({"error": "YAML not found"}), 404
+    if yaml_record.player_id != player.id and not is_authorized(lobby, session["_id"]):
+        return jsonify({"error": "You can only upload auxiliary APWorlds for your own YAML"}), 403
+    game_name = yaml_record.yaml_game or ""
+    allowed_game = any(game_name.startswith(prefix) for prefix in _auxiliary_apworld_games())
+    if not lobby.allow_custom_apworlds or not allowed_game:
+        return jsonify({"error": "Auxiliary APWorlds are not enabled for this world in this lobby"}), 400
+    if len(_auxiliary_apworlds(lobby, game_name)) >= AUXILIARY_APWORLD_LIMIT:
+        return jsonify({"error": f"Each world can have at most {AUXILIARY_APWORLD_LIMIT} auxiliary APWorlds per lobby"}), 400
+    upload = request.files.get('file')
+    if not upload or not upload.filename.lower().endswith('.apworld'):
+        return jsonify({"error": "File must be a .apworld file"}), 400
+    filename = upload.filename.replace('\\', '/').rsplit('/', 1)[-1]
+    if filename != _safe_zip_name(filename) or len(filename) > 255:
+        return jsonify({"error": "Invalid APWorld filename"}), 400
+    content = upload.read(APWORLD_MAX_SIZE + 1)
+    if len(content) > APWORLD_MAX_SIZE:
+        return jsonify({"error": "APWorld must be at most 60 MB"}), 400
+    if not zipfile.is_zipfile(io.BytesIO(content)):
+        return jsonify({"error": "File is not a valid .apworld (must be a ZIP archive)"}), 400
+    filenames = {a.original_filename.casefold() for a in _auxiliary_apworlds(lobby)}
+    for main in lobby.apworlds:
+        try:
+            with open(main.storage_path, 'rb') as source:
+                filenames.add(_apworld_package_filename(main, source.read()).casefold())
+        except OSError:
+            filenames.add(_apworld_package_filename(main).casefold())
+    if filename.casefold() in filenames:
+        return jsonify({"error": "An APWorld with this filename already exists in the lobby"}), 409
+    directory = os.path.join(_apworld_lobby_dir(lobby), 'auxiliary')
+    path = _safe_storage_path(directory, f"{uuid4().hex}.apworld")
+    try:
+        with open(path, 'wb') as target:
+            target.write(content)
+        auxiliary = LobbyAuxiliaryApworld(lobby_id=lobby.id, game_name=game_name, uploader=session["_id"],
+                                         original_filename=filename, storage_path=path, file_size=len(content))
+        _reset_lobby_readiness(lobby, game_name)
+        _lobby_system_message(lobby, f"{player.player_name} uploaded auxiliary APWorld '{filename}' for {game_name}.")
+        commit()
+    except Exception:
+        _delete_pending_apworld_file(path)
+        raise
+    return jsonify({"id": auxiliary.id, "filename": filename}), 201
+
+
+@api_endpoints.route('/lobby/<suuid:lobby>/auxiliary-apworld/<int:auxiliary_id>', methods=['GET', 'DELETE'])
+def lobby_auxiliary_apworld(lobby: UUID, auxiliary_id: int):
+    lobby = Lobby.get(id=lobby)
+    if not lobby:
+        return jsonify({"error": "Lobby not found"}), 404
+    if not _get_player_in_lobby(lobby):
+        return jsonify({"error": "You must be in this lobby to access auxiliary APWorlds"}), 403
+    auxiliary = LobbyAuxiliaryApworld.get(id=auxiliary_id)
+    if not auxiliary or auxiliary.lobby_id != lobby.id:
+        return jsonify({"error": "Auxiliary APWorld not found"}), 404
+    if request.method == 'GET':
+        if not os.path.isfile(auxiliary.storage_path):
+            return jsonify({"error": "Auxiliary APWorld file is missing"}), 404
+        return send_file(auxiliary.storage_path, download_name=auxiliary.original_filename,
+                         as_attachment=True, mimetype="application/zip")
+    if not _can_remove_auxiliary(lobby, auxiliary):
+        return jsonify({"error": "Only the uploader or lobby owner can remove this APWorld"}), 403
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
+        return jsonify({"error": "Cannot remove APWorlds after generation has started"}), 400
+    _reset_lobby_readiness(lobby, auxiliary.game_name)
+    _lobby_system_message(lobby, f"Auxiliary APWorld '{auxiliary.original_filename}' for {auxiliary.game_name} was removed.")
+    _delete_apworld_file(auxiliary)
+    auxiliary.delete()
+    commit()
+    return jsonify({"status": "removed"})
+
+
 @api_endpoints.route('/lobby/<suuid:lobby>/download-package', methods=['GET'])
+@limiter.limit("20 per hour")
+@limiter.limit("2 per minute")
 def lobby_download_package(lobby: UUID):
     lobby = Lobby.get(id=lobby)
     if not lobby:
@@ -2248,11 +2739,20 @@ def lobby_download_package(lobby: UUID):
     if not player:
         return jsonify({"error": "You must be in this lobby to download the package"}), 403
 
-    yaml_rows = select(
-        (y.id, y.yaml_player_name, y.yaml_game, y.filename, y.content, y.player.player_name)
-        for y in LobbyYaml if y.lobby == lobby
-    ).order_by(lambda i, n, g, f, c, p: i)[:]
-    apworlds = select(a for a in LobbyApworld if a.lobby == lobby)[:]
+    yaml_rows = db.session.execute(
+        select(
+            LobbyYaml.id, LobbyYaml.yaml_player_name, LobbyYaml.yaml_game,
+            LobbyYaml.filename, LobbyYaml.content, LobbyPlayer.player_name,
+        ).join(LobbyPlayer, LobbyYaml.player_id == LobbyPlayer.id).where(
+            LobbyYaml.lobby_id == lobby.id
+        ).order_by(LobbyYaml.id)
+    ).all()
+    if not yaml_rows:
+        return jsonify({"error": "Cannot download a package without any YAMLs"}), 400
+
+    apworlds = db.session.scalars(
+        select(LobbyApworld).where(LobbyApworld.lobby_id == lobby.id)
+    ).all()
 
     meta = json.loads(lobby.meta)
     server_opts = meta.get("server_options", {})
@@ -2264,25 +2764,30 @@ def lobby_download_package(lobby: UUID):
             "hint_cost": server_opts.get("hint_cost", 10),
             "release_mode": server_opts.get("release_mode", "auto"),
             "collect_mode": server_opts.get("collect_mode", "auto"),
+            "release_threshold": server_opts.get("release_threshold", 0),
             "remaining_mode": server_opts.get("remaining_mode", "goal"),
             "countdown_mode": server_opts.get("countdown_mode", "auto"),
             "hint_mode": server_opts.get("hint_mode", "default"),
             "disable_item_cheat": not server_opts.get("item_cheat", True),
-            "server_password": server_opts.get("server_password") or None,
+            "admin_password": server_opts.get("admin_password") or None,
         },
         "generator": {
             "player_files_path": "Players",
             "spoiler": gen_opts.get("spoiler", 3),
             "race": 1 if gen_opts.get("race") else 0,
+            "progression_equalization": gen_opts.get("progression_equalization", 20),
             "plando_options": ", ".join(sorted(plando_opts)),
         },
     }, default_flow_style=False, allow_unicode=True)
 
     zip_buffer = io.BytesIO()
     seen_apworld_games: set[str] = set()
+    seen_apworld_filenames: set[str] = set()
 
     with zipfile.ZipFile(zip_buffer, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("host.yaml", host_yaml)
+        if lobby.meta_yaml:
+            zf.writestr("Players/meta.yaml", _meta_yaml_content(lobby))
 
         seen_yaml_names: set[str] = set()
         for y_id, y_player_name, y_game, y_filename, y_content, y_lobby_player_name in yaml_rows:
@@ -2303,12 +2808,29 @@ def lobby_download_package(lobby: UUID):
             if a.game_name in seen_apworld_games:
                 continue
             seen_apworld_games.add(a.game_name)
-            safe_filename = _safe_zip_name(a.original_filename)
             try:
                 with open(a.storage_path, 'rb') as apf:
-                    zf.writestr(f"custom_worlds/{safe_filename}", apf.read())
+                    apworld_data = apf.read()
             except OSError:
-                pass
+                continue
+            safe_filename = _apworld_package_filename(a, apworld_data)
+            if safe_filename in seen_apworld_filenames:
+                root, ext = os.path.splitext(safe_filename)
+                safe_filename = f"{root}_{a.id}{ext or '.apworld'}"
+            seen_apworld_filenames.add(safe_filename)
+            zf.writestr(f"custom_worlds/{safe_filename}", apworld_data)
+
+        for auxiliary in _auxiliary_apworlds(lobby):
+            filename = auxiliary.original_filename
+            if filename.casefold() in {name.casefold() for name in seen_apworld_filenames}:
+                return jsonify({"error": f"Conflicting APWorld filename '{filename}'. "
+                                         "Remove the conflicting auxiliary file."}), 409
+            try:
+                with open(auxiliary.storage_path, 'rb') as source:
+                    zf.writestr(f"custom_worlds/{filename}", source.read())
+            except OSError:
+                return jsonify({"error": f"Auxiliary APWorld '{filename}' is missing. Please upload it again."}), 400
+            seen_apworld_filenames.add(filename)
 
     zip_buffer.seek(0)
     safe_title = _safe_zip_name(lobby.title)
@@ -2328,10 +2850,10 @@ def lobby_upload_game(lobby: UUID):
     if not lobby:
         return jsonify({"error": "Lobby not found"}), 404
 
-    if lobby.owner != session["_id"]:
+    if not is_authorized(lobby, session["_id"]):
         return jsonify({"error": "Only the lobby owner can upload the game"}), 403
 
-    if lobby.state != LOBBY_OPEN:
+    if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
         return jsonify({"error": "Lobby is not in a state to accept a game file"}), 400
 
     if 'file' not in request.files:
@@ -2341,7 +2863,7 @@ def lobby_upload_game(lobby: UUID):
     if not f.filename or not allowed_generation(f.filename):
         return jsonify({"error": "Invalid file type. Expected .archipelago, .mwgg, or .zip"}), 400
 
-    meta = json.loads(lobby.meta)
+    meta = _lobby_meta_with_host_display_name(lobby)
 
     try:
         file_bytes = f.read()
@@ -2350,24 +2872,26 @@ def lobby_upload_game(lobby: UUID):
                 seed = upload_zip_to_db(zf, owner=lobby.owner, meta=meta)
         else:
             slots, multidata = process_multidata(file_bytes)
-            seed = Seed(multidata=multidata, slots=slots, owner=lobby.owner, meta=json.dumps(meta))
+            seed = Seed(multidata=multidata, owner=lobby.owner, meta=json.dumps(meta))
             flush()
             for slot in slots:
-                slot.seed = seed
+                slot.seed_id = seed.id
     except Exception as e:
         return jsonify({"error": f"Failed to process game file: {e}"}), 400
 
     if not seed:
         return jsonify({"error": "No multidata found in the uploaded file."}), 400
 
-    room = Room(seed=seed, owner=lobby.owner, tracker=uuid4())
-    lobby.seed = seed
-    lobby.room = room
+    room = Room(seed_id=seed.id, owner=lobby.owner, tracker=uuid4())
+    assign_short_id(db.session, room)
+    flush()
+    lobby.seed_id = seed.id
+    lobby.room_id = room.id
     _cancel_all_pending_requests(lobby, "lobby uploaded a finished game")
     lobby.state = LOBBY_DONE
     lobby.last_activity = utcnow()
     LobbyMessage(
-        lobby=lobby, player=None, sender_name="System",
+        lobby_id=lobby.id, player_id=None, sender_name="System",
         content="Game uploaded! Room is ready.",
     )
     commit()

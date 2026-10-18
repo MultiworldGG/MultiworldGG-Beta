@@ -20,13 +20,27 @@ export type EventReason =
   | "tag_missing"
   | "wheel_asset_missing"
   | "wheel_asset_ambiguous"
+  | "apworld_asset_ambiguous"
   | "asset_digest_missing"
   | "release_lookup_404"
   | "release_not_found"
   | "index_install_missing"
   | "github_api_error"
   | "codeowners_conflict"
-  | "tag_sha_lookup_failed";
+  | "tag_sha_lookup_failed"
+  // Bundled multi-world release (handlers/shared.ts bundle path).
+  | "bundle_wheel_unrecognized"
+  | "bundle_no_valid_worlds"
+  | "bundle_world_no_manifest"
+  // Karen fuzz/scan dispatch (handlers/fuzz_dispatch.ts).
+  | "fuzz_bad_payload"
+  | "fuzz_not_index_repo"
+  | "fuzz_container_error"
+  | "fuzz_image_unavailable"
+  | "fuzz_sha_mismatch"
+  | "fuzz_timeout"
+  | "fuzz_overall_fail"
+  | "fuzz_check_run_error";
 
 export interface OliverEvent {
   kind: EventKind;
@@ -39,6 +53,8 @@ export interface OliverEvent {
   wheel_size_bytes?: number;
   module_location?: string;
   index_pr?: number;
+  pr_number?: number;
+  fuzz_status?: "pass" | "warn" | "fail";
   reason?: EventReason;
   message: string;
 }

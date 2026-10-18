@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build script for MultiWorldGG executables using cx_Freeze
+Build script for MultiworldGG executables using cx_Freeze
 """
 
 import os
@@ -62,13 +62,9 @@ def install_requirements(build: bool = False) -> bool:
         logger.info(f"{req_file.name} not found, skipping requirements installation")
         return True
 
-# Sibling repos under the MultiworldGG GitHub org that publish wheel releases.
-# build_exe pip-installs the latest wheel asset from each into the build venv so
-# cx_Freeze can bundle them. Per-game worlds are NOT here — those are pulled at
-# first run by ModuleUpdate.install_worlds() from mwgg_igdb module_location URLs.
-# TODO: add the platform-helpers repo (pyfastbti, pyfastyaz0yay0) here once it
-# exists. The current frozen build doesn't need those — every world that did has
-# been pulled out of the monorepo.
+# Sibling repos whose latest wheel release gets pip-installed into the build venv
+# for cx_Freeze to bundle. Per-game worlds are NOT here; they install at first run.
+# TODO: add the platform-helpers repo (pyfastbti, pyfastyaz0yay0) once it exists.
 SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
     ("MultiworldGG", "mwgg-gui"),
     ("MultiworldGG", "mwgg-tui"),
@@ -76,10 +72,18 @@ SIBLING_WHEEL_REPOS: list[tuple[str, str]] = [
 ]
 
 
-# Token for fetching from private sibling repos during beta. Set
-# MWGG_BUILD_GITHUB_TOKEN (locally or via the workflow's `env:` block) to a PAT or
-# GitHub App installation token with `contents: read` on the SIBLING_WHEEL_REPOS.
-# When the repos go public this can be unset and anonymous requests will work.
+# Optional per-repo release-tag pin; None = latest release. Populate by hand (or
+# CI input) before a coordinated release so an in-flight sibling release can't
+# get silently picked up.
+SIBLING_WHEEL_TAG_PINS: dict[str, str | None] = {
+    "mwgg-gui": None,
+    "mwgg-tui": None,
+    "mwgg-splash": None,
+}
+
+
+# Token for private sibling repos during beta: a PAT or App installation token
+# with `contents: read` on SIBLING_WHEEL_REPOS. Unset once the repos go public.
 _BUILD_GH_TOKEN_ENV = "MWGG_BUILD_GITHUB_TOKEN"
 
 
@@ -150,9 +154,8 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
             )
         else:
             logger.warning(f"GET {api_url} failed: {e}")
-        # Diagnostic: dump headers + body + platform so we can tell apart token-scope,
-        # missing-permission, rate-limit, and proxy-tamper. Safe — these are response
-        # metadata, not the token itself.
+        # Diagnostic dump to tell apart token-scope, missing-permission, rate-limit,
+        # and proxy-tamper; response metadata only, never the token.
         try:
             req_id = e.headers.get("X-GitHub-Request-Id") if e.headers else None
             rate_remaining = e.headers.get("X-RateLimit-Remaining") if e.headers else None
@@ -182,18 +185,33 @@ def _latest_release_wheel_asset(owner: str, repo: str) -> dict | None:
     return asset
 
 
+def _release_wheel_asset_for_tag(owner: str, repo: str, tag: str) -> dict | None:
+    """Fetch a specific tagged release (see SIBLING_WHEEL_TAG_PINS) and return the
+    chosen wheel asset dict. Mirrors _latest_release_wheel_asset but hits the
+    /releases/tags/{tag} endpoint instead of /releases/latest."""
+    api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag}"
+    req = urllib.request.Request(api_url, headers=_gh_headers())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        logger.warning(f"GET {api_url} failed: {e} (is {tag!r} a real release tag on {owner}/{repo}?)")
+        return None
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as e:
+        logger.warning(f"Could not fetch release {tag!r} for {owner}/{repo}: {e}")
+        return None
+
+    asset = _pick_wheel_asset(data.get("assets", []))
+    if asset is None:
+        logger.warning(f"No suitable wheel asset on release {tag!r} of {owner}/{repo}")
+        return None
+    return asset
+
+
 def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
-    """Download a release asset by id; return the path to a file with the asset's
-    original filename (inside a fresh temp dir). Works for private repos.
-
-    The filename must match PEP 427 — pip parses dist/version/tags from it — so we
-    can't use mkstemp's randomized name. We create a temp dir and write the asset
-    into it with `asset["name"]`. Caller is responsible for cleaning up the dir.
-
-    Uses the `/releases/assets/{id}` endpoint with `Accept: application/octet-stream`,
-    which serves the binary directly (or 302-redirects to a signed URL that needs no
-    further auth). urllib follows the redirect; we strip Authorization on hop to a
-    foreign host so the signed URL isn't double-authed and rejected.
+    """Download a release asset by id into a fresh temp dir, keeping the asset's
+    original filename (pip parses dist/version/tags from it per PEP 427, so no
+    mkstemp names). Works for private repos; caller cleans up the dir.
     """
     asset_id = asset.get("id")
     name = asset.get("name") or ""
@@ -205,9 +223,8 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
     headers = _gh_headers()
     headers["Accept"] = "application/octet-stream"
 
-    # Custom handler: when GitHub returns 302 to AWS S3, drop our Authorization header
-    # before following — the redirect target has signed credentials baked into the URL,
-    # and S3 will reject a stray Bearer token.
+    # Drop Authorization when following GitHub's 302 to S3: the signed URL carries
+    # its own credentials and S3 rejects a stray Bearer token.
     class _StripAuthRedirect(urllib.request.HTTPRedirectHandler):
         def redirect_request(self, req, fp, code, msg, headers, newurl):
             new_req = super().redirect_request(req, fp, code, msg, headers, newurl)
@@ -232,12 +249,8 @@ def _download_release_asset(owner: str, repo: str, asset: dict) -> str | None:
 
 
 def _log_installation_repositories() -> None:
-    """Diagnostic: dump the repos the current installation token can actually see.
-
-    For App-installation tokens, GitHub exposes `/installation/repositories` —
-    the authoritative list of what the token grants access to. If a repo we
-    later try to GET isn't in this list, that's the smoking-gun explanation
-    for a 403/404. No-op when no token is set.
+    """Diagnostic: dump the repos the current installation token can actually see
+    (/installation/repositories); explains a later 403/404. No-op without a token.
     """
     if not os.environ.get(_BUILD_GH_TOKEN_ENV, "").strip():
         return
@@ -257,7 +270,7 @@ def _log_installation_repositories() -> None:
         return
     repos = data.get("repositories", []) or []
     full_names = [r.get("full_name", "?") for r in repos]
-    # logger.warning, not logger.info — basicConfig at module top sets level=WARNING
+    # logger.warning, not logger.info: basicConfig at module top sets level=WARNING
     # for the root logger, so info-level messages are filtered out in CI logs.
     logger.warning(
         f"  diag: platform={sys.platform} installation_token sees "
@@ -268,8 +281,9 @@ def _log_installation_repositories() -> None:
 def install_wheels() -> bool:
     """Install sibling-repo wheels from their latest GitHub releases.
 
-    For each repo in SIBLING_WHEEL_REPOS, GET the latest release, pick a wheel
-    asset compatible with the current platform, download it (authenticated when
+    For each repo in SIBLING_WHEEL_REPOS, GET the latest release (or a pinned
+    release tag from SIBLING_WHEEL_TAG_PINS), pick a wheel asset compatible
+    with the current platform, download it (authenticated when
     MWGG_BUILD_GITHUB_TOKEN is set, anonymous otherwise), and pip-install it
     into the build venv. cx_Freeze then bundles the installed package into the
     frozen build via setup.py's `packages` list.
@@ -283,7 +297,12 @@ def install_wheels() -> bool:
     _log_installation_repositories()
 
     for owner, repo in SIBLING_WHEEL_REPOS:
-        asset = _latest_release_wheel_asset(owner, repo)
+        pinned_tag = SIBLING_WHEEL_TAG_PINS.get(repo)
+        if pinned_tag:
+            logger.info(f"{owner}/{repo} is pinned to tag {pinned_tag!r}")
+            asset = _release_wheel_asset_for_tag(owner, repo, pinned_tag)
+        else:
+            asset = _latest_release_wheel_asset(owner, repo)
         if asset is None:
             return False
         wheel_path = _download_release_asset(owner, repo, asset)
@@ -354,8 +373,8 @@ def run_cx_freeze_build() -> bool:
         ])
         logger.debug("cx_Freeze build completed successfully")
         return True
-    except Exception as e:
-        logger.debug(f"cx_Freeze build failed: {e}")
+    except Exception:
+        logger.error("cx_Freeze build failed", exc_info=True)
         return False
 
 def clean_build_directory() -> bool:
@@ -387,17 +406,28 @@ def verify_build_output() -> bool:
     
     exe_dir = exe_dirs[0]
     logger.debug(f"Checking build output in: {exe_dir}")
-    
+
+    # Deferred import keeps the pre-venv version/platform checks cheap;
+    # FROZEN_TARGETS matches setup.py's Executable(...) target_name values.
+    from BaseUtils import FROZEN_TARGETS
+
+    def exe_name(base: str) -> str:
+        return f"{base}.exe" if sys.platform == "win32" else base
+
     expected_exes = [
-        "MultiWorldGG.exe" if sys.platform == "win32" else "MultiWorldGG",
-        "MultiWorldGGServer.exe" if sys.platform == "win32" else "MultiWorldGGServer",
-        "MultiWorldGGGenerate.exe" if sys.platform == "win32" else "MultiWorldGGGenerate",
-        "MultiWorldGGPatch.exe" if sys.platform == "win32" else "MultiWorldGGPatch"
+        exe_name(FROZEN_TARGETS["MultiWorld"]),
+        exe_name(FROZEN_TARGETS["MultiServer"]),
+        exe_name(FROZEN_TARGETS["Generate"]),
+        exe_name(FROZEN_TARGETS["Patch"]),
+        exe_name(FROZEN_TARGETS["Launcher"]),
     ]
-    
+
     if sys.platform == "win32":
-        expected_exes.append("MultiWorldGGClientDebug.exe")
-    
+        expected_exes.append(f"{FROZEN_TARGETS['MultiWorldDebug']}.exe")
+        # LauncherDebug has no FROZEN_TARGETS entry of its own (see setup.py's
+        # _launcher_debug_exe_name) -- same "Launcher" + "Debug" derivation.
+        expected_exes.append(f"{FROZEN_TARGETS['Launcher']}Debug.exe")
+
     missing_exes = []
     for exe in expected_exes:
         exe_path = exe_dir / exe
@@ -430,7 +460,7 @@ def verify_build_output() -> bool:
     return True
 
 def main():
-    parser = argparse.ArgumentParser(description="Build MultiWorldGG executables")
+    parser = argparse.ArgumentParser(description="Build MultiworldGG executables")
     parser.add_argument("--clean", action="store_true", help="Clean build directory before building")
     parser.add_argument("--skip-requirements", action="store_true", help="Skip requirements installation")
     parser.add_argument("--skip-wheels", action="store_true", help="Skip wheel installation")
@@ -440,7 +470,7 @@ def main():
     args = parser.parse_args()
     logger.setLevel(args.logger_level)
 
-    logger.info("MultiWorldGG Build Script")
+    logger.info("MultiworldGG Build Script")
     logger.info("=" * 50)
     # Change to src directory
     os.chdir(Path(__file__).parent)
@@ -458,11 +488,8 @@ def main():
         if not install_requirements(build=False):
             sys.exit(1)
 
-    # Install sibling-repo wheels (mwgg_gui, mwgg_tui, mwgg_splash) from their
-    # latest GitHub releases. cx_Freeze bundles them once they're in the build
-    # venv. Worlds bundle directly from src/worlds/ source — no wheel fetch
-    # there. Per-game worlds are installed at first run by
-    # ModuleUpdate.install_worlds() from mwgg_igdb's module_location URLs.
+    # Sibling-repo wheels (mwgg_gui/tui/splash) from latest GitHub releases;
+    # worlds bundle from src/worlds/ source and per-game worlds install at first run.
     if not args.skip_wheels:
         if not install_wheels():
             sys.exit(1)

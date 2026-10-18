@@ -5,6 +5,10 @@ import logging
 import typing
 from pathlib import Path
 
+# Must precede the ModuleUpdate import (its fallback would claim the root logger)
+# and live at module level so spawn()ed children, which only re-import, get it too.
+logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+
 import ModuleUpdate
 from BaseUtils import local_path
 
@@ -13,7 +17,8 @@ ModuleUpdate.requirements_files.add(Path(local_path("WebHostLib", "requirements.
 # mwgg_igdb variant: "nr" | "ao" | "twelve" | "sixteen".
 INDEX_VARIANT = "ao"
 ModuleUpdate.set_variant(INDEX_VARIANT)
-ModuleUpdate.update()
+# No install here: the mwgg_upgrader service is the sole writer of the shared
+# worlds venv. The web/multiworld containers mount it read-only and only read.
 
 # in case app gets imported by something like gunicorn
 import Utils
@@ -24,21 +29,37 @@ if typing.TYPE_CHECKING:
 
 Utils.local_path.cached_path = os.path.dirname(__file__)
 settings.no_gui = True
+settings.skip_autosave = True  # configs are mounted read-only; never rewrite host.yaml on exit
 configpath = os.path.abspath("config.yaml")
 if not os.path.exists(configpath):
     # fall back to config.yaml in user_path if config does not exist in cwd to match settings.py
     configpath = os.path.abspath(Utils.user_path('config.yaml'))
 
 
-def get_app() -> "Flask":
-    # WebHost is the load-all exception: serve every world the index knows about.
-    # set_game_names must be called before any `import worlds` cascade, so the
-    # narrow loader populates the full slug set on first import.
-    from mwgg_igdb import GameIndex
-    Utils.set_game_names(list(GameIndex.game_names.keys()), strict=False)
+def _pony_config_to_sqlalchemy_uri(pony_config: dict) -> str:
+    """Convert a legacy PONY config dict to a SQLAlchemy connection URI."""
+    provider = pony_config.get("provider", "sqlite")
+    if provider == "sqlite":
+        filename = pony_config.get("filename", "ap.db3")
+        if filename == ":memory:":
+            return "sqlite:///:memory:"
+        return f"sqlite:///{filename}"
+    elif provider in ("postgres", "postgresql"):
+        # Typical pony postgres config has: host, port, user, password, database
+        host = pony_config.get("host", "localhost")
+        port = pony_config.get("port", 5432)
+        user = pony_config.get("user", "")
+        password = pony_config.get("password", "")
+        database = pony_config.get("database", "")
+        return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}"
+    else:
+        raise ValueError(f"Unsupported PONY provider: {provider!r}")
 
-    from WebHostLib import register, cache, app as raw_app
-    from WebHostLib.models import db
+
+def get_app() -> "Flask":
+
+    from WebHostLib import register, cache, resolve_paths, app as raw_app
+    from WebHostLib.models import db, Base
 
     app = raw_app
     if os.path.exists(configpath) and not app.config["TESTING"]:
@@ -59,11 +80,34 @@ def get_app() -> "Flask":
         app.config["HOST_ADDRESS"] = Utils.get_public_ipv4()
         logging.info(f"HOST_ADDRESS was set to {app.config['HOST_ADDRESS']}")
 
-    os.makedirs(app.config["LOBBY_APWORLD_PATH"], exist_ok=True)
+    # Refuse to boot on the hostname-derived SECRET_KEY default: it signs the
+    # session cookie and is trivially guessable.
+    import socket as _socket
+    hostname_default = bytes(_socket.gethostname(), encoding="utf-8")
+    if app.config["SECRET_KEY"] == hostname_default and not app.config["TESTING"]:
+        raise RuntimeError(
+            "Refusing to start: SECRET_KEY is still the hostname-derived default. "
+            "Anyone who can guess the host name can forge session cookies. Set "
+            "MWGG_SECRET_KEY (env var, e.g. from a docker env_file) or SECRET_KEY "
+            "in config.yaml to a random ≥32-byte value (try `openssl rand -hex 32`)."
+        )
+
+    resolve_paths(app)
     register()
     cache.init_app(app)
-    db.bind(**app.config["PONY"])
-    db.generate_mapping(create_tables=True)
+
+    # Convert legacy PONY config dict to a SQLAlchemy URI and initialise flask-sqlalchemy
+    pony_config = app.config.get("PONY", {})
+    db_uri = _pony_config_to_sqlalchemy_uri(pony_config)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+    db.init_app(app)
+
+    # Create tables only for fresh databases (SQLite) or when explicitly requested.
+    # For production PostgreSQL deployments the schema is managed separately.
+    with app.app_context():
+        Base.metadata.create_all(db.engine)
+
     return app
 
 
@@ -74,13 +118,15 @@ def copy_tutorials_files_to_static(app=None) -> None:
 
     zfile: zipfile.ZipInfo
 
+    if app is None:
+        from WebHostLib import app
     from worlds import AutoWorldRegister
     worlds = {}
     for game, world in AutoWorldRegister.world_types.items():
         if hasattr(world.web, 'tutorials') and (not world.hidden or game == 'Archipelago'):
             worlds[game] = world
 
-    base_target_path = Utils.local_path("WebHostLib", "static", "generated", "docs")
+    base_target_path = os.path.join(app.config["GENERATED_FOLDER"], "docs")
     shutil.rmtree(base_target_path, ignore_errors=True)
     for game, world in worlds.items():
         # copy files from world's docs folder to the generated folder
@@ -152,21 +198,19 @@ def find_docs_folder_recursive(root_dir, max_depth=3):
 if __name__ == "__main__":
     multiprocessing.freeze_support()
     multiprocessing.set_start_method('spawn')
-    logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
 
     from WebHostLib.autolauncher import autohost, autogen, stop
     from WebHostLib.options import create as create_options_files
 
-    try:
-        from WebHostLib.lttpsprites import update_sprites_lttp
-        update_sprites_lttp()
-    except Exception as e:
-        logging.warning("Could not update LttP sprites: %s", e)
     app = get_app()
 
+    try:
+        from WebHostLib.lttpsprites import update_sprites_lttp
+        update_sprites_lttp(output_dir=app.config["GENERATED_FOLDER"])
+    except Exception as e:
+        logging.warning("Could not update LttP sprites: %s", e)
+
     from worlds import AutoWorldRegister, network_data_package
-    # Update to only valid WebHost worlds
-    ModuleUpdate.record_worlds_update()
 
     invalid_worlds = {name for name, world in AutoWorldRegister.world_types.items()
                       if not hasattr(world.web, "tutorials")}

@@ -244,6 +244,7 @@ Sent to clients if the server caught a problem with a packet. This only occurs f
 | ---- | ----- |
 | cmd | `cmd` argument of the faulty packet that could not be parsed correctly. |
 | arguments | Arguments of the faulty packet which were not correct. |
+| permission | Client was not authenticated as admin, and command required admin permission. |
 
 ### Retrieved
 Sent to clients as a response the a [Get](#Get) package.
@@ -308,7 +309,6 @@ Sent by the client to initiate a connection to a MultiworldGG game session.
 | 0b001 | Indicates you get items sent from other worlds. |
 | 0b010 | Indicates you get items sent from your own world. Requires 0b001 to be set. |
 | 0b100 | Indicates you get your starting inventory sent. Requires 0b001 to be set. |
-| null  | Null or undefined loads settings from world definition for backwards compatibility. This is deprecated. |
 
 #### Authentication
 Many, if not all, other packets require a successfully authenticated client. This is described in more detail in [MultiworldGG Connection Handshake](#MultiworldGG-Connection-Handshake).
@@ -411,13 +411,17 @@ Basic chat command which sends text to the server to be distributed to other cli
 Requests the data package from the server. Does not require client authentication.
 
 #### Arguments
-| Name  | Type | Notes                                                                                                                           |
-|-------| ----- |---------------------------------------------------------------------------------------------------------------------------------|
-| games | list\[str\]  | Optional. If specified, will only send back the specified data. Such as, \["Factorio"\] -> Datapackage with only Factorio data. |
+| Name  | Type        | Notes                                                                                                                                                         |
+|-------|-------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| games | list\[str\] | The server will send datapackage(s) for the specified game(s) requested in the supplied list. Such as, \["Factorio"\] -> Datapackage with only Factorio data. |
 
 ### Bounce
-Send this message to the server, tell it which clients should receive the message and 
-the server will forward the message to all those targets to which any one requirement applies.
+Send this message to the server, tell it which clients should receive the message and the server will forward
+the message to all those targets to which the requirements ("teams", "games", "slots", "tags") apply according
+to the operator chosen:
+- "or": Conditions are chained with "or".
+- "and": Conditions are chained with "and". (Important note: A completely missing key evaluates as **True**, whereas an empty list evaluates as **False**)
+- "legacy": Evaluates as `teams and (games or slots or tags)`.
 
 #### Arguments
 | Name | Type | Notes |
@@ -450,6 +454,7 @@ Some special keys exist with specific return data, all of them have the prefix `
 ### Set
 Used to write data to the server's data storage, that data can then be shared across worlds or just saved for later. Values for keys in the data storage can be retrieved with a [Get](#Get) package, or monitored with a [SetNotify](#SetNotify) package.
 Keys that start with `_read_` cannot be set.
+Keys that start with `_admin_` require the client to be logged in as a room admin via `!admin login` before modifying.
 #### Arguments
 | Name       | Type                                                  | Notes                                                                                                                  |
 |------------|-------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
@@ -707,6 +712,8 @@ class Hint(NamedTuple):
     entrance: str = ""
     item_flags: int = 0
     status: HintStatus = HintStatus.HINT_UNSPECIFIED
+    hidden: bool = False       # exact location is concealed
+    item_hidden: bool = False  # exact item is concealed for a location hint
 ```
 
 ### Data Package Contents

@@ -12,7 +12,41 @@ import time
 import functools
 
 import websockets
+from websockets.frames import CloseCode
 from websockets.protocol import State
+from websockets.asyncio.connection import Connection
+
+# websockets 14+ removed Connection.closed/.open; restore them as State-backed properties
+# for world clients written against the shipped 13.x. One deprecation warning per call site.
+_legacy_socket_attr_sites: typing.Set[typing.Tuple[str, int, str]] = set()
+
+
+def _warn_legacy_socket_attr(name: str) -> None:
+    frame = sys._getframe(2)
+    site = (frame.f_code.co_filename, frame.f_lineno, name)
+    if site in _legacy_socket_attr_sites:
+        return
+    _legacy_socket_attr_sites.add(site)
+    logging.getLogger("Client").warning(
+        "Deprecated websockets API: %s:%s reads socket.%s, which websockets 14+ removed. "
+        "MWGG shims it for now; migrate to socket.state checks against websockets.protocol.State.",
+        site[0], site[1], name)
+
+
+def _compat_socket_closed(self: Connection) -> bool:
+    _warn_legacy_socket_attr("closed")
+    return self.state is State.CLOSED
+
+
+def _compat_socket_open(self: Connection) -> bool:
+    _warn_legacy_socket_attr("open")
+    return self.state is State.OPEN
+
+
+if not hasattr(Connection, "closed"):
+    Connection.closed = property(_compat_socket_closed)
+if not hasattr(Connection, "open"):
+    Connection.open = property(_compat_socket_open)
 
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -24,7 +58,7 @@ from NetUtils import (Endpoint, ClientStatus, encode, decode, NetworkItem, Netwo
                       Permission, SlotType, LocationStore, Hint, HintStatus, MWGGUIHintStatus,JSONtoTextParser,
                       RawJSONtoTextParser, add_json_text, add_json_location, add_json_item, JSONTypes, TEXT_COLORS)
 from ClientState import ClientState
-from ClientBuilder import GameClient
+from ClientBuilder import GameClient, FeatureRegistry
 from multiprocessing import Queue
 
 # GUI-only dialog components are imported lazily at their call sites so
@@ -69,6 +103,26 @@ def _consume_pending_launch_callbacks() -> "typing.Tuple[typing.Optional[typing.
     return pending.get("ready_callback"), pending.get("error_callback")
 
 
+_pending_tracker_attach: bool = False
+
+
+def _set_pending_tracker_attach(value: bool) -> None:
+    """Stash a flag asking the next CommonContext to attach the Universal Tracker
+    overlay during its __init__. Called by Utils._perform_module_launch when
+    the launcher's client_type is 'universal_tracker' and a per-game launch
+    function is being deferred."""
+    global _pending_tracker_attach
+    _pending_tracker_attach = bool(value)
+
+
+def _consume_pending_tracker_attach() -> bool:
+    """Pop and return the pending tracker-attach flag."""
+    global _pending_tracker_attach
+    value = _pending_tracker_attach
+    _pending_tracker_attach = False
+    return value
+
+
 def _make_one_shot(callback: "typing.Optional[typing.Callable[[], None]]") -> "typing.Callable[[], None]":
     """Wrap a callback so it fires at most once. Subsequent calls are no-ops.
 
@@ -99,10 +153,12 @@ def get_ssl_context():
     return ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=certifi.where())
 
 def set_local_network_data_package() -> typing.Tuple[typing.Dict[str, typing.Any], typing.Dict[str, typing.Any]]:
-    from worlds import DataPackage, AutoWorldRegister
-    local_network_data_package: DataPackage = {
-        "games": {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()},
-    }
+    from worlds import DataPackage, AutoWorldRegister, network_data_package
+    games = {world_name: world.get_data_package_data() for world_name, world in AutoWorldRegister.world_types.items()}
+    # Worlds imported after the package loaded (on-demand client loads) must also reach
+    # per-world clients that read worlds.network_data_package directly (Manual's server_auth).
+    network_data_package["games"].update(games)
+    local_network_data_package: DataPackage = {"games": games}
     local_network_data_package_single_game: typing.Dict[str, DataPackage] = {
         game_name: {"games": {game_name: pkg_data}}
         for game_name, pkg_data in local_network_data_package["games"].items()
@@ -116,7 +172,8 @@ class ClientCommandProcessor(CommandProcessor):
 
     The decorator @mark_raw can be imported from MultiServer and tells the parser to only split on the first
     space after the command i.e. "/exit one two three" will be passed in as method("one two three") with mark_raw
-    and method("one", "two", "three") without.
+    and method("one", "two", "three") without. Double quotes group words into one argument either way:
+    '/exit "one two" three' gives method("one two", "three"), and a raw argument loses its surrounding quotes.
 
     In addition all docstrings for command methods will be displayed to the user on launch and when using "/help"
     """
@@ -305,9 +362,7 @@ class InitContext:
     command_processor: typing.Type[CommandProcessor] = ClientCommandProcessor
     all_players_chat: bool = True
     """If False only your own server chatter (items, locations, hints) will be shown in the console."""
-    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
-    # Kind of hate python typechecking sometimes.
-    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    # Frontend-neutral handles (Kivy MessageBox, Textual ModalScreen, or None); not importable here, hence Any.
     _messagebox: typing.Any = None
     """Current message box through Gui"""
     _messagebox_connection_loss: typing.Any = None
@@ -323,6 +378,7 @@ class InitContext:
         self._state = ClientState.INITIAL
         self._is_transitioning = False
         self._splash_queue: Optional[Queue] = None
+        self.launch_mode = os.environ.get("MWGG_ROLE", "launcher")
 
     def _set_server_address(self, server_address: str) -> str:
         prefix = "ws://" if "://" not in server_address else urllib.parse.urlparse(server_address).scheme
@@ -425,7 +481,7 @@ class CommonContext(InitContext):
     # The following attributes are used to Connect and should be adjusted as needed in subclasses
     tags: typing.Set[str] = {"AP"}
     game: typing.Optional[str] = None
-    items_handling: typing.Optional[int] = None
+    items_handling: int
     want_slot_data: bool = True  # should slot_data be retrieved via Connect
 
     class NameLookupDict:
@@ -500,6 +556,7 @@ class CommonContext(InitContext):
     server: typing.Optional[Endpoint] = None
     server_version: Version = Version(0, 0, 0)
     generator_version: Version = Version(0, 0, 0)
+    server_tags: list[str] = []
     current_energy_link_value: typing.Optional[int] = None  # to display in UI, gets set by server
     max_size: int = 16*1024*1024  # 16 MB of max incoming packet size
 
@@ -538,6 +595,10 @@ class CommonContext(InitContext):
     """Start time based on first location checked"""
     admin: bool
     """Bool to keep track of admin login state"""
+    server_seed_name: str | None
+    """Actual seed_name reported by the server in RoomInfo"""
+    connected_identity: tuple[str, int, int] | None
+    """(server_seed_name, team, slot) of the last successful connection, used to detect a session switch"""
 
     # locations
     locations_checked: set[int]
@@ -575,9 +636,7 @@ class CommonContext(InitContext):
     """Time of last activity, used to track elapsed time"""
     _shared_activity_time: float | None
     """Time of all players' last activity, used to track elapsed time"""
-    # Frontend-neutral handles: Kivy MessageBox, Textual ModalScreen, or None.
-    # Kind of hate python typechecking sometimes.
-    # typing.Union[MessageBox, ModalScreen, None] would be better but they're still not defined here.
+    # Frontend-neutral handles (Kivy MessageBox, Textual ModalScreen, or None); not importable here, hence Any.
     _messagebox: typing.Any = None
     """Current message box through UI"""
     _messagebox_connection_loss: typing.Any = None
@@ -614,6 +673,11 @@ class CommonContext(InitContext):
         self.seed_name = None
         self.timer = 0.0
         self.admin = False
+        self.server_seed_name = None
+        self.connected_identity = None
+        # decouple from the class-level mutable set so tag changes (e.g. DeathLink) don't leak across instances
+        self.tags = set(type(self).tags)
+
         self.locations_checked = set()  # local state
         self.locations_scouted = set()
         self.items_received = []
@@ -637,16 +701,40 @@ class CommonContext(InitContext):
         self.location_names = self.NameLookupDict(self, "location")
         self.checksums = {}
 
+        # Seed the bundled/local data package so Archipelago base lookups (e.g. item -1 -> "Nothing",
+        # location -1 -> "Cheat Console") and our own games resolve before connecting to a server.
+        local_network_data_package, _ = set_local_network_data_package()
+        self.update_data_package(local_network_data_package)
+
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
-        # Launcher-provided callbacks, stashed by Utils._perform_module_launch.
-        # One-shot wrappers so the same callback can't fire twice across the
-        # takeover-completion path, the kvui async_run failure path, and the
-        # outer Utils._perform_module_launch exception handler.
+        # Game-keyed world version pins from the last RoomInfo packet. The client doesn't
+        # know its slot at RoomInfo time, so the server keys by game name. Checked after
+        # Connected via _check_world_version_pin.
+        self.world_versions: dict[str, dict] = {}
+        # The mwgg_igdb release tag the room was generated against (from RoomInfo). Used to
+        # install a managed world at its gen-time version WITHOUT overwriting the active index.
+        self.mwgg_index_tag: typing.Optional[str] = None
+
+        # Launcher-provided callbacks
         ready_cb, error_cb = _consume_pending_launch_callbacks()
         self._ready_callback = _make_one_shot(ready_cb)
         self._error_callback = _make_one_shot(error_cb)
+
+        # Overlay-feature registry: phase-1 attach hooks register a phase-2 activator
+        # here; ExtrasBuilder runs them after the per-game UI is wired up.
+        # Not named "client": upstream world contexts own self.client for their game client.
+        self.feature_registry = FeatureRegistry()
+
+        # Universal Tracker opt-in (client_type='universal_tracker'). Runs before the world's
+        # launch() schedules server_task, so on_package is patched before any Connected packet.
+        if _consume_pending_tracker_attach():
+            try:
+                from worlds.tracker.wrap import attach_tracker_overlay
+                attach_tracker_overlay(self)
+            except Exception:
+                logger.exception("Tracker overlay attach failed; continuing without it")
 
         # execution
         self.keep_alive_task = asyncio.create_task(keep_alive(self), name="Bouncy")
@@ -663,6 +751,7 @@ class CommonContext(InitContext):
             cls = resolve_frontend_class()
             app = getattr(cls, "_active_instance", None)
             return (app is not None and
+                    getattr(app, "role", "client") != "launcher" and
                     hasattr(app, 'ctx') and
                     isinstance(app.ctx, InitContext) and
                     app.ctx._state == ClientState.INITIAL and
@@ -679,42 +768,32 @@ class CommonContext(InitContext):
         app = getattr(resolve_frontend_class(), "_active_instance", None)
         existing_ctx = app.ctx
 
-        # Mark transition state
         existing_ctx._is_transitioning = True
         self._is_transitioning = True
 
         try:
-            # Preserve exit_event from existing context
             self.exit_event = existing_ctx.exit_event
 
-            # Preserve UI references from existing context
             if hasattr(existing_ctx, 'ui'):
                 self.ui = existing_ctx.ui
             if hasattr(existing_ctx, 'ui_task'):
                 self.ui_task = existing_ctx.ui_task
 
-            # Create game client builder with existing context
             game_client = GameClient(self, {
                 "ui_task": self.ui_task,
                 "ui": self.ui
             })
 
-            # Update app reference to new context
             app.ctx = self
 
             # Notify the frontend that its `ctx` has been reassigned, so it can rebuild
-            # anything cached against the previous ctx (commandprocessor, JSON parser,
-            # etc.). The TUI implements this; mwgg-gui's Kivy app rebuilds those at
-            # console_init() time so it does not need a hook here. Optional by design.
             ctx_swap_hook = getattr(app, "_on_ctx_swapped", None)
             if ctx_swap_hook is not None:
                 ctx_swap_hook()
 
-            # Update state
             self._state = ClientState.GAME
             self._current_client = game_client
 
-            # Build new client features
             await game_client.build()
 
             # The world's UI is now in front of the user. Signal the launcher.
@@ -763,8 +842,10 @@ class CommonContext(InitContext):
         self.admin = False
         self.items_received = []
         self.locations_info = {}
+        self.server_seed_name = None
         self.server_version = Version(0, 0, 0)
         self.generator_version = Version(0, 0, 0)
+        self.server_tags = []
         self.server = None
         self.server_task = None
         self.hint_cost = None
@@ -773,6 +854,21 @@ class CommonContext(InitContext):
             "collect": "disabled",
             "remaining": "disabled",
         }
+
+    def reset_session_state(self):
+        """Clear local progress and data-storage state tied to a single session."""
+        self.locations_checked = set()
+        self.locations_scouted = set()
+        self.locations_info = {}
+        self.items_received = []
+        self.missing_locations = set()
+        self.checked_locations = set()
+        self.server_locations = set()
+        self.finished_game = False
+        self.ready = False
+        self.stored_data = {}
+        self.stored_data_notification_keys = set()
+        self.current_energy_link_value = None
 
     async def disconnect(self, allow_autoreconnect: bool = False):
         if not allow_autoreconnect:
@@ -790,6 +886,8 @@ class CommonContext(InitContext):
         """ `msgs` JSON serializable """
         if not self.server or not self.server.socket or self.server.socket.state is not State.OPEN:
             return
+        if not msgs:
+            return
         if msgs[0]["cmd"] == "LocationChecks":
             self.update_timer()
         await self.server.socket.send(encode(msgs))
@@ -801,8 +899,30 @@ class CommonContext(InitContext):
             self.ui.ui_player_data = {slot: {} for team, slot, alias, name in package if self.team == team}
 
     def event_invalid_game(self):
-        self.gui_error('Invalid Game', 'Please verify that you connected with the right game to the correct world.')
         logger.error('Invalid Game; please verify that you connected with the right game to the correct world.')
+
+    async def recover_refused_slot(self) -> None:
+        """Ask for another slot name after an InvalidGame/InvalidSlot refusal.
+
+        A frontend with a connect dialog gets it prefilled from this context; the
+        refused server stays because `hostname`/`port` derive from `server_address`.
+        Otherwise the console prompt asks for the name and the login is redone on
+        the socket, which the server keeps open after a refusal.
+        """
+        self.auth = None
+        # Not the setter: the refused name must not be written back to last_username.
+        self._username = None
+        open_connect_dialog = getattr(self.ui, "open_connect_dialog", None)
+        if callable(open_connect_dialog):
+            # Blocks auto-reconnect with the refused name; server_loop clears it once
+            # the dialog's connect opens a socket.
+            self.disconnected_intentionally = True
+            self.ui.hide_loading()
+            open_connect_dialog()
+            return
+        logger.info('Enter player name:')
+        self.auth = await self.console_input()
+        await self.server_auth()
 
     async def client_get_password(self, password_requested: bool = False) -> str:
         if password_requested and not self.password:
@@ -826,9 +946,12 @@ class CommonContext(InitContext):
         Send a `Connect` packet to log in to the server,
         additional keyword args can override any value in the connection packet
         """
+        server_hostname = urllib.parse.urlparse(self.server_address or "").hostname or ""
+        is_multiworld_host = server_hostname == "multiworld.gg" or server_hostname.endswith(".multiworld.gg") or server_hostname == "localhost"
+        connect_version = Utils.version_tuple if is_multiworld_host else Utils.core_version_tuple
         payload = {
             'cmd': 'Connect',
-            'password': self.password, 'name': self.auth, 'version': Utils.version_tuple,
+            'password': self.password, 'name': self.auth, 'version': connect_version,
             'tags': self.tags, 'items_handling': self.items_handling,
             'uuid': Utils.get_unique_identifier(), 'game': self.game, "slot_data": self.want_slot_data,
         }
@@ -940,6 +1063,11 @@ class CommonContext(InitContext):
         """For custom package handling in subclasses."""
         pass
 
+    async def before_package(self, cmd: str, args: dict) -> None:
+        """Awaited by the server loop right before `on_package`, so work that must finish
+        before the packet is handled can still yield to the frontend (a frame draw, a worker
+        thread) instead of freezing it."""
+
     def on_user_say(self, text: str) -> typing.Optional[str]:
         """Gets called before sending a Say to the server from the user.
         Returned text is sent, or sending is aborted if None is returned."""
@@ -962,8 +1090,9 @@ class CommonContext(InitContext):
 
     async def shutdown(self):
         self.server_address = ""
-        self.username = None
-        self.password = None
+        # Plain attributes: the username setter persists, and None would delete last_username.
+        self._username = None
+        self._password = None
         self.cancel_autoreconnect()
         if self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.server.socket.close()
@@ -977,13 +1106,12 @@ class CommonContext(InitContext):
         # Set exit event first so keep_alive can exit naturally
         self.exit_event.set()
         
-        # Cancel keep_alive task if it's still running
         if self.keep_alive_task and not self.keep_alive_task.done():
             self.keep_alive_task.cancel()
             try:
                 await self.keep_alive_task
             except asyncio.CancelledError:
-                pass  # Expected when task is cancelled
+                pass
         
         if self.ui_task:
             await self.ui_task
@@ -998,12 +1126,17 @@ class CommonContext(InitContext):
         async_start(self.send_msgs([msg]), name="update_hint")
 
     def update_mwgg_hint(self, location: int, finding_player: int, mwgg_status: MWGGUIHintStatus) -> None:
-        msg = {"cmd": "Set", 
-               "key": f"hints_{self.team}_{self.slot}_mwgg", 
-               "want_reply": False, 
-               "default": {}, 
-               "operations": [{"operation": "replace", "value": {f"{finding_player}_{location}": mwgg_status.value}}]}
-        async_start(self.send_msgs([msg]), name="update_mwgg_hint")
+        self.update_mwgg_hints({f"{finding_player}_{location}": int(mwgg_status)})
+
+    def update_mwgg_hints(self, statuses: typing.Dict[str, int]) -> None:
+        """Merge ``{"{finding_player}_{location}": MWGGUIHintStatus value}`` entries into
+        this slot's hints_*_mwgg key; "update" leaves every other hint's flags alone."""
+        msg = {"cmd": "Set",
+               "key": f"hints_{self.team}_{self.slot}_mwgg",
+               "want_reply": False,
+               "default": {},
+               "operations": [{"operation": "update", "value": statuses}]}
+        async_start(self.send_msgs([msg]), name="update_mwgg_hints")
 
     @property
     def shared_activity_time(self) -> float | None:
@@ -1248,25 +1381,31 @@ class CommonContext(InitContext):
     def handle_connection_loss(self, msg: str) -> None:
         """Helper for logging and displaying a loss of connection. Must be called from an except block."""
         exc_info = sys.exc_info()
-        logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
+        exc = exc_info[1]
+        # Expected disconnect/connect-failure types: log a clean message without the traceback.
+        # Anything else gets the full traceback because it's an unexpected bug.
+        if isinstance(exc, (
+            ConnectionRefusedError,
+            ConnectionResetError,
+            ConnectionAbortedError,
+            asyncio.TimeoutError,
+            websockets.InvalidURI,
+            websockets.InvalidMessage,
+            websockets.ConnectionClosed,
+            OSError,
+        )):
+            detail = f"{msg} ({exc.__class__.__name__}: {exc})" if str(exc) else msg
+            logger.info(detail, extra={'compact_gui': True})
+        else:
+            logger.exception(msg, exc_info=exc_info, extra={'compact_gui': True})
 
-        # Hide loading screen if it exists
         if self.ui:
             self.ui.hide_loading()
      
-        error_msg = ""
-        # Provide helpful guidance for retrying connection
-        if self.server_address:
-            error_msg = f"To retry the connection, use: /connect {self.server_address}"
-        else:
-            error_msg = "To retry the connection, use: /connect <server_address:port>"
-        
-        # Show error message box using MDDialog
         if self.ui:
             error_text = str(exc_info[1]) if exc_info[1] else msg
             self._messagebox_connection_loss = self.gui_error("Connection Error", error_text + "\n" + msg)
         else:
-            # Fallback to old method if no UI
             self.error(msg, exc_info[1])
 
     def make_gui(self) -> "type[FrontendProtocol]":
@@ -1286,10 +1425,8 @@ class CommonContext(InitContext):
         return resolve_frontend_class()
 
     def run_cli(self):
-        # Under the Textual TUI, the TUI owns stdin (raw mode) and already routes typed
-        # commands through ctx.command_processor via mwgg_tui.app.MultiTUIApp. Starting our
-        # own console_loop would duplicate that routing AND deadlock the asyncio loop,
-        # because rich.Console.input() is a synchronous blocking read on stdin.
+        # The Textual TUI owns stdin and already routes commands through ctx.command_processor;
+        # a second console_loop would duplicate that routing and deadlock the asyncio loop.
         if os.environ.get("MWGG_FRONTEND", "gui") == "tui":
             return
 
@@ -1320,7 +1457,8 @@ async def keep_alive(ctx: CommonContext, seconds_between_checks=100):
                 seconds_elapsed = 0
 
 
-async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) -> None:
+async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None, *,
+                      reconnect_attempt: bool = False) -> None:
     await ctx.takeover_complete.wait()
     if ctx.server and ctx.server.socket:
         logger.error('Already connected')
@@ -1349,10 +1487,26 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     def reconnect_hint() -> str:
         return ", type /connect to reconnect" if ctx.server_address else ""
 
+    def log_server_shutdown(reason: typing.Optional[str]) -> None:
+        shutdown = f"Server shut down: {reason or 'no reason given'}"
+        if "WebHost" in ctx.server_tags:
+            shutdown += (f". Please resume the multiworld room at https://{ctx.hostname}/me/rooms"
+                         " before typing /connect to reconnect")
+        logger.info(shutdown)
+
     username = f" with username {urllib.parse.urlparse(address).username}" if urllib.parse.urlparse(address).username else ""
     hostname = urllib.parse.urlparse(address).hostname
     port = str(urllib.parse.urlparse(address).port)
     logger.info(f'Connecting to {apname} server at {hostname}:{port}{username}.')
+    # The ws:// -> wss:// retry below recurses; only the innermost frame may close
+    # the connection and schedule a reconnect, or the outer finally double-schedules.
+    delegated = False
+    # Auto-reconnect only chases a server that went away unexpectedly: a fresh connect that
+    # fails is a wrong address until the user says otherwise, a server that sent GOING_AWAY
+    # shut down on purpose, and a refused connect has nothing listening until the room is
+    # reopened. None of those come back on their own.
+    connected = False
+    retry = reconnect_attempt
     try:
         socket = await websockets.connect(address, ping_timeout=None, ping_interval=None,
                                           ssl=get_ssl_context() if address.startswith("wss://") else None,
@@ -1362,16 +1516,33 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         ctx.server_address = address
         ctx.current_reconnect_delay = ctx.starting_reconnect_delay
         ctx.disconnected_intentionally = False
+        connected = retry = True
         try:
             async for data in ctx.server.socket:
                 for msg in decode(data):
                     await process_server_cmd(ctx, msg)
+            # A clean close (1000/1001) ends the iteration without raising; the close frame
+            # is still on the socket. Only a failed close handshake reaches the except below.
+            if socket.close_code == CloseCode.GOING_AWAY:
+                retry = False
+                log_server_shutdown(socket.close_reason)
+            else:
+                logger.info(f"Server closed the connection: {socket.close_code} {socket.close_reason or ''}".rstrip())
         except asyncio.CancelledError:
-            # Expected when the task is cancelled during shutdown
             logger.info("Server loop cancelled during shutdown")
             raise
+        except websockets.ConnectionClosed as e:
+            if e.rcvd is not None and e.rcvd.code == CloseCode.GOING_AWAY:
+                retry = False
+                log_server_shutdown(e.rcvd.reason)
+            else:
+                # Server dropped mid-session. Not a bug - no traceback.
+                logger.info(f"Server closed the connection: {e.__class__.__name__}: {e}")
+        except (ConnectionResetError, ConnectionAbortedError, asyncio.TimeoutError, OSError) as e:
+            # Transport-level disconnects. Not a bug - no traceback.
+            logger.info(f"Connection lost to multiworld server: {e.__class__.__name__}: {e}")
         except Exception as e:
-            # Log unexpected errors but don't let them crash the loop
+            # Genuinely unexpected - keep the traceback so we can debug.
             logger.warning(f"Error in server loop: {e}", exc_info=True)
         finally:
             logger.warning(f"Disconnected from multiworld server{reconnect_hint()}")
@@ -1379,13 +1550,15 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
         # probably encrypted
         if address.startswith("ws://"):
             # try wss
-            await server_loop(ctx, "ws" + address[1:])
+            delegated = True
+            await server_loop(ctx, "ws" + address[1:], reconnect_attempt=reconnect_attempt)
         else:
             ctx.handle_connection_loss(f"Lost connection to the multiworld server due to InvalidMessage"
                                        f"{reconnect_hint()}")
     except ConnectionRefusedError:
-        ctx.handle_connection_loss("Connection refused by the server. "
-                                   f"May not be running {apname} on that address or port.")
+        retry = False
+        ctx.handle_connection_loss("Server refused the connection. Verify that you have the correct address/port "
+                                   "and that the room has been reopened if previously closed due to inactivity.")
     except websockets.InvalidURI:
         ctx.handle_connection_loss("Failed to connect to the multiworld server (invalid URI)")
     except asyncio.TimeoutError:
@@ -1395,20 +1568,64 @@ async def server_loop(ctx: CommonContext, address: typing.Optional[str] = None) 
     except Exception:
         ctx.handle_connection_loss(f"Lost connection to the multiworld server{reconnect_hint()}")
     finally:
-        await ctx.connection_closed()
-        if ctx.server_address and ctx.username and not ctx.disconnected_intentionally:
-            logger.info(f"... automatically reconnecting in {ctx.current_reconnect_delay} seconds")
-            assert ctx.autoreconnect_task is None
-            ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
-        ctx.current_reconnect_delay *= 2
+        if not delegated:
+            await ctx.connection_closed()
+            if ctx.exit_event.is_set() or ctx.disconnected_intentionally:
+                pass
+            elif retry and ctx.server_address and ctx.username:
+                logger.info(f"... automatically reconnecting in {ctx.current_reconnect_delay} seconds")
+                assert ctx.autoreconnect_task is None
+                ctx.autoreconnect_task = asyncio.create_task(server_autoreconnect(ctx), name="server auto reconnect")
+            elif not connected:
+                logger.info("Use /connect to try again.")
 
 
 async def server_autoreconnect(ctx: CommonContext):
     if ctx.exit_event.is_set():
         return
     await asyncio.sleep(ctx.current_reconnect_delay)
+    ctx.current_reconnect_delay *= 2
     if ctx.server_address and ctx.server_task is None:
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
+        ctx.server_task = asyncio.create_task(server_loop(ctx, reconnect_attempt=True), name="server loop")
+
+
+def _check_world_version_pin(ctx: CommonContext) -> None:
+    """After Connected, report a mismatch between the room's world version pin and the
+    installed world.
+
+    The launcher's pre-flight (frontend_protocol.verify_slot) installs a managed pin before
+    the client imports the world; a running client holds the world's modules and native
+    libraries, so it never installs. Each connected room overwrites ModuleUpdate's
+    room-pinned worlds: this world when it is installed at a managed pin, otherwise none.
+    """
+    import ModuleUpdate
+    ModuleUpdate.set_room_pinned_worlds(())
+    if ctx.game is None:
+        return
+    pin = ModuleUpdate.check_world_pin(ctx.game, ctx.world_versions.get(ctx.game), ctx.mwgg_index_tag)
+    if pin is None:
+        return
+    if pin.custom:
+        if pin.installed and not pin.matches:
+            logger.warning(
+                f"[{ctx.game}] Room was generated with custom world version {pin.want}; "
+                f"you have {pin.installed} installed. Behaviour may differ."
+            )
+        return
+    if not pin.slug:
+        logger.warning(
+            f"[{ctx.game}] Could not resolve an index slug; cannot verify world version pin {pin.want}"
+        )
+        return
+    if pin.matches:
+        ModuleUpdate.set_room_pinned_worlds([pin.slug])
+        return
+    fix = ("connect from the launcher to install it first" if pin.tag
+           else "the room sent no index tag to install it from")
+    logger.warning(
+        f"[{ctx.game}] This room was generated with apworld {pin.want}, but you have "
+        f"{pin.installed or 'no version'} installed; version-specific features may misbehave -- {fix}."
+    )
 
 
 async def process_server_cmd(ctx: CommonContext, args: dict):
@@ -1418,6 +1635,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         logger.exception(f"Could not get command from {args}")
         raise
     if cmd == 'RoomInfo':
+        ctx.server_seed_name = args["seed_name"]
         if ctx.seed_name and ctx.seed_name != args["seed_name"]:
             msg = "The server is running a different multiworld than your client is. (invalid seed_name)"
             logger.info(msg, extra={'compact_gui': True})
@@ -1437,6 +1655,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             else:
                 logger.info(f'Server protocol version: {ctx.server_version.as_simple_string()}, '
                             f'tags: {", ".join(args["tags"])}')
+            ctx.server_tags = list(args.get("tags", ()))
             if args['password']:
                 logger.info('Password required')
             ctx.update_permissions(args.get("permissions", {}))
@@ -1465,6 +1684,10 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             data_package_checksums = args.get("datapackage_checksums", {})
             await ctx.prepare_data_package(set(args["games"]), data_package_checksums)
 
+            # Store game-keyed world version pins + the index tag for use after Connected.
+            ctx.world_versions = args.get("world_versions", {}) or {}
+            ctx.mwgg_index_tag = args.get("mwgg_index_tag")
+
             await ctx.server_auth(args['password'])
 
     elif cmd == 'DataPackage':
@@ -1473,36 +1696,43 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
     elif cmd == 'ConnectionRefused':
         errors = args["errors"]
         if 'InvalidGame' in errors:
-            ctx.disconnected_intentionally = True
             ctx.event_invalid_game()
+            await ctx.recover_refused_slot()
         elif 'IncompatibleVersion' in errors:
             ctx.disconnected_intentionally = True
             raise Exception('Server reported your client version as incompatible. '
                             'This probably means you have to update.')
         elif 'InvalidItemsHandling' in errors:
+            ctx.disconnected_intentionally = True
             raise Exception('The item handling flags requested by the client are not supported')
         # last to check, recoverable problem
         elif 'InvalidSlot' in errors:
             logger.error('Player name is incorrect, please verify that you have entered your player name exactly as it appears in your YAML file.')
-            ctx.auth = None
-            ctx.username = None
-            await ctx.client_get_username()
+            await ctx.recover_refused_slot()
         elif 'InvalidPassword' in errors:
             logger.error('Invalid password')
             ctx.password = None
             await ctx.client_get_password(True)
         elif errors:
+            ctx.disconnected_intentionally = True
             raise Exception("Unknown connection errors: " + str(errors))
         else:
+            ctx.disconnected_intentionally = True
             raise Exception('Connection refused by the multiworld host, no reason provided')
 
     elif cmd == 'Connected':
-        ctx.username = ctx.auth
         ctx.team = args["team"]
         ctx.slot = args["slot"]
+        # on a switch to a different session, clear session state before stale checks/goal are replayed below
+        identity = (ctx.server_seed_name, ctx.team, ctx.slot)
+        if ctx.connected_identity is not None and identity != ctx.connected_identity:
+            ctx.reset_session_state()
+        ctx.connected_identity = identity
         # int keys get lost in JSON transfer
         ctx.slot_info = {0: NetworkSlot("Archipelago", "Archipelago", SlotType.player)}
         ctx.slot_info.update({int(pid): data for pid, data in args["slot_info"].items()})
+        # Not ctx.auth: ROM clients log in with a ROM-derived alias, and the setter persists this.
+        ctx.username = ctx.slot_info[ctx.slot].name
         ctx.hint_points = args.get("hint_points", 0)
         ctx.players = args["players"]
         ctx.consume_players_package(args["players"])
@@ -1546,6 +1776,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         if ctx.ui:
             ctx.ui.on_connect()
 
+        # Check world version pin for this slot now that ctx.game is known.
+        _check_world_version_pin(ctx)
+
     elif cmd == 'ReceivedItems':
         start_index = args["index"]
         
@@ -1575,7 +1808,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             ctx.consume_players_package(args["players"])
             ctx.players = args["players"]
         if "hint_points" in args:
-            ctx.hint_points = args['hint_points']
+            ctx.hint_points = args["hint_points"]
         if "checked_locations" in args:
             checked = set(args["checked_locations"])
             ctx.checked_locations |= checked
@@ -1583,27 +1816,39 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         if "permissions" in args:
             ctx.update_permissions(args["permissions"])
 
+        # Update hint info for local display
+        if "hint_cost" in args:
+            ctx.hint_cost = int(args["hint_cost"])
+
     elif cmd == 'Print':
         ctx.on_print(args)
 
     elif cmd == 'PrintJSON':
-        data = args.get("data", [])
-        if "CommandResult" in args.get("type", "") and any("successful" in a.get("text", "") for a in data if "text" in a):
-            text_parts = [a["text"] for a in data if "text" in a]
-            if "Login" in text_parts:
+        if args.get("type") == "CommandResult":
+            # MultiServer's !admin replies arrive as one text part:
+            # "Login successful. ..." / "Logout successful. ...".
+            text = "".join(part.get("text", "") for part in args.get("data", []))
+            if text.startswith("Login successful"):
                 ctx.admin = True
-            elif "Logout" in text_parts:
+            elif text.startswith("Logout successful"):
                 ctx.admin = False
         ctx.on_print_json(args)
+        if args.get("type") == "AdminCommandResult":
+            on_admin_command_result = getattr(ctx.ui, "on_admin_command_result", None)
+            if callable(on_admin_command_result):
+                on_admin_command_result(args)
 
     elif cmd == 'InvalidPacket':
         logger.warning(f"Invalid Packet of {args['type']}: {args['text']}")
 
     elif cmd == "Bounced":
         tags = args.get("tags", [])
-        # we can skip checking "DeathLink" in ctx.tags, as otherwise we wouldn't have been send this
-        if "DeathLink" in tags and ctx.last_death_link != args["data"]["time"]:
-            ctx.on_deathlink(args["data"])
+        # we can skip checking "DeathLink" in ctx.tags, as otherwise we wouldn't have been sent this
+        if "DeathLink" in tags:
+            data = args.get("data", {})
+            time = data.get("time")
+            if time is not None and ctx.last_death_link != time:
+                ctx.on_deathlink(args["data"])
 
     elif cmd == "Retrieved":
         ctx.stored_data.update(args["keys"])
@@ -1661,35 +1906,39 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
         logger.debug(f"unknown command {cmd}")
 
     try:
+        await ctx.before_package(cmd, args)
+    except Exception:
+        logger.exception(f"before_package failed for cmd={cmd!r}")
+    try:
         ctx.on_package(cmd, args)
     except Exception:
-        # Per-world on_package overrides can raise (e.g. KeyError on a ctx attribute
-        # the framework hasn't populated yet). Outer server_loop catches it but logs at
-        # WARNING via a chain that a child logger with propagate=False could hide.
-        # Log here so the world-specific failure is always visible in the console.
+        # Per-world on_package overrides can raise; log here because the outer server_loop's
+        # WARNING goes through a chain a propagate=False child logger can hide.
         logger.exception(f"on_package failed for cmd={cmd!r}")
 
 
 async def console_loop(ctx: CommonContext):
-    from rich import Console
-    console = Console(force_terminal=True, force_interactive=True)
+    import logging
+    logger = logging.getLogger(__name__)
+    
     commandprocessor = ctx.command_processor(ctx)
     queue = asyncio.Queue()
-    stream_input(console.input(prompt=f"{ctx.server_address}: "), queue)
+    stream_input(sys.stdin, queue)
+    
     while not ctx.exit_event.is_set():
         try:
-            input_text = await queue.get()
+            input_text = await asyncio.wait_for(queue.get(), timeout=0.1)
             queue.task_done()
-
             if ctx.input_requests > 0:
                 ctx.input_requests -= 1
                 ctx.input_queue.put_nowait(input_text)
                 continue
-
             if input_text:
                 commandprocessor(input_text)
-        except Exception as e:
-            logger.exception(e)
+        except asyncio.TimeoutError:
+            continue  # Loop back to check exit_event
+        except Exception:
+            logger.exception("Error in console_loop")
 
 
 def get_base_parser(description: typing.Optional[str] = None):
@@ -1726,6 +1975,61 @@ def handle_url_arg(args: "argparse.Namespace",
         args.password = urllib.parse.unquote(url.password)
 
     return args
+
+
+#: Hosts whose avatar URLs the client will store/render. Mirrors the desktop GUI's
+#: mwgg_gui.constants.TRUSTED_AVATAR_HOSTS.
+TRUSTED_AVATAR_HOSTS = ("multiworld.gg", "mw.prismativerse.com")
+
+
+def safe_avatar_source(url: str) -> str:
+    """Return ``url`` only if it is HTTPS on the trusted-host allowlist, else "".
+
+    Mirrors mwgg_gui's ``safe_avatar_source``: legacy/hostile URLs collapse to
+    the empty string so nothing untrusted is persisted or rendered.
+    """
+    if not url:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(url)
+    except ValueError:
+        return ""
+    if parsed.scheme != "https":
+        return ""
+    if (parsed.hostname or "").lower() not in TRUSTED_AVATAR_HOSTS:
+        return ""
+    return url
+
+
+def parse_connect_url(url: "typing.Optional[str]") -> "typing.Optional[dict]":
+    """Decompose a ``mwgg://`` / ``archipelago://`` launch URL into its parts.
+
+    Returns ``{hostname, port, name, password, game, avatar}`` (values may be
+    None/"") or None if ``url`` is empty or not one of our schemes. ``password``
+    is None for the literal ``:None@`` the room links use to mean "no password".
+    """
+    if not url:
+        return None
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("mwgg", "archipelago"):
+        return None
+    query = urllib.parse.parse_qs(parsed.query)
+
+    def _first(key: str) -> str:
+        values = query.get(key)
+        return urllib.parse.unquote(values[0]) if values else ""
+
+    password = urllib.parse.unquote(parsed.password) if parsed.password else None
+    if password == "None":
+        password = None
+    return {
+        "hostname": parsed.hostname,
+        "port": parsed.port,
+        "name": urllib.parse.unquote(parsed.username) if parsed.username else "",
+        "password": password,
+        "game": _first("game"),
+        "avatar": _first("avatar"),
+    }
 
 
 def launch_textclient(server_address: str = None):
@@ -1770,7 +2074,6 @@ def launch_textclient(server_address: str = None):
         ctx = TextContext(server_address)
         ctx.server_task = asyncio.create_task(server_loop(ctx), name="server loop")
 
-        # Try to takeover existing frontend UI (Kivy or TUI)
         if ctx._can_takeover_existing_ui():
             await ctx._takeover_existing_ui()
         else:
@@ -1788,7 +2091,6 @@ def launch_textclient(server_address: str = None):
 
     import colorama
 
-    # Check if we're already in an event loop (GUI mode)
     try:
         loop = asyncio.get_running_loop()
         logger.info("Running text client in existing event loop (GUI mode)")
@@ -1803,9 +2105,8 @@ def launch_textclient(server_address: str = None):
         return task
     except RuntimeError:
         logger.critical("This is not a standalone text client. Please run the MultiWorld GUI.")
-        # No CommonContext was constructed in this branch, so no _error_callback
-        # is reachable here; Utils._perform_module_launch will fire its pending
-        # callback fallback if this raises out.
+        # No CommonContext exists in this branch, so no _error_callback is reachable;
+        # Utils._perform_module_launch's pending-callback fallback fires if this raises out.
 
 def main_textclient(server_address: str):
     """Main entry point for integration with MultiWorld system"""

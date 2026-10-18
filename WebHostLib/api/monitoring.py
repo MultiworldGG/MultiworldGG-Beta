@@ -4,13 +4,12 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from flask import jsonify, request, abort
-from pony.orm import db_session, select
+from sqlalchemy import select
 
 from Utils import restricted_loads, utcnow
 from WebHostLib import app, to_url
 
-from ..models import Room, Command
-
+from ..models import Room, Command, db, commit
 
 from . import api_endpoints
 
@@ -80,12 +79,11 @@ def get_per_player_last_activity(room: Room) -> Dict[int, Optional[float]]:
 def monitoring_rooms() -> Dict[str, Any]:
     """Get a list of all active rooms with port and last activity time."""
     require_admin_token()
-    with db_session:
+    if True:  # replaced with db_session; flask-sqlalchemy handles session lifecycle
         now = utcnow()
-        rooms = select(
-            room for room in Room if
-            room.last_activity >= now - timedelta(days=3)
-        )
+        rooms = db.session.scalars(
+            select(Room).where(Room.last_activity >= now - timedelta(days=3))
+        ).all()
         
         active_rooms = []
         for room in rooms:
@@ -123,12 +121,11 @@ def monitoring_rooms() -> Dict[str, Any]:
 def monitoring_games() -> Dict[str, Any]:
     """Get a list of all games with port and time of last action."""
     require_admin_token()
-    with db_session:
+    if True:  # replaced with db_session; flask-sqlalchemy handles session lifecycle
         now = utcnow()
-        rooms = select(
-            room for room in Room if
-            room.last_activity >= now - timedelta(days=3)
-        )
+        rooms = db.session.scalars(
+            select(Room).where(Room.last_activity >= now - timedelta(days=3))
+        ).all()
 
         games_dict: Dict[str, List[Dict[str, Any]]] = {}
         
@@ -177,42 +174,40 @@ def monitoring_games() -> Dict[str, Any]:
 def broadcast() -> Dict[str, Any]:
     """Send a message to all active rooms (or specific ones)."""
     require_admin_token()
-    
+
     data = request.get_json()
     if not data or "message" not in data:
         abort(400, description="Message is required")
-        
+
     message = data["message"]
-    room_ids = data.get("rooms") # optional
-    
-    with db_session:
-        now = utcnow()
-        
-        if room_ids:
-            try:
-                room_uuids = [UUID(rid) for rid in room_ids]
-            except ValueError:
-                abort(400, description="Invalid room ID format")
-                
-            rooms = select(
-                room for room in Room if room.id in room_uuids
-            )
-        else:
-            # Default to all active rooms
-            # Same criteria as monitoring_rooms + is_room_active check
-            candidates = select(
-                room for room in Room if
-                room.last_activity >= now - timedelta(days=3)
-            )
-            rooms = [r for r in candidates if is_room_active(r)]
-            
-        count = 0
-        for room in rooms:
-            Command(room=room, commandtext=message)
-            count += 1
-            
-        return jsonify({
-            "message": f"Broadcast sent to {count} rooms",
-            "count": count,
-            "timestamp": now.isoformat(),
-        })
+    room_ids = data.get("rooms")  # optional
+
+    now = utcnow()
+
+    if room_ids:
+        try:
+            room_uuids = [UUID(rid) for rid in room_ids]
+        except ValueError:
+            abort(400, description="Invalid room ID format")
+
+        rooms = db.session.scalars(
+            select(Room).where(Room.id.in_(room_uuids))
+        ).all()
+    else:
+        # Default to all active rooms
+        candidates = db.session.scalars(
+            select(Room).where(Room.last_activity >= now - timedelta(days=3))
+        ).all()
+        rooms = [r for r in candidates if is_room_active(r)]
+
+    cmd_count = 0
+    for room in rooms:
+        Command(room_id=room.id, commandtext=message)
+        cmd_count += 1
+    commit()
+
+    return jsonify({
+        "message": f"Broadcast sent to {cmd_count} rooms",
+        "count": cmd_count,
+        "timestamp": now.isoformat(),
+    })

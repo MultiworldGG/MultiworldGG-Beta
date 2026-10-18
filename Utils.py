@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from BaseUtils import *
-from BaseUtils import use_worlds_venv, reload_application_options
+from BaseUtils import use_worlds_venv, reload_application_options, mwgg_venv_site_packages
 
 import asyncio
 import concurrent.futures
 import json
+import shlex
 import typing
 import builtins
 import os
@@ -17,18 +18,25 @@ import functools
 import io
 import collections
 import importlib
+import importlib.machinery
+import importlib.metadata
+import importlib.util
 import logging
 import warnings
+import pathlib
+import webbrowser
 import zipfile
 
 import re
 
 from argparse import Namespace
+from collections.abc import Collection, Iterable, Sequence
 from datetime import datetime, timezone
+from shutil import which
 
 from settings import Settings, get_settings
 from time import sleep
-from typing import BinaryIO, Coroutine, Mapping, Optional, Set, Dict, Any, Union, TypeGuard
+from typing import BinaryIO, Coroutine, Generic, Mapping, Optional, Set, Dict, Any, TypeVar, Union, TypeGuard
 from yaml import load, load_all, dump
 from pathspec import PathSpec, GitIgnoreSpec
 from typing_extensions import deprecated
@@ -36,7 +44,6 @@ from pathlib import Path
 
 logger = logging.getLogger("MultiWorld")
 
-init_logging("Update")
 update_logger = logging.getLogger("Update")
 
 import ModuleUpdate
@@ -54,7 +61,6 @@ save_filename = FileUtils.save_file_input_dialog
 
 if typing.TYPE_CHECKING:
     import tkinter
-    import pathlib
     from BaseClasses import Region
     import multiprocessing
 
@@ -66,7 +72,58 @@ is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
 
-_worlds_to_load: typing.List[str | "APWorldContainer"] = []
+# Restarts read this, not sys.argv: _defer_cli_launch swaps sys.argv for the world client's lifetime.
+_startup_argv: typing.Tuple[str, ...] = tuple(sys.argv)
+
+_worlds_to_load: typing.List[str | "APWorldContainer"] = ["worlds.generic", "worlds.tracker"]
+
+def _expand_game_choices(game_names: typing.Iterable) -> typing.List[str]:
+    """Flatten raw YAML ``game`` values into candidate game-name strings.
+
+    A ``game`` entry can be a plain string, a list of names, or a
+    ``{name: weight}`` weighted mapping. The actual game is chosen later in
+    Generate.roll_settings via get_choice(), so every candidate world must be
+    queued here - the pick isn't known yet. Mirror get_choice's weight
+    handling: a weighted name is a candidate only when its weight is positive
+    (non-positive weights can never be selected), while list/string forms have
+    no weights and contribute every name. Order-preserving and deduplicated.
+    """
+    expanded: typing.List[str] = []
+    for entry in game_names:
+        if isinstance(entry, dict):
+            for name, weight in entry.items():
+                try:
+                    selectable = int(weight) > 0
+                except (TypeError, ValueError):
+                    selectable = True  # unparseable weight: keep the candidate
+                if selectable:
+                    expanded.append(name)
+        elif isinstance(entry, (list, tuple)):
+            expanded.extend(_expand_game_choices(entry))
+        else:
+            expanded.append(entry)
+    return list(dict.fromkeys(expanded))
+
+def _worlds_search_paths() -> typing.List[str]:
+    """The directories worlds/__init__.py puts on the `worlds` package __path__."""
+    bundled = local_path("lib", "worlds") if is_frozen() else local_path("worlds")
+    return [bundled, str(ModuleUpdate._venv_worlds_dir())]
+
+
+def _world_module_on_disk(slug: str) -> bool:
+    """True if `worlds.<slug>` is importable, WITHOUT importing the `worlds` package.
+
+    importlib.util.find_spec("worlds.<slug>") imports the parent package as a side
+    effect, and worlds/__init__.py is one-shot: on import it snapshots
+    _worlds_to_load, loads it and builds the data package. Probing mid-queue
+    therefore truncates the catalog to whatever was queued so far. PathFinder takes
+    explicit search paths and imports nothing.
+    """
+    spec = importlib.machinery.PathFinder().find_spec(slug, _worlds_search_paths())
+    # A bare directory matches as a namespace package (loader None); worlds are real
+    # packages, so that is a stray directory rather than an installed world.
+    return spec is not None and spec.loader is not None
+
 
 def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.List[(str, bool)]:
     """Set the game names to the list of game names.
@@ -77,9 +134,13 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     """
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
+    from BaseUtils import get_apworld_manifest
+    # Weighted/list `game:` specs arrive as dicts/lists; expand to the candidate
+    # game-name strings so every path below has hashable names to key on.
+    game_names = _expand_game_choices(game_names)
     _worlds_to_install = {game: "" for game in game_names}
     _unknown_worlds = []
-    custom_worlds_dir = Path(local_path("custom_worlds"))
+    custom_worlds_dir = ModuleUpdate.custom_worlds_dir
     _unlisted_worlds = [world for world in ModuleUpdate.find_world_modules() if world not in GameIndex.game_names.values()]
     # We only have the module name here, not the game name, and that is buried deep in the metadata
 
@@ -90,12 +151,13 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
             _worlds_to_install.pop(game)
         except KeyError:
-            # Game not found in index
             update_logger.warning(f"Game {game} not found in game index, looking for unlisted world.")
             _unknown_worlds.append(game)
             return
         except importlib.metadata.PackageNotFoundError:
-            # Package not installed
+            if _world_module_on_disk(_worlds_to_install[game]):
+                _worlds_to_load.append(f"worlds.{_worlds_to_install[game]}")
+                _worlds_to_install.pop(game)
             return
 
     for game in game_names:
@@ -108,8 +170,14 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             try:
                 dist = importlib.metadata.distribution(f"worlds.{module_name}")
                 if dist:
-                    _unlisted_worlds_names[dist.metadata.json['summary'].strip("MultiWorld: ")] = module_name
+                    _unlisted_worlds_names[dist.metadata.json['summary'].removeprefix("MultiWorld: ")] = module_name
             except importlib.metadata.PackageNotFoundError:
+                # Bundled world with no pip metadata; try the archipelago.json
+                if _world_module_on_disk(module_name):
+                    manifest = get_apworld_manifest(module_name)
+                    game_name = manifest.get("game") if manifest else None
+                    if game_name:
+                        _unlisted_worlds_names[game_name] = module_name
                 continue
         for world in _unknown_worlds:
             if world in _unlisted_worlds_names.keys():
@@ -121,9 +189,8 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
     if _worlds_to_install:
         modules_to_install = [module for module in _worlds_to_install.values() if module]
         custom_worlds = ModuleUpdate.install_worlds(modules_to_install)
-        # install_worlds returns slugs that fell back to a custom apworld; pick up the
-        # ones that actually pip-installed by checking importlib.metadata directly so
-        # the loader sees them.
+        # install_worlds returns slugs that fell back to a custom apworld; check
+        # importlib.metadata directly for the ones that pip-installed so the loader sees them.
         for slug in modules_to_install:
             target = f"worlds.{slug}"
             if target in _worlds_to_load:
@@ -139,7 +206,7 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
         custom_worlds = []
 
     # Snapshot installed-wheel versions for slugs already on _worlds_to_load.
-    # Used to honor the precedence rule: higher world_version wins, tie -> installed wheel.
+    # Used to honor the ModuleUpdate.custom_world_wins precedence rule.
     _installed_versions: dict[str, str] = {}
     for entry in _worlds_to_load:
         if isinstance(entry, str) and entry.startswith("worlds."):
@@ -156,38 +223,33 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
             with zipfile.ZipFile(file, 'r') as zipf:
                 apworld = APWorldContainer(file)
                 manifest = apworld.read_contents(zipf)
+                slug = ModuleUpdate.apworld_module_name(zipf)
 
             if manifest.get("game") in _unknown_worlds:
                 _worlds_to_load.append(apworld)
-                # Seed the in-memory GameIndex so subsequent get_module_for_game()
-                # lookups (notably in Generate.roll_settings) can resolve this game
-                # to its custom apworld module without waiting for
-                # get_available_worlds() to scan custom_worlds_dir again.
-                if not GameIndex.get_game_name_for_module(file.stem):
+                # Seed the in-memory GameIndex so get_module_for_game() lookups (notably
+                # Generate.roll_settings) resolve without re-scanning custom_worlds_dir.
+                if not GameIndex.get_game_name_for_module(slug):
                     index_entry = dict(manifest)
                     index_entry["game_name"] = manifest["game"]
-                    GameIndex.add_game(file.stem, index_entry)
+                    GameIndex.add_game(slug, index_entry)
                 continue
-            if f"worlds.{file.stem}" in custom_worlds:
+            if f"worlds.{slug}" in custom_worlds:
                 _worlds_to_load.append(apworld)
                 continue
-            if file.stem in _installed_versions:
-                apworld_version = tuplize_version(manifest.get("world_version", "0.0.0"))
-                installed_version = tuplize_version(_installed_versions[file.stem])
-                if apworld_version > installed_version:
-                    # apworld wins — replace the installed-wheel entry with the apworld
-                    target = f"worlds.{file.stem}"
+            if slug in _installed_versions:
+                if ModuleUpdate.custom_world_wins(manifest.get("world_version"), _installed_versions[slug]):
+                    # apworld wins: replace the installed-wheel entry with the apworld
+                    target = f"worlds.{slug}"
                     try:
                         _worlds_to_load.remove(target)
                     except ValueError:
                         pass
                     _worlds_to_load.append(apworld)
-                # tie or apworld older -> installed wheel wins, leave _worlds_to_load alone
+                # installed wheel strictly newer -> it wins, leave _worlds_to_load alone
 
-    # Compute the set of game names that _worlds_to_load can actually serve. Mirrors
-    # what the loader will see: a `worlds.<slug>` entry serves whatever game the
-    # installed wheel's summary advertises, and an APWorldContainer serves its
-    # manifest .game.
+    # Game names _worlds_to_load can actually serve, as the loader will see it: a wheel
+    # serves the game its summary advertises, an APWorldContainer its manifest .game.
     index_slug_to_name = {slug: name for name, slug in GameIndex.game_names.items()}
     served_games: set[str] = set()
     for entry in _worlds_to_load:
@@ -204,9 +266,13 @@ def set_game_names(game_names: typing.List[str], strict: bool = True) -> typing.
                 dist = importlib.metadata.distribution(f"worlds.{slug}")
                 summary = dist.metadata.json.get('summary', '') if dist else ''
                 if summary:
-                    served_games.add(summary.strip("MultiWorld: "))
+                    served_games.add(summary.removeprefix("MultiWorld: "))
             except importlib.metadata.PackageNotFoundError:
-                pass
+                # Bundled monorepo world; read game name from archipelago.json.
+                manifest = get_apworld_manifest(slug)
+                game_name = manifest.get("game") if manifest else None
+                if game_name:
+                    served_games.add(game_name)
     missing = [g for g in game_names if g not in served_games]
     if missing:
         if strict:
@@ -225,76 +291,134 @@ def game_names() -> typing.List[str]:
 
 def get_available_worlds() -> typing.List[str]:
     """Get a list of all of the available worlds"""
-    from mwgg_igdb import GameIndex
     from ModuleUpdate import find_world_modules
-    from BaseUtils import get_apworld_manifest
     
     available_worlds = find_world_modules()
-    # Also add worlds from the custom_worlds directory
-    custom_worlds_dir = Path(local_path("custom_worlds"))
-    try:
-        for world_file in custom_worlds_dir.iterdir():
-            module_name = discover_custom_world_module(world_file)
-            if module_name and module_name not in available_worlds:
-                available_worlds.add(module_name)
-    except Exception as e:
-        update_logger.warning(f"Error checking custom worlds location: {e}")
-    game_modules = set(GameIndex.get_all_games().keys())
-
-    # Also check for currently installed world modules not in GameIndex
-    try:
-        for world_name in available_worlds:
-            if world_name not in game_modules:
-                manifest = get_apworld_manifest(world_name)
-                manifest["game_name"] = manifest.pop("game", world_name)
-                manifest["cover_url"] = manifest.pop("cover_url", "")
-                GameIndex.add_game(world_name, manifest)
-
-    except Exception as e:
-        update_logger.warning(f"Error checking installed world modules: {e}")
-
+    # Register custom_worlds entries so they are indexed and selectable; skips
+    # non-world files and never lets one bad file abort the scan.
+    available_worlds.update(register_custom_worlds())
     return list(sorted(available_worlds))
 
+
+def get_installed_worlds() -> typing.List[str]:
+    """Worlds installed into the per-user worlds venv (worlds.<slug> dists)
+    plus custom_worlds entries. Reads that venv's site-packages directly: a
+    dev checkout's own environment carries every world for the test suite and
+    must not count."""
+    installed = set(register_custom_worlds())
+    for dist in importlib.metadata.distributions(path=[mwgg_venv_site_packages()]):
+        name = dist.metadata["Name"] or ""
+        slug = name.removeprefix("worlds.")
+        if slug != name and slug and not slug.startswith("_"):
+            installed.add(slug)
+    return list(sorted(installed))
+
+
+def register_custom_worlds() -> typing.List[str]:
+    """Scan the custom_worlds directory and register each world's manifest in the
+    in-memory GameIndex so it is selectable. Idempotent and import-free: only the
+    apworld/zip manifest is read, never the Python module (they're zip files).
+    Files that aren't a recognized world archive (README.txt, stray files) are
+    skipped, and a single unreadable file never aborts the rest of the scan.
+    Returns the module names that were found.
+
+    custom_worlds_dir is resolved (and mkdir'd) once in ModuleUpdate so frozen
+    builds point at the user-writable write_path location and dev mode points at
+    the in-repo dir.
+    """
+    from ModuleUpdate import custom_worlds_dir
+    found: typing.List[str] = []
+    if not custom_worlds_dir.exists():
+        return found
+    # site-packages may have been populated after a lookup None-cached its finder.
+    importlib.invalidate_caches()
+    for world_file in custom_worlds_dir.iterdir():
+        try:
+            module_name = discover_custom_world_module(world_file)
+        except Exception as e:
+            update_logger.warning(f"Skipping custom world {world_file.name}: {e}", exc_info=True)
+            continue
+        if module_name and module_name not in found:
+            found.append(module_name)
+    return found
+
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
-    """Add worlds from the custom_worlds directory to the game index."""
+    """Register a single custom world's manifest in the in-memory GameIndex and
+    return its module name. Returns None for anything that isn't a recognized
+    world archive (e.g. a README.txt), so callers can scan a directory without
+    tripping over stray files. No Python import happens - only the zip manifest
+    is read."""
     from mwgg_igdb import GameIndex
     from APContainer import APWorldContainer
-    
+
+    if not custom_world.is_file():
+        return None
+
     if custom_world.suffix in [".whl", ".egg", ".tar", ".gz", ".zip"]:
         with zipfile.ZipFile(custom_world, 'r') as zipf:
-            for name in zipf.infolist():
-                if name.filename.endswith("archipelago.json"):
-                    apmanifest_path = name
-                    break
+            apmanifest_path = next(
+                (name for name in zipf.infolist()
+                 if name.filename.endswith("archipelago.json")), None)
+            if apmanifest_path is None:
+                return None
             module_name = apmanifest_path.filename.split("/")[1].replace("-", "_")
             metadata = json.loads(zipf.read(apmanifest_path))
             metadata["game_name"] = metadata.pop("game", module_name)
             metadata["cover_url"] = metadata.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (e.g. registered by a previous
-                # call this run). Idempotent no-op; return the module name so callers
-                # still see it as a discovered world.
+                # Already indexed; the custom manifest stays authoritative for its declared
+                # components, so a shadowing or replaced file still refreshes them.
+                if "components" in metadata:
+                    GameIndex.get_game(module_name)["components"] = metadata["components"]
                 return module_name
             GameIndex.add_game(module_name, metadata)
+            return module_name
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
-            module_name = custom_world.stem
+            module_name = ModuleUpdate.apworld_module_name(custom_apworld)
             manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):
-                # Already known to the in-memory index (e.g. registered by a previous
-                # call this run). Idempotent no-op; return the module name so callers
-                # still see it as a discovered world.
+                # Already indexed; the custom manifest stays authoritative for its declared
+                # components, so a shadowing or replaced file still refreshes them.
+                if "components" in manifest:
+                    GameIndex.get_game(module_name)["components"] = manifest["components"]
                 return module_name
             GameIndex.add_game(module_name, manifest)
-    return module_name if module_name else None
+            return module_name
+    # Not a recognized world archive (e.g. a README.txt or stray file).
+    return None
+
+
+def read_patch_manifest(patch_path: str) -> Dict[str, Any]:
+    """Read a patch container's root archipelago.json.
+
+    Every APContainer-derived patch format (.aplttp, .apkh3, .apemerald, ...)
+    is a zip with the manifest at the archive root. Returns {} for anything
+    else (multidata, apworlds, stray files)."""
+    try:
+        with zipfile.ZipFile(patch_path, "r") as zf:
+            manifest = json.loads(zf.read("archipelago.json").decode("utf-8"))
+    except (OSError, zipfile.BadZipFile, KeyError, ValueError):
+        return {}
+    return manifest if isinstance(manifest, dict) else {}
+
+
+def read_patch_game_name(patch_path: str) -> Optional[str]:
+    """Read the game name from a patch container's root archipelago.json.
+
+    Returns None for anything that is not a patch container so callers can
+    fall back to component-suffix routing."""
+    game = read_patch_manifest(patch_path).get("game")
+    return game if isinstance(game, str) and game else None
 
 
 def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) -> Optional[callable]:
     """
     Returns the inner callable for custom worlds, or None if the wrapper doesn't match the
-    standard `launch_component(<X>, ...)` shape so that the client canh be launched in the same UI.
+    standard `launch_component(<X>, ...)` / `launch_subprocess(<X>, ...)` shape, so that the
+    client can be launched in the same UI.
     """
     import ast
     import inspect
@@ -309,21 +433,20 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
 
     local_imports: dict[str, tuple[str, str]] = {}
     launch_arg: Optional[str] = None
-    for stmt in tree.body[0].body:
-        if isinstance(stmt, ast.ImportFrom):
-            for alias in stmt.names:
-                local_imports[alias.asname or alias.name] = (stmt.module or "", alias.name)
-        elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Call):
-            call = stmt.value
+    # Nested blocks included: Manual guards its call with `if gui_enabled:`.
+    for node in ast.walk(tree.body[0]):
+        if isinstance(node, ast.ImportFrom):
+            for alias in node.names:
+                local_imports[alias.asname or alias.name] = (node.module or "", alias.name)
+        elif isinstance(node, ast.Call) and launch_arg is None:
             callee_name = (
-                call.func.id if isinstance(call.func, ast.Name)
-                else call.func.attr if isinstance(call.func, ast.Attribute)
+                node.func.id if isinstance(node.func, ast.Name)
+                else node.func.attr if isinstance(node.func, ast.Attribute)
                 else None
             )
-            if callee_name in ("launch_component", "launch") and call.args:
-                if isinstance(call.args[0], ast.Name):
-                    launch_arg = call.args[0].id
-                    break
+            if callee_name in ("launch_component", "launch", "launch_subprocess") and node.args:
+                if isinstance(node.args[0], ast.Name):
+                    launch_arg = node.args[0].id
 
     if launch_arg is None:
         return None
@@ -340,23 +463,50 @@ def _resolve_launch_from_custom_world(wrapper_func: callable, module_id: str) ->
     return candidate if callable(candidate) else None
 
 
+def _resolve_named_client_component(module_id: str, component_name: str) -> Optional[callable]:
+    """Resolve a specific client Component registered by module_id (an import
+    side effect of _perform_module_launch's import). Module-scoped on
+    func.__module__ -- deliberately not a global find_component: other worlds'
+    registrations must not be reachable by name from a client launch. Returns
+    the (unwrapped) launch callable, or None with a warning so the caller
+    falls back to default client resolution."""
+    try:
+        from LauncherComponents import components, Type as ComponentType
+    except ImportError:
+        return None
+    for component in components:
+        if component.display_name != component_name:
+            continue
+        if component.type is not ComponentType.CLIENT or component.func is None:
+            continue
+        func_module = getattr(component.func, "__module__", "") or ""
+        if func_module == module_id or func_module.startswith(module_id + "."):
+            inner = _resolve_launch_from_custom_world(component.func, module_id)
+            return inner if inner is not None else component.func
+    logging.warning(f"Component {component_name!r} is not a client registered by {module_id}; "
+                    "falling back to default client resolution.")
+    return None
+
+
 def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]:
     """Discover and launch module via entrypoints.
 
     Frontend-neutral: worker-thread callbacks marshal back to the asyncio loop
     via loop.call_soon_threadsafe, which works for both the Kivy GUI and the
     Textual TUI (both run inside the same asyncio loop driven by MultiWorld.py).
+
+    A `patch_file` kwarg is forwarded to the resolved client: as a positional
+    CLI arg for entry-point/component launch functions, as `diff_file=` for the
+    SNI client, and as the patch positional for the BizHawk fallback.
     """
     import threading
     import asyncio
 
-    # No game selected -> fall straight through to Text Client (CommonClient).
-    # _perform_module_launch("") skips the specialized-client gate and lands at
-    # the main_textclient fallback below.
+    # No game selected: _perform_module_launch("") skips the world-module gate
+    # and dispatches on client_type (manual / universal_tracker / text fallback).
     if not module_name:
         return _perform_module_launch("", **kwargs)
 
-    # First, try to import the module to see if it exists
     if not module_name.startswith("worlds."):
         module_name = f"worlds.{module_name}"
 
@@ -367,14 +517,10 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         try:
             custom_fallbacks = ModuleUpdate.install_worlds([module_name])
             if custom_fallbacks:
-                # install_worlds() extracted these apworlds into the venv worlds
-                # dir, so importlib.import_module(worlds.<slug>) now works via the
-                # normal file loader. Just register them with the live GameIndex
-                # so launcher lookups (game_name -> module) resolve cleanly.
-                custom_worlds_dir = Path(local_path("custom_worlds"))
+                # install_worlds() extracted these apworlds into the venv worlds dir (normal
+                # import now works); register them so game_name -> module lookups resolve.
                 for target in custom_fallbacks:
-                    slug = target.removeprefix("worlds.")
-                    apworld_file = custom_worlds_dir / f"{slug}.apworld"
+                    apworld_file = ModuleUpdate.find_custom_apworld(target.removeprefix("worlds."))
                     try:
                         discover_custom_world_module(apworld_file)
                     except Exception as ie:
@@ -385,7 +531,6 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 
         except Exception as e:
             update_logger.error(f"Failed to update module {module_name}: {str(e)}")
-            # Schedule error handling on main thread
             loop.call_soon_threadsafe(_handle_install_error, str(e))
 
     def _launch_module_after_install():
@@ -398,22 +543,20 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
 
     def _handle_install_error(error):
         """Handle installation errors on the main thread"""
-        # Get error callback from kwargs if provided
         error_callback = kwargs.get('error_callback')
         if error_callback:
             error_callback()
         update_logger.error(f"Module installation failed: {error}")
-    
-    if not is_windows:
-        _perform_module_launch("", **kwargs)
-        return
+
+    # Spawned clients skip update_worlds(): sync an apworld dropped in while the launcher ran.
+    custom_apworld = ModuleUpdate.find_custom_apworld(module_name.removeprefix("worlds."))
+    if custom_apworld.exists():
+        ModuleUpdate.sync_custom_world(custom_apworld)
 
     try:
         importlib.import_module(module_name)
-        # Module exists, launch directly
         _perform_module_launch(module_name, **kwargs)
     except ModuleNotFoundError:
-        # Module doesn't exist, install it in a separate thread
         update_logger.info(f"Module {module_name} not found, installing in background...")
         install_thread = threading.Thread(target=_install_module_threaded, daemon=True)
         install_thread.start()
@@ -422,23 +565,153 @@ def discover_and_launch_module(module_name: str, **kwargs) -> Optional[callable]
         update_logger.error(f"Failed to import module {module_name}: {e}")
         raise e
 
+def _fire_pending_error_callback() -> None:
+    """Fire the launcher-stashed error callback if a deferred launch fails.
+
+    CommonContext consumes the pending dict in __init__, so this only fires
+    when launch() raised before any context was constructed."""
+    import CommonClient as _CC
+    _, pending_error_cb = _CC._consume_pending_launch_callbacks()
+    if pending_error_cb is not None:
+        try:
+            pending_error_cb()
+        except Exception as cb_err:
+            logging.error(f"Error in error callback: {cb_err}")
+
+
+def _client_launch_argv(server_address, slot_name: typing.Optional[str], label: str,
+                        patch_file: typing.Optional[str] = None) -> typing.List[str]:
+    """Translate launcher-provided kwargs into the CLI argv world clients parse:
+    an optional positional patch file followed by --connect/--name flags."""
+    launch_argv: typing.List[str] = []
+    if patch_file:
+        launch_argv.append(patch_file)
+    if isinstance(server_address, str) and server_address:
+        launch_argv.append(f"--connect={server_address}")
+        if slot_name and label == "universal_tracker":
+            launch_argv.append(f"--name={slot_name}")
+    return launch_argv
+
+
+def _update_world_after_failed_launch(module_id: str) -> bool:
+    """Re-pull mwgg_igdb ahead of the daily check and reinstall `module_id` when
+    the fresh index carries a newer version of it (a patch generated on a newer
+    apworld is the usual cause). True when it was reinstalled, so a restart loads it."""
+    try:
+        if module_id not in ModuleUpdate.check_for_updates(worlds_only=True, force=True):
+            update_logger.info(f"The index has no newer {module_id} yet; keeping the installed version.")
+            return False
+        update_logger.warning(f"Installing the newer {module_id} from the refreshed index and restarting.")
+        return module_id not in ModuleUpdate.install_worlds([module_id]).failed
+    except Exception as update_error:
+        logging.error(f"Update after the failed launch of {module_id} failed: {update_error}", exc_info=True)
+        return False
+
+
+def _defer_cli_launch(launch_function, label: str, server_address,
+                      already_restarted: bool,
+                      dep_install_module: typing.Optional[str] = None,
+                      slot_name: typing.Optional[str] = None,
+                      patch_file: typing.Optional[str] = None) -> None:
+    """Defer a CLI-style world launch() to the next asyncio iteration with
+    sys.argv translated from the launcher-provided server_address/patch_file."""
+    loop = asyncio.get_event_loop()
+
+    def _deferred_launch():
+        import inspect
+        saved_argv = sys.argv[:]
+        try:
+            launch_argv = _client_launch_argv(server_address, slot_name, label, patch_file)
+            if launch_argv:
+                sys.argv = [sys.argv[0], *launch_argv]
+            try:
+                accepts_positional = any(
+                    p.kind in (inspect.Parameter.VAR_POSITIONAL,
+                               inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                               inspect.Parameter.POSITIONAL_ONLY)
+                    for p in inspect.signature(launch_function).parameters.values()
+                )
+            except (TypeError, ValueError):
+                accepts_positional = False
+            if accepts_positional:
+                launch_function(*launch_argv)
+            else:
+                launch_function()
+        except (ModuleNotFoundError, ImportError) as dep_error:
+            if dep_install_module and not already_restarted:
+                update_logger.warning(
+                    f"Deferred launch import failed ({dep_error}); reinstalling {dep_install_module} with deps and restarting."
+                )
+                try:
+                    ModuleUpdate.install_worlds([dep_install_module], with_deps=True)
+                except Exception as install_error:
+                    logging.error(
+                        f"Failed to reinstall {dep_install_module} with deps: {install_error}",
+                        exc_info=True,
+                    )
+                    _fire_pending_error_callback()
+                    return
+                _restart_client_with_args()
+            else:
+                logging.error(
+                    f"Deferred world launch for {label} still missing deps after restart: {dep_error}",
+                    exc_info=True,
+                )
+                _fire_pending_error_callback()
+        except Exception as launch_error:
+            logging.error(
+                f"Deferred world launch failed for {label}: {launch_error}",
+                exc_info=True,
+            )
+            if dep_install_module and not already_restarted \
+                    and _update_world_after_failed_launch(dep_install_module):
+                _restart_client_with_args()
+            else:
+                _fire_pending_error_callback()
+        finally:
+            sys.argv[:] = saved_argv
+
+    loop.call_soon(_deferred_launch)
+    logging.info(f"Scheduled deferred launch for {label} on next asyncio iteration")
+
+
+def _indexed_game_name(module_id: str) -> typing.Optional[str]:
+    """Game name the index records for a world module id ("worlds.<slug>" or "<slug>")."""
+    from mwgg_igdb import GameIndex
+    return GameIndex.get_game_name_for_module(module_name=module_id.removeprefix("worlds."))
+
+
+def _seed_manual_game(module_id: str) -> None:
+    """Point the manual client's game selector at the routed module's world.
+
+    The client (upstream Manual's copy included) defaults that selector from the
+    persisted last_manual_game, which would otherwise be whatever was played last."""
+    from worlds.AutoWorld import AutoWorldRegister
+    for game, world in AutoWorldRegister.world_types.items():
+        module = getattr(world, "__module__", "")
+        if "Manual_" in game and (module == module_id or module.startswith(module_id + ".")):
+            persistent_store("client", "last_manual_game", game)
+            return
+
+
 def _perform_module_launch(module_id: str, **kwargs):
     """Perform the actual module launch logic"""
     try:
-        # Per-world launch() bodies are CLI-style and call asyncio.run(main()).
-        # Without nest_asyncio that raises "cannot be called from a running
-        # event loop" because the launcher's asyncio loop is already running
-        # on this thread.
+        # Per-world launch() bodies call asyncio.run(main()); without nest_asyncio that
+        # raises "cannot be called from a running event loop" under the launcher's loop.
         import nest_asyncio
         nest_asyncio.apply()
 
-        # Stash launcher-provided ready/error callbacks centrally. CommonContext
-        # picks them up in __init__ so world clients don't need to forward them
-        # through their launch() signatures.
+        # Stash launcher-provided ready/error callbacks centrally.
         import CommonClient
         ready_callback = kwargs.pop("ready_callback", None)
         error_callback = kwargs.pop("error_callback", None)
         client_type = kwargs.pop("client_type", "text")
+        server_address = kwargs.pop("server_address", None)
+        slot_name = kwargs.pop("slot_name", None)
+        patch_file = kwargs.pop("patch_file", None)
+        component_name = kwargs.pop("component", None)
+        already_restarted = kwargs.pop("_restarted", False)
         CommonClient._set_pending_launch_callbacks(ready_callback, error_callback)
 
         if module_id:
@@ -446,7 +719,7 @@ def _perform_module_launch(module_id: str, **kwargs):
                 importlib.invalidate_caches()
                 importlib.import_module(module_id)
             except (ModuleNotFoundError, ImportError) as e:
-                if kwargs.get("_restarted"):
+                if already_restarted:
                     update_logger.error(f"Module {module_id} still failed after dep reinstall: {e}")
                     raise
                 update_logger.warning(
@@ -456,25 +729,26 @@ def _perform_module_launch(module_id: str, **kwargs):
                 _restart_client_with_args()
                 return None
 
-            # Resolve a client launch function from two sources:
-            #   1. importlib.metadata entry_points (group="mwgg.client") -- this
-            #      is what pip-installed world wheels register via
-            #      [project.entry-points."mwgg.client"] in their pyproject.toml.
-            #   2. worlds.LauncherComponents.components -- this is what worlds
-            #      register at import time via components.append(Component(...)).
-            #      Apworlds loaded via zipimport have no dist-info, so they only
-            #      ever show up in (2). Match by func.__module__ so we pick the
-            #      Component that lives in the just-imported module.
+            if client_type == "manual":
+                _seed_manual_game(module_id)
+
+            # Client launch fn comes from entry_points (group="mwgg.client", pip-installed wheels)
+            # or LauncherComponents.components (zipimported apworlds lack dist-info; match by func.__module__).
             launch_function = None
-            entry_points = importlib.metadata.entry_points(group="mwgg.client")
-            entry_point_name = "{}.Client".format(module_id)
-            for entry_point in entry_points:
-                if entry_point.name == entry_point_name:
-                    launch_function = entry_point.load()
-                    break
+            if component_name:
+                # A named component narrows the scan to one display_name; unknown
+                # names fall through to default resolution rather than dying.
+                launch_function = _resolve_named_client_component(module_id, component_name)
+            if launch_function is None:
+                entry_points = importlib.metadata.entry_points(group="mwgg.client")
+                entry_point_name = "{}.Client".format(module_id)
+                for entry_point in entry_points:
+                    if entry_point.name == entry_point_name:
+                        launch_function = entry_point.load()
+                        break
             if launch_function is None:
                 try:
-                    from worlds.LauncherComponents import (
+                    from LauncherComponents import (
                         components as _components,
                         Type as _ComponentType,
                     )
@@ -494,106 +768,62 @@ def _perform_module_launch(module_id: str, **kwargs):
                     pass
 
             if launch_function is not None:
-                # Per-world launch() bodies are CLI-style: they parse sys.argv
-                # and then call asyncio.run(main()). Two constraints stack:
-                #   1. asyncio.run() inside a running loop normally raises;
-                #      nest_asyncio.apply() (called at the top of this function)
-                #      patches asyncio to allow re-entry.
-                #   2. We're invoked from a Kivy event handler. If we call
-                #      launch_function() synchronously here, the handler never
-                #      returns while the game session is alive, and Kivy --
-                #      being single-threaded -- can't dispatch any other UI
-                #      events (the GUI freezes even though asyncio keeps
-                #      pumping). To unblock Kivy, defer launch_function() to
-                #      the next loop iteration via call_soon. By the time it
-                #      runs, the Kivy event handler has returned and Kivy is
-                #      back in its idle dispatch state.
-                loop = asyncio.get_event_loop()
-                server_address = kwargs.get("server_address")
-
-                already_restarted = kwargs.get("_restarted", False)
-
-                def _deferred_launch():
-                    saved_argv = sys.argv[:]
-                    try:
-                        if isinstance(server_address, str) and server_address:
-                            sys.argv = [sys.argv[0], f"--connect={server_address}"]
-                        launch_function()
-                    except (ModuleNotFoundError, ImportError) as dep_error:
-                        if already_restarted:
-                            logging.error(
-                                f"Deferred world launch for {module_id} still missing deps after restart: {dep_error}",
-                                exc_info=True,
-                            )
-                            import CommonClient as _CC
-                            _, pending_error_cb = _CC._consume_pending_launch_callbacks()
-                            if pending_error_cb is not None:
-                                try:
-                                    pending_error_cb()
-                                except Exception as cb_err:
-                                    logging.error(f"Error in error callback: {cb_err}")
-                        else:
-                            update_logger.warning(
-                                f"Deferred launch import failed ({dep_error}); reinstalling {module_id} with deps and restarting."
-                            )
-                            try:
-                                ModuleUpdate.install_worlds([module_id], with_deps=True)
-                            except Exception as install_error:
-                                logging.error(f"Failed to reinstall {module_id} with deps: {install_error}", exc_info=True)
-                                return
-                            _restart_client_with_args()
-                    except Exception as launch_error:
-                        logging.error(
-                            f"Deferred world launch failed for {module_id}: {launch_error}",
-                            exc_info=True,
-                        )
-                        import CommonClient as _CC
-                        _, pending_error_cb = _CC._consume_pending_launch_callbacks()
-                        if pending_error_cb is not None:
-                            try:
-                                pending_error_cb()
-                            except Exception as cb_err:
-                                logging.error(f"Error in error callback: {cb_err}")
-                    finally:
-                        sys.argv[:] = saved_argv
-
-                loop.call_soon(_deferred_launch)
-                logging.info(f"Scheduled deferred launch for {module_id} on next asyncio iteration")
+                # UT checkbox + game module: have the next CommonContext attach the tracker overlay
+                # in __init__. Game-module path only; TrackerGameContext below owns its own tracker_core.
+                if client_type == "universal_tracker":
+                    CommonClient._set_pending_tracker_attach(True)
+                _defer_cli_launch(
+                    launch_function, module_id, server_address, already_restarted,
+                    dep_install_module=module_id,
+                    slot_name=slot_name,
+                    patch_file=patch_file,
+                )
                 return None
-                            
-            # Check SNI registry
-            from mwgg_igdb import GameIndex
-            game_name = GameIndex.get_game_name_for_module(module_name=module_id.strip("worlds."))
-            try:
-                from worlds._sni.client import AutoSNIClientRegister
-                if AutoSNIClientRegister.is_sni_world(module_name=game_name):
-                    logging.info(f"Detected SNI client for {game_name}")
-                    from worlds._sni.context import launch
-                    return launch(**kwargs)
-            except ImportError:
-                logging.debug("SNI client not available")
-                
-            # Check BizHawk registry
-            try:
-                from worlds._bizhawk.client import AutoBizHawkClientRegister
-                if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
-                    logging.info(f"Detected BizHawk client for {game_name}")
-                    from worlds._bizhawk.context import launch
-                    return launch(**kwargs)
-            except ImportError:
-                logging.debug("BizHawk client not available")
+
+            # SNI/BizHawk registries key on the game name; a module the index
+            # does not know (custom manual worlds) has none and skips both.
+            game_name = _indexed_game_name(module_id)
+            if game_name:
+                try:
+                    from worlds._sni.client import AutoSNIClientRegister
+                    if AutoSNIClientRegister.is_sni_world(module_name=game_name):
+                        logging.info(f"Detected SNI client for {game_name}")
+                        from worlds._sni.context import launch as _sni_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
+                        return _sni_launch(server_address=server_address, diff_file=patch_file)
+                except ImportError:
+                    logging.debug("SNI client not available")
+
+                try:
+                    from worlds._bizhawk.client import AutoBizHawkClientRegister
+                    if AutoBizHawkClientRegister.is_bizhawk_world(module_name=game_name):
+                        logging.info(f"Detected BizHawk client for {game_name}")
+                        from worlds._bizhawk.context import launch as _bizhawk_launch
+                        if client_type == "universal_tracker":
+                            CommonClient._set_pending_tracker_attach(True)
+                        _defer_cli_launch(_bizhawk_launch, "bizhawk", server_address, already_restarted,
+                                          patch_file=patch_file)
+                        return None
+                except ImportError:
+                    logging.debug("BizHawk client not available")
 
         if client_type == "manual":
-            from worlds._manual.ManualClient import main
-            return main(**kwargs)
+            from worlds._manual.ManualClient import launch as _manual_launch
+            _defer_cli_launch(_manual_launch, "manual", server_address, already_restarted,
+                              patch_file=patch_file)
+            return None
         elif client_type == "universal_tracker":
-            from worlds.tracker.TrackerClient import launch
-            return launch(**kwargs)
-        
+            from worlds.tracker.TrackerClient import launch as _tracker_launch
+            _defer_cli_launch(_tracker_launch, "universal_tracker", server_address, already_restarted, slot_name=slot_name)
+            return None
+
         # Fallback to text client
+        if patch_file:
+            logging.warning(f"No specialized client claims patch file {patch_file}; it will be ignored.")
         logging.info(f"No specialized client, using text client")
         from CommonClient import main_textclient
-        result = main_textclient(**kwargs)
+        result = main_textclient(server_address)
 
         # Check if the launch function returned a task (GUI mode)
         if hasattr(result, '_coro'):
@@ -606,10 +836,8 @@ def _perform_module_launch(module_id: str, **kwargs):
 
     except Exception as e:
         logging.error(f"Failed to launch module {module_id}: {e}")
-        # Fallback for the case where the world's launch() raised before any
-        # CommonContext was constructed. If a context was built, it consumed
-        # the pending dict and the context's own one-shot fired the callback
-        # from _takeover_existing_ui's except arm — we don't double-fire here.
+        # Fallback for launch() raising before any CommonContext existed; a built context
+        # consumed the pending dict and fired its own one-shot, so we don't double-fire.
         _, pending_error_callback = CommonClient._consume_pending_launch_callbacks()
         if pending_error_callback is not None:
             try:
@@ -618,24 +846,27 @@ def _perform_module_launch(module_id: str, **kwargs):
                 logging.error(f"Error in error callback: {callback_error}")
         raise
 
+def _self_relaunch_argv() -> typing.List[str]:
+    """argv that re-runs this process. Frozen argv[0] is the exe itself (== sys.executable);
+    passing it again would land as MultiWorld's launch_file positional."""
+    return [sys.executable, *(_startup_argv[1:] if is_frozen() else _startup_argv)]
+
+
 def exit_restart_for_update():
     """
     Spawn a new process with the same arguments, then exit.
     The new process will have its splashscreen apply the updates.
     """
-    # Spawn new process with same executable and arguments
-    subprocess.Popen([sys.executable] + sys.argv,
+    subprocess.Popen(_self_relaunch_argv(),
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
 
     logger.info("Exiting current process...")
 
-    # Flush all logging handlers to ensure messages are displayed
     for handler in logging.root.handlers:
         handler.flush()
 
-    # Use sys.exit with code 10 to signal "bad environment" - needs restart
-    # This allows the calling process to handle the restart properly
+    # Exit code 10 signals "bad environment" so the caller restarts us.
     sys.exit(10)
 
 
@@ -643,10 +874,10 @@ def _restart_client_with_args():
     """Re-exec the client with the same argv plus --no-restart so a second
     launch failure surfaces an error instead of looping. Used when a world's
     transitive deps were missing and we just reinstalled them."""
-    new_argv = list(sys.argv)
+    new_argv = _self_relaunch_argv()
     if "--no-restart" not in new_argv:
         new_argv.append("--no-restart")
-    subprocess.Popen([sys.executable, *new_argv],
+    subprocess.Popen(new_argv,
                      cwd=os.getcwd(),
                      creationflags=subprocess.CREATE_NEW_CONSOLE if is_windows else 0)
     logger.info("Restarting client to pick up freshly installed dependencies...")
@@ -725,97 +956,13 @@ def is_webhost_mode() -> bool:
     return "webhost.py" in argv0 or "gunicorn" in argv0
 
 
-def local_path(*path: str) -> str:
-    """
-    Returns path to a file in the local MultiworldGG installation or source.
-    This might be read-only and user_path should be used instead for ROMs, configuration, etc.
-    """
-    if hasattr(local_path, 'cached_path'):
-        pass
-    elif is_frozen():
-        if hasattr(sys, "_MEIPASS"):
-            # we are running in a PyInstaller bundle
-            local_path.cached_path = sys._MEIPASS  # pylint: disable=protected-access,no-member
-        else:
-            # cx_Freeze
-            local_path.cached_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    else:
-        import __main__
-        if globals().get("__file__") and os.path.isfile(__file__):
-            # we are running in a normal Python environment
-            local_path.cached_path = os.path.dirname(os.path.abspath(__file__))
-        elif hasattr(__main__, "__file__") and os.path.isfile(__main__.__file__):
-            # we are running in a normal Python environment, but AP was imported weirdly
-            local_path.cached_path = os.path.dirname(os.path.abspath(__main__.__file__))
-        else:
-            # pray
-            local_path.cached_path = os.path.abspath(".")
-
-    return os.path.join(local_path.cached_path, *path)
-
-
-def home_path(*path: str) -> str:
-    """Returns path to a file in the user home's MultiworldGG directory."""
-    if hasattr(home_path, 'cached_path'):
-        pass
-    elif sys.platform.startswith('linux'):
-        xdg_data_home = os.getenv('XDG_DATA_HOME', os.path.expanduser('~/.local/share'))
-        home_path.cached_path = f'{xdg_data_home}/{instance_name}'
-        if not os.path.isdir(home_path.cached_path):
-            legacy_home_path = os.path.expanduser(f'~/{instance_name}')
-            if os.path.isdir(legacy_home_path):
-                os.renames(legacy_home_path, home_path.cached_path)
-                os.symlink(home_path.cached_path, legacy_home_path)
-            else:
-                os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
-    elif sys.platform == 'darwin':
-        import platformdirs
-        home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
-        os.makedirs(home_path.cached_path, 0o700, exist_ok=True)
-    else:
-        # not implemented
-        home_path.cached_path = local_path()  # this will generate the same exceptions we got previously
-
-    return os.path.join(home_path.cached_path, *path)
-
-
-def user_path(*path: str) -> str:
-    """Returns either local_path or home_path based on write permissions."""
-    if hasattr(user_path, "cached_path"):
-        pass
-    elif os.access(local_path(), os.W_OK) and not (is_macos and is_frozen()):
-        user_path.cached_path = local_path()
-    else:
-        user_path.cached_path = home_path()
-        # populate home from local
-        if user_path.cached_path != local_path():
-            import filecmp
-            if not os.path.exists(user_path("manifest.json")) or \
-                    not os.path.exists(local_path("manifest.json")) or \
-                    not filecmp.cmp(local_path("manifest.json"), user_path("manifest.json"), shallow=True):
-                import shutil
-                for dn in ("Players", "data/sprites", "data/lua"):
-                    shutil.copytree(local_path(dn), user_path(dn), dirs_exist_ok=True)
-                if not os.path.exists(local_path("manifest.json")):
-                    warnings.warn(f"Upgrading {user_path()} from something that is not a proper install")
-                else:
-                    shutil.copy2(local_path("manifest.json"), user_path("manifest.json"))
-            os.makedirs(user_path("worlds"), exist_ok=True)
-
-    return os.path.join(user_path.cached_path, *path)
-
-
-def cache_path(*path: str) -> str:
-    """Returns path to a file in the user's MultiworldGG cache directory."""
-    if hasattr(cache_path, "cached_path"):
-        pass
-    else:
-        import platformdirs
-        cache_path.cached_path = platformdirs.user_cache_dir(instance_name, False)
-        # Ensure the cache directory exists
-        os.makedirs(cache_path.cached_path, exist_ok=True)
-
-    return os.path.join(cache_path.cached_path, *path)
+def players_path(*path: str) -> str:
+    """Path in the settings-resolved player-files dir (the dir Generate scans).
+    Deliberately uncached: get_settings() must never run at module import."""
+    from settings import get_settings
+    base = get_settings().generator.player_files_path
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, *path)
 
 
 def output_path(*path: str) -> str:
@@ -837,6 +984,22 @@ def open_file(filename: typing.Union[str, "pathlib.Path"]) -> None:
 
         env = env_cleared_lib_path()
         subprocess.call([open_command, filename], env=env)
+
+
+def open_in_text_editor(filename: str) -> None:
+    from shutil import which
+    if is_linux:
+        exe = which('sensible-editor') or which('gedit') or \
+              which('xdg-open') or which('gnome-open') or which('kde-open')
+    elif is_macos:
+        exe = which("open")
+    else:
+        # Windows: hands the path to the default handler for its file type.
+        webbrowser.open(filename)
+        return
+
+    env = env_cleared_lib_path()
+    subprocess.Popen([exe, filename], env=env)
 
 
 # from https://gist.github.com/pypt/94d747fe5180851196eb#gistcomment-4015118 with some changes
@@ -950,7 +1113,6 @@ def persistent_load() -> dict[str, dict[str, Any]]:
                 logging.debug("Removed old datapackage from persistent storage")
         except Exception as e:
             logger.warning(f"Could not read persistent storage (file may be corrupted): {e}")
-            # Attempt to backup the corrupted file
             try:
                 import shutil
                 backup_path = path + ".corrupted"
@@ -1072,7 +1234,6 @@ class RestrictedUnpickler(pickle.Unpickler):
             if issubclass(obj, (self.options_module.Option, self.options_module.PlandoConnection,
                                 self.options_module.PlandoItem, self.options_module.PlandoText)):
                 return obj
-        # Forbid everything else.
         raise pickle.UnpicklingError(f"global '{module}.{name}' is forbidden")
 
 
@@ -1235,7 +1396,7 @@ def get_input_text_from_response(text: str, command: str) -> typing.Optional[str
             if text.startswith(question):
                 name = get_text_between(text, "did you mean '",
                                         "'? (")
-                return f"!{command} {name}"
+                return f"{command} {name}"
     elif text.startswith("Missing: "):
         return text.replace("Missing: ", "!hint_location ")
     return None
@@ -1278,64 +1439,56 @@ def env_cleared_lib_path() -> Mapping[str, str]:
     return env
 
 
-def _mp_open_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_frontend_running():
-        raise RuntimeError("frontend should not be running in multiprocess")
-    res.put(open_file_input_dialog(*args))
+def run_in_terminal(exe: Sequence[str]) -> bool:
+    """
+    Runs the given command/args in `exe` in a new terminal window
+
+    Returns value indicates if a valid terminal was located
+    """
+    if is_windows:
+        # intentionally using a window title with a space so it gets quoted and treated as a title
+        subprocess.Popen(["start", f"Running {instance_name or 'Archipelago'}", *exe], shell=True)
+        return True
+    elif is_linux:
+        # Prefer the user's configured terminal when xdg-terminal-exec is available.
+        xdg = which("xdg-terminal-exec")
+        if xdg:
+            subprocess.Popen([xdg, "--", *exe])
+            return True
+        # Terminals have started deprecating `-e` flag with some not implementing it at all
+        # `modern_terminals` is a list of terminals which we want/need to use `--` instead
+        # `legacy_terminals` are common aliases for terminals people want to use so checking these are prioritized
+        legacy_terminals = ("x-terminal-emulator", "konsole", "alacritty", "kitty")
+        modern_terminals = ("gnome-terminal", "cosmic-term", "ptyxis")
+
+        terminal: str | None = None
+        for term in itertools.chain(legacy_terminals, modern_terminals, ("xterm",)):
+            terminal = which(term)
+            if terminal:
+                break
+
+        if terminal:
+            # Clear LD_LIB_PATH during terminal startup, but set it again when running command in case it's needed
+            ld_lib_path = os.environ.get("LD_LIBRARY_PATH")
+            lib_path_setter = f"env LD_LIBRARY_PATH={shlex.quote(ld_lib_path)} " if ld_lib_path else ""
+            env = env_cleared_lib_path()
+
+            real_terminal_name = pathlib.Path(terminal).resolve().name
+            if real_terminal_name in modern_terminals:
+                subprocess.Popen([terminal, "--", "sh", "-c", lib_path_setter + shlex.join(exe)], env=env)
+            else:
+                subprocess.Popen([terminal, "-e", "sh", "-c", lib_path_setter + shlex.join(exe)], env=env)
+            return True
+    elif is_macos:
+        terminal = [which("open"), "-W", "-a", "Terminal.app"]
+        subprocess.Popen([*terminal, *exe])
+        return True
+    return False
 
 
-def _mp_save_filename(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_frontend_running():
-        raise RuntimeError("frontend should not be running in multiprocess")
-    res.put(save_filename(*args))
-    
 def _run_for_stdout(*args: str):
     env = env_cleared_lib_path()
     return subprocess.run(args, capture_output=True, text=True, env=env).stdout.split("\n", 1)[0] or None
-
-
-def _mp_open_directory(res: "multiprocessing.Queue[typing.Optional[str]]", *args: Any) -> None:
-    if is_frontend_running():
-        raise RuntimeError("frontend should not be running in multiprocess")
-    res.put(open_directory(*args))
-
-
-def open_directory(title: str, suggest: str = "") -> typing.Optional[str]:
-    if is_linux:
-        # prefer native dialog
-        from shutil import which
-        kdialog = which("kdialog")
-        if kdialog:
-            return _run_for_stdout(kdialog, f"--title={title}", "--getexistingdirectory",
-                       os.path.abspath(suggest) if suggest else ".")
-        zenity = which("zenity")
-        if zenity:
-            z_filters = ("--directory",)
-            selection = (f"--filename={os.path.abspath(suggest)}/",) if suggest else ()
-            return _run_for_stdout(zenity, f"--title={title}", "--file-selection", *z_filters, *selection)
-
-    # fall back to tk
-    try:
-        import tkinter
-        import tkinter.filedialog
-    except Exception as e:
-        logging.error('Could not load tkinter, which is likely not installed. '
-                      f'This attempt was made because open_directory was used for "{title}".')
-        raise e
-    else:
-        if is_macos and is_frontend_running():
-            # on macOS, mixing the active frontend and tk does not work, so spawn a new process
-            # FIXME: performance of this is pretty bad, and we should (also) look into alternatives
-            from multiprocessing import Process, Queue
-            res: "Queue[typing.Optional[str]]" = Queue()
-            Process(target=_mp_open_directory, args=(res, title, suggest)).start()
-            return res.get()
-        try:
-            root = tkinter.Tk()
-        except tkinter.TclError:
-            return None  # GUI not available. None is the same as a user clicking "cancel"
-        root.withdraw()
-        return tkinter.filedialog.askdirectory(title=title, mustexist=True, initialdir=suggest or None)
 
 
 def messagebox(title: str, text: str, error: bool = False) -> None:
@@ -1348,7 +1501,7 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
 
     if is_kivy_running():
         from mwgg_gui.components.dialog import MessageBox
-        MessageBox(title, text, error).open()
+        MessageBox(title, text, is_error=error).open()
         return
 
     textual_app = _get_running_textual_app()
@@ -1384,6 +1537,57 @@ def messagebox(title: str, text: str, error: bool = False) -> None:
         root.withdraw()
         showerror(title, text) if error else showinfo(title, text)
         root.update()
+
+
+def messagebox_confirm(title: str, text: str) -> bool:
+    """Blocking OK/Cancel confirm; True when the user confirms. Kivy/Textual
+    dialogs are callback-based and can't block the main thread, so under a
+    running frontend this logs and returns True: the GUI/TUI must pre-confirm."""
+    if not gui_enabled:
+        logging.info(f"{title}: {text} (auto-confirmed: no GUI available)")
+        return True
+
+    if is_kivy_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running Kivy app; "
+                        f"the GUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_textual_running():
+        logging.warning(f"messagebox_confirm auto-confirms under a running TUI; "
+                        f"the TUI must pre-confirm. {title}: {text}")
+        return True
+
+    if is_linux and "tkinter" not in sys.modules:
+        # prefer native dialog
+        from shutil import which
+        env = env_cleared_lib_path()
+        kdialog = which("kdialog")
+        if kdialog:
+            return subprocess.run([kdialog, f"--title={title}", "--warningyesno", text],
+                                  env=env).returncode == 0
+        zenity = which("zenity")
+        if zenity:
+            return subprocess.run([zenity, f"--title={title}", f"--text={text}", "--question"],
+                                  env=env).returncode == 0
+
+    elif is_windows:
+        import ctypes
+        # MB_OKCANCEL | MB_ICONWARNING; IDOK == 1
+        return ctypes.windll.user32.MessageBoxW(0, text, title, 0x31) == 1
+
+    # fall back to tk
+    try:
+        import tkinter
+        from tkinter.messagebox import askokcancel
+    except Exception:
+        logging.error('Could not load tkinter, which is likely not installed. This attempt was '
+                      f'made because messagebox_confirm was used for "{title}"; declining.')
+        return False
+    root = tkinter.Tk()
+    root.withdraw()
+    result = askokcancel(title, text)
+    root.update()
+    return bool(result)
 
 
 gui_enabled = not sys.stdout or "--nogui" not in sys.argv
@@ -1445,23 +1649,6 @@ def deprecate(message: str, add_stacklevels: int = 0):
     if __debug__:
         raise Exception(message)
     warnings.warn(message, stacklevel=2 + add_stacklevels)
-
-
-class DeprecateDict(dict):
-    log_message: str
-    should_error: bool
-
-    def __init__(self, message: str, error: bool = False) -> None:
-        self.log_message = message
-        self.should_error = error
-        super().__init__()
-
-    def __getitem__(self, item: Any) -> Any:
-        if self.should_error:
-            deprecate(self.log_message, add_stacklevels=1)
-        elif __debug__:
-            warnings.warn(self.log_message, stacklevel=2)
-        return super().__getitem__(item)
 
 
 def _extend_freeze_support() -> None:
@@ -1534,6 +1721,7 @@ def visualize_regions(
         file_name: str,
         *,
         show_entrance_names: bool = False,
+        show_entrance_rules: bool = False,
         show_locations: bool = True,
         show_other_regions: bool = True,
         linetype_ortho: bool = True,
@@ -1546,6 +1734,7 @@ def visualize_regions(
     :param root_region: The region from which to start the diagram from. (Usually the "Menu" region of your world.)
     :param file_name: The name of the destination .puml file.
     :param show_entrance_names: (default False) If enabled, the name of the entrance will be shown near each connection.
+    :param show_entrance_rules: (default False) If enabled, the Rule Builder explanation of the entrance's access rule will be shown near each connection.
     :param show_locations: (default True) If enabled, the locations will be listed inside each region.
             Priority locations will be shown in bold.
             Excluded locations will be stricken out.
@@ -1567,7 +1756,7 @@ def visualize_regions(
 
     Example usage in World code:
     from Utils import visualize_regions
-    state = self.multiworld.get_all_state(False)
+    state = self.multiworld.get_all_state()
     state.update_reachable_regions(self.player)
     visualize_regions(self.get_region("Menu"), "my_world.puml", show_entrance_names=True,
                       regions_to_highlight=state.reachable_regions[self.player])
@@ -1635,13 +1824,22 @@ def visualize_regions(
         return re.sub("[\".:]", "", name)
 
     def visualize_exits(region: Region) -> None:
+        import rule_builder.rules
         for exit_ in region.exits:
             color_code: str = ""
             if exit_.randomization_group in entrance_highlighting:
                 color_code = f" #{entrance_highlighting[exit_.randomization_group]:0>6X}"
             if exit_.connected_region:
+                label = ""
                 if show_entrance_names:
-                    uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\" : \"{fmt(exit_)}\"{color_code}")
+                    label += fmt(exit_)
+                if show_entrance_rules:
+                    if isinstance(exit_.access_rule, rule_builder.rules.Rule.Resolved):
+                        if label:
+                            label += "\\n"
+                        label += exit_.access_rule.explain_str()
+                if label:
+                    uml.append(f"\"{fmt(region)}\" --> \"{fmt(exit_.connected_region)}\" : \"{label}\"{color_code}")
                 else:
                     try:
                         uml.remove(f"\"{fmt(exit_.connected_region)}\" --> \"{fmt(region)}\"{color_code}")
@@ -1717,8 +1915,11 @@ def visualize_regions(
         f.write("\n".join(uml))
 
 
-class RepeatableChain:
-    def __init__(self, iterable: typing.Iterable):
+_T_co = TypeVar("_T_co", covariant=True)
+
+
+class RepeatableChain(Generic[_T_co]):
+    def __init__(self, iterable: Iterable[Collection[_T_co]]):
         self.iterable = iterable
 
     def __iter__(self):
@@ -1729,6 +1930,9 @@ class RepeatableChain:
 
     def __len__(self):
         return sum(len(iterable) for iterable in self.iterable)
+
+    def __contains__(self, o: object) -> bool:
+        return any(o in sub_iterable for sub_iterable in self.iterable)
 
 
 def is_iterable_except_str(obj: object) -> TypeGuard[typing.Iterable[typing.Any]]:
@@ -1814,3 +2018,13 @@ def get_all_causes(ex: Exception) -> str:
     top = causes[-1]
     others = "".join(f"\n{' ' * (i + 1)}Which caused: {c}" for i, c in enumerate(reversed(causes[:-1])))
     return f"{top}{others}"
+
+
+_empty_frozenset = frozenset()  # empty frozenset singleton
+
+
+def empty_frozenset_factory() -> frozenset:
+    """
+    returns empty frozenset singleton when called
+    """
+    return _empty_frozenset

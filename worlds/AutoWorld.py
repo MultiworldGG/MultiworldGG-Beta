@@ -27,8 +27,34 @@ class InvalidItemError(KeyError):
     pass
 
 
+def _stamp_world_manifest(world_cls: Type[World]) -> None:
+    """Apply archipelago.json (world_version, manifest) to a freshly registered
+    world. Runs at registration rather than in the loader's one-shot loop so
+    lazily imported worlds (client launches, Generate's per-yaml loads) get it too.
+    """
+    module = world_cls.__module__
+    if world_cls.game == "Archipelago" or not module.startswith("worlds."):
+        return
+    from BaseUtils import get_archipelago_json, get_apworld_manifest, tuplize_version
+    slug = module.split(".")[1]
+    try:
+        *_, version = get_archipelago_json(slug)
+        manifest = get_apworld_manifest(slug)
+    except Exception:
+        logging.debug("No readable archipelago.json for %s; keeping default world_version", slug, exc_info=True)
+        return
+    world_cls.world_version = tuplize_version(version)
+    if manifest:
+        # version/compatible_version aren't world-facing; match the folder-load behavior
+        manifest.pop("version", None)
+        manifest.pop("compatible_version", None)
+        world_cls.manifest = manifest
+
+
 class AutoWorldRegister(type):
-    world_types: Dict[str, Type[World]] = {}
+    world_types: dict[str, Type[World]] = {}
+    testable_worlds: dict[str, Type[World]] = world_types
+    """worlds under test; scoped to AP_TEST_WORLDS by the test/__init__ bootstrap"""
     __file__: str
     zip_path: Optional[str]
     settings_key: str
@@ -94,11 +120,13 @@ class AutoWorldRegister(type):
                 {AutoWorldRegister.world_types[dct["game"]].__file__} when attempting to register from
                 {new_class.__file__}.""")
             AutoWorldRegister.world_types[dct["game"]] = new_class
+            _stamp_world_manifest(new_class)
         if ".apworld" in new_class.__file__:
             new_class.zip_path = pathlib.Path(new_class.__file__).parents[1]
         if "settings_key" not in dct:
             mod_name = new_class.__module__
-            world_folder_name = mod_name[7:].lower() if mod_name.startswith("worlds.") else mod_name.lower()
+            # folder name only, so a World defined in worlds/<folder>/<sub>.py shares its folder's section
+            world_folder_name = mod_name.split(".")[1].lower() if mod_name.startswith("worlds.") else mod_name.lower()
             new_class.settings_key = world_folder_name + "_options"
         new_class.__settings = None
         return new_class
@@ -375,13 +403,14 @@ class World(metaclass=AutoWorldRegister):
     """path it was loaded from"""
     world_version: ClassVar[Version] = Version(0, 0, 0)
     """Optional world version loaded from archipelago.json"""
+    manifest: ClassVar[dict[str, Any]] = {}
+    """Mapping of the world's archipelago.json manifest. Use game and world_version attrs instead for those values."""
 
     def __init__(self, multiworld: "MultiWorld", player: int):
         assert multiworld is not None
         self.multiworld = multiworld
         self.player = player
         self.random = Random(multiworld.random.getrandbits(64))
-        multiworld.per_slot_randoms[player] = self.random
 
     def __getattr__(self, item: str) -> Any:
         if item == "settings":
@@ -534,7 +563,9 @@ class World(metaclass=AutoWorldRegister):
 
     def get_filler_item_name(self) -> str:
         """
-        Called when the item pool needs to be filled with additional items to match location count.
+        If core AP removes an item from your item pool, this method is called to choose a replacement item
+        so item count and location count remain equal.
+        For example: plando, item_links and start_inventory_from_pool are features that may cause this.
 
         Any returned item name must be for a "repeatable" item, i.e. one that it's okay to generate arbitrarily many of.
         For most worlds this will be one or more of your filler items, but the classification of these items

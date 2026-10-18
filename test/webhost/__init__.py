@@ -26,9 +26,12 @@ class TestBase(unittest.TestCase):
         })
         try:
             cls.app = get_app()
-        except AssertionError as e:
-            # since we only have 1 global app object, this might fail, but luckily all tests use the same config
-            if "register_blueprint" not in e.args[0]:
+        except (AssertionError, ValueError) as e:
+            # Only one global app object exists, so a second get_app() in the same
+            # (xdist) worker re-registers blueprints. Flask <3 raised AssertionError,
+            # Flask 3.x raises ValueError. Either way the already-configured app is fine.
+            message = e.args[0] if e.args else ""
+            if "register_blueprint" not in message and "already registered" not in message:
                 raise
             cls.app = raw_app
 

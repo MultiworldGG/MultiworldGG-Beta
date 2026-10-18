@@ -1,0 +1,2601 @@
+"""Launcher stack tests (entry points, components, spawn/routing, connect URLs, installer refs); add new launcher-stack tests here."""
+
+import json
+import logging
+import os
+import re
+import shlex
+import shutil
+import subprocess
+import sys
+import types
+import urllib.parse
+import zipfile
+
+import pytest
+
+import BaseUtils
+import Launcher
+import LauncherComponents as lc
+import ModuleUpdate
+import MultiWorld
+import Utils
+import settings
+import tools.regen_inno_components as regen_inno
+from CommonClient import parse_connect_url, safe_avatar_source
+from LauncherComponents import (Component, SuffixIdentifier, Type, components, get_exe, identify,
+                                launch as launch_component, launch_subprocess)
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def _setup_py_target_names() -> set[str]:
+    with open(Utils.local_path("setup.py"), "r", encoding="utf-8") as f:
+        text = f.read()
+    names: set[str] = set()
+    for line in text.splitlines():
+        if "target_name" not in line:
+            continue
+        for match in re.findall(r'"([^"]+)"', line):
+            names.add(match[:-4] if match.endswith(".exe") else match)
+    return names
+
+
+# --------------------------------------------------------------------------- #
+# Entry-point split: MultiWorld.main()'s role computation and MWGG_ROLE
+# assignment (assigned, never setdefault), the connect-address composer
+# forwarded to spawned clients, the --client-type parser surface, splash
+# gating (MWGG_NO_SPLASH escape hatch, MWGG_SKIP_UPDATE for spawned clients),
+# and the thin Launcher.py dispatcher (headless --version before any heavy
+# import, component dispatch, verbatim delegation to MultiWorld.main).
+# --------------------------------------------------------------------------- #
+
+def _parsed_args(argv=(), **overrides):
+    """Parse argv like MultiWorld.main does, including the post-routing
+    patch_module/patch_file attributes it stamps onto args."""
+    args = MultiWorld.make_arg_parser().parse_args(list(argv))
+    args.patch_module = None
+    args.patch_file = None
+    for key, value in overrides.items():
+        setattr(args, key, value)
+    return args
+
+
+# --- compute_role: client iff --game / --client-type / routed patch ---
+
+def test_compute_role_bare_invocation_is_launcher():
+    assert MultiWorld.compute_role(_parsed_args()) == "launcher"
+
+
+def test_compute_role_game_is_client():
+    assert MultiWorld.compute_role(_parsed_args(["--game", "kh2"])) == "client"
+
+
+def test_compute_role_client_type_is_client():
+    assert MultiWorld.compute_role(_parsed_args(["--client-type", "text"])) == "client"
+
+
+def test_compute_role_routed_patch_is_client():
+    args = _parsed_args(["seed.apkh3"], patch_module="kh3", patch_file="seed.apkh3")
+    assert MultiWorld.compute_role(args) == "client"
+
+
+def test_compute_role_connection_flags_alone_stay_launcher():
+    """Server/slot/password without a game or client type seed the launcher's
+    fields; they must not flip the process into client role."""
+    args = _parsed_args(["--server-address", "localhost:38281", "--slot-name", "P1", "--password", "x"])
+    assert MultiWorld.compute_role(args) == "launcher"
+
+
+def test_compute_role_unrouted_launch_file_stays_launcher():
+    """A positional that could not be routed leaves patch_module unset, so the
+    graceful fallback lands in the launcher."""
+    args = _parsed_args(["not_a_patch.zip"])
+    assert MultiWorld.compute_role(args) == "launcher"
+
+
+# --- assign_role_env: assignment, never setdefault ---
+
+def test_assign_role_env_overwrites_stale_client_value(monkeypatch):
+    """A spawned child inherits MWGG_ROLE=client from spawn_client's env; a
+    launcher-role process must overwrite it, not setdefault around it."""
+    monkeypatch.setenv("MWGG_ROLE", "client")
+    assert MultiWorld.assign_role_env(_parsed_args()) == "launcher"
+    assert os.environ["MWGG_ROLE"] == "launcher"
+
+
+def test_assign_role_env_overwrites_stale_launcher_value(monkeypatch):
+    monkeypatch.setenv("MWGG_ROLE", "launcher")
+    assert MultiWorld.assign_role_env(_parsed_args(["--game", "kh2"])) == "client"
+    assert os.environ["MWGG_ROLE"] == "client"
+
+
+def test_assign_role_env_sets_when_unset(monkeypatch):
+    monkeypatch.delenv("MWGG_ROLE", raising=False)
+    MultiWorld.assign_role_env(_parsed_args())
+    assert os.environ["MWGG_ROLE"] == "launcher"
+
+
+# --- parser: --client-type ---
+
+@pytest.mark.parametrize("client_type", ["game", "text", "universal_tracker", "manual"])
+def test_parser_accepts_client_type_choices(client_type):
+    args = MultiWorld.make_arg_parser().parse_args(["--client-type", client_type])
+    assert args.client_type == [client_type]
+
+
+def test_parser_accepts_client_type_combo():
+    args = MultiWorld.make_arg_parser().parse_args(["--client-type", "game", "universal_tracker"])
+    assert args.client_type == ["game", "universal_tracker"]
+
+
+def test_parser_client_type_defaults_to_none():
+    assert MultiWorld.make_arg_parser().parse_args([]).client_type is None
+
+
+def test_parser_rejects_unknown_client_type(capsys):
+    with pytest.raises(SystemExit):
+        MultiWorld.make_arg_parser().parse_args(["--client-type", "bogus"])
+    capsys.readouterr()  # swallow argparse's usage message
+
+
+# --- _compose_connect_address ---
+
+def test_compose_connect_address_none_without_server():
+    assert MultiWorld._compose_connect_address(None, None, None) is None
+    assert MultiWorld._compose_connect_address(None, "P1", "secret") is None
+    assert MultiWorld._compose_connect_address("", "P1", None) is None
+
+
+def test_compose_connect_address_bare_address_passes_through():
+    assert MultiWorld._compose_connect_address("localhost:38281", None, None) == "localhost:38281"
+
+
+def test_compose_connect_address_slot_only():
+    assert MultiWorld._compose_connect_address("localhost:38281", "P1", None) == "P1@localhost:38281"
+
+
+def test_compose_connect_address_slot_and_password():
+    composed = MultiWorld._compose_connect_address("localhost:38281", "P1", "secret")
+    assert composed == "P1:secret@localhost:38281"
+
+
+def test_compose_connect_address_password_without_slot_is_dropped():
+    """InitContext._set_server_address ignores a password with an empty
+    username (urlparse yields username='' for ':pass@host'), so composing one
+    would silently lose it anyway."""
+    assert MultiWorld._compose_connect_address("localhost:38281", None, "secret") == "localhost:38281"
+
+
+def test_compose_connect_address_existing_userinfo_not_double_composed():
+    """The archipelago:// URL path pre-composes name@host:port into
+    args.server_address AND sets args.slot_name; composing again would yield
+    name@name@host:port."""
+    assert MultiWorld._compose_connect_address("P1@localhost:38281", "P1", None) == "P1@localhost:38281"
+
+
+def test_compose_connect_address_preserves_scheme():
+    composed = MultiWorld._compose_connect_address("ws://localhost:38281", "P1", "secret")
+    assert composed == "ws://P1:secret@localhost:38281"
+
+
+def test_compose_connect_address_round_trips_through_urlparse():
+    """The composed form must parse the way _set_server_address parses it
+    (prefix "ws://", then urlparse userinfo/host/port), ports intact."""
+    composed = MultiWorld._compose_connect_address("multiworld.gg:12345", "Slot One", "hunter2")
+    parsed = urllib.parse.urlparse(f"ws://{composed}")
+    assert parsed.username == "Slot One"
+    assert parsed.password == "hunter2"
+    assert parsed.hostname == "multiworld.gg"
+    assert parsed.port == 12345
+
+
+def test_compose_connect_address_warns_on_colon_in_slot_name(caplog):
+    """A ':' in the slot name mis-splits downstream (InitContext partitions
+    userinfo at the first colon, so 'P:1' parses as user P, password 1@...).
+    Behavior is preserved - the composer warns, it does not reject."""
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        composed = MultiWorld._compose_connect_address("localhost:38281", "P:1", None)
+    assert composed == "P:1@localhost:38281"
+    assert any("contains ':'" in record.message for record in caplog.records)
+
+
+def test_compose_connect_address_no_warning_without_colon(caplog):
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        MultiWorld._compose_connect_address("localhost:38281", "P1", "secret")
+    assert not caplog.records
+
+
+# --- frozen KIVY_DATA_DIR mirror ---
+
+def _kivy_bundle(tmp_path, monkeypatch, mtime):
+    monkeypatch.setattr(MultiWorld, "write_path", lambda *p: os.path.join(tmp_path, "wp", *p))
+    src = tmp_path / "bundle"
+    (src / "images").mkdir(parents=True, exist_ok=True)
+    for path, text in ((src / "style.kv", f"style {mtime}"), (src / "images" / "defaulttheme-0.png", f"atlas {mtime}")):
+        path.write_text(text)
+        os.utime(path, (mtime, mtime))
+    return src, tmp_path / "wp" / "data" / "kivy" / "data"
+
+
+def test_kivy_data_mirror_resyncs_only_when_bundle_changes(tmp_path, monkeypatch):
+    """An unchanged bundle keeps mwgg_gui's recolored atlas; an upgrade re-syncs even with
+    older build mtimes; 0.7.x's write_path("kivy") files survive the old mirror's removal."""
+    src, dst = _kivy_bundle(tmp_path, monkeypatch, 1_000_000)
+    legacy = tmp_path / "wp" / "kivy"
+    (legacy / "data").mkdir(parents=True)
+    (legacy / "config.ini").write_text("0.7.x")
+
+    assert MultiWorld._ensure_writable_kivy_data(str(src)) == str(dst)
+    assert (dst / "style.kv").read_text() == "style 1000000"
+    assert not (legacy / "data").exists()
+    assert (legacy / "config.ini").read_text() == "0.7.x"
+
+    (dst / "images" / "defaulttheme-0.png").write_text("recolored")
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "recolored"
+
+    _kivy_bundle(tmp_path, monkeypatch, 900_000)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "style.kv").read_text() == "style 900000"
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "atlas 900000"
+
+
+def test_kivy_data_mirror_retries_after_locked_file(tmp_path, monkeypatch):
+    src, dst = _kivy_bundle(tmp_path, monkeypatch, 1_000_000)
+    copy2 = shutil.copy2
+
+    def locked_atlas(source, *args, **kwargs):
+        if source.endswith("defaulttheme-0.png"):
+            raise PermissionError(32, "in use")
+        return copy2(source, *args, **kwargs)
+
+    monkeypatch.setattr(shutil, "copy2", locked_atlas)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert not (dst / "style.kv").exists()
+
+    monkeypatch.setattr(shutil, "copy2", copy2)
+    MultiWorld._ensure_writable_kivy_data(str(src))
+    assert (dst / "style.kv").exists()
+    assert (dst / "images" / "defaulttheme-0.png").read_text() == "atlas 1000000"
+
+
+# --- _resolve_client_route: dead-client guard fallback matrix ---
+
+def _resolve_with_role(args):
+    """Mirror MultiWorld.main's flow: assign the role env from args, then
+    resolve the route (which may fall the role back to launcher)."""
+    MultiWorld.assign_role_env(args)
+    return MultiWorld._resolve_client_route(args)
+
+
+@pytest.mark.parametrize("overrides", [
+    {"client_type": "game"},
+    {"client_type": "bogus"},
+])
+def test_resolve_route_unroutable_client_type_falls_back_to_launcher(overrides, monkeypatch, caplog):
+    """Defense-in-depth under main()'s argv validation (which exits 2 on
+    game-without---game and on unknown types via parser choices): hand-built
+    args carrying these compute role=client yet resolve no route; without the
+    guard that boots a dead client GUI (console + permanent loading overlay,
+    nothing ever launches)."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")  # registers teardown restore
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        route_module, route_kwargs = _resolve_with_role(_parsed_args([], **overrides))
+    assert route_module is None
+    assert route_kwargs == {}
+    assert os.environ["MWGG_ROLE"] == "launcher"
+    assert "MWGG_GAME" not in os.environ
+    assert any("falling back to launcher" in record.message for record in caplog.records)
+
+
+def test_resolve_route_unavailable_game_falls_back_to_launcher(monkeypatch):
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    route_module, route_kwargs = _resolve_with_role(_parsed_args(["--game", "not_installed"]))
+    assert route_module is None
+    assert route_kwargs == {}
+    assert os.environ["MWGG_ROLE"] == "launcher"
+
+
+def test_resolve_route_resolution_error_falls_back_to_launcher(monkeypatch):
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+
+    def boom():
+        raise RuntimeError("world index unavailable")
+    monkeypatch.setattr(Utils, "get_available_worlds", boom)
+    route_module, route_kwargs = _resolve_with_role(_parsed_args(["--game", "kh2"]))
+    assert route_module is None
+    assert route_kwargs == {}
+    assert os.environ["MWGG_ROLE"] == "launcher"
+
+
+def test_resolve_route_available_game_stays_client(monkeypatch):
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--server-address", "localhost:38281",
+                         "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "kh2"
+    assert route_kwargs["server_address"] == "P1@localhost:38281"
+    assert route_kwargs["client_type"] == "game"
+    assert os.environ["MWGG_ROLE"] == "client"
+    # Exported for the client-role frontend's cover-art lookup.
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_text_client_sentinel_stays_client(monkeypatch):
+    """client_type=="text" routes via the "" sentinel (a real route, hence
+    the `is None` guard rather than a bool check)."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    route_module, route_kwargs = _resolve_with_role(_parsed_args(["--client-type", "text"]))
+    assert route_module == ""
+    assert route_kwargs == {"server_address": None, "client_type": "text"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    # No game routed: a stale inherited value must not leak a wrong cover.
+    assert "MWGG_GAME" not in os.environ
+
+
+def test_resolve_route_explicit_text_outranks_game(monkeypatch):
+    """Picking the text client for a selected game must boot the text client:
+    an explicit --client-type text routes the "" sentinel even when --game is
+    present and available, instead of letting the game's own client resolve."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "text",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281", "client_type": "text"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    # The selected game stays context (cover art) for the client that boots.
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_game_and_universal_tracker_is_overlay_mode(monkeypatch):
+    """Listing game AND universal_tracker boots the game's client with the
+    tracker overlay: the module routes, with the overlay-triggering
+    client_type string for downstream."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "game", "universal_tracker"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "kh2"
+    assert route_kwargs["client_type"] == "universal_tracker"
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_universal_tracker_with_game_is_standalone_tracker(monkeypatch):
+    """universal_tracker without game in the list boots the standalone tracker
+    even when a game is selected; the game rides along as context (MWGG_GAME
+    for cover art), not as a module route."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: ["kh2"])
+    args = _parsed_args(["--game", "kh2", "--client-type", "universal_tracker",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281",
+                            "client_type": "universal_tracker",
+                            "slot_name": "P1"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert os.environ["MWGG_GAME"] == "kh2"
+
+
+def test_resolve_route_universal_tracker_sentinel_stays_client(monkeypatch):
+    """No-game universal tracker (launcher spawn / desktop shortcut) routes via
+    the "" sentinel; slot_name rides along separately because the tracker's
+    launch argv takes it as --name."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    args = _parsed_args(["--client-type", "universal_tracker",
+                         "--server-address", "localhost:38281", "--slot-name", "P1"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "P1@localhost:38281",
+                            "client_type": "universal_tracker",
+                            "slot_name": "P1"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert "MWGG_GAME" not in os.environ
+
+
+def test_resolve_route_universal_tracker_bare_stays_client(monkeypatch):
+    """A bare --client-type universal_tracker (no server/slot) is a
+    server-acceptable state and must still route."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    route_module, route_kwargs = _resolve_with_role(
+        _parsed_args(["--client-type", "universal_tracker"]))
+    assert route_module == ""
+    assert route_kwargs == {"server_address": None,
+                            "client_type": "universal_tracker",
+                            "slot_name": None}
+    assert os.environ["MWGG_ROLE"] == "client"
+
+
+def test_resolve_route_manual_sentinel_stays_client(monkeypatch):
+    """No-game manual client routes via the "" sentinel; no slot_name kwarg
+    (the manual launch argv has no --name)."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.setenv("MWGG_GAME", "stale")
+    args = _parsed_args(["--client-type", "manual", "--server-address", "localhost:38281"])
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == ""
+    assert route_kwargs == {"server_address": "localhost:38281", "client_type": "manual"}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert "MWGG_GAME" not in os.environ
+
+
+@pytest.mark.parametrize("restart_argv, restarted", [([], False), (["--no-restart"], True)])
+def test_resolve_route_routed_patch_stays_client(restart_argv, restarted, monkeypatch):
+    """--no-restart (stamped by _restart_client_with_args) reaches the patch route
+    as _restarted, so a second failed launch errors instead of restarting again."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    args = _parsed_args(["seed.apkh3", *restart_argv], patch_module="kh3",
+                        patch_file="C:\\seeds\\seed.apkh3")
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "kh3"
+    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.apkh3", "_restarted": restarted}
+    assert os.environ["MWGG_ROLE"] == "client"
+    assert os.environ["MWGG_GAME"] == "kh3"
+
+
+@pytest.mark.parametrize("client_type_argv, expected", [
+    (["--client-type", "universal_tracker"], "universal_tracker"),
+    (["--client-type", "text"], "text"),
+])
+def test_resolve_route_routed_patch_honors_explicit_client_type(client_type_argv, expected, monkeypatch):
+    """--client-type next to a patch file picks the tracker overlay for the
+    patch's client (universal_tracker) or launches it plain; the patch still
+    outranks the type for the route itself."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    monkeypatch.delenv("MWGG_GAME", raising=False)
+    args = _parsed_args(["seed.aplttp", *client_type_argv], patch_module="alttp",
+                        patch_file="C:\\seeds\\seed.aplttp")
+    route_module, route_kwargs = _resolve_with_role(args)
+    assert route_module == "alttp"
+    assert route_kwargs == {"patch_file": "C:\\seeds\\seed.aplttp", "_restarted": False,
+                            "client_type": expected}
+
+
+def test_resolve_route_launcher_role_untouched(monkeypatch, caplog):
+    """A launcher-role process (bare invocation) resolves no route and must
+    not trip the guard or its warning."""
+    monkeypatch.setenv("MWGG_ROLE", "stale")
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        route_module, route_kwargs = _resolve_with_role(_parsed_args())
+    assert route_module is None
+    assert route_kwargs == {}
+    assert os.environ["MWGG_ROLE"] == "launcher"
+    assert not any("falling back to launcher" in record.message for record in caplog.records)
+
+
+def test_empty_module_text_route_reaches_text_client(monkeypatch):
+    """The "" sentinel with client_type text must land on main_textclient --
+    the manual/universal_tracker dispatch now shares the no-game path and must
+    not intercept it."""
+    import types
+    import CommonClient
+    # nest_asyncio.apply() patches asyncio globally and leaks into later async
+    # tests; dispatch order is what's under test, so stub it out.
+    monkeypatch.setitem(sys.modules, "nest_asyncio", types.SimpleNamespace(apply=lambda *a, **kw: None))
+    calls = []
+    monkeypatch.setattr(CommonClient, "main_textclient", lambda server_address: calls.append(server_address))
+    Utils.discover_and_launch_module("", server_address="P1@localhost:38281", client_type="text")
+    assert calls == ["P1@localhost:38281"]
+
+
+# --- _route_module_when_ui_ready: connect prompt when no address was supplied ---
+
+def _fake_frontend(ctx_server_address=None, with_dialog=True):
+    """Live-frontend stand-in: `root` set so the routing poll returns at once,
+    `ctx` standing in for the game context the takeover swaps in."""
+    class Frontend:
+        _active_instance = None
+
+        def __init__(self):
+            self.root = object()
+            self.ctx = types.SimpleNamespace(server_address=ctx_server_address)
+            self.calls = []
+            type(self)._active_instance = self
+
+        def client_console_init(self):
+            self.calls.append("client_console_init")
+
+        def console_init(self):
+            self.calls.append("console_init")
+
+        def change_screen(self, name):
+            self.calls.append(f"change_screen:{name}")
+
+        def hide_loading(self):
+            self.calls.append("hide_loading")
+
+    if with_dialog:
+        Frontend.open_connect_dialog = lambda self: self.calls.append("open_connect_dialog")
+    return Frontend()
+
+
+def _routed_launch_kwargs(monkeypatch, app, **launch_kwargs):
+    """Route against `app` and return the kwargs handed to discover_and_launch_module."""
+    import asyncio
+    import frontend_protocol
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+    asyncio.run(MultiWorld._route_module_when_ui_ready("albw", **launch_kwargs))
+    return captured
+
+
+def _routed_ready_callback(monkeypatch, app, **launch_kwargs):
+    return _routed_launch_kwargs(monkeypatch, app, **launch_kwargs)["ready_callback"]
+
+
+def test_route_ready_opens_connect_dialog_without_address(monkeypatch):
+    """A direct client launch carries no server address; the client must not
+    connect on a saved one -- the dialog opens after the console is up."""
+    app = _fake_frontend()
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert app.calls == ["client_console_init", "console_init", "change_screen:console",
+                         "hide_loading", "open_connect_dialog"]
+
+
+def test_route_ready_skips_connect_dialog_with_launch_address(monkeypatch):
+    app = _fake_frontend()
+    _routed_ready_callback(monkeypatch, app, server_address="P1@localhost:38281", client_type="game")()
+    assert "open_connect_dialog" not in app.calls
+
+
+def test_route_ready_skips_connect_dialog_when_client_seeded_address(monkeypatch):
+    """Patch metadata / --connect set the address on the game context before
+    the ready callback; that address wins over the prompt."""
+    app = _fake_frontend(ctx_server_address="ws://localhost:38281")
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert "open_connect_dialog" not in app.calls
+
+
+def _routed_patch_ready(monkeypatch, app, scenario):
+    """Route a patch launch against `app` and run `scenario(ready_callback)`
+    inside the same loop: the patch prompt is a loop timer."""
+    import asyncio
+    import frontend_protocol
+    monkeypatch.setattr(MultiWorld, "_PATCH_CONNECT_GRACE", 0.02)
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+
+    async def run():
+        await MultiWorld._route_module_when_ui_ready("alttp", patch_file="seed.aplttp")
+        await scenario(captured["ready_callback"])
+
+    asyncio.run(run())
+
+
+def test_route_patch_prompt_yields_to_metadata_seeded_address(monkeypatch):
+    """The SNI client seeds server_address from the patch metadata after the
+    ready callback; the prompt waits out the grace and finds it connecting."""
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        assert "open_connect_dialog" not in app.calls
+        app.ctx.server_address = "ws://localhost:38281"
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert app.calls[-1] == "hide_loading"
+
+
+def test_route_patch_prompt_yields_to_open_server_endpoint(monkeypatch):
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        app.ctx.server = object()
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert "open_connect_dialog" not in app.calls
+
+
+def test_route_patch_prompt_opens_when_nothing_connects(monkeypatch):
+    """A patch without a server in its metadata (local seed) still gets the dialog."""
+    import asyncio
+    app = _fake_frontend()
+
+    async def scenario(ready):
+        ready()
+        await asyncio.sleep(0.1)
+
+    _routed_patch_ready(monkeypatch, app, scenario)
+    assert app.calls[-1] == "open_connect_dialog"
+
+
+def test_route_patch_takes_client_type_from_frontend_preference(monkeypatch):
+    """A patch route leaves the client type open; the frontend's Settings
+    choice (patch_client_type) fills it so the tracker overlay attaches."""
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, patch_file="seed.aplttp")
+    assert kwargs["client_type"] == "universal_tracker"
+
+
+def test_route_patch_keeps_explicit_client_type_over_preference(monkeypatch):
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, patch_file="seed.aplttp", client_type="text")
+    assert kwargs["client_type"] == "text"
+
+
+def test_route_patch_without_preference_hook_leaves_client_type_open(monkeypatch):
+    """The TUI has no preference hook; _perform_module_launch's plain default applies."""
+    kwargs = _routed_launch_kwargs(monkeypatch, _fake_frontend(), patch_file="seed.aplttp")
+    assert "client_type" not in kwargs
+
+
+def test_route_preference_does_not_touch_direct_launches(monkeypatch):
+    app = _fake_frontend()
+    type(app).patch_client_type = lambda self: "universal_tracker"
+    kwargs = _routed_launch_kwargs(monkeypatch, app, client_type="game")
+    assert kwargs["client_type"] == "game"
+
+
+def test_route_ready_tolerates_frontend_without_dialog_hook(monkeypatch):
+    """The TUI has no connect dialog; the hook is feature-detected."""
+    app = _fake_frontend(with_dialog=False)
+    _routed_ready_callback(monkeypatch, app, client_type="game")()
+    assert app.calls[-1] == "hide_loading"
+
+
+def test_route_awaits_launch_notice_and_reports_failure(monkeypatch):
+    """The frontend's launch notice (an awaitable) runs before the launch and
+    the launch-failure hook fires from the error callback; both are
+    feature-detected, so the dialog-less frontend above still routes."""
+    import asyncio
+    import frontend_protocol
+    app = _fake_frontend()
+    seen = {}
+
+    async def before_module_launch(self, module_name, **launch_kwargs):
+        await asyncio.sleep(0)
+        seen["notice"] = (module_name, launch_kwargs)
+        self.calls.append("before_module_launch")
+
+    type(app).before_module_launch = before_module_launch
+    type(app).on_module_launch_failed = lambda self, module_name: self.calls.append(f"failed:{module_name}")
+    captured = {}
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: captured.update(kw))
+
+    asyncio.run(MultiWorld._route_module_when_ui_ready("papermario", patch_file="game.appm64"))
+    captured["error_callback"]()
+
+    assert seen["notice"] == ("papermario", {"patch_file": "game.appm64"})
+    assert app.calls == ["client_console_init", "before_module_launch", "failed:papermario"]
+
+
+# --- _show_worlds_venv_error: a failed worlds-venv bootstrap reaches the user ---
+
+def test_worlds_venv_error_shows_dialog_once_frontend_is_up(monkeypatch, tmp_path):
+    import asyncio
+    import frontend_protocol
+    app = _fake_frontend()
+    type(app).show_error_dialog = lambda self, title, message: self.calls.append((title, message))
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: tmp_path / "mwgg_venv")
+
+    asyncio.run(MultiWorld._show_worlds_venv_error("error: No interpreter found for Python 3.13"))
+
+    assert len(app.calls) == 1
+    title, message = app.calls[0]
+    assert title == "Game installs are broken"
+    assert str(tmp_path / "mwgg_venv") in message
+    assert "error: No interpreter found for Python 3.13" in message
+
+
+def test_worlds_venv_error_without_frontend_returns_quietly(monkeypatch):
+    import asyncio
+    import frontend_protocol
+
+    class NoFrontend:
+        _active_instance = None
+
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: NoFrontend)
+
+    assert asyncio.run(MultiWorld._show_worlds_venv_error("boom", timeout=0.3)) is None
+
+
+# --- _route_module_when_ui_ready: a patch room's pinned world installs before the launch ---
+
+_PINNED_WORLD = {"version": [1, 2, 3], "custom": False}
+_PINNED_TAG = "sixteen-2026.05.16"
+
+
+class _RoomInfoSocket:
+    """Websocket stand-in: the server sends RoomInfo on open, before any Connect."""
+
+    async def __aiter__(self):
+        from NetUtils import encode
+        yield encode([{"cmd": "RoomInfo", "world_versions": {"Some Game": _PINNED_WORLD},
+                       "mwgg_index_tag": _PINNED_TAG}])
+
+    async def close(self):
+        pass
+
+
+def _pinned_world_frontend(choice=True, dialog=True):
+    """`choice` answers the confirm dialog; None means the frontend could not show it."""
+    app = _fake_frontend()
+
+    def show_confirm_dialog(self, title, message, callback, ok_text="OK", cancel_text="Cancel"):
+        self.calls.append(f"confirm:{ok_text}")
+        if choice is None:
+            return None
+        callback(choice)
+        return object()
+
+    async def show_loading_status(self, message):
+        self.calls.append(f"status:{message}")
+
+    if dialog:
+        type(app).show_confirm_dialog = show_confirm_dialog
+    type(app).show_loading_status = show_loading_status
+    return app
+
+
+def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="localhost:38281",
+                         install_ok=True, auto_install=False, **launch_kwargs):
+    """Route a patch whose room pins Some Game 1.2.3 against `app`; returns the
+    websocket opens, pin checks, installs and launch in the order they happened."""
+    import asyncio
+    import frontend_protocol
+    import websockets
+    patch = tmp_path / "seed.apsome"
+    with zipfile.ZipFile(patch, "w") as zf:
+        zf.writestr("archipelago.json", json.dumps({"game": "Some Game", "server": server}))
+    events = []
+
+    async def connect(address, **kwargs):
+        events.append(f"open:{address}")
+        return _RoomInfoSocket()
+
+    def check_world_pin(game, pin, tag):
+        events.append(("check", game, pin, tag))
+        return ModuleUpdate.WorldPinCheck(game, "1.2.3", installed, "some_game", tag, False)
+
+    def install_pinned_world(pin):
+        events.append(f"install:{pin.want}")
+        return install_ok
+
+    monkeypatch.setattr(websockets, "connect", connect)
+    monkeypatch.setattr(ModuleUpdate, "check_world_pin", check_world_pin)
+    monkeypatch.setattr(frontend_protocol, "install_pinned_world", install_pinned_world)
+    monkeypatch.setattr(MultiWorld, "_auto_install_pinned_worlds", lambda: auto_install)
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(Utils, "discover_and_launch_module", lambda module_name, **kw: events.append("launch"))
+    asyncio.run(MultiWorld._route_module_when_ui_ready("some_game", patch_file=str(patch), **launch_kwargs))
+    return events
+
+
+_PROBED = ["open:ws://localhost:38281", ("check", "Some Game", _PINNED_WORLD, _PINNED_TAG)]
+
+
+@pytest.mark.parametrize("auto_install", [False, True])
+def test_route_patch_installs_room_pinned_world_before_launch(auto_install, monkeypatch, tmp_path):
+    """The room's RoomInfo pins another version of the patch's world: it installs
+    before the launch imports the world, asked unless auto_install_pinned_worlds."""
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, auto_install=auto_install)
+    assert events == [*_PROBED, "install:1.2.3", "launch"]
+    asked = [] if auto_install else ["confirm:Install 1.2.3"]
+    assert app.calls == ["client_console_init", *asked, "status:Installing Some Game 1.2.3..."]
+
+
+@pytest.mark.parametrize("choice, dialog", [(False, True), (None, True), (True, False)],
+                         ids=["declined", "dialog_not_shown", "no_dialog_hook"])
+def test_route_patch_keeps_installed_world_without_consent(choice, dialog, monkeypatch, tmp_path, caplog):
+    app = _pinned_world_frontend(choice=choice, dialog=dialog)
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        events = _pinned_patch_launch(monkeypatch, tmp_path, app)
+    assert events == [*_PROBED, "launch"]
+    assert "Keeping Some Game 1.0.0; the room expects 1.2.3." in caplog.text
+
+
+def test_route_patch_matching_world_launches_without_install(monkeypatch, tmp_path):
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3")
+    assert events == [*_PROBED, "launch"]
+    assert app.calls == ["client_console_init"]
+
+
+def test_route_patch_probes_its_own_server_over_the_launch_address(monkeypatch, tmp_path):
+    app = _pinned_world_frontend()
+    events = _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.2.3",
+                                  server_address="P1@other.host:12345")
+    assert events == [*_PROBED, "launch"]
+
+
+def test_route_patch_without_server_skips_room_probe(monkeypatch, tmp_path):
+    """A local seed's patch carries an empty server; nothing to probe."""
+    app = _pinned_world_frontend()
+    assert _pinned_patch_launch(monkeypatch, tmp_path, app, server="") == ["launch"]
+    assert app.calls == ["client_console_init"]
+
+
+def test_route_patch_install_failure_launches_installed_world(monkeypatch, tmp_path, caplog):
+    app = _pinned_world_frontend()
+    with caplog.at_level(logging.WARNING, logger="MultiWorld"):
+        events = _pinned_patch_launch(monkeypatch, tmp_path, app, install_ok=False)
+    assert events == [*_PROBED, "install:1.2.3", "launch"]
+    assert "Could not install Some Game apworld 1.2.3; launching the installed version." in caplog.text
+
+
+# --- client-type combo validation ---
+
+@pytest.mark.parametrize("argv, message", [
+    (["--client-type", "game", "text"], "mutually exclusive"),
+    (["--client-type", "text", "manual"], "mutually exclusive"),
+    (["--client-type", "text", "universal_tracker"], "only combines with game"),
+    (["--client-type", "manual", "universal_tracker"], "only combines with game"),
+    (["--client-type", "game"], "requires --game"),
+    (["--client-type", "game", "universal_tracker"], "requires --game"),
+])
+def test_main_rejects_conflicting_client_types(argv, message, capsys):
+    """game/text/manual are mutually exclusive primaries; universal_tracker
+    combines with game only; the game client is meaningless without --game."""
+    with pytest.raises(SystemExit) as excinfo:
+        MultiWorld.main(argv)
+    assert excinfo.value.code == 2
+    assert message in capsys.readouterr().err
+
+
+# --- Kivy-only client guard (TUI frontend) ---
+
+@pytest.mark.parametrize("argv", [
+    ["--frontend", "tui", "--game", "tracker"],
+    ["--frontend", "tui", "--game", "Manual"],
+    ["--frontend", "tui", "--client-type", "universal_tracker"],
+    ["--frontend", "tui", "--client-type", "manual"],
+])
+def test_main_rejects_kivy_only_clients_under_tui(argv, capsys):
+    """Tracker and manual clients use Kivy-only UI affordances: main() must
+    exit 2 before any heavy import, whether they arrive as --game or as a
+    no-game --client-type route."""
+    with pytest.raises(SystemExit) as excinfo:
+        MultiWorld.main(argv)
+    assert excinfo.value.code == 2
+    assert "requires --frontend=gui" in capsys.readouterr().err
+
+
+# --- splash gating ---
+
+def test_splash_shown_on_windows_gui_cold_start(monkeypatch):
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    assert MultiWorld.should_show_splash("gui") is True
+
+
+def test_splash_skipped_under_mwgg_no_splash(monkeypatch):
+    """MWGG_NO_SPLASH is the manual escape hatch: the whole splash block,
+    including the 60s wait, must skip."""
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.setenv("MWGG_NO_SPLASH", "1")
+    assert MultiWorld.should_show_splash("gui") is False
+
+
+def test_splash_still_shown_under_mwgg_skip_update(monkeypatch):
+    """spawn_client sets MWGG_SKIP_UPDATE=1 in the child env; that skips the
+    updater (inline here, in-thread in the splash process), not the splash
+    itself -- spawned clients front their boot with it too."""
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    monkeypatch.setenv("MWGG_SKIP_UPDATE", "1")
+    assert MultiWorld.should_show_splash("gui") is True
+
+
+def test_splash_skipped_for_tui_frontend(monkeypatch):
+    monkeypatch.setattr(MultiWorld, "is_windows", True)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    assert MultiWorld.should_show_splash("tui") is False
+
+
+def test_splash_skipped_off_windows(monkeypatch):
+    monkeypatch.setattr(MultiWorld, "is_windows", False)
+    monkeypatch.delenv("MWGG_NO_SPLASH", raising=False)
+    assert MultiWorld.should_show_splash("gui") is False
+
+
+# --- init_logging: host.yaml log_network gates websockets frame tracing ---
+
+@pytest.fixture
+def restored_root_logger(monkeypatch, tmp_path):
+    """init_logging replaces the root handlers: keep its log file out of the
+    repo and hand pytest's capture handlers back afterwards."""
+    monkeypatch.setattr(BaseUtils, "user_path", lambda *parts: str(tmp_path.joinpath(*parts)))
+    root = logging.getLogger()
+    websockets_logger = logging.getLogger("websockets")
+    saved_handlers, saved_level, saved_ws_level = root.handlers[:], root.level, websockets_logger.level
+    yield
+    for handler in root.handlers[:]:
+        if handler not in saved_handlers:
+            root.removeHandler(handler)
+            handler.close()
+    for handler in saved_handlers:
+        if handler not in root.handlers:
+            root.addHandler(handler)
+    root.setLevel(saved_level)
+    websockets_logger.setLevel(saved_ws_level)
+
+
+def _fake_settings(log_network):
+    return types.SimpleNamespace(server_options=types.SimpleNamespace(log_network=log_network))
+
+
+def test_init_logging_debug_keeps_websockets_quiet_without_log_network(restored_root_logger, monkeypatch):
+    """--loglevel debug is the client default; websockets logs every frame at
+    DEBUG, and that traffic is what host.yaml log_network controls."""
+    monkeypatch.setattr(settings, "get_settings", lambda: _fake_settings(0))
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert logging.getLogger().level == logging.DEBUG
+    assert logging.getLogger("websockets").level == logging.INFO
+
+
+def test_init_logging_debug_traces_websockets_with_log_network(restored_root_logger, monkeypatch):
+    monkeypatch.setattr(settings, "get_settings", lambda: _fake_settings(1))
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert logging.getLogger("websockets").level == logging.DEBUG
+
+
+def test_init_logging_explicit_log_network_skips_host_yaml(restored_root_logger, monkeypatch):
+    """MultiServer passes its --log_network flag; host.yaml is not consulted."""
+    monkeypatch.setattr(settings, "get_settings", lambda: pytest.fail("host.yaml consulted"))
+    BaseUtils.init_logging("LogNetworkTest", "debug", log_network=True)
+    assert logging.getLogger("websockets").level == logging.DEBUG
+
+
+def test_init_logging_info_skips_host_yaml(restored_root_logger, monkeypatch):
+    monkeypatch.setattr(settings, "get_settings", lambda: pytest.fail("host.yaml consulted"))
+    BaseUtils.init_logging("LogNetworkTest", "info")
+    assert logging.getLogger("websockets").level == logging.INFO
+
+
+def test_init_logging_host_yaml_lookup_precedes_handler_swap(restored_root_logger, monkeypatch):
+    """The settings import reaches ModuleUpdate, whose basicConfig fallback
+    fires on a handler-less root logger; the lookup must run before
+    init_logging strips the handlers or that fallback survives it."""
+    def get_settings_with_fallback():
+        if not logging.getLogger().hasHandlers():
+            logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+        return _fake_settings(0)
+    monkeypatch.setattr(settings, "get_settings", get_settings_with_fallback)
+    root = logging.getLogger()
+    for handler in root.handlers[:]:
+        root.removeHandler(handler)
+    BaseUtils.init_logging("LogNetworkTest", "debug")
+    assert root.level == logging.DEBUG
+    stream_handlers = [h for h in root.handlers
+                       if isinstance(h, logging.StreamHandler) and not isinstance(h, logging.FileHandler)]
+    assert len(stream_handlers) == 1
+
+
+# --- client component unwrapping (in-process launch) ---
+
+def _inner_launch(*args):
+    """Stands in for a world's Client.launch."""
+
+
+def _launch_subprocess_wrapper(*args):
+    launch_subprocess(_inner_launch, name="TestClient", args=args)
+
+
+def _launch_component_wrapper(*args):
+    launch_component(_inner_launch, name="TestClient", args=args)
+
+
+def _opaque_wrapper(*args):
+    print(_inner_launch)
+
+
+def test_unwrap_launch_subprocess_wrapper():
+    """Wheel worlds that ship the upstream launch_subprocess(<launch>) wrapper
+    must unwrap to the inner callable so the client launches in-process instead
+    of spawning a second GUI process."""
+    assert Utils._resolve_launch_from_custom_world(_launch_subprocess_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_launch_component_wrapper():
+    assert Utils._resolve_launch_from_custom_world(_launch_component_wrapper, "worlds.x") is _inner_launch
+
+
+def test_unwrap_unrecognized_wrapper_returns_none():
+    assert Utils._resolve_launch_from_custom_world(_opaque_wrapper, "worlds.x") is None
+
+
+def _guarded_launch_wrapper(*args):
+    if args:
+        launch_subprocess(_inner_launch, name="TestClient", args=args)
+    else:
+        _inner_launch()
+
+
+def test_unwrap_wrapper_guarded_by_if():
+    """Manual's launch_client keeps its launch call under `if gui_enabled:`."""
+    assert Utils._resolve_launch_from_custom_world(_guarded_launch_wrapper, "worlds.x") is _inner_launch
+
+
+# --- Launcher.py dispatcher ---
+
+def test_launcher_version_prints_and_returns_zero(capsys):
+    assert Launcher.main(["--version"]) == 0
+    out = capsys.readouterr().out
+    assert BaseUtils.__version__ in out
+
+
+def test_launcher_help_returns_zero(capsys):
+    assert Launcher.main(["--help"]) == 0
+    out = capsys.readouterr().out
+    assert "MultiworldGGLauncher" in out
+
+
+@pytest.mark.parametrize("argv", [["--frontend=tui"], ["--frontend", "tui"]])
+def test_launcher_rejects_tui_frontend(argv, capsys):
+    assert Launcher.main(argv) == 2
+    err = capsys.readouterr().err
+    assert "--frontend=tui" in err
+
+
+def test_launcher_gui_frontend_is_not_rejected(monkeypatch):
+    """--frontend gui must fall through to MultiWorld.main, argv verbatim."""
+    calls = []
+    monkeypatch.setattr(MultiWorld, "main", lambda argv=None: calls.append(argv))
+    assert Launcher.main(["--frontend", "gui"]) == 0
+    assert calls == [["--frontend", "gui"]]
+
+
+def test_launcher_runs_component_and_joins_processes(monkeypatch):
+    ran = {}
+    fake = lc.Component("Entry Point Test Component", func=lambda *a: None)
+    monkeypatch.setattr(lc, "find_component",
+                        lambda name: fake if name == "Entry Point Test Component" else None)
+    monkeypatch.setattr(lc, "run_component", lambda component, *a: ran.update(component=component, args=a))
+    monkeypatch.setattr(Utils, "init_logging", lambda name, *a, **kw: ran.update(logging=name))
+
+    assert Launcher.main(["Entry Point Test Component", "one", "two"]) == 0
+    assert ran["component"] is fake
+    assert ran["args"] == ("one", "two")
+    assert ran["logging"] == "Launcher"
+
+
+def test_launcher_delegates_unmatched_positional_verbatim(monkeypatch):
+    """A patch/URL positional is not a component: the untouched argv goes to
+    MultiWorld.main, whose parser owns the launch_file positional."""
+    calls = []
+    monkeypatch.setattr(MultiWorld, "main", lambda argv=None: calls.append(argv))
+    assert Launcher.main(["C:\\seeds\\seed.aplttp", "--loglevel", "info"]) == 0
+    assert calls == [["C:\\seeds\\seed.aplttp", "--loglevel", "info"]]
+
+
+def test_launcher_bare_invocation_delegates_to_launcher_mode(monkeypatch):
+    calls = []
+    monkeypatch.setattr(MultiWorld, "main", lambda argv=None: calls.append(argv))
+    assert Launcher.main([]) == 0
+    assert calls == [[]]
+
+
+def test_launcher_version_subprocess_is_fast_and_headless():
+    """CI smokes `Launcher --version` headless on Linux: it must exit 0
+    without importing Kivy, MultiWorld, or the worlds package. Runs in a clean
+    subprocess (test_client_compat.py pattern) because a fresh interpreter is the
+    only rigorous way to assert what got imported."""
+    script = (
+        "import sys, runpy\n"
+        "sys.argv = ['Launcher.py', '--version']\n"
+        "code = 0\n"
+        "try:\n"
+        "    runpy.run_path('Launcher.py', run_name='__main__')\n"
+        "except SystemExit as e:\n"
+        "    code = e.code if isinstance(e.code, int) else (0 if e.code is None else 1)\n"
+        "assert code == 0, f'exit {code}'\n"
+        "assert 'kivy' not in sys.modules, 'Kivy was imported for --version'\n"
+        "assert 'MultiWorld' not in sys.modules, 'MultiWorld was imported for --version'\n"
+        "assert 'worlds' not in sys.modules, 'worlds was imported for --version'\n"
+        "print('LAUNCHER_VERSION_OK')\n"
+    )
+    result = subprocess.run([sys.executable, "-c", script], cwd=REPO_ROOT,
+                            capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    assert "LAUNCHER_VERSION_OK" in result.stdout
+
+
+def test_launcher_py_version_exits_zero_as_own_process():
+    result = subprocess.run([sys.executable, os.path.join(REPO_ROOT, "Launcher.py"), "--version"],
+                            cwd=REPO_ROOT, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    assert BaseUtils.__version__ in result.stdout
+
+
+# --------------------------------------------------------------------------- #
+# Launcher component surface: FROZEN_TARGETS as the single source of truth
+# for built exe names, BaseUtils.spawn_client's argv/env/detach
+# construction, the builtin/other component-origin classification that keeps
+# builtin_components() trustworthy, the install_apworld confirm gate, and the
+# worlds.LauncherComponents re-export shim.
+# --------------------------------------------------------------------------- #
+
+# --- FROZEN_TARGETS single source of truth ---
+
+def test_frozen_targets_covers_every_setup_py_executable():
+    """Every exe setup.py actually builds must resolve through FROZEN_TARGETS.
+
+    Subset check in one direction only: FROZEN_TARGETS may contain entries
+    setup.py doesn't build yet (the Launcher exe lands in a later phase)."""
+    setup_py_names = _setup_py_target_names()
+    assert setup_py_names, "expected to find at least one target_name in setup.py"
+    assert setup_py_names <= set(BaseUtils.FROZEN_TARGETS.values())
+
+
+def test_host_and_generate_frozen_names_match_frozen_targets():
+    host = lc.find_component("Host")
+    generate = lc.find_component("Generate")
+    assert host is not None and generate is not None
+    assert host.frozen_name == BaseUtils.FROZEN_TARGETS["MultiServer"]
+    assert generate.frozen_name == BaseUtils.FROZEN_TARGETS["Generate"]
+
+
+def test_builtin_frozen_names_do_not_derive_from_live_instance_name(monkeypatch):
+    """Regression guard for the app_name-override bug: application.yaml's
+    app_name (e.g. "MultiworldGG-Test") used to override instance_name at
+    runtime, and frozen_name = apname + script_name silently broke. Every
+    builtin frozen_name must be a literal FROZEN_TARGETS value, unaffected by
+    instance_name."""
+    monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
+    frozen_values = set(BaseUtils.FROZEN_TARGETS.values())
+    checked_any = False
+    for component in lc.builtin_components():
+        if component.frozen_name:
+            checked_any = True
+            assert component.frozen_name in frozen_values
+    assert checked_any
+
+
+# --- spawn_client argv/env/detach construction ---
+
+def test_spawn_client_builds_argv_and_env_windows(monkeypatch):
+    # DETACHED_PROCESS/CREATE_NEW_PROCESS_GROUP only exist on the stdlib subprocess
+    # module under `if _mswindows:`, so they're absent on POSIX Pythons; CI runs this
+    # suite on ubuntu/macos too, so stand in real Windows values (raising=False handles
+    # the on-Windows case where the attributes already exist).
+    monkeypatch.setattr(BaseUtils.subprocess, "DETACHED_PROCESS", 0x00000008, raising=False)
+    monkeypatch.setattr(BaseUtils.subprocess, "CREATE_NEW_PROCESS_GROUP", 0x00000200, raising=False)
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", True)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client("kh2", server_address="localhost:38281", slot_name="P1", password="secret",
+                           client_type="game")
+
+    argv = captured["argv"]
+    assert argv[:2] == [sys.executable, BaseUtils.local_path("MultiWorld.py")]
+    assert argv[argv.index("--game") + 1] == "kh2"
+    assert argv[argv.index("--server-address") + 1] == "localhost:38281"
+    assert argv[argv.index("--slot-name") + 1] == "P1"
+    assert argv[argv.index("--password") + 1] == "secret"
+    assert argv[argv.index("--client-type") + 1] == "game"
+
+    env = captured["kwargs"]["env"]
+    assert env["MWGG_ROLE"] == "client"
+    assert env["MWGG_CLIENT_TYPE"] == "game"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
+    assert captured["kwargs"]["creationflags"] == (
+        BaseUtils.subprocess.DETACHED_PROCESS | BaseUtils.subprocess.CREATE_NEW_PROCESS_GROUP
+    )
+    assert "start_new_session" not in captured["kwargs"]
+
+
+def test_spawn_client_builds_argv_and_env_posix(monkeypatch):
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client(client_type="text", extra_args=("--foo",))
+
+    argv = captured["argv"]
+    assert "--game" not in argv
+    assert "--server-address" not in argv
+    assert argv[argv.index("--client-type") + 1] == "text"
+    assert argv[-1] == "--foo"
+
+    env = captured["kwargs"]["env"]
+    assert env["MWGG_ROLE"] == "client"
+    assert env["MWGG_CLIENT_TYPE"] == "text"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+    assert "MWGG_NO_SPLASH" not in env
+    assert captured["kwargs"]["start_new_session"] is True
+    assert "creationflags" not in captured["kwargs"]
+
+
+def test_spawn_client_component_flag(monkeypatch):
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client(game="kh2", component="Map Tracker")
+
+    argv = captured["argv"]
+    assert argv[argv.index("--game") + 1] == "kh2"
+    assert argv[argv.index("--component") + 1] == "Map Tracker"
+    # Additive contract: --component goes after --client-type, so component-less
+    # argv stays byte-identical to older cores.
+    assert argv.index("--component") > argv.index("--client-type")
+
+    env = captured["kwargs"]["env"]
+    assert env["MWGG_ROLE"] == "client"
+    assert env["MWGG_SKIP_UPDATE"] == "1"
+
+
+def test_spawn_client_client_type_combo(monkeypatch):
+    """An iterable client_type expands into one --client-type flag with all
+    values (nargs="+" on the receiving parser) and a space-joined env hint;
+    a plain string stays the single-value argv older cores expect."""
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        captured["kwargs"] = kwargs
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+
+    BaseUtils.spawn_client(game="kh2", client_type=("game", "universal_tracker"))
+
+    argv = captured["argv"]
+    idx = argv.index("--client-type")
+    assert argv[idx + 1:idx + 3] == ["game", "universal_tracker"]
+    assert captured["kwargs"]["env"]["MWGG_CLIENT_TYPE"] == "game universal_tracker"
+
+
+def test_spawn_client_component_requires_game(monkeypatch):
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+
+    def _fail_popen(*args, **kwargs):
+        raise AssertionError("Popen must not run when spawn_client validation fails")
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", _fail_popen)
+
+    with pytest.raises(ValueError):
+        BaseUtils.spawn_client(component="Map Tracker")
+
+
+def _spawned_client_args(monkeypatch, spawn, launch_file):
+    """Run `spawn` against a fake Popen and parse the child's argv (from the
+    launch file on) with MultiWorld's own parser."""
+    monkeypatch.setattr(BaseUtils, "is_frozen", lambda: False)
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    captured = {}
+
+    def fake_popen(argv, **kwargs):
+        captured["argv"] = argv
+        return object()
+
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", fake_popen)
+    spawn()
+    argv = captured["argv"]
+    return MultiWorld.make_arg_parser().parse_args(argv[argv.index(launch_file):])
+
+
+@pytest.mark.parametrize("client_type, parsed", [("text", ["text"]), ((), None)])
+def test_spawn_client_launch_file_is_positional_before_flags(client_type, parsed, monkeypatch):
+    """The positional precedes --client-type (nargs="+" would swallow it), and an
+    empty client_type omits the flag instead of passing it bare."""
+    args = _spawned_client_args(
+        monkeypatch, lambda: BaseUtils.spawn_client(launch_file="C:/seed.apkh3", client_type=client_type),
+        "C:/seed.apkh3")
+    assert args.launch_file == "C:/seed.apkh3"
+    assert args.client_type == parsed
+
+
+def test_open_patch_spawns_without_game_client_type(monkeypatch):
+    """main() exits 2 on --client-type game without --game, so a patch spawn must not
+    carry spawn_client's "game" default."""
+    monkeypatch.setattr(lc, "open_filename", lambda *args, **kwargs: "C:/seed.apnew")
+    args = _spawned_client_args(monkeypatch, lc.open_patch, "C:/seed.apnew")
+    assert args.launch_file == "C:/seed.apnew"
+    assert args.client_type is None
+    assert args.game is None
+
+
+@pytest.mark.parametrize("frozen, executable, argv, expected", [
+    (True, "C:/MWGG/MultiworldGG.exe", ["C:/MWGG/MultiworldGG.exe", "C:/seed.apnew"],
+     ["C:/MWGG/MultiworldGG.exe", "C:/seed.apnew", "--no-restart"]),
+    (False, "python", ["MultiWorld.py", "C:/seed.apnew"],
+     ["python", "MultiWorld.py", "C:/seed.apnew", "--no-restart"]),
+])
+def test_restart_client_keeps_patch_as_launch_file(frozen, executable, argv, expected, monkeypatch):
+    """Frozen argv[0] is the exe itself and must not be repeated, or the exe becomes
+    the child's launch_file and the patch an unrecognized argument."""
+    monkeypatch.setattr(Utils, "is_frozen", lambda: frozen)
+    monkeypatch.setattr(sys, "executable", executable)
+    monkeypatch.setattr(Utils, "_startup_argv", tuple(argv))
+    spawned = []
+    monkeypatch.setattr(Utils.subprocess, "Popen", lambda child_argv, **kwargs: spawned.append(child_argv))
+
+    with pytest.raises(SystemExit):
+        Utils._restart_client_with_args()
+
+    assert spawned == [expected]
+
+
+@pytest.mark.parametrize("frozen, prefix", [
+    (True, ["C:/MWGG/MultiworldGG.exe"]),
+    (False, ["python", "MultiWorld.py"]),
+])
+def test_deferred_launch_restart_relaunches_startup_argv(frozen, prefix, monkeypatch):
+    """A restart from inside the deferred launch, where sys.argv holds the world
+    client's --connect form, must re-run argv that MultiWorld's parser accepts."""
+    monkeypatch.setattr(Utils.asyncio, "get_event_loop",
+                        lambda: types.SimpleNamespace(call_soon=lambda callback: callback()))
+    monkeypatch.setattr(Utils, "is_frozen", lambda: frozen)
+    monkeypatch.setattr(sys, "executable", prefix[0])
+    monkeypatch.setattr(Utils, "_startup_argv", (prefix[-1], "--game", "kh3", "--server-address", "h:1",
+                                                 "--slot-name", "P1", "--client-type", "game"))
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda *args, **kwargs: None)
+    spawned = []
+    monkeypatch.setattr(Utils.subprocess, "Popen", lambda child_argv, **kwargs: spawned.append(child_argv))
+
+    def _missing_dep(*args):
+        raise ImportError("No module named 'kh3_dep'")
+
+    with pytest.raises(SystemExit):
+        Utils._defer_cli_launch(_missing_dep, "worlds.kh3", "P1@h:1", False, dep_install_module="worlds.kh3")
+
+    [child_argv] = spawned
+    assert child_argv[:len(prefix)] == prefix
+    args = MultiWorld.make_arg_parser().parse_args(child_argv[len(prefix):])
+    assert (args.game, args.server_address, args.slot_name, args.no_restart) == ("kh3", "h:1", "P1", True)
+
+
+# --- launch_exe: terminal detection, window-then-tab bucketing, env forwarding ---
+
+TERMINAL_EXE = ["/opt/mwgg/MultiworldGG", "--game", "A Game"]
+
+
+def _which_from(available):
+    return lambda name, *args, **kwargs: available.get(name)
+
+
+@pytest.fixture
+def plain_environ(monkeypatch):
+    """No launcher-owned variables, so _env_prefixed leaves the argv alone."""
+    monkeypatch.setattr(os, "environ", {"HOME": "/home/x", "LANG": "C"})
+
+
+def test_env_prefixed_forwards_launcher_owned_variables(monkeypatch):
+    monkeypatch.setattr(os, "environ", {
+        "MWGG_ROLE": "launcher", "KIVY_HOME": "/k", "PATH": "/a:/b", "SSL_CERT_FILE": "/c.pem",
+        "REQUESTS_CA_BUNDLE": "/c.pem", "HOME": "/h", "GITHUB_TOKEN": "secret"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._env_prefixed(TERMINAL_EXE) == [
+        "/usr/bin/env", "KIVY_HOME=/k", "MWGG_ROLE=launcher", "PATH=/a:/b", "REQUESTS_CA_BUNDLE=/c.pem",
+        "SSL_CERT_FILE=/c.pem", *TERMINAL_EXE]
+
+
+def test_env_prefixed_without_launcher_variables_is_identity(plain_environ):
+    assert BaseUtils._env_prefixed(TERMINAL_EXE) == TERMINAL_EXE
+
+
+def test_env_prefixed_adds_the_child_only_variables(plain_environ, monkeypatch):
+    """SKIP_REQUIREMENTS_UPDATE is not the launcher's own, so only the argv carries it."""
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._env_prefixed(TERMINAL_EXE, {"SKIP_REQUIREMENTS_UPDATE": "1"}) == [
+        "/usr/bin/env", "SKIP_REQUIREMENTS_UPDATE=1", *TERMINAL_EXE]
+
+
+def test_linux_terminal_passes_extra_env_to_the_command(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"konsole": "/usr/bin/konsole"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False, {"SKIP": "1"}) == [
+        "/usr/bin/konsole", "--new-tab", "-e", "/usr/bin/env", "SKIP=1", *TERMINAL_EXE]
+
+
+def test_linux_terminal_prefers_xdg_terminal_exec(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from(
+        {"xdg-terminal-exec": "/usr/bin/xdg-terminal-exec", "ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/xdg-terminal-exec", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_ptyxis_window_then_tab(plain_environ, monkeypatch):
+    """Bazzite ships Ptyxis and none of the legacy emulators."""
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/ptyxis", "--new-window", "-T", "Host", "--", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/ptyxis", "--tab", "-T", "Host", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_forwards_launcher_env_into_the_tab(monkeypatch):
+    monkeypatch.setattr(os, "environ", {"MWGG_ROLE": "launcher", "HOME": "/h"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"ptyxis": "/usr/bin/ptyxis"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/ptyxis", "--tab", "-T", "Host", "--", "/usr/bin/env", "MWGG_ROLE=launcher", *TERMINAL_EXE]
+
+
+def test_linux_terminal_tab_capable_outranks_legacy(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({
+        "xterm": "/usr/bin/xterm", "x-terminal-emulator": "/usr/bin/x-terminal-emulator", "kgx": "/usr/bin/kgx"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/kgx", "-T", "Host", "--", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/kgx", "--tab", "-T", "Host", "--", *TERMINAL_EXE]
+
+
+def test_linux_terminal_konsole_new_tab(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"konsole": "/usr/bin/konsole"}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) == [
+        "/usr/bin/konsole", "-e", *TERMINAL_EXE]
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", False) == [
+        "/usr/bin/konsole", "--new-tab", "-e", *TERMINAL_EXE]
+
+
+def test_linux_terminal_none_installed(plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", True) is None
+
+
+@pytest.mark.parametrize("new_window", [True, False], ids=["window", "tab"])
+@pytest.mark.parametrize("spec", BaseUtils._LINUX_TERMINALS, ids=lambda spec: spec.name)
+def test_linux_terminal_specs_end_with_the_command(spec, new_window, plain_environ, monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({spec.name: f"/usr/bin/{spec.name}"}))
+    command = BaseUtils._linux_terminal_command(TERMINAL_EXE, "Host", new_window)
+    assert command[0] == f"/usr/bin/{spec.name}"
+    assert command[-len(TERMINAL_EXE):] == TERMINAL_EXE
+    assert "{title}" not in " ".join(command)
+
+
+def test_windows_terminal_buckets_into_named_window(monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({"wt": "C:/WindowsApps/wt.exe"}))
+    monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
+    exe = ["C:/mwgg/MultiworldGG.exe", "--game", "A;B"]
+    assert BaseUtils._windows_terminal_command(exe, "Host") == [
+        "C:/WindowsApps/wt.exe", "-w", "MultiworldGG-Test", "new-tab", "--title", "Host", "-d", os.getcwd(),
+        "C:/mwgg/MultiworldGG.exe", "--game", "A\\;B"]
+
+
+def test_windows_terminal_without_wt(monkeypatch):
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    assert BaseUtils._windows_terminal_command(TERMINAL_EXE, "Host") is None
+
+
+def test_macos_terminal_iterm_window_then_tab(plain_environ, monkeypatch, tmp_path):
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", True)
+    assert command[0] == "osascript"
+    assert 'tell application "iTerm2"' in command
+    assert "tell current window to create tab with default profile" in command
+    assert command[-3:] == [f"cd {shlex.quote(os.getcwd())} && {shlex.join(TERMINAL_EXE)}", "Host", "window"]
+    assert BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", False)[-1] == "tab"
+
+
+def test_macos_terminal_forwards_launcher_env(monkeypatch, tmp_path):
+    monkeypatch.setattr(os, "environ", {"MWGG_ROLE": "launcher", "HOME": "/h"})
+    monkeypatch.setattr(BaseUtils.shutil, "which", _which_from({}))
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", False)
+    assert command[-3].endswith(f"&& /usr/bin/env MWGG_ROLE=launcher {shlex.join(TERMINAL_EXE)}")
+
+
+def test_macos_terminal_app_fallback(plain_environ, monkeypatch, tmp_path):
+    monkeypatch.setattr(BaseUtils, "_ITERM_APP_PATHS", (str(tmp_path / "missing"),))
+    command = BaseUtils._macos_terminal_command(TERMINAL_EXE, "Host", True)
+    assert 'tell application "Terminal"' in command
+    assert command[-1].endswith(shlex.join(TERMINAL_EXE))
+
+
+def test_launch_exe_opens_window_then_tabs(monkeypatch):
+    calls = []
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command",
+                        lambda exe, title, new_window, extra_env: ["term", title, str(new_window), *exe])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Generate") is True
+    assert calls == [(["term", "Host", "True", *TERMINAL_EXE], {}),
+                     (["term", "Generate", "False", *TERMINAL_EXE], {})]
+
+
+def test_launch_exe_extra_env_reaches_the_spawned_terminal(monkeypatch):
+    """Windows Terminal hands its own environment to the tab, so the extras go on the Popen."""
+    captured = {}
+    monkeypatch.setattr(os, "environ", {"HOME": "/h"})
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command",
+                        lambda exe, title, new_window, extra_env: ["term", *sorted(extra_env)])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv, kw=kw))
+    BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host", extra_env={"SKIP_REQUIREMENTS_UPDATE": "1"})
+    assert captured == {"argv": ["term", "SKIP_REQUIREMENTS_UPDATE"],
+                        "kw": {"env": {"HOME": "/h", "SKIP_REQUIREMENTS_UPDATE": "1"}}}
+
+
+def test_launch_exe_title_defaults_to_instance_name(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(BaseUtils, "instance_name", "MultiworldGG-Test")
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: ["term", title])
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv))
+    BaseUtils.launch_exe(TERMINAL_EXE, True)
+    assert captured["argv"] == ["term", "MultiworldGG-Test"]
+
+
+def test_launch_exe_windows_start_fallback(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(BaseUtils, "is_windows", True)
+    monkeypatch.setattr(BaseUtils, "_terminal_window_opened", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: None)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: captured.update(argv=argv, kw=kw))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True, title="Host") is True
+    assert captured == {"argv": ["start", "Running Host", *TERMINAL_EXE], "kw": {"shell": True}}
+    assert BaseUtils._terminal_window_opened is False
+
+
+def test_launch_exe_without_terminal_runs_plain(monkeypatch):
+    calls = []
+    monkeypatch.setattr(BaseUtils, "is_windows", False)
+    monkeypatch.setattr(BaseUtils, "_terminal_command", lambda exe, title, new_window, extra_env: None)
+    monkeypatch.setattr(BaseUtils.subprocess, "Popen", lambda argv, **kw: calls.append((argv, kw)))
+    assert BaseUtils.launch_exe(TERMINAL_EXE, True) is False
+    assert BaseUtils.launch_exe(TERMINAL_EXE) is False
+    assert calls == [(TERMINAL_EXE, {}), (TERMINAL_EXE, {})]
+
+
+def test_run_component_titles_terminal_with_display_name(monkeypatch):
+    captured = {}
+    component = lc.Component("Host Test", script_name="MultiServer", cli=True)
+    monkeypatch.setattr(lc, "get_exe", lambda c: ["/opt/mwgg/MultiServer"])
+    monkeypatch.setattr(lc, "launch_exe",
+                        lambda exe, in_terminal, **kw: captured.update(exe=exe, in_terminal=in_terminal, **kw))
+    lc.run_component(component, "--foo")
+    assert captured == {"exe": ["/opt/mwgg/MultiServer", "--foo"], "in_terminal": True, "title": "Host Test"}
+
+
+# --- origin classification / builtin_components / find_component ---
+
+def test_builtin_components_excludes_component_appended_after_flip():
+    marker = lc.Component("Late Marker Component", func=lambda *a: None)
+    lc.components.append(marker)
+    try:
+        assert marker in lc.components
+        assert marker not in lc.builtin_components()
+    finally:
+        lc.components.remove(marker)
+
+
+def test_builtin_components_includes_known_builtins():
+    names = {c.display_name for c in lc.builtin_components()}
+    assert {"Host", "Generate", "Install APWorld", "Text Client", "Export Datapackage"} <= names
+
+
+def test_find_component_matches_display_name_and_script_name():
+    host_by_display = lc.find_component("Host")
+    host_by_script = lc.find_component("MultiServer")
+    assert host_by_display is not None
+    assert host_by_display is host_by_script
+
+
+def test_find_component_no_match_returns_none():
+    assert lc.find_component("Definitely Not A Real Component") is None
+
+
+# --- the synthesized YAML strip entry ---
+
+def test_yaml_component_is_a_world_tool():
+    """Frontends render it through the same WorldTool shape as scanned
+    components, so there is one dataclass rather than a per-frontend clone."""
+    entry = lc.yaml_component("oot")
+
+    assert isinstance(entry, lc.WorldTool)
+    assert entry.module == "oot"
+    assert entry.type == "yaml"
+    assert entry.name == lc.YAML_COMPONENT_NAME
+
+
+def test_yaml_type_is_not_manifest_declarable():
+    """The YAML entry is the frontend's own; a world must not be able to
+    declare one and have it rendered as if core synthesized it."""
+    assert "yaml" not in lc._MANIFEST_COMPONENT_TYPES
+    assert lc._coerce_manifest_component(
+        {"name": "Sneaky", "type": "yaml"}, "world.apworld") is None
+
+
+# --- install_apworld confirm gate / Utils.messagebox_confirm cascade ---
+
+def test_install_apworld_declines_without_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: False)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path))
+    boxes = []
+    monkeypatch.setattr(Utils, "messagebox", lambda *args, **kwargs: boxes.append((args, kwargs)))
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == []
+    assert boxes == []
+
+
+def test_install_apworld_proceeds_on_confirm(monkeypatch):
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "messagebox_confirm", lambda title, text: True)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_install_apworld_skips_native_confirm_when_kivy_running(monkeypatch):
+    # the GUI pre-confirms with its own dialog; a second native confirm would
+    # double-warn every GUI install
+    monkeypatch.setattr(lc, "is_kivy_running", lambda: True)
+
+    def _fail_confirm(*args, **kwargs):
+        raise AssertionError("core confirm must not fire when the GUI pre-confirms")
+
+    monkeypatch.setattr(Utils, "messagebox_confirm", _fail_confirm)
+    installed = []
+    monkeypatch.setattr(lc, "_install_apworld", lambda path="": installed.append(path) or None)
+
+    lc.install_apworld("C:/downloads/some.apworld")
+
+    assert installed == ["C:/downloads/some.apworld"]
+
+
+def test_messagebox_confirm_auto_confirms_without_gui(monkeypatch):
+    monkeypatch.setattr(Utils, "gui_enabled", False)
+    assert Utils.messagebox_confirm("Title", "text") is True
+
+
+def test_messagebox_confirm_auto_confirms_under_kivy(monkeypatch, caplog):
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: True)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+def test_messagebox_confirm_textual_branch_beats_native_backends(monkeypatch, caplog):
+    # a running TUI must not fall through to a blocking native dialog
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: True)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+
+    class _Tripwire:
+        def __getattr__(self, name):
+            raise AssertionError("native dialog must not open under a running TUI")
+
+    monkeypatch.setattr(ctypes, "windll", _Tripwire(), raising=False)
+    with caplog.at_level(logging.WARNING):
+        assert Utils.messagebox_confirm("Title", "text") is True
+    assert any("pre-confirm" in record.message for record in caplog.records)
+
+
+@pytest.mark.parametrize("box_result, expected", [(1, True), (2, False)])
+def test_messagebox_confirm_windows_okcancel(monkeypatch, box_result, expected):
+    import ctypes
+
+    monkeypatch.setattr(Utils, "gui_enabled", True)
+    monkeypatch.setattr(Utils, "is_kivy_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_textual_running", lambda: False)
+    monkeypatch.setattr(Utils, "is_linux", False)
+    monkeypatch.setattr(Utils, "is_windows", True)
+    calls = {}
+
+    class _User32:
+        @staticmethod
+        def MessageBoxW(hwnd, text, title, style):
+            calls.update(text=text, title=title, style=style)
+            return box_result
+
+    class _WinDLL:
+        user32 = _User32()
+
+    monkeypatch.setattr(ctypes, "windll", _WinDLL(), raising=False)
+
+    assert Utils.messagebox_confirm("Install APWorld?", "body") is expected
+    assert calls["style"] == 0x31  # MB_OKCANCEL | MB_ICONWARNING
+
+
+# --- worlds.LauncherComponents re-export shim ---
+
+def test_worlds_shim_shares_objects_with_top_level_module():
+    """World modules keep importing worlds.LauncherComponents; the shim must
+    hand them the very same objects (identity, not equality) so registrations
+    land in the one live registry the launcher renders."""
+    import worlds.LauncherComponents as wlc
+
+    assert wlc.components is lc.components
+    assert wlc.Component is lc.Component
+    assert wlc.Type is lc.Type
+    assert wlc.spawn_client is BaseUtils.spawn_client
+    assert wlc.find_component is lc.find_component
+
+
+def test_top_level_module_never_imports_worlds_package():
+    """The point of the top-level module: launcher-side consumers import it
+    without executing worlds/__init__, whose one-shot world load belongs to
+    client processes only. Subprocess because this suite already has worlds
+    in sys.modules."""
+    import subprocess
+    code = ("import sys\n"
+            "import LauncherComponents\n"
+            "assert 'worlds' not in sys.modules\n")
+    result = subprocess.run([sys.executable, "-c", code], cwd=Utils.local_path(),
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+# --------------------------------------------------------------------------- #
+# Named-client-component launch path (--component):
+# spawn_client(component=...) appends `--component <display_name>` to the
+# child argv; the child forwards it through _resolve_client_route's
+# route_kwargs and Utils._perform_module_launch resolves it via
+# Utils._resolve_named_client_component -- a module-scoped scan that must
+# never let another world's registrations be reachable by name, and must
+# fall back to default client resolution (never die) on an unknown or
+# non-client name.
+# --------------------------------------------------------------------------- #
+
+def _fake_launch(*args):
+    pass
+
+
+def _other_launch(*args):
+    pass
+
+
+@pytest.fixture
+def registered(request):
+    """Append Components to the live registry and always remove them."""
+    added: list[lc.Component] = []
+
+    def _register(component: lc.Component) -> lc.Component:
+        lc.components.append(component)
+        added.append(component)
+        return component
+
+    yield _register
+    for component in added:
+        lc.components.remove(component)
+
+
+def test_resolve_named_client_component_scoped_match(registered, monkeypatch):
+    monkeypatch.setattr(_fake_launch, "__module__", "worlds.kh2.submod", raising=False)
+    monkeypatch.setattr(_other_launch, "__module__", "worlds.other", raising=False)
+    registered(lc.Component("Alt Client", func=_other_launch, component_type=lc.Type.CLIENT))
+    target = registered(lc.Component("Alt Client", func=_fake_launch, component_type=lc.Type.CLIENT))
+
+    resolved = Utils._resolve_named_client_component("worlds.kh2", "Alt Client")
+
+    assert resolved is target.func
+
+
+def test_resolve_named_client_component_rejects_other_modules(registered, monkeypatch, caplog):
+    monkeypatch.setattr(_other_launch, "__module__", "worlds.other", raising=False)
+    registered(lc.Component("Alt Client", func=_other_launch, component_type=lc.Type.CLIENT))
+
+    with caplog.at_level(logging.WARNING):
+        resolved = Utils._resolve_named_client_component("worlds.kh2", "Alt Client")
+
+    assert resolved is None
+    assert any("falling back" in record.message for record in caplog.records)
+
+
+def test_resolve_named_client_component_rejects_non_client_types(registered, monkeypatch, caplog):
+    monkeypatch.setattr(_fake_launch, "__module__", "worlds.kh2", raising=False)
+    registered(lc.Component("KH2 Fixup", func=_fake_launch, component_type=lc.Type.TOOL))
+
+    with caplog.at_level(logging.WARNING):
+        resolved = Utils._resolve_named_client_component("worlds.kh2", "KH2 Fixup")
+
+    assert resolved is None
+
+
+def test_resolve_client_route_forwards_component(monkeypatch):
+    import MultiWorld
+
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: {"kh2"})
+    args = MultiWorld.make_arg_parser().parse_args(
+        ["--game", "kh2", "--component", "Alt Client"])
+
+    route_module, route_kwargs = MultiWorld._resolve_client_route(args)
+
+    assert route_module == "kh2"
+    assert route_kwargs["component"] == "Alt Client"
+
+
+def test_resolve_client_route_component_defaults_to_none(monkeypatch):
+    import MultiWorld
+
+    monkeypatch.setattr(Utils, "get_available_worlds", lambda: {"kh2"})
+    args = MultiWorld.make_arg_parser().parse_args(["--game", "kh2"])
+
+    _route_module, route_kwargs = MultiWorld._resolve_client_route(args)
+
+    assert route_kwargs["component"] is None
+
+
+# --------------------------------------------------------------------------- #
+# Patch-file routing: opening a patch file (OS file-association
+# double-click or CLI positional) must launch the right game client with
+# it. Guards the pieces the flow is built from: the optional positional
+# file/URL on MultiWorld's parser (installer file associations point at
+# `MultiworldGG.exe "%1"`, once an unrecognized argument / SystemExit 2),
+# Utils.read_patch_game_name (root archipelago.json, no world imports),
+# Utils._client_launch_argv (positional patch file first, then
+# --connect/--name), and LauncherComponents.identify/get_exe routing of
+# non-patch files (e.g. a .archipelago multidata).
+# --------------------------------------------------------------------------- #
+
+def _make_patch_container(path, game_name: str) -> None:
+    with zipfile.ZipFile(path, "w") as zf:
+        zf.writestr("archipelago.json", json.dumps({"game": game_name, "compatible_version": 5}))
+
+
+# --- MultiWorld argument parser ---
+
+def test_parser_accepts_positional_patch_path():
+    args = MultiWorld.make_arg_parser().parse_args(["C:\\seeds\\AP_1234_P1.aplttp"])
+    assert args.launch_file == "C:\\seeds\\AP_1234_P1.aplttp"
+    assert args.game is None
+
+
+def test_parser_no_args_defaults():
+    args = MultiWorld.make_arg_parser().parse_args([])
+    assert args.launch_file is None
+    assert args.frontend == "gui"
+
+
+def test_parser_positional_combines_with_flags():
+    args = MultiWorld.make_arg_parser().parse_args(["seed.apkh3", "--frontend", "tui", "--loglevel", "info"])
+    assert args.launch_file == "seed.apkh3"
+    assert args.frontend == "tui"
+    assert args.loglevel == "info"
+
+
+def test_parser_accepts_launch_url():
+    args = MultiWorld.make_arg_parser().parse_args(["archipelago://player:pass@multiworld.gg:38281"])
+    assert args.launch_file == "archipelago://player:pass@multiworld.gg:38281"
+
+
+# --- Utils.read_patch_game_name ---
+
+def test_read_patch_game_name_reads_root_manifest(tmp_path):
+    patch = tmp_path / "seed.apemerald"
+    _make_patch_container(patch, "Pokemon Emerald")
+    assert Utils.read_patch_game_name(str(patch)) == "Pokemon Emerald"
+
+
+def test_read_patch_game_name_rejects_non_zip(tmp_path):
+    multidata = tmp_path / "AP_1234.archipelago"
+    multidata.write_bytes(b"\x78\x9c not a zip")
+    assert Utils.read_patch_game_name(str(multidata)) is None
+
+
+def test_read_patch_game_name_rejects_zip_without_root_manifest(tmp_path):
+    apworld = tmp_path / "some.apworld"
+    with zipfile.ZipFile(apworld, "w") as zf:
+        zf.writestr("some/archipelago.json", json.dumps({"game": "Nested"}))
+    assert Utils.read_patch_game_name(str(apworld)) is None
+
+
+def test_read_patch_game_name_missing_file(tmp_path):
+    assert Utils.read_patch_game_name(str(tmp_path / "missing.aplttp")) is None
+
+
+def test_read_patch_game_name_manifest_without_game(tmp_path):
+    patch = tmp_path / "broken.aplttp"
+    with zipfile.ZipFile(patch, "w") as zf:
+        zf.writestr("archipelago.json", json.dumps({"compatible_version": 5}))
+    assert Utils.read_patch_game_name(str(patch)) is None
+
+
+# --- Utils._client_launch_argv ---
+
+def test_client_launch_argv_patch_file_is_positional_before_connect():
+    argv = Utils._client_launch_argv("localhost:38281", None, "kh3", patch_file="C:/seed.apkh3")
+    assert argv == ["C:/seed.apkh3", "--connect=localhost:38281"]
+
+
+def test_client_launch_argv_patch_file_only():
+    assert Utils._client_launch_argv(None, None, "bizhawk", patch_file="seed.apemerald") == ["seed.apemerald"]
+
+
+def test_client_launch_argv_empty():
+    assert Utils._client_launch_argv(None, None, "kh3") == []
+
+
+def test_client_launch_argv_tracker_gets_slot_name():
+    argv = Utils._client_launch_argv("host:1", "Player1", "universal_tracker")
+    assert argv == ["--connect=host:1", "--name=Player1"]
+
+
+def test_client_launch_argv_slot_name_ignored_for_regular_clients():
+    assert Utils._client_launch_argv("host:1", "Player1", "alttp") == ["--connect=host:1"]
+
+
+# --- LauncherComponents.identify / get_exe ---
+
+def test_identify_routes_multidata_to_host():
+    component = identify("AP_1234.archipelago")
+    assert component is not None
+    assert component.display_name == "Host"
+
+
+def test_identify_unknown_suffix_returns_none():
+    assert identify("photo.png") is None
+    assert identify(None) is None
+    assert identify("") is None
+
+
+def test_identify_routes_apworld_to_install_apworld():
+    component = identify("some_world.apworld")
+    assert component is not None
+    assert component.display_name == "Install APWorld"
+
+
+def test_identify_world_registered_suffix():
+    component = Component("Patch Routing Test Client", func=lambda *args: None,
+                          component_type=Type.CLIENT, file_identifier=SuffixIdentifier(".aproutingtest"))
+    components.append(component)
+    try:
+        assert identify("seed.aproutingtest") is component
+    finally:
+        components.remove(component)
+
+
+def test_get_exe_resolves_script_component_in_dev():
+    host = next(c for c in components if c.display_name == "Host")
+    exe = get_exe(host)
+    assert exe is not None
+    assert exe[0] == sys.executable
+    assert exe[1].endswith("MultiServer.py")
+
+
+def test_get_exe_func_only_component_has_no_exe():
+    component = Component("Func Only", func=lambda *args: None)
+    assert get_exe(component) is None
+
+
+def test_get_exe_resolves_literal_frozen_names_when_frozen(monkeypatch):
+    """Host/Generate must resolve to the exact built exe name under a frozen
+    build regardless of the (possibly test-channel-overridden) instance_name --
+    application.yaml's app_name overriding instance_name at runtime was exactly
+    the bug that made frozen_name resolution silently match nothing."""
+    monkeypatch.setattr(lc, "is_frozen", lambda: True)
+    monkeypatch.setattr(lc, "is_windows", True)
+
+    host = next(c for c in components if c.display_name == "Host")
+    generate = next(c for c in components if c.display_name == "Generate")
+
+    assert get_exe(host) == [lc.local_path("MultiworldGGServer.exe")]
+    assert get_exe(generate) == [lc.local_path("MultiworldGGGenerate.exe")]
+
+
+# --------------------------------------------------------------------------- #
+# mwgg:// launch-URL parser and avatar gate (deep-link PR4): a website
+# "Connect via Game Client" link decomposes into connection prefs + the
+# chosen avatar, which get persisted before the GUI opens (backs
+# MultiWorld.py's protocol-launch handling).
+# --------------------------------------------------------------------------- #
+
+def test_parse_full_room_link():
+    url = ("mwgg://FlatDelilah:None@mw.prismativerse.com:62252"
+           "?game=A%20Link%20to%20the%20Past&room=abc"
+           "&avatar=https%3A%2F%2Fmw.prismativerse.com%2Favatar%2Fabc.png")
+    parsed = parse_connect_url(url)
+    assert parsed["hostname"] == "mw.prismativerse.com"
+    assert parsed["port"] == 62252
+    assert parsed["name"] == "FlatDelilah"
+    assert parsed["password"] is None  # :None@ encodes "no password"
+    assert parsed["game"] == "A Link to the Past"
+    assert parsed["avatar"] == "https://mw.prismativerse.com/avatar/abc.png"
+
+
+def test_parse_archipelago_scheme_and_real_password():
+    parsed = parse_connect_url("archipelago://name:secret@host:38281")
+    assert parsed["hostname"] == "host"
+    assert parsed["port"] == 38281
+    assert parsed["name"] == "name"
+    assert parsed["password"] == "secret"
+
+
+def test_parse_rejects_non_connection_urls():
+    assert parse_connect_url("https://example.com") is None
+    assert parse_connect_url("/path/to/patch.aplttp") is None
+    assert parse_connect_url("") is None
+    assert parse_connect_url(None) is None
+
+
+def test_safe_avatar_source_allows_trusted_https():
+    for url in ("https://mw.prismativerse.com/avatar/abc.png",
+                "https://multiworld.gg/avatar/abc.png"):
+        assert safe_avatar_source(url) == url
+
+
+def test_safe_avatar_source_rejects_untrusted_or_insecure():
+    assert safe_avatar_source("https://evil.example/x.png") == ""
+    assert safe_avatar_source("http://multiworld.gg/avatar/x.png") == ""  # not https
+    assert safe_avatar_source("") == ""
+    assert safe_avatar_source("not a url") == ""
+
+
+# --------------------------------------------------------------------------- #
+# inno_setup.iss lint: {app}\<name>.exe references setup.py doesn't build.
+# The allowed set is derived, not hand-maintained: every literal
+# target_name in setup.py, every BaseUtils.FROZEN_TARGETS value, plus the
+# LauncherDebug name setup.py derives at build time (it has no
+# FROZEN_TARGETS entry of its own).
+# --------------------------------------------------------------------------- #
+
+_INNO_PATH = Utils.local_path("inno_setup.iss")
+
+# Historically stale exe names, kept as an explicit regression guard on top of the
+# derived allow-list (a name could start being built for unrelated reasons).
+_KNOWN_STALE_NAMES = {
+    "MultiworldGGBizHawkClient",
+    "MultiworldGGSNIClient",
+    "ArchipelagoBizHawkClient",
+    # pre-2026-08 capital-W names, retired when every exe took the
+    # MultiworldGG prefix (upstream instance_name convention)
+    "MultiWorldGG",
+    "MultiWorldGGServer",
+    "MultiWorldGGGenerate",
+    "MultiWorldGGPatch",
+    "MultiWorldGGClientDebug",
+}
+
+def _known_built_exe_names() -> set[str]:
+    """Every exe base name (no .exe) that setup.py is known to build."""
+    names = _setup_py_target_names() | set(BaseUtils.FROZEN_TARGETS.values())
+    # LauncherDebug is derived in setup.py (_launcher_debug_exe_name), never a
+    # quoted literal, so _setup_py_target_names() can't see it.
+    names.add(BaseUtils.FROZEN_TARGETS["Launcher"] + "Debug")
+    names.discard("")
+    return names
+
+
+def _inno_exe_references() -> list[str]:
+    with open(_INNO_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    return re.findall(r"\{app\}\\(\w+\.exe)", text)
+
+
+def test_inno_exe_references_resolve_to_a_built_executable():
+    allowed = {f"{name}.exe" for name in _known_built_exe_names()}
+    references = _inno_exe_references()
+    assert references, "expected to find at least one {app}\\<name>.exe reference in inno_setup.iss"
+
+    stale = sorted(set(references) - allowed)
+    assert not stale, (
+        f"inno_setup.iss references exe(s) setup.py doesn't build: {stale}. "
+        f"Known-built names: {sorted(allowed)}"
+    )
+
+
+def test_inno_has_no_known_stale_exe_references():
+    references = {ref[:-4] for ref in _inno_exe_references()}
+    stale_hits = references & _KNOWN_STALE_NAMES
+    assert not stale_hits, f"inno_setup.iss still references retired exe(s): {sorted(stale_hits)}"
+
+
+def test_inno_app_exe_name_is_the_launcher():
+    with open(_INNO_PATH, "r", encoding="utf-8") as f:
+        text = f.read()
+    match = re.search(r'#define MyAppExeName "([^"]+)"', text)
+    assert match, "expected a #define MyAppExeName line in inno_setup.iss"
+    assert match.group(1) == f"{BaseUtils.FROZEN_TARGETS['Launcher']}.exe"
+
+
+# --------------------------------------------------------------------------- #
+# inno_setup.iss wheel_downloads: Inno itself fetches selected worlds' wheels
+# into {app}\wheel_cache via the [Files] `download` flag (Inno 6.5.0+). This
+# replaces the old runasoriginaluser `--update-modules` predownload step,
+# whose de-elevated token couldn't exec uv through the WinGet AppExecLink
+# shim (WinError 448).
+# --------------------------------------------------------------------------- #
+
+def _read_inno_text() -> str:
+    with open(_INNO_PATH, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def test_inno_predownload_run_entry_removed():
+    text = _read_inno_text()
+    assert "--update-modules" not in text
+    assert "GetSelectedWorld" not in text
+    assert "GetUvDir" not in text
+    assert "ResolveRealUvPath" not in text
+
+
+def test_inno_uv_install_run_entries_survive():
+    """The uv install [Run] entries (and their Check functions) must survive:
+    uv is still required at first launch, even though nothing installs worlds
+    at install time anymore."""
+    text = _read_inno_text()
+    assert 'Check: IsUvNeededViaWinget' in text
+    assert 'Check: IsUvNeededViaPwsh' in text
+    assert "function IsWingetAvailable" in text
+
+
+def test_inno_wheel_downloads_region_markers_in_files_section():
+    text = _read_inno_text()
+    files_idx = text.index("[Files]")
+    begin_idx = text.index("; BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("; END AUTOGEN: wheel_downloads")
+    icons_idx = text.index("[Icons]")
+    assert files_idx < begin_idx < end_idx < icons_idx
+
+
+def test_inno_wheel_downloads_lines_carry_required_fields():
+    """Any populated wheel_downloads line (the region may be empty until CI's
+    regen workflow fills it in) must carry the full download-flag contract."""
+    text = _read_inno_text()
+    begin_idx = text.index("; BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("; END AUTOGEN: wheel_downloads")
+    body = text[begin_idx:end_idx]
+    lines = [line for line in body.splitlines() if line.strip().startswith("Source:")]
+    for line in lines:
+        assert 'DestDir: "{app}\\wheel_cache"' in line
+        assert re.search(r"ExternalSize:\s*\d+", line)
+        assert re.search(r'Hash:\s*"[0-9a-fA-F]+"', line)
+        assert "Flags: external download ignoreversion" in line
+
+
+def test_inno_wheel_cache_install_uninstall_delete_entries():
+    text = _read_inno_text()
+    assert 'Type: filesandordirs; Name: "{app}\\wheel_cache"' in text
+    assert 'Type: filesandordirs; Name: "{app}\\wheel_cache.consuming"' in text
+
+
+def test_inno_post_install_writes_variant_marker():
+    text = _read_inno_text()
+    assert "ssPostInstall" in text
+    assert "mwgg_igdb_variant.txt" in text
+    assert "GetSelectedVariantToken" in text
+
+
+def _inno_run_entry(marker: str) -> str:
+    return next(line for line in _read_inno_text().splitlines()
+                if marker in line and not line.lstrip().startswith(";"))
+
+
+_EXPLORER_LAUNCH = 'Filename: "{win}\\explorer.exe"; Parameters: """{app}\\{#MyAppExeName}"""'
+
+
+def test_inno_updater_relaunch_runs_launcher_as_original_user():
+    entry = _inno_run_entry("Check: IsUpdaterRelaunch")
+    assert entry.startswith(_EXPLORER_LAUNCH)
+    assert "runasoriginaluser" in entry
+    assert "skipifnotsilent" in entry
+    assert "{param:relaunch|0}" in _read_inno_text()
+
+
+def test_inno_postinstall_launch_goes_through_explorer():
+    """Setup's direct children inherit its RedirectionGuard and cannot traverse uv's
+    Python junction, so the launcher must start as the shell's child."""
+    entry = _inno_run_entry("postinstall")
+    assert entry.startswith(_EXPLORER_LAUNCH)
+    assert "skipifsilent" in entry
+    assert not any(line.startswith('Filename: "{app}\\{#MyAppExeName}"')
+                   for line in _read_inno_text().splitlines())
+
+
+# --------------------------------------------------------------------------- #
+# tools/regen_inno_components.py wheel_downloads rendering: --from-json
+# fixtures so these don't touch the network.
+# --------------------------------------------------------------------------- #
+
+def _minimal_iss(tmp_path):
+    text = (
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions ""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n'
+    )
+    p = tmp_path / "test.iss"
+    p.write_text(text, encoding="utf-8")
+    return p
+
+
+def _write_games_json(tmp_path, games):
+    p = tmp_path / "games.json"
+    p.write_text(json.dumps(games), encoding="utf-8")
+    return p
+
+
+def test_regen_wheel_downloads_emits_entry_with_url_hash_size(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    sha = "a" * 64
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={sha}"
+            ),
+            "wheel_size": 12345,
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert ('Source: "https://github.com/o/r/releases/download/v1.0.0/'
+            'worlds_kh2-1.0.0-py3-none-any.whl"') in text
+    assert 'DestDir: "{app}\\wheel_cache"' in text
+    assert 'DestName: "worlds_kh2-1.0.0-py3-none-any.whl"' in text
+    assert "ExternalSize: 12345" in text
+    assert f'Hash: "{sha}"' in text
+    assert "Components: kh2" in text
+    assert "Flags: external download ignoreversion" in text
+
+
+def test_regen_wheel_downloads_skips_non_wheel_locations_with_warning(tmp_path, capsys):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "legacygit": {"game": "Legacy Git", "module_location": "git+https://github.com/o/r@abc123"},
+        "nofragment": {
+            "game": "No Fragment",
+            "module_location": "https://github.com/o/r/releases/download/v1/pkg-1.0-py3-none-any.whl",
+        },
+        "nolocation": {"game": "No Location"},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    begin_idx = text.index("BEGIN AUTOGEN: wheel_downloads")
+    end_idx = text.index("END AUTOGEN: wheel_downloads")
+    body = text[begin_idx:end_idx]
+    assert "legacygit" not in body
+    assert "nofragment" not in body
+    assert "nolocation" not in body
+    err = capsys.readouterr().err
+    assert "skipped 3 world(s)" in err
+    assert "legacygit" in err and "nofragment" in err and "nolocation" in err
+
+
+def test_regen_wheel_downloads_idempotent(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={'b' * 64}"
+            ),
+            "wheel_size": 99,
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text_after_first = iss.read_text(encoding="utf-8")
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text_after_second = iss.read_text(encoding="utf-8")
+    assert text_after_first == text_after_second
+
+
+def test_regen_from_json_never_touches_network(tmp_path, monkeypatch):
+    """--from-json must not HEAD any URL, even for entries missing wheel_size."""
+    def _fail(*args, **kwargs):
+        raise AssertionError("--from-json must not make network calls")
+    monkeypatch.setattr(regen_inno, "_fetch_content_length", _fail)
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {
+            "game": "Kingdom Hearts II",
+            "module_location": (
+                f"https://github.com/o/r/releases/download/v1.0.0/"
+                f"worlds_kh2-1.0.0-py3-none-any.whl#sha256={'c' * 64}"
+            ),
+        },
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert "ExternalSize: 0" in iss.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# tools/regen_inno_components.py vs the live index schema: game_name rename,
+# flags gone, disk_space_kb stamped (disk_space_mb is its retired predecessor).
+# --------------------------------------------------------------------------- #
+
+def test_regen_in_client_preserved_when_index_has_no_flags(tmp_path, capsys):
+    """The live index dropped `flags`; a regen must not blank the bold list."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions """2048"""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "disk_space_mb": 1},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert '#define InClientDescriptions """2048"""' in iss.read_text(encoding="utf-8")
+    assert "preserving the existing in_client region" in capsys.readouterr().err
+
+
+def test_regen_in_client_rendered_from_flags_when_present(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "2048": {"game_name": "2048", "flags": ["in_client"]},
+        "kh2": {"game_name": "Kingdom Hearts II", "flags": []},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert '#define InClientDescriptions """2048"""' in text
+    assert "Kingdom Hearts" not in text.split("[Components]")[0]
+
+
+def test_regen_components_prefers_disk_space_kb_as_kib(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II", "disk_space_kb": 81, "disk_space_mb": 1},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert ('Name: "kh2"; Description: "Kingdom Hearts II"; '
+            'ExtraDiskSpaceRequired: 82_944') in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_retired_disk_space_mb_as_mib(tmp_path):
+    iss = _minimal_iss(tmp_path)
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II", "disk_space_mb": 2},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    assert "ExtraDiskSpaceRequired: 2_097_152" in iss.read_text(encoding="utf-8")
+
+
+def test_regen_components_size_falls_back_to_existing_iss(tmp_path, capsys):
+    """Worlds with neither disk_space_kb nor disk_space_mb keep their old iss
+    value; worlds with no value anywhere warn and get 0."""
+    iss = tmp_path / "test.iss"
+    iss.write_text(
+        '; BEGIN AUTOGEN: in_client\n'
+        '#define InClientDescriptions ""\n'
+        '; END AUTOGEN: in_client\n'
+        '[Components]\n'
+        '; BEGIN AUTOGEN: components\n'
+        'Name: "kh2"; Description: "Kingdom Hearts II"; ExtraDiskSpaceRequired: 123_456\n'
+        '; END AUTOGEN: components\n'
+        '[Files]\n'
+        '; BEGIN AUTOGEN: wheel_downloads\n'
+        '; END AUTOGEN: wheel_downloads\n',
+        encoding="utf-8",
+    )
+    games_json = _write_games_json(tmp_path, {
+        "kh2": {"game_name": "Kingdom Hearts II"},
+        "newworld": {"game_name": "New World"},
+    })
+    assert regen_inno.main(["--iss", str(iss), "--from-json", str(games_json)]) == 0
+    text = iss.read_text(encoding="utf-8")
+    assert "ExtraDiskSpaceRequired: 123_456" in text
+    assert 'Name: "newworld"; Description: "New World"; ExtraDiskSpaceRequired: 0' in text
+    assert "no disk-space value for 'newworld'" in capsys.readouterr().err
+
+
+# --------------------------------------------------------------------------- #
+# Inno's predownload step: must exit 0 yet leave a trace on silent no-ops.
+# --------------------------------------------------------------------------- #
+
+@pytest.fixture
+def _predownload_stub(monkeypatch, tmp_path):
+    """Route diagnostics to a temp file and stub uv discovery (irrelevant to
+    these tests, which control ModuleUpdate's behavior directly)."""
+    log_path = tmp_path / "predownload.log"
+    monkeypatch.setattr(MultiWorld, "_predownload_log_paths", lambda: [str(log_path)])
+    monkeypatch.setattr(MultiWorld, "_ensure_uv_discoverable", lambda: None)
+    original_level = logging.getLogger().level
+    yield log_path
+    logging.getLogger().setLevel(original_level)
+
+
+def test_predownload_logs_diagnostic_when_venv_unhealthy_without_raising(monkeypatch, _predownload_stub, capsys):
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: ModuleUpdate.WorldInstallResult())
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: False)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])
+
+    assert "Unable to fully predownload" in capsys.readouterr().out
+    assert "venv_healthy=False" in _predownload_stub.read_text(encoding="utf-8")
+
+
+def test_predownload_swallows_exceptions_and_logs_traceback(monkeypatch, _predownload_stub, capsys):
+    def _boom(worlds):
+        raise RuntimeError("uv exploded")
+
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", _boom)
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])  # must not raise
+
+    assert "Unable to predownload" in capsys.readouterr().out
+    assert "uv exploded" in _predownload_stub.read_text(encoding="utf-8")
+
+
+def test_predownload_is_quiet_on_full_success(monkeypatch, _predownload_stub, capsys):
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: ModuleUpdate.WorldInstallResult())
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: True)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr"])
+
+    assert "Unable" not in capsys.readouterr().out
+
+
+def test_predownload_reports_failed_worlds(monkeypatch, _predownload_stub, capsys):
+    result = ModuleUpdate.WorldInstallResult()
+    result.failed.append("worlds.hk")
+    monkeypatch.setattr(ModuleUpdate, "install_worlds", lambda worlds: result)
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: True)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: _predownload_stub.parent)
+    monkeypatch.setattr("importlib.util.find_spec", lambda name: object())
+
+    MultiWorld._run_predownload(["mwgg_igdb_nr", "worlds.hk"])
+
+    assert "Unable to fully predownload" in capsys.readouterr().out
+    assert "worlds.hk" in _predownload_stub.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# Specialized-client gate: the index is keyed by the bare slug, and a module
+# the index does not know must fall through to client_type dispatch.
+# --------------------------------------------------------------------------- #
+
+def test_indexed_game_name_strips_only_the_worlds_prefix(monkeypatch):
+    import mwgg_igdb
+    seen = []
+
+    def _lookup(module_name):
+        seen.append(module_name)
+        return {"papermario": "Paper Mario"}.get(module_name)
+
+    monkeypatch.setattr(mwgg_igdb.GameIndex, "get_game_name_for_module", _lookup)
+
+    assert Utils._indexed_game_name("worlds.papermario") == "Paper Mario"
+    assert Utils._indexed_game_name("papermario") == "Paper Mario"
+    assert seen == ["papermario", "papermario"]
+
+
+def _stub_nest_asyncio(monkeypatch):
+    """_perform_module_launch applies nest_asyncio process-wide; that leaks into
+    later async tests (MultiServer packet ordering), so stub it."""
+    monkeypatch.setitem(sys.modules, "nest_asyncio", types.SimpleNamespace(apply=lambda *a, **kw: None))
+
+
+def test_perform_module_launch_unindexed_module_reaches_manual_client(monkeypatch):
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.fake_manual_world", types.ModuleType("worlds.fake_manual_world"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+
+    Utils._perform_module_launch("worlds.fake_manual_world", client_type="manual",
+                                 patch_file="game.apmanual")
+
+    assert deferred == [("manual", "game.apmanual")]
+
+
+def test_perform_module_launch_manual_module_seeds_the_game_selector(monkeypatch):
+    """The manual client defaults its Manual Game ID selector from the persisted
+    last_manual_game; a routed manual module must win over the previous pick."""
+    from worlds.AutoWorld import AutoWorldRegister
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.manual_x_y", types.ModuleType("worlds.manual_x_y"))
+    manual_stub = types.ModuleType("worlds._manual.ManualClient")
+    manual_stub.launch = lambda: None
+    monkeypatch.setitem(sys.modules, "worlds._manual.ManualClient", manual_stub)
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {
+        "Manual_X_Y": type("XY", (), {"__module__": "worlds.manual_x_y"}),
+        "Manual_Other_Z": type("OZ", (), {"__module__": "worlds.manual_other_z"}),
+    })
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: None)
+    monkeypatch.setattr(Utils, "_defer_cli_launch", lambda *a, **kw: None)
+    stored = []
+    monkeypatch.setattr(Utils, "persistent_store", lambda *entry: stored.append(entry))
+
+    Utils._perform_module_launch("worlds.manual_x_y", client_type="manual")
+
+    assert stored == [("client", "last_manual_game", "Manual_X_Y")]
+
+
+def test_local_data_package_refresh_reaches_the_worlds_module_object(monkeypatch):
+    """Per-world clients read worlds.network_data_package at module level (Manual's
+    server_auth); a world imported after the package loaded must show up there."""
+    import worlds
+    from worlds.AutoWorld import AutoWorldRegister
+    import CommonClient
+    package = {"item_name_to_id": {}, "location_name_to_id": {}, "checksum": "late"}
+    late = type("LateWorld", (), {"get_data_package_data": classmethod(lambda cls: package)})
+    monkeypatch.setattr(AutoWorldRegister, "world_types", {"Late Game": late})
+    try:
+        local, _ = CommonClient.set_local_network_data_package()
+        assert local["games"]["Late Game"] is package
+        assert worlds.network_data_package["games"]["Late Game"] is package
+    finally:
+        worlds.network_data_package["games"].pop("Late Game", None)
+
+
+def test_perform_module_launch_bizhawk_world_honours_tracker_checkbox(monkeypatch):
+    import CommonClient
+    _stub_nest_asyncio(monkeypatch)
+    monkeypatch.setitem(sys.modules, "worlds.fake_bizhawk_world", types.ModuleType("worlds.fake_bizhawk_world"))
+    sni_client = types.ModuleType("worlds._sni.client")
+    sni_client.AutoSNIClientRegister = types.SimpleNamespace(is_sni_world=lambda module_name: False)
+    monkeypatch.setitem(sys.modules, "worlds._sni.client", sni_client)
+    bizhawk_client = types.ModuleType("worlds._bizhawk.client")
+    bizhawk_client.AutoBizHawkClientRegister = types.SimpleNamespace(is_bizhawk_world=lambda module_name: True)
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.client", bizhawk_client)
+    bizhawk_context = types.ModuleType("worlds._bizhawk.context")
+    bizhawk_context.launch = lambda *args: None
+    monkeypatch.setitem(sys.modules, "worlds._bizhawk.context", bizhawk_context)
+    monkeypatch.setattr(Utils, "_indexed_game_name", lambda module_id: "Fake BizHawk Game")
+    deferred = []
+    monkeypatch.setattr(Utils, "_defer_cli_launch",
+                        lambda fn, label, *a, **kw: deferred.append((label, kw.get("patch_file"))))
+    CommonClient._consume_pending_tracker_attach()
+
+    Utils._perform_module_launch("worlds.fake_bizhawk_world", client_type="universal_tracker",
+                                 patch_file="game.apfake")
+
+    assert deferred == [("bizhawk", "game.apfake")]
+    assert CommonClient._consume_pending_tracker_attach() is True

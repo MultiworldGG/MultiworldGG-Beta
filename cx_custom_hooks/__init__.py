@@ -1,5 +1,5 @@
 """
-cx_Freeze custom hooks package for MultiWorldGG
+cx_Freeze custom hooks package for MultiworldGG
 """
 
 from ._kivy_ import *

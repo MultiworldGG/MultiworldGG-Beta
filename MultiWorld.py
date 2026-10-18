@@ -1,6 +1,7 @@
 from multiprocessing import freeze_support, Process, Queue, set_start_method
 import argparse
 import asyncio
+import inspect
 import sys
 import logging
 import os
@@ -13,20 +14,94 @@ from argparse import ArgumentParser
 os.environ["KIVY_NO_CONSOLELOG"] = "0"
 os.environ["KIVY_NO_FILELOG"] = "0"
 os.environ["KIVY_LOG_ENABLE"] = "1"
-# Disable Kivy's own CLI argument parsing so our argparse (and --frontend in
-# particular) doesn't get intercepted on dev runs. Frozen builds already set
-# this below; doing it unconditionally is safe since we never use Kivy's CLI args.
+# Disable Kivy's CLI parsing so our argparse (--frontend) isn't intercepted on dev runs.
 os.environ["KIVY_NO_ARGS"] = "1"
 
 from BaseUtils import local_path, write_path, use_worlds_venv, init_logging, is_windows, mwgg_venv_site_packages
 
+# Force the SDL2 clipboard provider on Linux: skips Kivy's noisy xclip/xsel
+# probes (it falls back to sdl2 anyway when they're absent).
+if sys.platform.startswith("linux"):
+    os.environ.setdefault("KIVY_CLIPBOARD", "sdl2")
+
+# Frozen builds: the bundled OpenSSL's compiled-in cert paths point at the
+# build runner's filesystem, so point it at certifi's CA bundle before ssl loads.
+if use_worlds_venv():
+    try:
+        import certifi
+        _ca_bundle = certifi.where()
+        os.environ.setdefault("SSL_CERT_FILE", _ca_bundle)
+        os.environ.setdefault("REQUESTS_CA_BUNDLE", _ca_bundle)
+    except ImportError:
+        pass  # certifi unavailable; leave OpenSSL defaults in place
+
 # Ensure ctypes is imported early (fixes WinDLL issues in frozen builds)
 import ctypes
+
+# Linux frozen build: pre-load libmtdev.so.1 by absolute path before Kivy's
+# name-only ctypes.CDLL, so ld.so has the SONAME cached (see setup.py).
+if sys.platform.startswith("linux") and use_worlds_venv():
+    _bundled_mtdev = local_path("libmtdev.so.1")
+    if os.path.exists(_bundled_mtdev):
+        try:
+            ctypes.CDLL(_bundled_mtdev)
+        except OSError:
+            pass  # let Kivy log its own benign "MTDev is not supported" warning
+
+
+def _ensure_writable_kivy_data(src: str) -> str:
+    """Mirror the bundled Kivy data dir into a writable location and return it.
+
+    On the Linux AppImage (and macOS .app), `local_path(...)` resolves under a
+    read-only mount, but Kivy needs to write to its data dir at startup
+    (recoloring `defaulttheme-0.png`). We mirror it under KIVY_HOME
+    (`write_path("data")`) and re-sync whenever the bundled copy changes.
+    """
+    import shutil
+    # Kivy resolves "data/..." (atlas://data/images, the default_font paths) against
+    # KIVY_DATA_DIR/.., so the mirror must itself be a dir named "data".
+    dst = write_path("data", "kivy", "data")
+    # mwgg_gui rewrites images/defaulttheme-0.png at runtime, so gate on style.kv; compare
+    # for inequality since bundle mtimes are the build clock, not the install time.
+    marker = "style.kv"
+    src_marker = os.path.join(src, marker)
+    dst_marker = os.path.join(dst, marker)
+    needs_copy = not os.path.exists(dst_marker) or (
+        os.path.exists(src_marker)
+        and os.path.getmtime(src_marker) != os.path.getmtime(dst_marker)
+    )
+    if needs_copy:
+        # Previous mirror location; the rest of write_path("kivy") is MultiworldGG 0.7.x's KIVY_HOME.
+        shutil.rmtree(write_path("kivy", "data"), ignore_errors=True)
+        try:
+            os.rmdir(write_path("kivy"))
+        except OSError:
+            pass  # absent, or still holds 0.7.x's files
+        complete = True
+        # Overlay-copy, not rmtree+copytree: Windows raises PermissionError on files
+        # locked by another MWGG process.
+        os.makedirs(dst, exist_ok=True)
+        for root, _dirs, files in os.walk(src):
+            rel = os.path.relpath(root, src)
+            dst_root = dst if rel == "." else os.path.join(dst, rel)
+            os.makedirs(dst_root, exist_ok=True)
+            for name in files:
+                if rel == "." and name == marker:
+                    continue
+                try:
+                    shutil.copy2(os.path.join(root, name), os.path.join(dst_root, name))
+                except PermissionError:
+                    complete = False
+        # Marker last, so a partial sync retries on the next boot.
+        if complete:
+            shutil.copy2(src_marker, dst_marker)
+    return dst
+
 
 # TODO: Move kivy settings out of here and into the kivy module.
 if use_worlds_venv():
     os.environ["KIVY_NO_ARGS"] = "1"
-    os.environ["KIVY_DATA_DIR"] = local_path("lib", "kivy", "data")
+    os.environ["KIVY_DATA_DIR"] = _ensure_writable_kivy_data(local_path("lib", "kivy", "data"))
     default_libs_dir = os.path.join(sys.exec_prefix, "lib")
     if str(default_libs_dir) not in sys.path:
         sys.path.append(default_libs_dir)
@@ -39,41 +114,480 @@ os.environ["KIVY_HOME"] = write_path("data")
 os.makedirs(os.environ["KIVY_HOME"], exist_ok=True)
 
 
-def run_client(*args, queue=None):
+def make_arg_parser() -> ArgumentParser:
+    """Build the MultiworldGG argument parser.
+
+    The optional positional is what OS file associations and the
+    archipelago://-style URL protocols hand us: every registered suffix and
+    protocol points at `MultiworldGG.exe "%1"`."""
+    parser = ArgumentParser()
+    parser.add_argument("launch_file", type=str, default=None, nargs="?", metavar="PATCH_FILE|URL",
+                        help="A patch file to route to its game's client (OS file-association double-click), "
+                             "a file handled by a tool component (e.g. a .archipelago multidata for the Host), "
+                             "or an archipelago:// launch URL")
+    parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
+    parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
+    parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
+    parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
+    parser.add_argument("--client-type", type=str, default=None, required=False, nargs="+",
+                        choices=["game", "text", "universal_tracker", "manual"],
+                        help="Which client(s) to boot directly into: the selected --game module's own client "
+                             "(game; the default when --game is given, and requires --game), the text client, "
+                             "the standalone universal tracker, or a manual client. game/text/manual are "
+                             "mutually exclusive; listing universal_tracker with game attaches the tracker "
+                             "overlay to the game's client instead")
+    parser.add_argument("--component", type=str, default=None, required=False,
+                        help="Display name of a specific client component registered by --game's world "
+                             "module, e.g. a map tracker. Requires --game; unknown names fall back to the "
+                             "module's default client")
+    parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
+    parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
+    parser.add_argument("--loglevel", default="info",
+                        choices=['debug', 'info', 'warning', 'error', 'critical'],
+                        help="Set the logging level")
+    parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
+                        help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
+    # Internal: set by Utils._restart_client_with_args() so a second launch
+    # failure surfaces an error dialog instead of looping forever.
+    parser.add_argument("--no-restart", action="store_true", default=False,
+                        help=argparse.SUPPRESS)
+    return parser
+
+
+def compute_role(args) -> str:
+    """Compute this process's role: "client" iff a client launch was requested
+    (--game, --client-type, or a positional patch file that routed to a world
+    module), else "launcher". Evaluated after launch-file routing so a routed
+    patch counts."""
+    is_client = bool(getattr(args, "game", None)
+                     or getattr(args, "client_type", None)
+                     or getattr(args, "patch_module", None))
+    return "client" if is_client else "launcher"
+
+
+def assign_role_env(args) -> str:
+    """Assign os.environ["MWGG_ROLE"] from compute_role(args) and return it.
+
+    Deliberately an assignment, never setdefault: a client spawned by the
+    launcher inherits the parent's env, so a stale inherited value must never
+    leak into this process (or its own children)."""
+    role = compute_role(args)
+    os.environ["MWGG_ROLE"] = role
+    return role
+
+
+def should_show_splash(frontend: str) -> bool:
+    """Windows + Kivy GUI boots front the splash, spawned clients included --
+    the window rides opacity 0 until Kivy is up, so without the splash a spawn
+    is seconds of dead air. BaseUtils.spawn_client sets MWGG_SKIP_UPDATE=1 in
+    the child env so the child's splash skips the updater (a child must not
+    re-run it under a live launcher); MWGG_NO_SPLASH stays a manual escape
+    hatch that suppresses the splash entirely."""
+    return is_windows and frontend == "gui" and not os.environ.get("MWGG_NO_SPLASH")
+
+
+def _inline_world_update(logger: logging.Logger) -> None:
+    """Cold-start world update for boots that don't front the splash (Linux/Mac
+    GUI, all TUI, MWGG_NO_SPLASH). Same update_worlds() the splash child runs."""
+    logger.info("Checking for updates...")
+    try:
+        import ModuleUpdate
+        result = ModuleUpdate.update_worlds()
+        if result:
+            # Apworld fallbacks were staged into the venv; restart to load them.
+            from Utils import exit_restart_for_update
+            exit_restart_for_update()
+        elif result is not None:
+            logger.info("Updates applied successfully")
+    except Exception as e:
+        logger.warning(f"World update failed; continuing with installed versions: {e}")
+
+
+def _compose_connect_address(server_address: "str | None", slot_name: "str | None",
+                             password: "str | None") -> "str | None":
+    """Compose the "slot[:password]@host:port" form that CommonClient's
+    InitContext._set_server_address natively parses, honoring its quirks:
+    it prefixes "ws://" only when no scheme is present and never
+    percent-decodes userinfo, so raw values are joined verbatim; a password
+    without a slot name is unusable (urlparse yields an empty username, which
+    _set_server_address ignores), so it is dropped; an address that already
+    carries userinfo (the archipelago:// URL path pre-composes name@host:port)
+    is returned unchanged rather than double-composed."""
+    if not server_address:
+        return None
+    if not slot_name:
+        return server_address
+    if ":" in slot_name:
+        # ':' cannot be escaped in userinfo (_set_server_address splits at the
+        # first colon); warn but compose as-is.
+        logging.getLogger("MultiWorld").warning(
+            f"Slot name {slot_name!r} contains ':'; the client splits user info at the "
+            f"first colon, so the text after it will be treated as the password")
+    scheme, separator, rest = server_address.partition("://")
+    host_part = rest if separator else server_address
+    if "@" in host_part:
+        return server_address
+    userinfo = f"{slot_name}:{password}" if password else slot_name
+    composed = f"{userinfo}@{host_part}"
+    return f"{scheme}://{composed}" if separator else composed
+
+
+def _resolve_client_route(args) -> "tuple[str | None, dict]":
+    """Resolve which client this process boots to (route_module, route_kwargs)
+    for _route_module_when_ui_ready. --client-type (one or more values) picks
+    the clients and --game names the selected game: "game" (or no type at all)
+    boots the game module's own client, "text" the text client,
+    "universal_tracker" the standalone tracker (list "game" with it to instead
+    attach the tracker overlay to the game's client), and "manual" the manual
+    client (the selected manual game's module client when --game is given).
+    A routed patch file outranks all of it (--client-type universal_tracker
+    still attaches the overlay to the patch's client). "" is the game-agnostic
+    client sentinel (a valid route); None means no route.
+
+    Must run BEFORE InitContext is constructed: a client-role process with no
+    resolvable route is re-assigned MWGG_ROLE="launcher" here, else it would
+    boot a dead client-role GUI with nothing to launch."""
+    logger = logging.getLogger("MultiWorld")
+    route_module = None
+    route_kwargs: dict = {}
+    try:
+        raw_client_type = getattr(args, "client_type", None) if args else None
+        # Parser yields a list (nargs="+"); hand-built args may carry a bare string.
+        client_types = {raw_client_type} if isinstance(raw_client_type, str) else set(raw_client_type or [])
+        composed_address = _compose_connect_address(
+            getattr(args, "server_address", None) if args else None,
+            getattr(args, "slot_name", None) if args else None,
+            getattr(args, "password", None) if args else None)
+        if args and getattr(args, "patch_module", None):
+            route_module = args.patch_module
+            route_kwargs = {"patch_file": args.patch_file,
+                            "_restarted": getattr(args, "no_restart", False)}
+            if composed_address:
+                route_kwargs["server_address"] = composed_address
+            # An explicit --client-type decides the tracker overlay; otherwise
+            # the frontend's patch preference fills it in once the UI is up.
+            if client_types:
+                route_kwargs["client_type"] = ("universal_tracker" if "universal_tracker" in client_types
+                                               else "text")
+        elif "text" in client_types:
+            route_module = ""
+            route_kwargs = {"server_address": composed_address,
+                            "client_type": "text"}
+        elif args and args.game and (not client_types or client_types & {"game", "manual"}):
+            # "game" listed (or no client_type at all): the module's own client;
+            # universal_tracker alongside it attaches the overlay downstream.
+            # manual+game also routes the module: a manual game's module client
+            # IS its manual client.
+            logger.info(f"Attempting to launch game: {args.game}")
+            from Utils import get_available_worlds
+
+            if args.game in get_available_worlds():
+                # Downstream takes one string; universal_tracker is the value
+                # that triggers the overlay attach.
+                module_client = ("universal_tracker" if "universal_tracker" in client_types
+                                 else "manual" if "manual" in client_types else "game")
+                route_module = args.game
+                route_kwargs = {"server_address": composed_address,
+                                "slot_name": args.slot_name,
+                                "client_type": module_client,
+                                "component": getattr(args, "component", None),
+                                "_restarted": getattr(args, "no_restart", False)}
+            else:
+                logger.error(f"Game {args.game} not found in available worlds; falling back to launcher")
+        elif "universal_tracker" in client_types:
+            route_module = ""
+            route_kwargs = {"server_address": composed_address,
+                            "client_type": "universal_tracker",
+                            # _client_launch_argv forwards slot_name (--name) for the tracker only
+                            "slot_name": args.slot_name}
+        elif "manual" in client_types:
+            route_module = ""
+            route_kwargs = {"server_address": composed_address,
+                            "client_type": "manual"}
+    except Exception:
+        logger.exception("Could not resolve requested module launch; falling back to launcher")
+        route_module = None
+        route_kwargs = {}
+
+    # Dead-client guard: client role with no resolved route falls back to a
+    # live launcher window instead of a client GUI with nothing to launch.
+    if route_module is None and os.environ.get("MWGG_ROLE") == "client":
+        logger.warning("Client role was requested but no client launch could be resolved; "
+                       "falling back to launcher")
+        os.environ["MWGG_ROLE"] = "launcher"
+
+    # Export the routed/selected game so the client-role frontend (which never
+    # builds a launcher screen) can resolve cover art: the selected game is
+    # context for whichever client boots. Assign-or-pop for the same
+    # stale-inheritance reason as assign_role_env.
+    context_game = route_module if route_module else (
+        args.game if args and route_module is not None else None)
+    if context_game:
+        os.environ["MWGG_GAME"] = context_game
+    else:
+        os.environ.pop("MWGG_GAME", None)
+    return route_module, route_kwargs
+
+
+# Seconds a routed patch launch gets to seed its own server address (from the
+# file's metadata) before the connect dialog opens.
+_PATCH_CONNECT_GRACE = 2.0
+
+
+def _preferred_patch_client_type(app) -> "str | None":
+    """The frontend's Settings choice for a routed patch, "text" or
+    "universal_tracker"; None when the frontend has no preference hook."""
+    preference = getattr(app, "patch_client_type", None)
+    if not callable(preference):
+        return None
+    try:
+        return preference() or None
+    except Exception:
+        logging.getLogger("MultiWorld").exception("patch_client_type failed; launching the patch plain")
+        return None
+
+
+def _client_has_server(ctx) -> bool:
+    """The game context will connect on its own: an address seeded by --connect or
+    patch metadata (server_loop reads it), or an already open server endpoint."""
+    return bool(getattr(ctx, "server_address", None) or getattr(ctx, "server", None))
+
+
+def _auto_install_pinned_worlds() -> bool:
+    try:
+        from settings import get_settings
+        return bool(get_settings().general_options.auto_install_pinned_worlds)
+    except Exception:
+        return False
+
+
+async def _confirm_pinned_world(app, pin) -> bool:
+    """Offer the room's world version in the frontend's confirm dialog; False when the
+    frontend has no dialog or the user keeps the installed version."""
+    confirm = getattr(app, "show_confirm_dialog", None)
+    if not callable(confirm):
+        return False
+    loop = asyncio.get_running_loop()
+    choice = loop.create_future()
+
+    def on_choice(confirmed: bool) -> None:
+        if not choice.done():
+            choice.set_result(bool(confirmed))
+
+    handle = confirm(
+        title="World Version Mismatch",
+        message=f"This room was generated with {pin.game} apworld {pin.want}, but you have "
+                f"{pin.installed or 'no version'} installed. A game patched with one version "
+                f"usually can't talk to the other. Install {pin.want} before launching?",
+        callback=lambda confirmed: loop.call_soon_threadsafe(on_choice, confirmed),
+        ok_text=f"Install {pin.want}",
+        cancel_text="Keep current")
+    return handle is not None and await choice
+
+
+async def _install_patch_room_world(app, patch_file: str) -> None:
+    """Install the world version the patch's room was generated with before the launch
+    imports the world: a client holding the world's modules and native libraries cannot
+    replace them. Only the room's RoomInfo is read, so no slot name or password is needed."""
+    import frontend_protocol
+    import ModuleUpdate
+    from Utils import read_patch_manifest
+
+    logger = logging.getLogger("MultiWorld")
+    manifest = read_patch_manifest(patch_file)
+    game, server = manifest.get("game"), manifest.get("server")
+    if not game or not server:
+        return
+    room_info = await frontend_protocol.read_room_info(server)
+    if not room_info:
+        return
+    pin = ModuleUpdate.check_world_pin(game, (room_info.get("world_versions") or {}).get(game),
+                                       room_info.get("mwgg_index_tag"))
+    # Custom and untagged mismatches are left to the client's notice after Connected.
+    if pin is None or not pin.installable:
+        return
+    if not _auto_install_pinned_worlds() and not await _confirm_pinned_world(app, pin):
+        logger.warning(f"Keeping {game} {pin.installed or 'none'}; the room expects {pin.want}.")
+        return
+    show_status = getattr(app, "show_loading_status", None)
+    if callable(show_status):
+        await show_status(f"Installing {game} {pin.want}...")
+    if not await asyncio.to_thread(frontend_protocol.install_pinned_world, pin):
+        logger.warning(f"Could not install {game} apworld {pin.want}; launching the installed version.")
+
+
+async def _wait_for_frontend(timeout: float):
+    """Poll for the launcher frontend until it is up. After `timeout`, returns the
+    last instance seen even if it is not up yet, or None if there was none."""
+    from frontend_protocol import resolve_frontend_class
+
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    app = None
+    while loop.time() < deadline:
+        app = getattr(resolve_frontend_class(), "_active_instance", None)
+        if app is not None and (getattr(app, "root", None) is not None      # Kivy: root built
+                                or getattr(app, "is_running", False)):      # Textual: running
+            break
+        await asyncio.sleep(0.2)
+    return app
+
+
+async def _show_worlds_venv_error(error: str, timeout: float = 30.0) -> None:
+    """Tell the user games cannot be installed: ModuleUpdate could not create the worlds venv."""
+    import ModuleUpdate
+
+    app = await _wait_for_frontend(timeout)
+    if app is None:
+        return
+    try:
+        app.show_error_dialog(
+            "Game installs are broken",
+            f"MultiworldGG could not set up the folder it installs games into:\n"
+            f"{ModuleUpdate.install_path()}\n\n"
+            "Games cannot be installed or updated until this is fixed. Close MultiworldGG "
+            "and start it again from its shortcut, not from the installer. If this keeps "
+            "happening, delete that folder and restart MultiworldGG.\n\n"
+            f"Details:\n{error}")
+    except Exception:
+        logging.getLogger("MultiWorld").exception("Could not show the worlds venv error")
+
+
+async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
+    """Launch a world module's client once the launcher frontend is up.
+
+    Beta clients take over the launcher UI rather than running standalone: wait
+    for the frontend, then route through Utils.discover_and_launch_module, which
+    installs the world on demand and forwards `launch_kwargs` to the resolved
+    client. The screen-flip hooks are feature-detected so the TUI skips them.
+
+    Without a launch-supplied server address the client must not connect on
+    its own (a saved port is stale by the next room): once the client is up,
+    the frontend's connect dialog opens and the connect waits for its OK. A
+    routed patch is the exception: its client may seed the address from the
+    file's metadata after the ready callback (the SNI client patches after
+    taking over the UI), so the dialog waits out _PATCH_CONNECT_GRACE and
+    stays closed for a client that connects on its own. A patch also takes
+    its client type (plain or tracker overlay) from the frontend's
+    patch_client_type preference unless --client-type named one, and first
+    installs the world version its room was generated with
+    (_install_patch_room_world)."""
+    logger = logging.getLogger("MultiWorld")
+    loop = asyncio.get_event_loop()
+    app = await _wait_for_frontend(timeout)
+    if app is None:
+        logger.error(f"Frontend did not come up; cannot launch module {module_name}")
+        return
+
+    if launch_kwargs.get("patch_file") and not launch_kwargs.get("client_type"):
+        preferred = _preferred_patch_client_type(app)
+        if preferred:
+            launch_kwargs["client_type"] = preferred
+
+    pre_hook = getattr(app, "client_console_init", None)
+    if callable(pre_hook):
+        try:
+            pre_hook()
+        except Exception:
+            logger.exception("client_console_init failed; continuing module launch")
+
+    if launch_kwargs.get("patch_file"):
+        try:
+            await _install_patch_room_world(app, launch_kwargs["patch_file"])
+        except Exception:
+            logger.exception("Could not check the patch room's world version; launching the installed version")
+
+    # Launch notice for the frontend (patch status on its loading overlay). Awaited
+    # so a frame can draw before a synchronous patch blocks the loop.
+    notice = getattr(app, "before_module_launch", None)
+    if callable(notice):
+        try:
+            pending = notice(module_name, **launch_kwargs)
+            if inspect.isawaitable(pending):
+                await pending
+        except Exception:
+            logger.exception("before_module_launch failed; continuing module launch")
+
+    prompt_for_server = not launch_kwargs.get("server_address")
+    prompt_delay = _PATCH_CONNECT_GRACE if launch_kwargs.get("patch_file") else 0
+
+    def prompt_unless_connected():
+        # app.ctx is the game context here (swapped in before the ready callback);
+        # a client that seeded its own address (patch metadata, --connect) keeps it.
+        if _client_has_server(app.ctx):
+            return
+        open_connect_dialog = getattr(app, "open_connect_dialog", None)
+        if callable(open_connect_dialog):
+            try:
+                open_connect_dialog()
+            except Exception:
+                logger.exception("Could not open the connect dialog after module launch")
+
+    def ready_callback(*_cb_args):
+        try:
+            console_init = getattr(app, "console_init", None)
+            change_screen = getattr(app, "change_screen", None)
+            hide_loading = getattr(app, "hide_loading", None)
+            if callable(console_init):
+                console_init()
+            if callable(change_screen):
+                change_screen("console")
+            if callable(hide_loading):
+                hide_loading()
+        except Exception:
+            logger.exception("Could not switch to the console screen after module launch")
+        if prompt_for_server and prompt_delay:
+            loop.call_later(prompt_delay, prompt_unless_connected)
+        elif prompt_for_server:
+            prompt_unless_connected()
+
+    def error_callback(*_cb_args):
+        logger.error(f"Failed to launch a client for module {module_name}")
+        on_failed = getattr(app, "on_module_launch_failed", None)
+        if callable(on_failed):
+            try:
+                on_failed(module_name)
+            except Exception:
+                logger.exception("on_module_launch_failed failed; the frontend may still show its loading overlay")
+
+    from Utils import discover_and_launch_module
+    try:
+        discover_and_launch_module(module_name=module_name,
+                                   ready_callback=ready_callback,
+                                   error_callback=error_callback,
+                                   **launch_kwargs)
+    except Exception:
+        logger.exception(f"Module launch failed for {module_name}")
+
+
+def run_client(args=None, queue=None):
     """Start the MWGG client"""
 
-    async def main(args: list[str]):
+    async def main(args):
         from CommonClient import InitContext
 
         logger = logging.getLogger("MultiWorld")
+
+        # Resolve the route BEFORE constructing InitContext so a launcher-role
+        # fallback is visible in MWGG_ROLE; the launch itself waits for the frontend.
+        route_module, route_kwargs = _resolve_client_route(args)
+
         ctx = InitContext()
-        
-        # Check if a specific module was requested
-        try:
-            if args and args.game and args.server_address:
-                logger.info(f"Attempting to launch game: {args.game}")
-                from Utils import get_available_worlds, discover_and_launch_module
 
-                if args.game not in get_available_worlds():
-                    raise Exception(f"Game {args.game} not found in available worlds")
-
-                # Try to launch the module via entrypoints
-                try:
-                    discover_and_launch_module(module_name=args.game,
-                                            server_address=args.server_address,
-                                            _restarted=getattr(args, "no_restart", False))
-                    return  # Module takeover successful, exit initial client
-                except Exception as e:
-                    logger.error(f"Module launch failed: {e}")
-                    # Fall back to initial client
-                    logger.info("Falling back to launcher")
-        except Exception as e:
-            pass
-        
         # Default initial client behavior
         logger.info("Launching default GUI")
         try:
             ctx.run_gui(splash_queue=queue)
+            import ModuleUpdate
+            if ModuleUpdate.worlds_venv_error is not None:
+                venv_error_task = asyncio.create_task(  # noqa: F841
+                    _show_worlds_venv_error(ModuleUpdate.worlds_venv_error), name="WorldsVenvError")
+            if route_module is not None:
+                # Keep a reference so the routing task isn't garbage-collected.
+                # "" (text client) is a valid route, hence the None check.
+                routing_task = asyncio.create_task(  # noqa: F841
+                    _route_module_when_ui_ready(route_module, **route_kwargs),
+                    name="ModuleRouting")
             await ctx.exit_event.wait()
         except Exception as e:
             logger.error(f"Error during GUI execution: {e}", exc_info=True)
@@ -106,44 +620,133 @@ def run_client(*args, queue=None):
     finally:
         colorama.deinit()
 
-if __name__ == "__main__":
-    # Multiprocessing protection for frozen executables
-    # This prevents fork bombs when creating subprocesses in cx_Freeze builds
+
+def _predownload_log_paths() -> "list[str]":
+    """Exe dir first ([Dirs] grants everyone-modify); the child's %TEMP% may not be the user's."""
+    import tempfile
+    paths = []
+    try:
+        paths.append(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "mwgg_predownload_error.log"))
+    except OSError:
+        pass
+    paths.append(os.path.join(tempfile.gettempdir(), "mwgg_predownload_error.log"))
+    return paths
+
+
+def _uv_binary_works(path: str) -> bool:
+    """True if `path --version` actually runs. Never raises."""
+    try:
+        return subprocess.run([path, "--version"], capture_output=True, timeout=5).returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def _ensure_uv_discoverable() -> None:
+    """Best-effort PATH repair for a *working* uv (the WinGet Links shim is an
+    AppExecLink some tokens can't exec: WinError 448 despite `which` finding it). Never raises."""
+    import shutil
+    which_uv = shutil.which("uv")
+    if which_uv and _uv_binary_works(which_uv):
+        return
+    home = os.path.expanduser("~")
+    candidates = [
+        os.path.join(home, ".local", "bin"),
+        os.path.join(home, "AppData", "Local", "Microsoft", "WinGet", "Links"),
+    ]
+    winget_packages = os.path.join(home, "AppData", "Local", "Microsoft", "WinGet", "Packages")
+    try:
+        for entry in os.listdir(winget_packages):
+            if entry.startswith("astral-sh.uv_"):
+                for root, _dirs, files in os.walk(os.path.join(winget_packages, entry)):
+                    if "uv.exe" in files:
+                        candidates.append(root)
+    except OSError:
+        pass
+    for directory in candidates:
+        exe = os.path.join(directory, "uv.exe")
+        if os.path.isfile(exe) and _uv_binary_works(exe):
+            os.environ["PATH"] = directory + os.pathsep + os.environ.get("PATH", "")
+            return
+
+
+def _run_predownload(worlds: "list[str]") -> None:
+    """Inno's predownload step. Non-fatal by design (always exits 0); the log
+    handler must attach before the ModuleUpdate import to catch its diagnostics."""
+    import logging
+    handler = None
+    for path in _predownload_log_paths():
+        try:
+            handler = logging.FileHandler(path, mode="w", encoding="utf-8")
+            break
+        except OSError:
+            continue
+    root_logger = logging.getLogger()
+    if handler is not None:
+        root_logger.addHandler(handler)
+        root_logger.setLevel(logging.DEBUG)
+
+    if is_windows:
+        _ensure_uv_discoverable()
+
+    try:
+        import ModuleUpdate
+        result = ModuleUpdate.install_worlds(worlds=worlds)
+        import importlib.util
+        venv_ok = ModuleUpdate.venv_is_healthy(ModuleUpdate.install_path())
+        igdb_ok = importlib.util.find_spec("mwgg_igdb") is not None
+        if not venv_ok or not igdb_ok or result.failed:
+            logging.getLogger("Update").warning(
+                "Predownload finished without raising, but did not fully succeed: "
+                f"venv_healthy={venv_ok} mwgg_igdb_installed={igdb_ok} failed_worlds={result.failed}")
+            print("Unable to fully predownload packages, please start the MultiworldGG Client from your Start Menu")
+    except Exception:
+        logging.getLogger("Update").exception("Predownload failed")
+        print("Unable to predownload packages, please start the MultiworldGG Client from your Start Menu")
+    finally:
+        if handler is not None:
+            handler.close()
+            root_logger.removeHandler(handler)
+
+
+def main(argv: "list[str] | None" = None) -> None:
+    """Entry point for the client/launcher process.
+
+    `argv` defaults to sys.argv[1:]; Launcher.py delegates here with its own
+    argv when the positional it received is not a component name."""
+    # Prevents fork bombs when creating subprocesses in cx_Freeze builds
     freeze_support()
 
-    # Parse the command line arguments
-    parser = ArgumentParser()
-    parser.add_argument("--game", type=str, default=None, required=False, help="The game module to launch\nGame Name will not work, use the apworld abbreviation")
-    parser.add_argument("--server-address", type=str, default=None, required=False, help="The server address to connect to")
-    parser.add_argument("--slot-name", type=str, default=None, required=False, help="The slot name to connect to")
-    parser.add_argument("--password", type=str, default=None, required=False, help="The password to connect to")
-    parser.add_argument("--update-modules", action="store_true", default=False, required=False, help="Whether to update modules")
-    parser.add_argument("--worlds", nargs="+", default=None, required=False, help="List of worlds to update")
-    parser.add_argument("--loglevel", default="debug",
-                        choices=['debug', 'info', 'warning', 'error', 'critical'],
-                        help="Set the logging level")
-    parser.add_argument("--frontend", default="gui", choices=["gui", "tui"],
-                        help="Which frontend to launch: 'gui' (Kivy desktop, default) or 'tui' (Textual terminal)")
-    # Internal: set by Utils._restart_client_with_args() so a second launch
-    # failure surfaces an error dialog instead of looping forever.
-    parser.add_argument("--no-restart", action="store_true", default=False,
-                        help=argparse.SUPPRESS)
+    parser = make_arg_parser()
+    args = parser.parse_args(sys.argv[1:] if argv is None else argv)
 
-    if sys.argv[1:]:
-        args = parser.parse_args(sys.argv[1:])
+    if args.update_modules:
+        _run_predownload(args.worlds if args.worlds else [])
+        sys.exit(0)
 
-        if args.update_modules:
-            import ModuleUpdate
-            ModuleUpdate.install_worlds(worlds=args.worlds if args.worlds else [])
-            sys.exit(0)
-    else:
-        args = parser.parse_args([])
+    client_types = set(args.client_type or [])
+    primaries = client_types & {"game", "text", "manual"}
+    if len(primaries) > 1:
+        print(f"Error: --client-type {' '.join(sorted(primaries))} are mutually exclusive.", file=sys.stderr)
+        sys.exit(2)
+    if "universal_tracker" in client_types and primaries - {"game"}:
+        print("Error: --client-type universal_tracker only combines with game.", file=sys.stderr)
+        sys.exit(2)
+    if "game" in client_types and not args.game:
+        print("Error: --client-type game requires --game.", file=sys.stderr)
+        sys.exit(2)
 
     # Guard: tracker and manual clients use Kivy-only UI affordances. They cannot run under TUI.
     KIVY_ONLY_GAMES = {"tracker", "manual"}
-    if args.frontend == "tui" and args.game and args.game.lower() in KIVY_ONLY_GAMES:
-        print(f"Error: --game={args.game} requires --frontend=gui (uses Kivy-only UI features).", file=sys.stderr)
-        sys.exit(2)
+    KIVY_ONLY_CLIENT_TYPES = {"universal_tracker", "manual"}
+    if args.frontend == "tui":
+        if args.game and args.game.lower() in KIVY_ONLY_GAMES:
+            print(f"Error: --game={args.game} requires --frontend=gui (uses Kivy-only UI features).", file=sys.stderr)
+            sys.exit(2)
+        kivy_only = KIVY_ONLY_CLIENT_TYPES & client_types
+        if kivy_only:
+            print(f"Error: --client-type {' '.join(sorted(kivy_only))} requires --frontend=gui "
+                  f"(uses Kivy-only UI features).", file=sys.stderr)
+            sys.exit(2)
 
     # Propagate the frontend selection to the lazy importer in frontend_protocol.resolve_frontend_class()
     os.environ["MWGG_FRONTEND"] = args.frontend
@@ -152,25 +755,29 @@ if __name__ == "__main__":
     logger = logging.getLogger("MultiWorld")
 
     if not is_windows:
-        # need to check for mwgg_igdb and install it if it's not installed
         try:
             import mwgg_igdb
         except ImportError:
             import ModuleUpdate
             ModuleUpdate.install_worlds(worlds=["mwgg_igdb_sixteen"])
 
-    # Start the splash screen process — only for the Kivy GUI frontend (TUI doesn't have
-    # the ~30s Kivy load that the splash exists to mask).
+    # Splash is Windows + Kivy GUI boots only: it crashes on Mac/Linux and the
+    # TUI has nothing to hide. Spawned clients show it too, minus the updater
+    # (MWGG_SKIP_UPDATE, honored inside the splash process).
     splash_queue = None
 
-    if is_windows and args.frontend == "gui":
+    if should_show_splash(args.frontend):
         from mwgg_splash import main as splash_main
-        set_start_method("spawn")
+        # force: on Python 3.13+ the freeze_support() call above already fixed the
+        # default context (cpython gh-76327), so a plain set_start_method raises.
+        set_start_method("spawn", force=True)
         splash_queue = Queue()
         Process(target=splash_main, name="SplashScreen", args=(splash_queue,)).start()
         
-        # Wait for splash process to signal ready (after checking/applying updates)
-        logger.info("Checking for updates...")
+        # Wait for splash process to signal ready (after checking/applying
+        # updates, unless MWGG_SKIP_UPDATE makes that a no-op)
+        logger.info("Waiting for splash screen..." if os.environ.get("MWGG_SKIP_UPDATE")
+                    else "Checking for updates...")
         try:
             message = splash_queue.get(timeout=60)  # Wait up to 60 seconds
             if isinstance(message, dict):
@@ -183,6 +790,92 @@ if __name__ == "__main__":
                     logger.error(f"Splash screen error: {message.get('error')}")
         except Exception as e:
             logger.warning(f"Timeout or error waiting for splash screen: {e}")
-        
-    # Run the main client in the current process
+    elif not os.environ.get("MWGG_SKIP_UPDATE"):
+        # The splash only fronts the update on Windows GUI boots; the update
+        # itself is required on every platform, frozen or dev. Spawned clients
+        # inherit MWGG_SKIP_UPDATE=1 and must not re-run it.
+        _inline_world_update(logger)
+
+    # Register custom_worlds/ apworlds into the in-memory index so they're
+    # selectable; only the zip manifest is read, nothing is imported.
+    try:
+        from Utils import register_custom_worlds
+        register_custom_worlds()
+    except Exception as e:
+        logger.warning(f"Could not scan custom_worlds on launch: {e}", exc_info=True)
+
+    # Route a double-clicked / positional file: patches resolve via their manifest
+    # (no world import); files claimed by a builtin tool component launch directly.
+    args.patch_module = None
+    args.patch_file = None
+    if args.launch_file:
+        if args.launch_file.startswith(("archipelago://", "mwgg://", "multiworldgg://")):
+            # Decompose the launch URL into connection prefs + avatar; persist them to
+            # seed the launcher fields and set launch args so routing auto-connects.
+            logger.info(f"Launched with URL {args.launch_file}")
+            try:
+                from CommonClient import parse_connect_url, safe_avatar_source
+                from Utils import persistent_store
+                parsed = parse_connect_url(args.launch_file)
+                if parsed:
+                    host, port, name = parsed["hostname"], parsed["port"], parsed["name"]
+                    if host:
+                        persistent_store("client", "last_server_hostname", host)
+                        if port:
+                            persistent_store("client", "last_server_port", port)
+                        host_port = f"{host}:{port}" if port else host
+                        args.server_address = f"{name}@{host_port}" if name else host_port
+                    if name:
+                        persistent_store("client", "last_username", name)
+                        args.slot_name = name
+                    safe_avatar = safe_avatar_source(parsed["avatar"])
+                    if safe_avatar:
+                        persistent_store("client", "avatar", safe_avatar)
+                    if parsed["game"]:
+                        from mwgg_igdb import GameIndex
+                        module_name = GameIndex.get_module_for_game(parsed["game"])
+                        if module_name:
+                            args.game = module_name
+            except Exception:
+                logger.warning("Failed to apply launch URL %r", args.launch_file, exc_info=True)
+        elif os.path.isfile(args.launch_file):
+            from Utils import read_patch_game_name
+            game_name = read_patch_game_name(args.launch_file)
+            if game_name:
+                from mwgg_igdb import GameIndex
+                module_name = GameIndex.get_module_for_game(game_name)
+                if module_name:
+                    args.patch_module = module_name
+                    args.patch_file = os.path.abspath(args.launch_file)
+                    logger.info(f"Routing patch file {args.launch_file} to {game_name} ({module_name})")
+                else:
+                    logger.warning(f"No installed or indexed world handles game {game_name!r} "
+                                   f"from {args.launch_file}; opening launcher.")
+            else:
+                from LauncherComponents import identify, get_exe
+                from BaseUtils import launch_exe
+                component = identify(args.launch_file)
+                if component is not None:
+                    logger.info(f"Routing {args.launch_file} to component {component.display_name}")
+                    if component.func:
+                        component.func(args.launch_file)
+                        sys.exit(0)
+                    exe = get_exe(component)
+                    if exe:
+                        launch_exe([*exe, args.launch_file], component.cli, title=component.display_name)
+                        sys.exit(0)
+                    logger.warning(f"Component {component.display_name} is not executable; opening launcher.")
+                else:
+                    logger.warning(f"Could not identify a handler for {args.launch_file}; opening launcher.")
+        else:
+            logger.warning(f"File not found: {args.launch_file}; opening launcher.")
+
+    # Computed after launch-file routing (a routed patch counts as a client
+    # launch) and always assigned, never setdefault: see assign_role_env.
+    assign_role_env(args)
+
     run_client(args, queue=splash_queue)
+
+
+if __name__ == "__main__":
+    main()

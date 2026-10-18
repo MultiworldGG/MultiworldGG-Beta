@@ -29,10 +29,10 @@ if __name__ == "__main__":
     Utils.init_logging("SNIClient", exception_logger="Client")
 
 import colorama
-from websockets.client import connect as websockets_connect, WebSocketClientProtocol
+from websockets.asyncio.client import connect as websockets_connect, ClientConnection
+from websockets.protocol import State
 from websockets.exceptions import WebSocketException, ConnectionClosed
 
-# Import SNI communication functions from __init__.py
 from . import (
     SNESState, snes_logger, launch_sni, _snes_connect, get_snes_devices, 
     verify_snes_app, snes_connect, snes_disconnect, task_alive, 
@@ -40,11 +40,35 @@ from . import (
     snes_buffered_write, snes_flush_writes
 )
 
+# Upstream SNES worlds lazily `from SNIClient import ...`; this module is upstream's SNIClient.py.
+sys.modules.setdefault("SNIClient", sys.modules[__name__])
+
 
 class DeathState(enum.IntEnum):
     killing_player = 1
     alive = 2
     dead = 3
+
+
+SNES_USAGE = 'Usage: /snes [host:port] [device number], e.g. "/snes", "/snes 1", "/snes localhost:23074 1"'
+
+
+def parse_snes_options(snes_options: str, default_address: str) -> typing.Tuple[str, int]:
+    """Split "/snes" arguments into (address, device number); -1 leaves the device to auto-pick."""
+    options = snes_options.split()
+    if len(options) > 2:
+        raise ValueError(f"Too many arguments. {SNES_USAGE}")
+    address, device = default_address, -1
+    if len(options) == 2 or (options and ":" in options[0]):
+        address = options.pop(0)
+        if ":" not in address:
+            raise ValueError(f"{address!r} is not a host:port address. {SNES_USAGE}")
+    if options:
+        try:
+            device = int(options[0])
+        except ValueError:
+            raise ValueError(f"{options[0]!r} is not a device number. {SNES_USAGE}") from None
+    return address, device
 
 
 class SNIClientCommandProcessor(ClientCommandProcessor):
@@ -63,24 +87,19 @@ class SNIClientCommandProcessor(ClientCommandProcessor):
     def _cmd_snes(self, snes_options: str = "") -> bool:
         """Connect to a snes. Optionally include network address of a snes to connect to,
         otherwise show available devices; and a SNES device number if more than one SNES is detected.
-        Examples: "/snes", "/snes 1", "/snes localhost:23074 1" """
+        Examples: "/snes", "/snes 1", "/snes localhost:23074", "/snes localhost:23074 1" """
+        try:
+            parse_snes_options(snes_options, self.ctx.snes_address)
+        except ValueError as e:
+            self.output(str(e))
+            return False
         if self.ctx.snes_state in {SNESState.SNES_ATTACHED, SNESState.SNES_CONNECTED, SNESState.SNES_CONNECTING}:
             self.output("Already connected to SNES. Disconnecting first.")
             self._cmd_snes_close()
         return self.connect_to_snes(snes_options)
 
     def connect_to_snes(self, snes_options: str = "") -> bool:
-        snes_address = self.ctx.snes_address
-        snes_device_number = -1
-
-        options = snes_options.split()
-        num_options = len(options)
-
-        if num_options > 1:
-            snes_address = options[0]
-            snes_device_number = int(options[1])
-        elif num_options > 0:
-            snes_device_number = int(options[0])
+        snes_address, snes_device_number = parse_snes_options(snes_options, self.ctx.snes_address)
 
         self.ctx.snes_reconnect_address = None
         if self.ctx.snes_connect_task:
@@ -94,7 +113,7 @@ class SNIClientCommandProcessor(ClientCommandProcessor):
         self.ctx.snes_reconnect_address = None
         self.ctx.cancel_snes_autoreconnect()
         self.ctx.snes_state = SNESState.SNES_DISCONNECTED
-        if self.ctx.snes_socket and not self.ctx.snes_socket.closed:
+        if self.ctx.snes_socket and self.ctx.snes_socket.state is not State.CLOSED:
             async_start(self.ctx.snes_socket.close())
             return True
         else:
@@ -129,7 +148,7 @@ class SNIContext(CommonContext):
     snes_autoreconnect_task: typing.Optional["asyncio.Task[None]"] = None
 
     snes_address: str
-    snes_socket: typing.Optional[WebSocketClientProtocol]
+    snes_socket: typing.Optional[ClientConnection]
     snes_state: SNESState
     snes_attached_device: typing.Optional[typing.Tuple[int, str]]
     snes_reconnect_address: typing.Optional[str]
@@ -183,7 +202,7 @@ class SNIContext(CommonContext):
         self.awaiting_rom = False
 
     def event_invalid_slot(self) -> typing.NoReturn:
-        if self.snes_socket is not None and not self.snes_socket.closed:
+        if self.snes_socket is not None and self.snes_socket.state is not State.CLOSED:
             async_start(self.snes_socket.close())
         raise Exception("Invalid ROM detected, "
                         "please verify that you have loaded the correct rom and reconnect your snes (/snes)")
@@ -420,17 +439,15 @@ def launch(server_address: str = None, password: str = None, ready_callback=None
 
         ctx.server_address = None
         ctx.snes_reconnect_address = None
-        if ctx.snes_socket is not None and not ctx.snes_socket.closed:
+        if ctx.snes_socket is not None and ctx.snes_socket.state is not State.CLOSED:
             await ctx.snes_socket.close()
         await watcher_task
         await ctx.shutdown()
 
     import colorama
 
-    # Check if we're already in an event loop (GUI mode) first
     try:
         loop = asyncio.get_running_loop()
-        # We're in an existing event loop, create a task
         snes_logger.info("Running in existing event loop (GUI mode)")
         
         # Create a simple namespace object to mimic argparse.Namespace

@@ -3,13 +3,12 @@ from uuid import UUID
 
 from flask import request, session, url_for
 from markupsafe import Markup
-from pony.orm import commit
 
 from Utils import restricted_dumps
 from WebHostLib import app
 from WebHostLib.check import get_yaml_data, roll_options
 from WebHostLib.generate import get_meta
-from WebHostLib.models import Generation, STATE_QUEUED, Seed, STATE_ERROR
+from WebHostLib.models import Generation, STATE_QUEUED, Seed, STATE_ERROR, commit
 from . import api_endpoints
 
 
@@ -55,6 +54,10 @@ def generate_api():
             return {"text": str(results),
                     "detail": results}, 400
         else:
+            # Stash the per-player game list in meta so the autogen worker can
+            # call set_game_names BEFORE restricted_loads imports worlds
+            gen_games = [vars(p).get("game") for p in gen_options.values()]
+            meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
                 options=restricted_dumps({name: vars(options) for name, options in gen_options.items()}),
                 # convert to json compatible

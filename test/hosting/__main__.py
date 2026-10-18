@@ -13,7 +13,6 @@ from test.hosting.generate import generate_local
 from test.hosting.serve import ServeGame, LocalServeGame, WebHostServeGame
 from test.hosting.webhost import (create_room, get_app, get_multidata_for_room, set_multidata_for_room, start_room,
                                   stop_autogen, stop_autohost, upload_multidata, generate_remote)
-from test.hosting.world import copy as copy_world, delete as delete_world
 
 failure = False
 fail_fast = True
@@ -70,22 +69,18 @@ if __name__ == "__main__":
         empty_file = str(Path(tempdir) / "empty")
         open(empty_file, "w").close()
         sys.argv += ["--config_override", empty_file]  # tests #5541
-        multis = [["APQuest"], ["Temp World"], ["APQuest", "Temp World"]]
+        multis = [["APQuest"], ["MWQuest"], ["APQuest", "MWQuest"]]
         p1_games: list[str] = []
         data_paths: list[Path | None] = []
         rooms: list[str] = []
         multidata: Path | None
 
-        copy_world("APQuest", "Temp World")
-        try:
-            for n, games in enumerate(multis, 1):
-                print(f"Generating [{n}] {', '.join(games)} offline")
-                multidata = generate_local(games, tempdir)
-                print(f"Generated [{n}] {', '.join(games)} as {multidata}\n")
-                data_paths.append(multidata)
-                p1_games.append(games[0])
-        finally:
-            delete_world("Temp World")
+        for n, games in enumerate(multis, 1):
+            print(f"Generating [{n}] {', '.join(games)} offline")
+            multidata = generate_local(games, tempdir)
+            print(f"Generated [{n}] {', '.join(games)} as {multidata}\n")
+            data_paths.append(multidata)
+            p1_games.append(games[0])
 
         webapp = get_app(tempdir)
         webhost_client = webapp.test_client()

@@ -17,6 +17,12 @@ class PlayerAlias(TypedDict):
     alias: str | None
 
 
+class PlayerAvatar(TypedDict):
+    team: int
+    player: int
+    avatar: str | None
+
+
 class PlayerItemsReceived(TypedDict):
     team: int
     player: int
@@ -159,8 +165,17 @@ def tracker_data(tracker: UUID) -> dict[str, Any]:
                 {"team": team, "player": player, "status": tracker_data.get_player_client_status(team, player),
                  "goal_override": (team, player) in goal_overrides})
 
+    from WebHostLib.avatars import compute_slot_avatars
+    slot_avatar_urls = compute_slot_avatars(tracker_data)
+    player_avatars: list[PlayerAvatar] = [
+        {"team": team, "player": player, "avatar": slot_avatar_urls.get((team, player))}
+        for team, players in all_players.items()
+        for player in players
+    ]
+
     return {
         "aliases": player_aliases,
+        "player_avatars": player_avatars,
         "player_items_received": player_items_received,
         "player_checks_done": player_checks_done,
         "total_checks_done": total_checks_done,

@@ -58,7 +58,7 @@ def generate_remote(app_client: "FlaskClient", games: Iterable[str]) -> str:
                 "description": f"generate_remote slot {n} ('Player{n}'): {game}",
             }))
     data.seek(0)
-    response = app_client.post("/generate", content_type="multipart/form-data", data={
+    response = app_client.post("/play/new", content_type="multipart/form-data", data={
         "file": (data, "yamls.zip"),
     })
     assert response.status_code < 400, f"Starting gen failed: status {response.status_code}"
@@ -71,22 +71,22 @@ def generate_remote(app_client: "FlaskClient", games: Iterable[str]) -> str:
         if "Location" in response.headers:
             location = response.headers["Location"]
             assert isinstance(location, str)
-            assert location.startswith("/seed/"), f"Finishing WebHost gen failed: unexpected redirect to {location}"
-            return location[6:]
+            assert location.startswith("/play/seed/"), f"Finishing WebHost gen failed: unexpected redirect to {location}"
+            return location.rsplit("/", 1)[-1]
         time.sleep(1)
     raise TimeoutError("WebHost gen did not finish")
 
 
 def upload_multidata(app_client: "FlaskClient", multidata: Path) -> str:
-    response = app_client.post("/uploads", data={
+    response = app_client.post("/play/host", data={
         "file": multidata.open("rb"),
     })
     assert response.status_code < 400, f"Upload of {multidata} failed: status {response.status_code}"
     assert "Location" in response.headers, f"Upload of {multidata} failed: no redirect"
     location = response.headers["Location"]
     assert isinstance(location, str)
-    assert location.startswith("/seed/"), f"Upload of {multidata} failed: unexpected redirect"
-    return location[6:]
+    assert location.startswith("/play/seed/"), f"Upload of {multidata} failed: unexpected redirect"
+    return location.rsplit("/", 1)[-1]
 
 
 def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) -> str:
@@ -95,8 +95,8 @@ def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) 
     assert "Location" in response.headers, f"Creating room for {seed} failed: no redirect"
     location = response.headers["Location"]
     assert isinstance(location, str)
-    assert location.startswith("/room/"), f"Creating room for {seed} failed: unexpected redirect"
-    room_id = location[6:]
+    assert "/room/" in location, f"Creating room for {seed} failed: unexpected redirect to {location}"
+    room_id = location.rsplit("/room/", 1)[-1]
 
     if not auto_start:
         # by default, creating a room will auto-start it, so we update last activity here
@@ -108,7 +108,7 @@ def create_room(app_client: "FlaskClient", seed: str, auto_start: bool = False) 
 def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> str:
     from time import sleep
 
-    import pony.orm
+    from sqlalchemy.exc import OperationalError
 
     poll_interval = .2
 
@@ -116,9 +116,12 @@ def start_room(app_client: "FlaskClient", room_id: str, timeout: float = 30) -> 
     no_timeout = timeout <= 0
     while no_timeout or timeout > 0:
         try:
-            response = app_client.get(f"/room/{room_id}")
-        except pony.orm.core.OptimisticCheckError:
-            # hoster wrote to room during our transaction
+            # /room/<id> now 301-redirects to /play/seed/<seed>/room/<id>; follow it
+            # so we land on the 200 host_room page that renders the /connect address.
+            response = app_client.get(f"/room/{room_id}", follow_redirects=True)
+        except OperationalError:
+            # the hoster process held the SQLite write lock while host_room
+            # committed its last_activity update - retry
             continue
 
         assert response.status_code == 200, f"Starting room for {room_id} failed: status {response.status_code}"
@@ -137,9 +140,7 @@ def stop_room(app_client: "FlaskClient",
     from datetime import timedelta
     from time import sleep
 
-    from pony.orm import db_session
-
-    from WebHostLib.models import Command, Room
+    from WebHostLib.models import db, commit, Command, Room
     from WebHostLib import app
 
     poll_interval = 2
@@ -150,7 +151,9 @@ def stop_room(app_client: "FlaskClient",
     if timeout is not None:
         sleep(.1)  # should not be required, but other things might use threading
 
-    with db_session:
+    address = None
+    original_timeout = None
+    with app.app_context():
         room: Room = Room.get(id=room_uuid)
         now = utcnow()
         if simulate_idle:
@@ -162,7 +165,8 @@ def stop_room(app_client: "FlaskClient",
         if address:
             original_timeout = room.timeout
             room.timeout = 1  # avoid spinning it up again
-            Command(room=room, commandtext="/exit")
+            Command(room_id=room.id, commandtext="/exit")
+        commit()
 
     try:
         if address and timeout is not None:
@@ -184,50 +188,50 @@ def stop_room(app_client: "FlaskClient",
 
             raise TimeoutError("Room did not stop")
     finally:
-        with db_session:
+        from sqlalchemy import select, delete as sa_delete
+        with app.app_context():
             room = Room.get(id=room_uuid)
             room.last_port = 0  # easier to detect when the host is up this way
-            if address:
+            if address and original_timeout is not None:
                 room.timeout = original_timeout
                 room.last_activity = new_last_activity
-                room.commands.clear()  # make sure there is no leftover /exit
+                # make sure there is no leftover /exit
+                for cmd in db.session.scalars(select(Command).where(Command.room_id == room_uuid)).all():
+                    db.session.delete(cmd)
                 print("timeout restored")
+            commit()
 
 
 def set_room_timeout(room_id: str, timeout: float) -> None:
-    from pony.orm import db_session
-
-    from WebHostLib.models import Room
+    from WebHostLib.models import db, commit, Room
     from WebHostLib import app
 
     room_uuid = to_python(room_id)
-    with db_session:
+    with app.app_context():
         room: Room = Room.get(id=room_uuid)
         room.timeout = timeout
+        commit()
 
 
 def get_multidata_for_room(webhost_client: "FlaskClient", room_id: str) -> bytes:
-    from pony.orm import db_session
-
-    from WebHostLib.models import Room
+    from WebHostLib.models import db, Room
     from WebHostLib import app
 
     room_uuid = to_python(room_id)
-    with db_session:
+    with app.app_context():
         room: Room = Room.get(id=room_uuid)
         return cast(bytes, room.seed.multidata)
 
 
 def set_multidata_for_room(webhost_client: "FlaskClient", room_id: str, data: bytes) -> None:
-    from pony.orm import db_session
-
-    from WebHostLib.models import Room
+    from WebHostLib.models import db, commit, Room
     from WebHostLib import app
 
     room_uuid = to_python(room_id)
-    with db_session:
+    with app.app_context():
         room: Room = Room.get(id=room_uuid)
         room.seed.multidata = data
+        commit()
 
 
 def _stop_webhost_mp(name_filter: str, graceful: bool = True) -> None:

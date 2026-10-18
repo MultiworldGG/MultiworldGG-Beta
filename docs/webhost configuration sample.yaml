@@ -17,8 +17,29 @@
 # Web hosting port
 #PORT: 80
 
-# Place where uploads go.
-#UPLOAD_FOLDER: uploads
+# Ports used for game hosting. Values can be specific ports, port ranges or both. Default is: [49152-65535, 0]
+# Zero means it will use a random free port if there is no free port in the ranges specified
+# Examples of valid values: [40000-41000, 49152-65535]
+# If ports within the range(s) are already in use, the WebHost will fallback to the default [49152-65535, 0] range.
+#GAME_PORTS: [49152-65535, 0]
+
+# Runtime data folders. Relative paths resolve against the working directory.
+# Each has an env-var default the Docker image sets (MWGG_UPLOAD_FOLDER,
+# MWGG_LOGS_FOLDER, MWGG_GENERATED_FOLDER, MWGG_DB_FILE); values here win.
+#UPLOAD_FOLDER: uploads             # avatars/ and lobby_apworlds/ live under it
+#AVATAR_UPLOAD_FOLDER: uploads/avatars
+#LOBBY_APWORLD_PATH: uploads/lobby_apworlds
+#LOGS_FOLDER: logs                  # <room_id>.txt room logs
+#GENERATED_FOLDER: WebHostLib/static/generated   # docs, option templates, sprites (served at /static/generated/)
+
+# World-name prefixes (matched against the YAML's game value) that may upload auxiliary .apworld files.
+# Matching is case-sensitive; empty prefixes are ignored. Full world names still match themselves.
+# Each listed world may have up to 5 auxiliary files per lobby, in addition to its main APWorld.
+# Requires custom APWorlds to be enabled in the lobby. These lobbies generate locally.
+#LOBBY_AUXILIARY_APWORLD_GAMES:
+#  - Pokemon Black and White
+#  - UZDoom
+# UZDoom also matches names such as "UZDoom - Doom II". The limit applies to each full world name.
 
 # Maximum upload size.  Default is 64 megabyte (64 * 1024 * 1024)
 #MAX_CONTENT_LENGTH: 67108864
@@ -39,7 +60,7 @@
 # waitress uses one thread for I/O, these are for processing of view that get sent
 #WAITRESS_THREADS: 10
 
-# Database provider details:
+# Database provider details (default: sqlite at MWGG_DB_FILE, else ./ap.db3):
 #PONY:
 #  provider: "sqlite"
 #  filename: "ap.db3" # This MUST be the ABSOLUTE PATH to the file.

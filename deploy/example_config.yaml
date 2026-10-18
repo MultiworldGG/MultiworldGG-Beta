@@ -12,3 +12,65 @@ HOST_ADDRESS: localhost
 # Asset redistribution rights.  If true, the host affirms they have been given explicit permission to redistribute
 # the proprietary assets in WebHostLib
 #ASSET_RIGHTS: false
+
+# ---------------------------------------------------------------------------
+# Data folders
+# ---------------------------------------------------------------------------
+# The image fixes these through env (Dockerfile): database /db/ap.db3, uploads
+# /uploads, logs /logs, generated static /static/generated, and compose mounts
+# them. Only override here to move something, e.g. to a PostgreSQL database:
+#PONY:
+#  provider: "postgresql"
+#  host: "db"
+#  user: "mwgg"
+#  password: ""
+#  database: "mwgg"
+
+# ---------------------------------------------------------------------------
+# Secret keys
+# ---------------------------------------------------------------------------
+# SECRET_KEY signs session cookies. The webhost refuses to start if this is
+# left at the hostname-derived default. Two ways to set it:
+#
+#   1. ENV (preferred for Docker; see deploy/docker-compose.yml `env_file`):
+#         MWGG_SECRET_KEY=<random hex from `openssl rand -hex 32`>
+#         MWGG_WEBAUTHN_HANDLE_SECRET=<another random hex>
+#
+#   2. Here in config.yaml (uncomment and set):
+#         #SECRET_KEY: "paste-a-random-32+-byte-value-here"
+#         #WEBAUTHN_USER_HANDLE_SECRET: "paste-another-random-value-here"
+#
+# WEBAUTHN_USER_HANDLE_SECRET is only consulted when the passkey blueprint is
+# in use. It falls back to SECRET_KEY if unset, which is fine for most
+# deployments; set it separately only if you want to rotate the OS-side
+# passkey clustering without rotating cookie signing.
+#
+# ---------------------------------------------------------------------------
+# WebAuthn relying-party identity
+# ---------------------------------------------------------------------------
+# Browsers reject WebAuthn calls whose RP ID doesn't match the live origin's
+# registrable domain. Set these to the public-facing hostname.
+#WEBAUTHN_RP_ID: "multiworld.gg"
+#WEBAUTHN_ORIGIN: "https://multiworld.gg"
+#WEBAUTHN_RP_NAME: "MultiworldGG"
+
+# ---------------------------------------------------------------------------
+# Avatar content moderation
+# ---------------------------------------------------------------------------
+# Avatar uploads can be screened for exposed nudity by a NudeNet sidecar
+# (deploy/docker-compose.yml `nudenet` service). Under compose the `web`
+# service already sets this via its `environment:` block. Uncomment here only
+# if you run the webhost outside compose and point it at your own NudeNet
+# `/infer` endpoint. Leave unset to disable screening.
+#AVATAR_NSFW_ENDPOINT: "http://nudenet:8080/infer"
+
+# ---------------------------------------------------------------------------
+# Avatar retention
+# ---------------------------------------------------------------------------
+# Replacing or removing an avatar never deletes its file: the old URL may be
+# pinned to a room slot or persisted by a desktop client. Instead the autohost
+# deletes avatars older than this many days that no session, slot pin, or
+# client token still uses (a client token always keeps its newest upload).
+# 0 disables the sweep. nginx `expires` on /avatar/ only sets browser-cache
+# headers and never removes files.
+#AVATAR_RETENTION_DAYS: 180

@@ -2,7 +2,7 @@
     width: 60%;
     margin-left: auto;
     margin-right: auto;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--mw-sys-color-scrim-light);
     border-radius: 8px;
     padding: 1rem;
     color: #eeffeb;
@@ -15,11 +15,11 @@
 }
 
 #host-room a{
-    color: #ea166c;
+    color: var(--mw-sys-color-link);
 }
 
 #host-room input[type=text]{
-    border: 1px solid #000000;
+    border: 1px solid var(--mw-sys-color-black);
     padding: 3px;
     border-radius: 3px;
     width: 50%;
@@ -37,26 +37,47 @@
 #host-room table th{
     text-align: left;
     padding: 10px;
-    border: 1px solid white;
     font-size: 20px;
     font-family: Inter-Regular, sans-serif;
+    border-bottom: 1px solid var(--mw-sys-color-scrim-medium);
 }
 
 #host-room table td{
-    border: 1px solid white;
     text-align: left;
     padding: 10px;
+    word-break: break-word;
+}
+
+#host-room table tbody tr:nth-child(even){
+    background-color: var(--mw-sys-color-scrim-light);
+}
+
+#host-room .room-action-link{
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid var(--mw-sys-color-link);
+    border-radius: 4px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+#host-room .room-action-link:hover{
+    background-color: var(--mw-sys-color-scrim-light);
 }
 
 #host-room #logger{
+    font-family: 'Monaspace Neon';
+    font-size: 14px;
+    line-height: 1.4;
     margin-top: 0;
     padding: 0.5rem 0.25rem;
-    background-color: lightblue;
-    border: 1px solid #2a6c2f;
+    background-color: var(--mw-sys-color-on-info-container);
+    border: 1px solid var(--mw-sys-color-accent-orange);
     border-radius: 6px;
-    color: #000000;
+    color: var(--mw-sys-color-info-container);
     overflow-y: auto;
     max-height: 400px;
+    scrollbar-color: var(--mw-sys-color-info-outline) var(--mw-sys-color-on-info-container);
 }
 
 .loader{
@@ -93,5 +114,84 @@
     }
     #base-header-mobile-menu {
         margin-right: 45px !important;
+    }
+}
+
+/* Phase 2b: shareable room URL row. Brand colors match the route-migration nav palette. */
+
+.share-row {
+    background: var(--mw-sys-color-surface-container);
+    border: 1px solid var(--mw-sys-color-primary);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.share-row-label {
+    color: var(--mw-sys-color-on-surface-variant);
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.share-row-url {
+    color: var(--mw-sys-color-secondary);
+    font-family: "SF Mono", Menlo, Monaco, "Cascadia Mono", "Courier New", monospace;
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: all;
+}
+
+.share-row-copy-btn {
+    background: var(--mw-sys-color-primary);
+    color: var(--mw-sys-color-white);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    transition: background 0.15s ease;
+}
+
+.share-row-copy-btn:hover {
+    background: var(--mw-sys-color-primary-container);
+}
+
+.share-row-copy-btn:active {
+    transform: translateY(1px);
+}
+
+.share-row-copy-btn--copied {
+    background: var(--mw-sys-color-state-running-outline);
+}
+
+.share-row-copy-icon {
+    font-size: 14px;
+}
+
+@media (max-width: 480px) {
+    .share-row {
+        flex-wrap: wrap;
+    }
+    .share-row-url {
+        flex-basis: 100%;
+        order: 2;
+    }
+    .share-row-copy-btn {
+        order: 3;
+        margin-left: auto;
     }
 }

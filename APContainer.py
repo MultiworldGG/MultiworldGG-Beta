@@ -114,10 +114,27 @@ class APContainer:
 
     def get_manifest(self) -> dict[str, Any]:
         return {
-            # minimum version of patch system expected for patching to be successful
             "compatible_version": 5,
             "version": container_version,
         }
+
+
+def _manual_apworld_manifest(opened_zipfile: zipfile.ZipFile) -> Optional[dict[str, Any]]:
+    """Manual apworlds ship no archipelago.json; their game id is Manual_<game>_<creator>."""
+    from ModuleUpdate import apworld_module_name
+    try:
+        game = json.loads(opened_zipfile.read(f"{apworld_module_name(opened_zipfile)}/data/game.json"))
+        return {"game": f"Manual_{game['game']}_{game['creator']}"}
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def _indexed_apworld_manifest(opened_zipfile: zipfile.ZipFile) -> Optional[dict[str, Any]]:
+    """A manifest-less apworld whose module is in the game index serves the indexed game."""
+    from ModuleUpdate import apworld_module_name
+    from mwgg_igdb import GameIndex
+    game = GameIndex.get_game_name_for_module(apworld_module_name(opened_zipfile))
+    return {"game": game} if game else None
 
 
 class APWorldContainer(APContainer):
@@ -134,11 +151,13 @@ class APWorldContainer(APContainer):
         try:
             manifest = super().read_contents(opened_zipfile)
         except KeyError as e:
-            # Feature gate: archipelago.json is optional for versions < 0.7.300
-            if version_tuple < (0, 7, 300):
-                # Return empty manifest, metadata will remain None
-                return {}
-            raise
+            manifest = _manual_apworld_manifest(opened_zipfile) or _indexed_apworld_manifest(opened_zipfile)
+            if manifest is None:
+                # Feature gate: archipelago.json is optional for versions < 0.7.300
+                if version_tuple < (0, 7, 300):
+                    # Return empty manifest, metadata will remain None
+                    return {}
+                raise
         if "game" in manifest:
             self.game = manifest["game"]
         for version_key in ("world_version", "minimum_ap_version", "maximum_ap_version"):
@@ -157,11 +176,13 @@ class APWorldContainer(APContainer):
         return manifest
 
     def sys_modules_import_apworld(self):
-        """Locate, register, and execute the apworld zipfile's `worlds.<stem>` module."""
+        """Locate, register, and execute the apworld zipfile's `worlds.<top-level folder>` module."""
         import sys
         import importlib.util
         from zipimport import zipimporter
-        name = f"worlds.{self.path.stem}"
+        from ModuleUpdate import apworld_module_name
+        with zipfile.ZipFile(self.path) as zf:
+            name = f"worlds.{apworld_module_name(zf)}"
         importer = zipimporter(str(self.path.absolute()))
         spec = importer.find_spec(name)
         if spec is None:

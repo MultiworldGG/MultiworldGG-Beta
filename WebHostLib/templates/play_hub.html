@@ -1,0 +1,63 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>Play · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/hub.css') }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([('Play', none)]) }}
+
+    <div class="mw-hub">
+        <h1>Play a Multiworld</h1>
+        <div class="mw-hub-cta-wrap">
+            <span class="mw-hub-cta-label">New here?</span>
+            <div class="mw-hub-cta-buttons">
+                <a href="{{ url_for('quickstart', lang='en') }}" class="mw-hub-cta">Click here for Setup Instructions</a>
+                <a href="{{ url_for('about') }}" class="mw-hub-cta">What is MultiworldGG?</a>
+            </div>
+        </div>
+
+        <div class="mw-hub-grid">
+            <a href="{{ url_for('lobby_list') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-account-group"></i></div>
+                <h3>Lobby Home</h3>
+                <p>Browse open lobbies, join friends, or create your own.</p>
+            </a>
+
+            <a href="{{ url_for('games') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-gamepad"></i></div>
+                <h3>Games</h3>
+                <p>See every supported game, with options pages and setup guides.</p>
+            </a>
+
+            <a href="{{ url_for('generate') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-sprout"></i></div>
+                <h3>Generate a new game</h3>
+                <p>Skip the lobby. Generate a seed directly from your YAML.</p>
+            </a>
+
+            <a href="{{ url_for('uploads') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-upload"></i></div>
+                <h3>Host a pre-generated game</h3>
+                <p>Already have an AP_*.zip file? Upload it to host the game here.</p>
+            </a>
+
+            <a href="{{ url_for('check') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-check-all"></i></div>
+                <h3>Validate YAML</h3>
+                <p>Check your YAML for errors before uploading.</p>
+            </a>
+
+            <a href="{{ url_for('me') }}" class="mw-hub-card">
+                <div class="mw-hub-icon"><i class="mdi mdi-bookmark"></i></div>
+                <h3>Your saved stuff</h3>
+                <p>Active rooms, open lobbies, and seeds you've created.</p>
+            </a>
+        </div>
+    </div>
+
+    {% include 'partials/play_checklist.html' %}
+{% endblock %}

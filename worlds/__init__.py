@@ -5,17 +5,18 @@ import logging
 import os
 import time
 import dataclasses
-from typing import Optional, Union
+from typing import Union
 
 from NetUtils import DataPackage
 from BaseUtils import (local_path, user_path, Version, version_tuple, tuplize_version,
-                       get_archipelago_json, mwgg_venv_site_packages, use_worlds_venv)
+                       get_archipelago_json, get_apworld_manifest, mwgg_venv_site_packages, use_worlds_venv)
 from APContainer import APWorldContainer
 from pathlib import Path
 
 # Some imports are "unnecessary", but they may be imported by random world modules.
 
-# Extend __path__ to include python installed worlds for namespace package behavior.
+# Extend __path__ with the installed-worlds dir (namespace package behavior). Keep in
+# lockstep with Utils._worlds_search_paths, which probes these dirs without importing this package.
 local_folder = Path(__file__).parent
 user_folder = None
 
@@ -54,7 +55,6 @@ class WorldSource:
         try:
             start = time.perf_counter()
             if isinstance(self.game_module, str):
-                # Load the world class from the entry point
                 self.game = self.game_module
                 world_class = importlib.import_module(self.game_module)
                 
@@ -68,8 +68,7 @@ class WorldSource:
             if isinstance(e, (KeyboardInterrupt, SystemExit)):
                 raise
             # A single world failing can still mean enough is working for the user, log and carry on.
-            # Catches BaseException so C-extension panics (e.g. pyo3_runtime.PanicException) don't
-            # bring the whole process down.
+            # BaseException: C-extension panics (e.g. pyo3_runtime.PanicException) must not kill the process.
             logging.warning(f"Could not load world {self}: {type(e).__name__}: {e}")
             logging.debug("Full traceback for %s:", self, exc_info=True)
             if isinstance(self.game_module, str):
@@ -82,6 +81,9 @@ class WorldSource:
 
 from Utils import game_names
 
+# The venv may have been populated after a lookup None-cached its finder.
+importlib.invalidate_caches()
+
 world_sources: list[WorldSource] = []
 for game_module in game_names():
     world_sources.append(WorldSource(game_module))
@@ -90,11 +92,8 @@ for world_source in world_sources:
     world_source.load()
 
 from .AutoWorld import AutoWorldRegister
-# Add version for each world.
-for world in AutoWorldRegister.world_types.values():
-    if world.game not in ["Archipelago"]:
-        world_name, author, minimum_ap_version, version = get_archipelago_json(world.__module__.split(".")[1])
-        AutoWorldRegister.world_types[world.game].world_version = tuplize_version(version)
+# world_version/manifest are stamped per class at registration (AutoWorldRegister),
+# so worlds imported after this loop get them too.
 
 # Build the data package for each game.
 network_data_package: DataPackage = {

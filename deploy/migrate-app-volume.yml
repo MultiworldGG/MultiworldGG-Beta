@@ -1,0 +1,34 @@
+# One-off migration from the old layout (a single app_volume mounted over /app)
+# to the current one. Standalone; run it under the SAME project name as the
+# running stack so app_volume/app_uploads/app_logs resolve to that project's
+# volumes (see README, "Migrating from the app_volume layout"):
+#   P=$(docker compose config | sed -n 's/^name: //p')
+#   docker compose -p "$P" -f deploy/migrate-app-volume.yml run --rm migrate_app_volume
+# Needs only `docker compose`; never part of `up`.
+services:
+  migrate_app_volume:
+    image: alpine:3.21
+    entrypoint:
+      - sh
+      - -ec
+      - |
+        ls -la /old
+        test -f /old/ap.db3 || { echo "ap.db3 not found in app_volume, nothing migrated"; exit 1; }
+        cp -a /old/ap.db3 /db/
+        for d in uploads logs; do
+          if [ -d "/old/$$d" ]; then cp -a "/old/$$d/." "/$$d/"; fi
+        done
+        echo "migrated: ap.db3 -> /var/lib/mwgg-db, uploads/ and logs/ -> their volumes"
+    volumes:
+      - app_volume:/old:ro
+      - /var/lib/mwgg-db:/db
+      - app_uploads:/uploads
+      - app_logs:/logs
+
+volumes:
+  # <project>_app_volume: the volume the old stack created. Not declared in
+  # docker-compose.yml any more, so the stack neither reads nor removes it.
+  app_volume:
+  # Same keys as docker-compose.yml, so `up` later reuses what is created here.
+  app_uploads:
+  app_logs:

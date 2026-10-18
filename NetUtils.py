@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 import typing
 import enum
+import re
 import warnings
 from json import JSONEncoder, JSONDecoder
 
@@ -22,11 +23,13 @@ class MWGGUIHintStatus(ByValue, enum.IntFlag):
     """
     Shop Item, Goal-required item, and 'this item is what is keeping me in BK_MODE'
     BK_MODE items will be shown as the highest priority.
+    HINT_HIDDEN is client-owned: the viewing client hides the hint on its own screens.
     """
     HINT_UNSPECIFIED = 0b000
     HINT_SHOP = 0b001
     HINT_GOAL = 0b010
     HINT_BK_MODE = 0b100
+    HINT_HIDDEN = 0b1000
 
 
 class JSONMessagePart(typing.TypedDict, total=False):
@@ -128,7 +131,6 @@ def convert_to_base_types(obj: typing.Any) -> _base_types:
         return {convert_to_base_types(key): convert_to_base_types(value) for key, value in obj.items()}
     elif obj is None or type(obj) in (str, int, float, bool):
         return obj
-    # unwrap simple types to their base, such as StrEnum
     elif isinstance(obj, str):
         return str(obj)
     elif isinstance(obj, int):
@@ -181,7 +183,39 @@ def _object_hook(o: typing.Any) -> typing.Any:
     return o
 
 
-decode = JSONDecoder(object_hook=_object_hook).decode
+_decode = JSONDecoder(object_hook=_object_hook).decode
+
+
+try:
+    from _speedups import check_json_depth as _check_depth
+except ImportError:
+    def _check_depth(s: str, limit: int = 16) -> None:
+        depth = 1
+        in_quotes = False
+        escape = False
+        for c in s:
+            if c == "\\" and not escape:
+                escape = True
+                continue
+            if c == '"' and not escape:
+                in_quotes = not in_quotes
+                continue
+            if not in_quotes:
+                if c in "[{":
+                    depth += 1
+                    if depth > limit:
+                        raise ValueError("JSON document too complex")
+                elif c in "}]":
+                    depth -= 1
+            escape = False
+
+        if depth != 1:  # free check
+            raise ValueError("JSON document malformed")
+
+
+def decode(s: str) -> typing.Any:
+    _check_depth(s)  # raises ValueError
+    return _decode(s)
 
 
 class Endpoint:
@@ -281,23 +315,24 @@ class JSONtoTextParser(metaclass=HandlerMeta):
 
     def _handle_item_name(self, node: JSONMessagePart):
         flags = node.get("flags", 0)
+        node["color"] = ""
         if flags == 0:
-            node["color"] = 'regular_item_color' # filler
+            node["color"] += 'regular_item_color;' # filler
         elif flags & 0b00010:  # useful
-            node["color"] = 'useful_item_color'  # lime for useful items
+            node["color"] += 'useful_item_color;'  # lime for useful items
         if flags & 0b00100:  # "useful trap" gets marked trap
-            node["color"] = 'trap_item_color'  # salmon for traps
+            node["color"] += 'trap_item_color;'  # salmon for traps
         elif flags & 0b00001:  # progression is the third flag checked, so it can overwrite. 
             # "useful progression" gets marked progression
-            node["color"] = 'progression_item_color'  # "dulled" gold for regular progression
+            node["color"] += 'progression_item_color;'  # "dulled" gold for regular progression
             if flags & 0b10000:  # deprioritized, but still progression (skulls etc)
-                node["color"] = 'progression_deprioritized_item_color'  # Citron for progression deprioritized
+                node["color"] += 'progression_deprioritized_item_color;'  # Citron for progression deprioritized
             else:
                 if flags & 0b01000:  # skip_balancing bit set
-                    node["color"] = 'progression_goal_item_color'  # Gold for progression skip items/macguffins
+                    node["color"] += 'progression_goal_item_color;'  # Gold for progression skip items/macguffins
         if not node["color"]:
             # if we can't find the flag set, use the command echo color to indicate it doesn't know what kind of item it is
-            node["color"] = 'command_echo_color'
+            node["color"] = 'command_echo_color;'
         node["text"] = escape_markup(node["text"])
         return self._handle_color(node)
 
@@ -375,6 +410,7 @@ class RawJSONtoTextParser(JSONtoTextParser):
 class KivyMarkupJSONtoTextParser(JSONtoTextParser):
     """JSON parser that converts to Kivy markup format with hex colors"""
     color_codes: typing.ClassVar[typing.Optional[dict]] = None
+    ref_count: int = 0
 
     def __init__(self, ctx):
         super().__init__(ctx)
@@ -386,24 +422,102 @@ class KivyMarkupJSONtoTextParser(JSONtoTextParser):
                 colors[key] = value
             cls.color_codes = colors
 
+    def __call__(self, *args, **kwargs):
+        self.ref_count = 0
+        return super().__call__(*args, **kwargs)
+
+    def _handle_item_name(self, node: JSONMessagePart):
+        flags = node.get("flags", 0)
+        item_types = []
+        if flags & 0b00001:  # progression
+            item_types.append("progression")
+            if flags & 0b10000:  # deprioritized, but still progression
+                item_types.append("deprioritized")
+            elif flags & 0b01000:  # skip_balancing: goal items/macguffins
+                item_types.append("skip_balancing")
+        if flags & 0b00010:  # useful
+            item_types.append("useful")
+        if flags & 0b00100:  # trap
+            item_types.append("trap")
+        if not item_types:
+            item_types.append("normal")
+
+        node.setdefault("refs", []).append("Item Class: " + ", ".join(item_types))
+        return super()._handle_item_name(node)
+
+    def _handle_player_id(self, node: JSONMessagePart):
+        player = int(node["text"])
+        slot_info = self.ctx.slot_info.get(player, None)
+        if slot_info:
+            text = f"Game: {slot_info.game}<br>" \
+                   f"Type: {SlotType(slot_info.type).name}"
+            if slot_info.group_members:
+                text += "<br>Members:<br> " + "<br> ".join(
+                    escape_markup(self.ctx.player_names[member])
+                    for member in slot_info.group_members
+                )
+            node.setdefault("refs", []).append(text)
+        return super()._handle_player_id(node)
+
     def _handle_color(self, node: JSONMessagePart):
         codes = node["color"].split(";")
-        # Find the first valid color code
-        color_hex = None
+        color_hex = []
         for code in codes:
             if code in self.color_codes:
-                color_hex = self.color_codes[code]
-                break
-        
+                color_hex.append(self.color_codes[code])
+
         if color_hex:
-            # Get the plain text without wrapping it in default color
+            # player_id, player_name and raw color nodes arrive unescaped here: brackets in names render as markup.
             text = node.get("text", "")
-            return f'[color={color_hex}]{text}[/color]'
+            if len(color_hex) == 1:
+                color_output = f"[color={color_hex[0]}]{text}[/color]"
+            else:
+                # This is a silly thing but I like it. Go backwards so it's "progression" first
+                color_output = bbcode_gradient(color_hex[-1], color_hex[0], text)
+            for ref in node.get("refs", []):
+                ret_text = f"[ref={self.ref_count}|{ref}]{color_output}[/ref]"
+                self.ref_count += 1
+                return ret_text # Return without 'handling' the text again, as it's already formatted with color and ref
+            return color_output
         else:
             return self._handle_text(node)
-    
+
     def _handle_text(self, node: JSONMessagePart):
+        '''This returns only the text, without any color formatting for the plaintext map'''
         return node.get("text", "")
+
+_GRADIENT_TOKEN = re.compile(r"&(?:bl|br|amp);|.", re.DOTALL)
+
+
+def bbcode_gradient(start_color: str, end_color: str, text: str) -> str:
+    """Wrap each glyph of `text` in BBCode [color] tags, blending from start_color to end_color.
+
+    Whitespace is passed through untouched since it has nothing visible to color. Kivy escape
+    entities (&bl; &br; &amp;) stay whole: the markup parser only unescapes within one text run.
+    """
+    def parse(color: str) -> tuple[int, int, int]:
+        return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4))
+
+    r1, g1, b1 = parse(start_color)
+    r2, g2, b2 = parse(end_color)
+
+    tokens = _GRADIENT_TOKEN.findall(text)
+    visible = sum(1 for tok in tokens if not tok.isspace())
+    steps = max(visible - 1, 1)
+
+    out = []
+    i = 0
+    for tok in tokens:
+        if tok.isspace():
+            out.append(tok)
+            continue
+        t = i / steps
+        r = round(r1 + (r2 - r1) * t)
+        g = round(g1 + (g2 - g1) * t)
+        b = round(b1 + (b2 - b1) * t)
+        out.append(f"[color={r:02x}{g:02x}{b:02x}]{tok}[/color]")
+        i += 1
+    return "".join(out)
 
 # setting ansi colors - Added many 8 bit to go with the 4 bit.
 color_codes = {'reset': 0, 'bold': 1, 'underline': 4, 'black': 30, 'red': 31, 'green': 32, 'yellow': 33, 'blue': 34,
@@ -450,12 +564,13 @@ status_names: typing.Dict[HintStatus, str] = {
     HintStatus.HINT_AVOID: "(avoid)",
     HintStatus.HINT_PRIORITY: "(priority)",
 }
+# Status colors must be TEXT_COLORS keys (rewritten per theme by mwgg_gui) with an ANSI entry in color_codes.
 status_colors: typing.Dict[HintStatus, str] = {
-    HintStatus.HINT_FOUND: "green",
-    HintStatus.HINT_UNSPECIFIED: "white",
-    HintStatus.HINT_NO_PRIORITY: "lightgray",
-    HintStatus.HINT_AVOID: "salmon",
-    HintStatus.HINT_PRIORITY: "gold",
+    HintStatus.HINT_FOUND: "location_color",
+    HintStatus.HINT_UNSPECIFIED: "default_color",
+    HintStatus.HINT_NO_PRIORITY: "regular_item_color",
+    HintStatus.HINT_AVOID: "trap_item_color",
+    HintStatus.HINT_PRIORITY: "progression_item_color",
 }
 ## HintStatus map is the location identifier/colors
 mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
@@ -464,14 +579,24 @@ mwggui_status_names: typing.Dict[MWGGUIHintStatus, str] = {
     MWGGUIHintStatus.HINT_BK_MODE: "(bk_mode)",
 }
 mwggui_status_colors: typing.Dict[MWGGUIHintStatus, str] = {
-    MWGGUIHintStatus.HINT_SHOP: "grey",
-    MWGGUIHintStatus.HINT_GOAL: "gold",
-    MWGGUIHintStatus.HINT_BK_MODE: "salmon",
+    MWGGUIHintStatus.HINT_SHOP: "regular_item_color",
+    MWGGUIHintStatus.HINT_GOAL: "progression_item_color",
+    MWGGUIHintStatus.HINT_BK_MODE: "trap_item_color",
 }
 
 def add_json_hint_status(parts: list, hint_status: HintStatus, text: typing.Optional[str] = None, **kwargs):
     parts.append({"text": text if text != None else status_names.get(hint_status, "(unknown)"),
                   "hint_status": hint_status, "type": JSONTypes.hint_status, **kwargs})
+
+def get_item_classification_label(item_flags: int) -> str:
+    """Return a player-facing label for the classification bits sent over the network."""
+    labels = [
+        label for flag, label in (
+            (0b001, "Progression"), (0b010, "Useful"), (0b100, "Trap"),
+        )
+        if item_flags & flag
+    ]
+    return ", ".join(labels) if labels else "Filler"
 
 
 class Hint(typing.NamedTuple):
@@ -483,14 +608,23 @@ class Hint(typing.NamedTuple):
     entrance: str = ""
     item_flags: int = 0
     status: HintStatus = HintStatus.HINT_UNSPECIFIED
+    # Item hints can conceal their exact location. Location hints use the inverse
+    # and conceal the exact item, since the location is already known.
     hidden: bool = False
+    item_hidden: bool = False
+
+    def __reduce_ex__(self, protocol):
+        # Starting hints use AP's eight-field schema. Keep hiding
+        # flags in MWGG saves when either flag is set.
+        fields = tuple(self) if self.hidden or self.item_hidden else self[:8]
+        return self.__class__, fields
 
     def re_check(self, ctx, team) -> Hint:
-        if self.found and self.status == HintStatus.HINT_FOUND:
+        if self.found and self.status == HintStatus.HINT_FOUND and not self.hidden and not self.item_hidden:
             return self
         found = self.location in ctx.location_checks[team, self.finding_player]
         if found:
-            return self._replace(found=found, status=HintStatus.HINT_FOUND)
+            return self._replace(found=found, status=HintStatus.HINT_FOUND, hidden=False, item_hidden=False)
         return self
     
     def re_prioritize(self, ctx, status: HintStatus) -> Hint:
@@ -506,6 +640,33 @@ class Hint(typing.NamedTuple):
     def as_network_message(self) -> dict:
         parts = []
         add_json_text(parts, "[Hint]: ")
+
+        if self.item_hidden:
+            add_json_location(parts, self.location, self.finding_player)
+            add_json_text(parts, " in ")
+            add_json_text(parts, self.finding_player, type="player_id")
+            if self.entrance:
+                add_json_text(parts, "'s World at ")
+                add_json_text(parts, self.entrance, type="entrance_name")
+            else:
+                add_json_text(parts, "'s World")
+            add_json_text(parts, " contains ")
+            if self.local:
+                add_json_text(parts, "one of your items")
+            else:
+                add_json_text(parts, "one of ")
+                add_json_text(parts, self.receiving_player, type="player_id")
+                add_json_text(parts, "'s items")
+            add_json_text(parts, f" ({self.item_classification})")
+            add_json_text(parts, ". ")
+            add_json_text(parts, status_names.get(self.status, "(unknown)"), type="color",
+                          color=status_colors.get(self.status, "red"))
+            return {"cmd": "PrintJSON", "data": parts, "type": "Hint",
+                    "receiving": self.receiving_player,
+                    "item": NetworkItem(self.item, self.location, self.finding_player, self.item_flags),
+                    "found": self.found,
+                    "item_hidden": True}
+
         add_json_text(parts, self.receiving_player, type="player_id")
         add_json_text(parts, "'s ")
         add_json_item(parts, self.item, self.receiving_player, self.item_flags)
@@ -540,6 +701,10 @@ class Hint(typing.NamedTuple):
     @property
     def local(self):
         return self.receiving_player == self.finding_player
+
+    @property
+    def item_classification(self) -> str:
+        return get_item_classification_label(self.item_flags)
 
 
 class _LocationStore(dict, typing.MutableMapping[int, typing.Dict[int, typing.Tuple[int, int, int]]]):
@@ -619,6 +784,11 @@ class DataPackage(typing.TypedDict):
     games: dict[str, GamesPackage]
 
 
+class WorldVersionPin(typing.TypedDict):
+    version: tuple[int, int, int]
+    custom: bool
+
+
 class MultiData(typing.TypedDict):
     slot_data: dict[int, Mapping[str, typing.Any]]
     slot_info: dict[int, NetworkSlot]
@@ -635,7 +805,10 @@ class MultiData(typing.TypedDict):
     seed_name: str
     spheres: list[dict[int, set[int]]]
     datapackage: dict[str, GamesPackage]
+    world_versions: typing.NotRequired[dict[int, WorldVersionPin]]
+    mwgg_index_tag: typing.NotRequired[str]
     race_mode: int
+    allow_collecting_from: dict[int, bool]
 
 
 if typing.TYPE_CHECKING:  # type-check with pure python implementation until we have a typing stub
@@ -655,7 +828,11 @@ else:
         except ImportError:
             pyximport = None
         try:
+            import logging
+            logger = logging.getLogger()
+            old_level = logger.level
             from _speedups import LocationStore
+            logger.setLevel(old_level)
         except ImportError:
             warnings.warn("_speedups not available. Falling back to pure python LocationStore. "
                           "Install a matching C++ compiler for your platform to compile _speedups.")

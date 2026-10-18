@@ -1,7 +1,7 @@
 {% extends 'pageWrapper.html' %}
 
 {% block head %}
-    {% include 'header/grassHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <title>MultiworldGG Guides</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/markdown.css") }}"/>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/tutorialLanding.css") }}"/>
@@ -14,7 +14,7 @@
     <p><a href="#" id="toggle-nsfw">Show NSFW games</a></p>
     {% for world_name, world_type in worlds.items() %}
         {% if tutorials[world_name] %}
-        <div class="tutorial-section" data-game="{{ world_name }}" {% if world_type.web.rating == "nsfw" %} data-nsfw="true"{% endif %}>
+        <div class="tutorial-section" data-game="{{ world_name }}" {% if is_game_nsfw(world_name) %} data-nsfw="true"{% endif %}>
             <h2 id="{{ (world_type.web.display_name | default(world_name)) | encodeURIComponent }}">{{ world_type.web.display_name | default(world_type.game) }}</h2>
             {% for tutorial_name, tutorial_data in tutorials[world_name].items() %}
                 <h3>{{ tutorial_name }}</h3>
@@ -23,8 +23,8 @@
                 <ul>
                     {% for file_name, file_data in tutorial_data.files.items() %}
                         <li>
-                            <a href="{{ url_for("tutorial", game=world_name, file=file_name) }}">{{ file_data.language }}</a>
-                            by {{ file_data.authors | join(", ") }} 
+                            <a href="{{ url_for("tutorial", lang=file_data.lang, game=world_name, file=file_data.file_base) }}">{{ file_data.language }}</a>
+                            by {{ file_data.authors | join(", ") }}
                         </li>
                     {% endfor %}
                 </ul>

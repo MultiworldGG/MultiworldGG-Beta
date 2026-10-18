@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { openOrUpdateIndexPR, IndexPROpts } from "../src/index-pr";
+import {
+  openOrUpdateIndexPR,
+  openOrUpdateBundleIndexPR,
+  mergeWorldManifest,
+  IndexPROpts,
+} from "../src/index-pr";
 
 interface FileEntry {
   content: string;
@@ -24,7 +29,7 @@ function makeFakeIndex(init: Partial<FakeIndex> = {}): FakeIndex {
   };
 }
 
-// Karen has Contents:Write only — branch + commit operations on the Index.
+// Karen has Contents:Write only: branch + commit operations on the Index.
 function makeKarenOctokit(state: FakeIndex): any {
   return {
     rest: {
@@ -63,6 +68,11 @@ function makeKarenOctokit(state: FakeIndex): any {
         },
         createRef: async ({ ref, sha }: { ref: string; sha: string }) => {
           const head = ref.replace(/^refs\/heads\//, "");
+          if (state.branches[head]) {
+            // GitHub's response when the ref is already there: the shape the
+            // caller's already-exists tolerance keys on.
+            throw Object.assign(new Error("Reference already exists"), { status: 422 });
+          }
           state.branches[head] = sha;
           // Inherit files from main (simulate branch-from-main)
           state.files[head] = { ...state.files[state.defaultBranch] };
@@ -74,7 +84,7 @@ function makeKarenOctokit(state: FakeIndex): any {
   };
 }
 
-// Oliver has Pull requests:Write + Issues:Write — opens the PR and applies labels.
+// Oliver has Pull requests:Write + Issues:Write: opens the PR and applies labels.
 function makeOliverOctokit(
   state: FakeIndex,
   indexOwner: string,
@@ -132,12 +142,12 @@ function makeOctokits(state: FakeIndex) {
 }
 
 const KAREN_DATA: any = {
-  name: "Karen-Multiworld-Bot",
-  html_url: "https://github.com/apps/karen-multiworld-bot",
+  name: "Karen-Head-of-Multiworld-QA",
+  html_url: "https://github.com/apps/karen-head-of-multiworld-qa",
 };
 const OLIVER_DATA: any = {
-  name: "Oliver-Multiworld-Squirrel",
-  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+  name: "Oliver-the-Multiworld-Squirrel",
+  html_url: "https://github.com/apps/oliver-the-multiworld-squirrel",
 };
 
 const baseOpts = (overrides: Partial<IndexPROpts> = {}): Omit<IndexPROpts, "karenOctokit" | "oliverOctokit"> => ({
@@ -170,7 +180,7 @@ afterEach(() => {
   delete process.env.OLIVER_CODEOWNER_PREFIX;
 });
 
-describe("openOrUpdateIndexPR — labels (Phase C)", () => {
+describe("openOrUpdateIndexPR - labels (Phase C)", () => {
   // Fixtures here include igdb_id so these tests stay focused on the
   // New/Update label rule. The Needs-IGDB-id label rule is covered separately.
   const optsWithIgdb = {
@@ -240,7 +250,7 @@ describe("openOrUpdateIndexPR — labels (Phase C)", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
+describe("openOrUpdateIndexPR - Needs IGDB id label", () => {
   it("applies 'Needs IGDB id' when source manifest lacks igdb_id and main has none either", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -335,7 +345,33 @@ describe("openOrUpdateIndexPR — Needs IGDB id label", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
+describe("openOrUpdateIndexPR - PR body game name", () => {
+  it("names the game from the manifest's `game` field in the PR body", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({ ...baseOpts(), ...octokits });
+
+    const body = state.writes.find((w) => w.kind === "pulls.create")?.payload.body as string;
+    expect(body).toContain("I found a new update for My Cool Game.");
+    expect(body).toContain("gathering the manifest for My Cool Game and cross referencing");
+    expect(body).not.toContain("for .");
+  });
+
+  it("falls back to the slug when the manifest has no `game` field", async () => {
+    const state = makeFakeIndex();
+    const octokits = makeOctokits(state);
+    await openOrUpdateIndexPR({
+      ...baseOpts({ sourceManifest: { authors: ["Alice"], world_version: "v1.0.0" } }),
+      ...octokits,
+    });
+
+    const body = state.writes.find((w) => w.kind === "pulls.create")?.payload.body as string;
+    expect(body).toContain("I found a new update for myclgm.");
+    expect(body).not.toContain("for .");
+  });
+});
+
+describe("openOrUpdateIndexPR - CODEOWNERS append (Phase E)", () => {
   it("creates CODEOWNERS with header when file does not exist", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -447,7 +483,7 @@ describe("openOrUpdateIndexPR — CODEOWNERS append (Phase E)", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinned)", () => {
+describe("openOrUpdateIndexPR - manifest merge (author-canonical, Oliver-pinned)", () => {
   function readManifest(state: FakeIndex): Record<string, unknown> {
     const write = state.writes.find(
       (w) => w.kind === "file" && w.payload.path === "worlds/myclgm.json",
@@ -592,7 +628,7 @@ describe("openOrUpdateIndexPR — manifest merge (author-canonical, Oliver-pinne
   });
 });
 
-describe("openOrUpdateIndexPR — PR body wheel info", () => {
+describe("openOrUpdateIndexPR - PR body wheel info", () => {
   it("includes the wheel filename and a human-readable size", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -628,7 +664,7 @@ describe("openOrUpdateIndexPR — PR body wheel info", () => {
   });
 });
 
-describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
+describe("openOrUpdateIndexPR - auto-merge enable on create", () => {
   it("calls enablePullRequestAutoMerge with the new PR's node_id and SQUASH method", async () => {
     const state = makeFakeIndex();
     const octokits = makeOctokits(state);
@@ -681,5 +717,293 @@ describe("openOrUpdateIndexPR — auto-merge enable on create", () => {
 
     const label = state.writes.find((w) => w.kind === "labels");
     expect(label).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bundled multi-world release: openOrUpdateBundleIndexPR
+// ---------------------------------------------------------------------------
+
+const BUNDLE_TAG = "worlds-wheels-2026-06-06";
+
+function bundleWorld(slug: string) {
+  return {
+    slug,
+    moduleLocation:
+      `https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/${BUNDLE_TAG}/` +
+      `worlds_${slug}-1.0.0-py3-none-any.whl#sha256=${"b".repeat(64)}`,
+    wheelAssetName: `worlds_${slug}-1.0.0-py3-none-any.whl`,
+    wheelAssetSize: 158_720,
+  };
+}
+
+const bundleBaseOpts = (worlds: ReturnType<typeof bundleWorld>[]) => ({
+  karenData: KAREN_DATA,
+  oliverData: OLIVER_DATA,
+  indexOwner: INDEX_OWNER,
+  indexName: INDEX_NAME,
+  sourceOwner: "MultiworldGG",
+  sourceRepo: "MultiworldGG-Beta",
+  releaseTag: BUNDLE_TAG,
+  worlds,
+});
+
+function manifestPaths(state: FakeIndex): string[] {
+  return state.writes
+    .filter((w) => w.kind === "file" && /^worlds\/.*\.json$/.test(w.payload.path))
+    .map((w) => w.payload.path);
+}
+
+function manifestWrite(state: FakeIndex, path: string) {
+  const w = state.writes.find((x) => x.kind === "file" && x.payload.path === path);
+  return w ? JSON.parse(w.payload.content) : undefined;
+}
+
+// Same split as single-world: Karen for repo/git/commits, Oliver for
+// pulls/issues/graphql: two clients over one shared FakeIndex state.
+function makeBundleOctokits(state: FakeIndex, opts: { graphqlThrows?: Error } = {}) {
+  return {
+    karenOctokit: makeKarenOctokit(state),
+    oliverOctokit: makeOliverOctokit(state, INDEX_OWNER, opts),
+  };
+}
+
+// A rich existing Index manifest, like the real worlds/<slug>.json entries.
+function indexManifest(game: string, extra: Record<string, unknown> = {}) {
+  return JSON.stringify(
+    {
+      minimum_ap_version: "0.6.5",
+      world_version: "1.5.7",
+      authors: ["Dev One", "Dev Two"],
+      igdb_id: 1096,
+      game,
+      module_location: `https://example/old/${game}.whl#sha256=${"0".repeat(64)}`,
+      ...extra,
+    },
+    null,
+    2,
+  );
+}
+
+// The author's archipelago.json, as read from inside the world's wheel.
+function wheelManifest(game: string, extra: Record<string, unknown> = {}): Record<string, unknown> {
+  return { minimum_ap_version: "0.6.5", world_version: "2.0.0", authors: ["A"], game, ...extra };
+}
+
+// Stand in for the real download+unzip: serve a manifest per slug, null otherwise
+// (null = "wheel has no archipelago.json" = the only skip path).
+function fetchFor(bySlug: Record<string, Record<string, unknown> | null>) {
+  return async (_moduleLocation: string, slug: string): Promise<Record<string, unknown> | null> =>
+    slug in bySlug ? bySlug[slug] : null;
+}
+
+describe("openOrUpdateBundleIndexPR", () => {
+  it("seeds each world's manifest from its wheel, preserving igdb_id from the Index", async () => {
+    const state = makeFakeIndex({
+      files: {
+        main: {
+          "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" },
+          "worlds/oot.json": { content: indexManifest("Ocarina of Time"), sha: "oot" },
+        },
+      },
+    });
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("oot")]),
+      ...octokits,
+      fetchManifest: fetchFor({
+        dk64: wheelManifest("Donkey Kong 64"),
+        oot: wheelManifest("Ocarina of Time"),
+      }),
+    });
+
+    expect(result.opened).toBe(true);
+    expect(result.created).toBe(true);
+    expect(result.updatedWorldSlugs).toEqual(["dk64", "oot"]);
+    expect(result.skippedSlugs).toEqual([]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json", "worlds/oot.json"]);
+
+    const dk = manifestWrite(state, "worlds/dk64.json");
+    // Wheel is canonical (world_version 2.0.0, not the Index's 1.5.7); module_location
+    // + disk_space_kb stamped; igdb_id preserved from the existing Index manifest.
+    expect(dk).toMatchObject({
+      game: "Donkey Kong 64",
+      world_version: "2.0.0",
+      authors: ["A"],
+      igdb_id: 1096,
+    });
+    expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
+    expect(dk.disk_space_kb).toBe(155);
+
+    expect(state.writes.filter((w) => w.kind === "branch")).toHaveLength(1);
+    expect(state.writes.filter((w) => w.kind === "pulls.create")).toHaveLength(1);
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["APWorld Update"]); // both already on the Index
+    // The bundle never touches CODEOWNERS.
+    expect(
+      state.writes.find((w) => w.kind === "file" && w.payload.path === ".github/CODEOWNERS"),
+    ).toBeUndefined();
+  });
+
+  it("preserves an existing manifest's indentation", async () => {
+    const fourSpace = JSON.stringify({ game: "G", igdb_id: 1, module_location: "old" }, null, 4);
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: fourSpace, sha: "dk" } } },
+    });
+    const octokits = makeBundleOctokits(state);
+    await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
+    });
+
+    const write = state.writes.find((w) => w.kind === "file" && w.payload.path === "worlds/dk64.json");
+    expect(write?.payload.content).toContain('\n    "'); // 4-space indent retained
+  });
+
+  it("seeds a brand-new world (not on the Index) from its wheel alongside an update", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
+    });
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("newbie")]),
+      ...octokits,
+      fetchManifest: fetchFor({
+        dk64: wheelManifest("Donkey Kong 64"),
+        newbie: wheelManifest("New Game", { igdb_id: 555 }),
+      }),
+    });
+
+    expect(result.opened).toBe(true);
+    expect(result.updatedWorldSlugs).toEqual(["dk64", "newbie"]);
+    expect(result.skippedSlugs).toEqual([]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json", "worlds/newbie.json"]);
+
+    const newbie = manifestWrite(state, "worlds/newbie.json");
+    expect(newbie).toMatchObject({ game: "New Game", igdb_id: 555 });
+    expect(newbie.module_location).toBe(bundleWorld("newbie").moduleLocation);
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["New APWorld", "APWorld Update"]);
+  });
+
+  it("skips only the world whose wheel has no archipelago.json", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
+    });
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64"), bundleWorld("broken")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64"), broken: null }),
+    });
+
+    expect(result.opened).toBe(true);
+    expect(result.updatedWorldSlugs).toEqual(["dk64"]);
+    expect(result.skippedSlugs).toEqual(["broken"]);
+    expect(manifestPaths(state)).toEqual(["worlds/dk64.json"]);
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeDefined();
+  });
+
+  it("opens no PR when no wheel carries an archipelago.json", async () => {
+    const state = makeFakeIndex(); // empty main
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha"), bundleWorld("beta")]),
+      ...octokits,
+      fetchManifest: fetchFor({ alpha: null, beta: null }),
+    });
+
+    expect(result.opened).toBe(false);
+    expect(result.skippedSlugs).toEqual(["alpha", "beta"]);
+    expect(state.writes.find((w) => w.kind === "branch")).toBeUndefined();
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
+  });
+
+  it("re-runs self-healing: re-seeds from the wheel + main's igdb, updates the existing PR", async () => {
+    const branch = `update/${BUNDLE_TAG}`;
+    const stripped = JSON.stringify({ module_location: "stale" }, null, 2); // a prior bad commit
+    const state = makeFakeIndex({
+      branches: { main: "main-sha", [branch]: "branch-sha" },
+      files: {
+        main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "m" } },
+        [branch]: { "worlds/dk64.json": { content: stripped, sha: "b" } },
+      },
+      openPRs: [{ number: 42, head: branch }],
+    });
+    const octokits = makeBundleOctokits(state);
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
+    });
+
+    expect(result.created).toBe(false);
+    expect(result.prNumber).toBe(42);
+    expect(result.updatedWorldSlugs).toEqual(["dk64"]);
+    // Re-seeded from the wheel (world_version 2.0.0); igdb_id restored from main.
+    const dk = manifestWrite(state, "worlds/dk64.json");
+    expect(dk).toMatchObject({ game: "Donkey Kong 64", world_version: "2.0.0", igdb_id: 1096 });
+    expect(dk.module_location).toBe(bundleWorld("dk64").moduleLocation);
+    expect(state.writes.find((w) => w.kind === "pulls.create")).toBeUndefined();
+    expect(state.writes.find((w) => w.kind === "pulls.update")).toBeDefined();
+  });
+
+  it("labels 'Needs IGDB id' when neither the wheel nor the Index manifest has one", async () => {
+    const noIgdb = JSON.stringify({ game: "G", world_version: "1.0.0", module_location: "old" }, null, 2);
+    const state = makeFakeIndex({
+      files: { main: { "worlds/alpha.json": { content: noIgdb, sha: "a" } } },
+    });
+    const octokits = makeBundleOctokits(state);
+    await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("alpha")]),
+      ...octokits,
+      fetchManifest: fetchFor({ alpha: wheelManifest("G") }), // wheel has no igdb_id either
+    });
+
+    const label = state.writes.find((w) => w.kind === "labels");
+    expect(label?.payload.labels).toEqual(["APWorld Update", "Needs IGDB id"]);
+  });
+
+  it("swallows a graphql auto-merge error and still completes", async () => {
+    const state = makeFakeIndex({
+      files: { main: { "worlds/dk64.json": { content: indexManifest("Donkey Kong 64"), sha: "dk" } } },
+    });
+    const octokits = makeBundleOctokits(state, { graphqlThrows: new Error("auto_merge disabled") });
+    const result = await openOrUpdateBundleIndexPR({
+      ...bundleBaseOpts([bundleWorld("dk64")]),
+      ...octokits,
+      fetchManifest: fetchFor({ dk64: wheelManifest("Donkey Kong 64") }),
+    });
+
+    expect(result.created).toBe(true);
+    expect(state.writes.find((w) => w.kind === "labels")).toBeDefined();
+  });
+});
+
+describe("mergeWorldManifest", () => {
+  it("stamps module_location and disk_space_kb and keeps author fields", () => {
+    const m = mergeWorldManifest({ game: "G", flags: ["ROM"] }, {}, "url#sha256=x", 2 * 1024 * 1024);
+    expect(m.module_location).toBe("url#sha256=x");
+    expect(m.disk_space_kb).toBe(2048);
+    expect(m.game).toBe("G");
+    expect(m.flags).toEqual(["ROM"]);
+  });
+
+  it("rounds a partial KiB up and drops a stale disk_space_mb copied from the Index", () => {
+    const m = mergeWorldManifest({ game: "G", disk_space_mb: 1 }, { disk_space_mb: 1 }, "u", 1025);
+    expect(m.disk_space_kb).toBe(2);
+    expect(m).not.toHaveProperty("disk_space_mb");
+  });
+
+  it("preserves igdb_id from the current Index manifest when the author omits it", () => {
+    const m = mergeWorldManifest({ game: "G" }, { igdb_id: 42 }, "u", 1);
+    expect(m.igdb_id).toBe(42);
+  });
+
+  it("lets the author's igdb_id win over the current Index manifest", () => {
+    const m = mergeWorldManifest({ igdb_id: 7 }, { igdb_id: 42 }, "u", 1);
+    expect(m.igdb_id).toBe(7);
   });
 });

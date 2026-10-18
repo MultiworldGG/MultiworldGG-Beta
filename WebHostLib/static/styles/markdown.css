@@ -5,11 +5,52 @@
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 30px;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: var(--mw-sys-color-scrim-light);
     border-radius: 8px;
     padding: 25px 30px 30px;
     font-family: Inter-Light, sans-serif;
-    font-size: 19px;
+    font-size: 16px;
+}
+
+/* Tutorial language switcher - only rendered when a guide ships translations. */
+.mw-doc-languages{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.mw-doc-languages-label{
+    font-family: Inter-Regular, sans-serif;
+    font-size: 14.5px;
+    color: var(--mw-sys-color-on-surface-variant);
+    margin-right: 2px;
+}
+
+.mw-doc-language{
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border: 1px solid var(--mw-sys-color-outline);
+    border-radius: var(--mw-radius-full);
+    font-family: Inter-Regular, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.6;
+    text-decoration: none;
+}
+
+a.mw-doc-language:hover{
+    border-color: var(--mw-sys-color-secondary);
+    color: var(--mw-sys-color-secondary);
+}
+
+.mw-doc-language.is-current{
+    background: var(--mw-sys-color-surface-container);
+    border-color: var(--mw-sys-color-secondary);
+    color: var(--mw-sys-color-secondary);
+    font-weight: 500;
 }
 
 .markdown img{
@@ -24,49 +65,59 @@
 .markdown a{}
 
 .markdown h1, .markdown details summary.h1{
-    font-size: 52px;
+    font-size: 32px;
     font-weight: normal;
-    font-family: Inter-Regular, sans-serif;
+    font-family: Inter-Bold, sans-serif;
     width: 100%;
-    text-shadow: 1px 1px 4px #000000;
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 5px var(--mw-sys-color-primary),
+        1px 1px 0px var(--mw-sys-color-primary);
 }
 
 .markdown h2, .markdown details summary.h2{
-    font-size: 30px;
+    font-size: 24px;
     font-weight: normal;
-    font-family: Inter-Light, sans-serif;
+    font-family: Inter-Regular, sans-serif;
     width: 100%;
     margin-top: 20px;
     margin-bottom: 0.5rem;
-    text-shadow: 1px 1px 2px #000000;
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 4px var(--mw-sys-color-primary),
+        1px 1px 0px var(--mw-sys-color-primary);
 }
 
 .markdown h3, .markdown details summary.h3{
-    font-size: 26px;
-    font-family: Inter-Regular, sans-serif;
+    font-size: 20px;
+    font-family: Inter-Light, sans-serif;
     text-transform: none;
     text-align: left;
     width: 100%;
     margin-bottom: 0.5rem;
+    color: var(--mw-sys-color-on-background);
+    text-shadow: 
+        0px 0px 3px var(--mw-sys-color-tertiary),
+        1px 1px 0px var(--mw-sys-color-tertiary);
 }
 
 .markdown h4, .markdown details summary.h4{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 24px;
+    font-size: 18px;
     margin-bottom: 24px;
 }
 
 .markdown h5, .markdown details summary.h5{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 20px;
+    font-size: 17px;
 }
 
 .markdown h6, .markdown details summary.h6{
     font-family: Inter-Regular, sans-serif;
     text-transform: none;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .markdown h4, .markdown h5, .markdown h6{
@@ -96,6 +147,31 @@
 
 }
 
+.markdown sub{
+    font-size: 0.8rem;
+    vertical-align: sub;
+}
+
+.markdown blockquote{
+    border-left: 4px solid var(--mw-sys-color-outline);
+    background-color: var(--mw-sys-color-surface-container);
+    font-family: Inter-Bold, sans-serif;
+    padding-left: 16px;
+    margin-left: 1rem;
+    margin-right: 0;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.markdown mark{
+    background-color: var(--mw-sys-color-secondary-container);
+    color: var(--mw-sys-color-on-secondary-container);
+    font-family: Inter-Bold, sans-serif;
+    font-weight: 600;
+    padding: 0px 4px;
+    border-radius: 2px;
+}
+
 .markdown #tutorial-video-container{
     width: 100%;
     text-align: center;
@@ -114,13 +190,13 @@
 .markdown table th{
     text-align: left;
     padding: 10px;
-    border: 1px solid white;
-    font-size: 20px;
+    border: 1px solid var(--mw-sys-color-white);
+    font-size: 16px;
     font-family: Inter-Regular, sans-serif;
 }
 
 .markdown table td{
-    border: 1px solid white;
+    border: 1px solid var(--mw-sys-color-white);
     text-align: left;
     padding: 10px;
 }

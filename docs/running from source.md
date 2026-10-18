@@ -12,7 +12,7 @@ What you'll need:
      updates for older versions are not easily available.
    * Python 3.13.x is the only supported version (3.12 is no longer supported as of the 3.13 cutover)
  * pip: included in downloads from python.org, separate in many Linux distributions
- * [uv](https://docs.astral.sh/uv/getting-started/installation/) — required by `ModuleUpdate.py` for all package
+ * [uv](https://docs.astral.sh/uv/getting-started/installation/) - required by `ModuleUpdate.py` for all package
    installs. The frozen Windows installer auto-installs uv via winget (with an astral PowerShell installer fallback);
    the macOS/Linux frozen builds run astral's installer on first launch. Running from source, install `uv` on
    `PATH` yourself with one of:
@@ -28,8 +28,15 @@ required modules and after pressing enter proceed to install everything automati
 installs through `uv pip install`, so you'll see uv's resolver output rather than pip's.
 After this, you should be able to run the programs.
 
- * `Launcher.py` gives access to many components, including clients registered in `worlds/LauncherComponents.py`.
-    * The Launcher button "Generate Template Options" will generate default yamls for all worlds.
+ * `Launcher.py` (source) / `MultiworldGGLauncher` (frozen) opens the standalone Launcher: games and tools,
+   including clients registered in `worlds/LauncherComponents.py`. It is its own process and stays open,
+   spawning every game/tool it launches as a separate process in turn.
+    * The Launcher's "Create YAML" tool opens the yaml_creator screen to build a player options file for one
+      game at a time. `Options.generate_yaml_templates` (bulk template generation for every installed world)
+      remains available for WebHost, which still uses it to seed the Players/Templates folder.
+ * `MultiWorld.py` (source) / `MultiworldGG` (frozen) is the client, and boots directly into a game when
+   launched with `--game <module>` (or a patch/URL it can route), skipping the game-select screen -- only
+   the Launcher shows the full game list.
  * With yaml(s) in the `Players` folder, `Generate.py` will generate the multiworld archive.
  * `MultiServer.py`, with the filename of the generated archive as a command line parameter, will host the multiworld locally.
     * `--log_network` is a command line parameter useful for debugging.
@@ -86,16 +93,6 @@ locally. If you still want to, e.g. for local testing, you can by running
 `python setup.py build_exe` to generate a binary distribution of Archipelago in `build/`. Or to generate an AppImage
 first generate the binary distribution and then run `python setup.py bdist_appimage` to populate `dist/`. You need to
 put an `appimagetool` into the directory you run the command from, rename it to `appimagetool` and make it executable.
-
-
-## Optional: A Link to the Past Enemizer
-
-Only required to generate seeds that include A Link to the Past with certain options enabled. You will receive an
-error if it is required.
-
-You can get the latest Enemizer release at [Enemizer Github releases](https://github.com/Ijwu/Enemizer/releases).
-It should be dropped as "EnemizerCLI" into the root folder of the project. Alternatively, you can point the Enemizer
-setting in host.yaml at your Enemizer executable.
 
 
 ## Optional: SNI

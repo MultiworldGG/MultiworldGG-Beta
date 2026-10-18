@@ -109,6 +109,7 @@ class UIHint:
         self.from_shop = bool(mwgg_status & MWGGUIHintStatus.HINT_SHOP)
         self.for_goal = bool(mwgg_status & MWGGUIHintStatus.HINT_GOAL)
         self.for_bk_mode = bool(mwgg_status & MWGGUIHintStatus.HINT_BK_MODE)
+        self._hide = bool(mwgg_status & MWGGUIHintStatus.HINT_HIDDEN)
 
         self.mwgg_hint_status = mwgg_status
 
@@ -124,16 +125,15 @@ class UIHint:
         flag_enum = MWGGUIHintStatus(flag) if not isinstance(flag, MWGGUIHintStatus) else flag
 
         if value:
-            # Set the flag by combining with existing flags using bitwise OR
             self.mwgg_hint_status = self.mwgg_hint_status | flag_enum
         else:
-            # Clear the flag by using bitwise AND with the inverted flag
             self.mwgg_hint_status = self.mwgg_hint_status & ~flag_enum
 
         # Update the individual boolean properties
         self.from_shop = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_SHOP)
         self.for_goal = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_GOAL)
         self.for_bk_mode = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_BK_MODE)
+        self._hide = bool(self.mwgg_hint_status & MWGGUIHintStatus.HINT_HIDDEN)
 
     @property
     def from_shop(self) -> bool:
@@ -191,9 +191,9 @@ class UIHint:
         if flags & ItemClassification.progression:  # Check for progression flag first!
             # "useful progression" gets marked progression
             if flags & ItemClassification.deprioritized:  # deprioritized, but still progression (skulls etc)
-                return "Progression - Logically Relevant"
+                return "Not Priority"
             elif flags & ItemClassification.skip_balancing:  # skip_balancing bit set on a priority item: macguffin
-                return "Progression - Requried for Goal"
+                return "Required for Goal"
             else:
                 return "Progression"
         elif flags & ItemClassification.useful:  # useful

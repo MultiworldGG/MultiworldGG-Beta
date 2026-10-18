@@ -3,7 +3,22 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { handleReleasePublished } from "../src/handlers/release_published";
+import { resetReleaseCoalescingForTests } from "../src/handlers/shared";
 import { IndexBotData } from "../src/index-pr";
+
+// The bundle path reads each world's archipelago.json out of its wheel (a real
+// download+unzip). Mock that boundary: by default every recognized world has a
+// seedable manifest; a test sets a slug to null to exercise the no-manifest skip.
+const { wheelManifests } = vi.hoisted(() => ({
+  wheelManifests: new Map<string, Record<string, unknown> | null>(),
+}));
+vi.mock("../src/wheel-manifest", () => ({
+  fetchWheelManifest: async (_moduleLocation: string, slug: string) =>
+    wheelManifests.has(slug)
+      ? wheelManifests.get(slug)
+      : { game: slug, world_version: "1.0.0", igdb_id: 1 },
+}));
+beforeEach(() => wheelManifests.clear());
 
 // ---------------------------------------------------------------------------
 // Fixture types
@@ -107,11 +122,11 @@ const fakeLog = {
   child: () => fakeLog,
 };
 
-function makeContext(state: RepoState, releaseTag: string, draft = false): any {
+function makeContext(state: RepoState, releaseTag: string, draft = false, prerelease = false): any {
   return {
     octokit: makeContextOctokit(state),
     payload: {
-      release: { tag_name: releaseTag, draft },
+      release: { tag_name: releaseTag, draft, prerelease },
     },
     log: fakeLog,
     repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
@@ -125,12 +140,12 @@ function makeMinimalProbot() {
 const KAREN_DATA: IndexBotData = {
   id: 0,
   client_id: "k",
-  slug: "karen-multiworld-bot",
+  slug: "karen-head-of-multiworld-qa",
   owner: {},
-  name: "Karen-Multiworld-Bot",
+  name: "Karen-Head-of-Multiworld-QA",
   description: "",
   external_url: "",
-  html_url: "https://github.com/apps/karen-multiworld-bot",
+  html_url: "https://github.com/apps/karen-head-of-multiworld-qa",
   created_at: "",
   updated_at: "",
   permissions: {},
@@ -140,12 +155,12 @@ const KAREN_DATA: IndexBotData = {
 const OLIVER_DATA: IndexBotData = {
   id: 0,
   client_id: "o",
-  slug: "oliver-multiworld-squirrel",
+  slug: "oliver-the-multiworld-squirrel",
   owner: {},
-  name: "Oliver-Multiworld-Squirrel",
+  name: "Oliver-The-Multiworld-Squirrel",
   description: "",
   external_url: "",
-  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+  html_url: "https://github.com/apps/oliver-the-multiworld-squirrel",
   created_at: "",
   updated_at: "",
   permissions: {},
@@ -172,11 +187,26 @@ function wheelAsset(opts: {
   };
 }
 
+// A `<name>.apworld` release asset (the Basic Manual fork flow attaches one by
+// hand). Identifies the world; not pinned with a sha256, so its digest is null.
+// Pass `name` directly to test a raw asset filename (e.g. an invalid stem).
+function apworldAsset(opts: { slug?: string; name?: string; tag: string; repo?: string; size?: number }) {
+  const repo = opts.repo ?? "MultiworldGG/myclgm-test";
+  const name = opts.name ?? `${opts.slug}.apworld`;
+  return {
+    name,
+    browser_download_url: `https://github.com/${repo}/releases/download/${opts.tag}/${name}`,
+    size: opts.size ?? 64_000,
+    digest: null,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Index-side octokit stubs (identical to workflow_run.test.ts helpers)
 // ---------------------------------------------------------------------------
 
 function makeKarenIndexOctokit(writes: string[]): any {
+  const createdRefs = new Set<string>();
   return {
     rest: {
       repos: {
@@ -194,7 +224,13 @@ function makeKarenIndexOctokit(writes: string[]): any {
           if (ref.endsWith("/main")) return { data: { object: { sha: "main-sha" } } };
           throw Object.assign(new Error("404"), { status: 404 });
         },
-        createRef: async () => {
+        createRef: async ({ ref }: { ref: string }) => {
+          // GitHub 422s a second create of the same ref. Modelled here because
+          // that response is exactly what the duplicate release delivery hits.
+          if (createdRefs.has(ref)) {
+            throw Object.assign(new Error("Reference already exists"), { status: 422 });
+          }
+          createdRefs.add(ref);
           writes.push("createRef");
           return { data: {} };
         },
@@ -237,12 +273,18 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-release-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Cases reuse the same repo+tag; drop the duplicate-delivery coalescing state.
+  resetReleaseCoalescingForTests();
+  // Make the asset-digest wait instant in tests (no real backoff sleeps).
+  process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
+  delete process.env.OLIVER_DIGEST_WAIT_MS;
+  delete process.env.OLIVER_RELEASE_COALESCE_MS;
 });
 
 function readEvents(): any[] {
@@ -324,6 +366,16 @@ describe("handleReleasePublished", () => {
     expect(readEvents()).toEqual([]);
   });
 
+  it("skips prerelease releases without emitting an event", async () => {
+    const state: RepoState = { releases: [] };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, "myclgm-1.0.0", /* draft= */ false, /* prerelease= */ true);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(probot.auth).not.toHaveBeenCalled();
+    expect(readEvents()).toEqual([]);
+  });
+
   it("logs skip when the tag cannot be resolved to a commit SHA", async () => {
     // State has no matching release → git.getRef returns 404 → TagLookupError
     const state: RepoState = { releases: [] };
@@ -344,7 +396,15 @@ describe("handleReleasePublished", () => {
   it("logs skip when the release tag has no slug prefix", async () => {
     const tag = "v1.0.0";
     const state: RepoState = {
-      releases: [{ tag_name: tag, tagSha: "release-sha-abc" }],
+      // A wheel IS attached: a world release whose tag the author needs to
+      // fix, so it still belongs on /status.
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag })],
+        },
+      ],
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();
@@ -352,6 +412,22 @@ describe("handleReleasePublished", () => {
     await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("ignores a release with neither a wheel nor an apworld asset without logging", async () => {
+    // MultiworldGG/MultiworldGG's own 0.7.x app releases look like this: no
+    // slug in the tag and no world artifacts. They were never Index-PR
+    // candidates, so they must not consume a row on /status.
+    const tag = "0.7.267";
+    const state: RepoState = {
+      releases: [{ tag_name: tag, tagSha: "release-sha-abc", assets: [] }],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    const ctx = makeContext(state, tag);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx);
+    expect(readEvents()).toEqual([]);
     expect(probot.auth).not.toHaveBeenCalled();
   });
 
@@ -422,19 +498,10 @@ describe("handleReleasePublished", () => {
 
   it("logs skip when getReleaseByTag returns 404", async () => {
     const tag = "myclgm-1.0.0";
-    // tagSha resolves fine (tag is in state.releases), but getReleaseByTag
-    // would look up by tag_name — remove assets to force us to think about
-    // what happens if the release disappears between event and handler.
-    // Simulate by providing a state where getRef succeeds but getReleaseByTag
-    // would 404: we add the release without a tag_name match for getReleaseByTag
-    // by giving it a different tag_name for the asset lookup.
+    // getRef resolves the tag, but getReleaseByTag 404s (release deleted
+    // between event and handler); overridden below.
     const state: RepoState = {
       releases: [
-        // Provide the tagSha resolution (getRef looks up by tag_name).
-        // But getReleaseByTag also looks up by tag_name, so we want it to 404.
-        // Trick: tagSha entry uses the real tag; the assets lookup fixture uses
-        // a *different* tag so find() misses — that would need two fixtures.
-        // Simpler: use a custom octokit override below.
         { tag_name: tag, tagSha: "release-sha-abc" },
       ],
     };
@@ -466,5 +533,615 @@ describe("handleReleasePublished", () => {
     const events = readEvents();
     expect(events[0]).toMatchObject({ kind: "skip", reason: "release_lookup_404", slug: "myclgm" });
     expect(probot.auth).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// World identification from a `<name>.apworld` release asset
+// (the Basic Manual fork flow: author attaches the .whl and .apworld by hand
+// under an arbitrary release tag, with no CI and no `<slug>-<version>` tag).
+// ---------------------------------------------------------------------------
+
+// Index-side probots wired so Karen commits and Oliver opens; shared across
+// the apworld-asset tests.
+function makeOpeningProbots(karenWrites: string[], oliverWrites: string[]) {
+  const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+  const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+  const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
+  const karenProbot = {
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
+    }),
+    log: fakeLog,
+  } as any;
+  return { probot, karenProbot };
+}
+
+describe("handleReleasePublished - .apworld-asset identification", () => {
+  it("uses the <name>.apworld asset as the slug under an arbitrary tag, pinning the wheel sha256", async () => {
+    // Arbitrary tag with no usable `<slug>-<version>` prefix: only the .apworld
+    // asset can identify the world.
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ slug: "myclgm", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game", authors: ["Berserker"] },
+      indexInstall: { id: 12345 },
+    };
+
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+    const { probot, karenProbot } = makeOpeningProbots(karenWrites, oliverWrites);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    expect(karenWrites).toContain("createRef");
+    expect(karenWrites).toContain("commit");
+    expect(oliverWrites).toContain("pulls.create");
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "ok",
+      slug: "myclgm",
+      release_tag: "v1.0.0",
+      release_sha: "manual-sha",
+      wheel_asset: "myclgm-1.0.0-py3-none-any.whl",
+      module_location:
+        "https://github.com/MultiworldGG/myclgm-test/releases/download/v1.0.0/myclgm-1.0.0-py3-none-any.whl" +
+        `#sha256=${"a".repeat(64)}`,
+    });
+  });
+
+  it("the .apworld asset wins over a disagreeing <slug>-<version> tag prefix", async () => {
+    // Tag prefix says `wrongslug`; the attached asset says `rightslug`. The
+    // asset is authoritative.
+    const tag = "wrongslug-9.9.9";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "rightslug", version: "9.9.9", tag }),
+            apworldAsset({ slug: "rightslug", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "Right Game" },
+      indexInstall: { id: 12345 },
+    };
+
+    const { probot, karenProbot } = makeOpeningProbots([], []);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "ok", slug: "rightslug", release_tag: "wrongslug-9.9.9" });
+  });
+
+  it("logs skip when more than one .apworld asset is attached", async () => {
+    const tag = "myclgm-1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ slug: "myclgm", tag }),
+            apworldAsset({ slug: "extra", tag }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({
+      kind: "skip",
+      reason: "apworld_asset_ambiguous",
+      slug: "myclgm", // provisional, from the tag prefix
+    });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the tag prefix when the .apworld stem is not a valid slug", async () => {
+    // GitHub turns spaces into dots, so a display-name apworld lands as
+    // `My.Game.apworld`: an invalid slug. The `<slug>-<version>` tag prefix
+    // still identifies the world (keeps the CI path working when both exist).
+    const tag = "myclgm-1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ name: "My.Game.apworld", tag }),
+          ],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game" },
+      indexInstall: { id: 12345 },
+    };
+
+    const { probot, karenProbot } = makeOpeningProbots([], []);
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "ok", slug: "myclgm" });
+  });
+
+  it("logs no_slug_resolved when the only signal is an invalidly-named .apworld asset", async () => {
+    // Arbitrary tag (no prefix) AND an invalid apworld stem → nothing trustworthy
+    // to use as a folder name. Refuse rather than treat the raw asset name as a
+    // path.
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [
+            wheelAsset({ slug: "myclgm", version: "1.0.0", tag }),
+            apworldAsset({ name: "Bad.Name.apworld", tag }),
+          ],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+
+  it("logs skip when the .apworld identifies the world but no .whl is attached", async () => {
+    const tag = "v1.0.0";
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "manual-sha",
+          assets: [apworldAsset({ slug: "myclgm", tag })],
+        },
+      ],
+    };
+    const probot = makeMinimalProbot();
+    const karenProbot = makeMinimalProbot();
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, tag));
+
+    const events = readEvents();
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "wheel_asset_missing", slug: "myclgm" });
+    expect(probot.auth).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Bundled multi-world release (tag `worlds-wheels-<date>`)
+// ---------------------------------------------------------------------------
+
+const BUNDLE_TAG = "worlds-wheels-2026-06-06";
+
+// A bundle wheel is `worlds_<module>-<version>-py3-none-any.whl`; the Index slug
+// is <module>.
+function bundleWheel(module: string, opts: { digest?: string | null } = {}) {
+  return wheelAsset({ slug: `worlds_${module}`, version: "1.0.0", tag: BUNDLE_TAG, digest: opts.digest });
+}
+
+function bundleIndexManifest(game: string): string {
+  return JSON.stringify({ game, world_version: "1.0.0", igdb_id: 1, module_location: "old" }, null, 2);
+}
+
+// Karen-token Index client for the bundle path: repo/git ops over a tiny
+// present-manifests map. `present[path]` decides whether a world is on the Index
+// (copy+edit) or skipped.
+function makeBundleKarenIndexOctokit(present: Record<string, string>, writes: string[]): any {
+  return {
+    rest: {
+      repos: {
+        get: async () => ({ data: { default_branch: "main" } }),
+        getContent: async ({ path }: { path: string }) => {
+          if (present[path] !== undefined) {
+            return {
+              data: {
+                type: "file",
+                sha: `sha-${path}`,
+                content: Buffer.from(present[path], "utf-8").toString("base64"),
+                encoding: "base64",
+              },
+            };
+          }
+          throw Object.assign(new Error("404"), { status: 404 });
+        },
+        createOrUpdateFileContents: async ({ path }: { path: string }) => {
+          writes.push(`commit:${path}`);
+          return { data: {} };
+        },
+      },
+      git: {
+        getRef: async ({ ref }: { ref: string }) => {
+          if (ref === "heads/main") return { data: { object: { sha: "main-sha", type: "commit" } } };
+          throw Object.assign(new Error("404"), { status: 404 }); // branch absent → createRef
+        },
+        createRef: async () => {
+          writes.push("createRef");
+          return { data: {} };
+        },
+      },
+    },
+  };
+}
+
+// Same split as single-world: Karen commits, Oliver opens. Both share one writes
+// log so assertions can check createRef/commit (Karen) and pulls.create (Oliver).
+function makeBundleProbots(present: Record<string, string>, writes: string[]) {
+  const oliverIndexOctokit = makeOliverIndexOctokit(writes);
+  const karenIndexOctokit = makeBundleKarenIndexOctokit(present, writes);
+  const probot = { auth: vi.fn().mockResolvedValue(oliverIndexOctokit), log: fakeLog } as any;
+  const karenAppOctokit = {
+    rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+  };
+  const karenProbot = {
+    auth: vi.fn().mockImplementation((id?: number) => {
+      if (id === undefined) return Promise.resolve(karenAppOctokit);
+      if (id === 67890) return Promise.resolve(karenIndexOctokit);
+      throw new Error(`unexpected karen auth id: ${id}`);
+    }),
+    log: fakeLog,
+  } as any;
+  return { probot, karenProbot };
+}
+
+describe("handleReleasePublished - bundled multi-world release", () => {
+  it("opens one combined Index PR (Oliver token) for worlds already on the Index", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("oot"), bundleWheel("crosscode")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const present = {
+      "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64"),
+      "worlds/oot.json": bundleIndexManifest("Ocarina of Time"),
+      "worlds/crosscode.json": bundleIndexManifest("CrossCode"),
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(present, writes);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    expect(writes).toContain("createRef");
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).length).toBe(3);
+    expect(writes).toContain("pulls.create");
+
+    const events = readEvents();
+    expect(events.find((e) => e.kind === "ok")).toMatchObject({
+      kind: "ok",
+      release_tag: BUNDLE_TAG,
+      index_pr: 99,
+    });
+    expect(events.filter((e) => e.kind === "ok")).toHaveLength(1);
+  });
+
+  it("skips a wheel missing a digest but still opens the PR for the rest", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("oot", { digest: null })],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "asset_digest_missing",
+        slug: "oot",
+        wheel_asset: "worlds_oot-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("skips an unrecognized wheel name and opens the PR for the recognized worlds", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          // The second asset has no `worlds_` dist prefix → unrecognized.
+          assets: [bundleWheel("dk64"), wheelAsset({ slug: "random", version: "1.0.0", tag: BUNDLE_TAG })],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        kind: "skip",
+        reason: "bundle_wheel_unrecognized",
+        wheel_asset: "random-1.0.0-py3-none-any.whl",
+      }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("seeds a brand-new world (not on the Index) from its wheel alongside an update", async () => {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("ghost")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    // Only dk64 is on the Index; ghost is new. Both wheels carry archipelago.json
+    // (the mock default), so both are committed.
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events.some((e) => e.reason === "bundle_world_no_manifest")).toBe(false);
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).sort()).toEqual([
+      "commit:worlds/dk64.json",
+      "commit:worlds/ghost.json",
+    ]);
+    expect(writes).toContain("pulls.create");
+  });
+
+  it("skips a world whose wheel has no archipelago.json, still opening the PR for the rest", async () => {
+    wheelManifests.set("ghost", null); // ghost's wheel carries no manifest → skipped
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("dk64"), bundleWheel("ghost")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      { "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64") },
+      writes,
+    );
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "skip", reason: "bundle_world_no_manifest", slug: "ghost" }),
+    );
+    expect(events.find((e) => e.kind === "ok")).toBeDefined();
+    expect(writes.filter((w) => w.startsWith("commit:worlds/"))).toEqual(["commit:worlds/dk64.json"]);
+  });
+
+  it("opens no PR when no wheel carries an archipelago.json", async () => {
+    wheelManifests.set("ghost1", null);
+    wheelManifests.set("ghost2", null);
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: BUNDLE_TAG,
+          tagSha: "bundle-sha",
+          assets: [bundleWheel("ghost1"), bundleWheel("ghost2")],
+        },
+      ],
+      indexInstall: { id: 12345 },
+    };
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots({}, writes);
+
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(state, BUNDLE_TAG));
+
+    const events = readEvents();
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "skip", reason: "bundle_no_valid_worlds" }),
+    );
+    expect(writes).not.toContain("pulls.create");
+  });
+
+  it("waits for a lagging asset digest, then includes that world once GitHub finishes hashing", async () => {
+    const validDigest = `sha256:${"a".repeat(64)}`;
+    const dl = (name: string) =>
+      `https://github.com/MultiworldGG/myclgm-test/releases/download/${BUNDLE_TAG}/${name}`;
+    let releaseFetches = 0;
+
+    const state: RepoState = {
+      releases: [{ tag_name: BUNDLE_TAG, tagSha: "bundle-sha" }],
+      indexInstall: { id: 12345 },
+    };
+    const octokit = makeContextOctokit(state);
+    // oot's digest is still being computed on the first read; it lands on the second.
+    octokit.rest.repos.getReleaseByTag = async () => {
+      releaseFetches += 1;
+      const ootDigest = releaseFetches >= 2 ? validDigest : null;
+      return {
+        data: {
+          tag_name: BUNDLE_TAG,
+          assets: [
+            {
+              name: "worlds_dk64-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_dk64-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: validDigest,
+            },
+            {
+              name: "worlds_oot-1.0.0-py3-none-any.whl",
+              browser_download_url: dl("worlds_oot-1.0.0-py3-none-any.whl"),
+              size: 158_720,
+              digest: ootDigest,
+            },
+          ],
+        },
+      };
+    };
+
+    const writes: string[] = [];
+    const { probot, karenProbot } = makeBundleProbots(
+      {
+        "worlds/dk64.json": bundleIndexManifest("Donkey Kong 64"),
+        "worlds/oot.json": bundleIndexManifest("Ocarina of Time"),
+      },
+      writes,
+    );
+
+    const ctx = {
+      octokit,
+      payload: { release: { tag_name: BUNDLE_TAG, draft: false } },
+      log: fakeLog,
+      repo: () => ({ owner: "MultiworldGG", repo: "myclgm-test" }),
+    };
+    await handleReleasePublished(probot, karenProbot, OLIVER_DATA, KAREN_DATA, ctx as any);
+
+    expect(releaseFetches).toBeGreaterThanOrEqual(2); // re-fetched after the lagging digest
+    const events = readEvents();
+    expect(events.some((e) => e.reason === "asset_digest_missing")).toBe(false); // oot not dropped
+    expect(writes.filter((w) => w.startsWith("commit:worlds/")).sort()).toEqual([
+      "commit:worlds/dk64.json",
+      "commit:worlds/oot.json",
+    ]);
+    expect(writes).toContain("pulls.create");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Duplicate-delivery coalescing
+//
+// GitHub fires `release.published` AND `release.released` for one full-release
+// publish, ~1s apart. Both route here, so without coalescing the two runs race:
+// they both created the Index branch and the loser's createRef 422'd
+// ("Reference already exists"), which is the github_api_error on /status.
+// ---------------------------------------------------------------------------
+
+describe("handleReleasePublished duplicate deliveries", () => {
+  function makeDuplicateHarness(tag: string) {
+    const state: RepoState = {
+      releases: [
+        {
+          tag_name: tag,
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag })],
+        },
+      ],
+      manifestAtRef: { game: "My Cool Game", authors: ["Berserker"] },
+      indexInstall: { id: 12345 },
+    };
+
+    const karenWrites: string[] = [];
+    const oliverWrites: string[] = [];
+    const oliverIndexOctokit = makeOliverIndexOctokit(oliverWrites);
+    const karenIndexOctokit = makeKarenIndexOctokit(karenWrites);
+
+    const probot = {
+      auth: vi.fn().mockResolvedValue(oliverIndexOctokit),
+      log: fakeLog,
+    } as any;
+    const karenAppOctokit = {
+      rest: { apps: { getRepoInstallation: async () => ({ data: { id: 67890 } }) } },
+    };
+    const karenProbot = {
+      auth: vi.fn().mockImplementation((id?: number) => {
+        if (id === undefined) return Promise.resolve(karenAppOctokit);
+        if (id === 67890) return Promise.resolve(karenIndexOctokit);
+        throw new Error(`unexpected karen auth id: ${id}`);
+      }),
+      log: fakeLog,
+    } as any;
+
+    return { state, probot, karenProbot, karenWrites, oliverWrites };
+  }
+
+  it("processes the release once when published and released arrive concurrently", async () => {
+    const tag = "myclgm-1.0.0";
+    const h = makeDuplicateHarness(tag);
+
+    // Both deliveries in flight at the same time, as they are in production.
+    await Promise.all([
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+    ]);
+
+    expect(h.karenWrites.filter((w) => w === "createRef")).toHaveLength(1);
+    expect(h.oliverWrites.filter((w) => w === "pulls.create")).toHaveLength(1);
+    expect(readEvents()).toHaveLength(1);
+  });
+
+  it("logs a skip once when the duplicate pair both fail to resolve a slug", async () => {
+    const tag = "0.7.267"; // core-repo style tag: no '<slug>-<version>' prefix
+    const h = makeDuplicateHarness(tag);
+
+    await Promise.all([
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+      handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag)),
+    ]);
+
+    const events = readEvents();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ kind: "skip", reason: "no_slug_resolved" });
+  });
+
+  it("still processes a later redelivery once the grace window has lapsed", async () => {
+    process.env.OLIVER_RELEASE_COALESCE_MS = "0";
+    const tag = "myclgm-1.0.0";
+    const h = makeDuplicateHarness(tag);
+
+    await handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag));
+    // Let the zero-length grace timer fire before the redelivery lands.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await handleReleasePublished(h.probot, h.karenProbot, OLIVER_DATA, KAREN_DATA, makeContext(h.state, tag));
+
+    expect(readEvents()).toHaveLength(2);
   });
 });

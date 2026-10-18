@@ -7,6 +7,60 @@ from . import TestBase
 
 
 class TestGenerate(TestBase):
+    def test_generate_page_marks_race_mode_for_settings_cache(self) -> None:
+        # upstream serves this page at /generate; beta renamed it to /play/new
+        normal_response = self.client.get("/play/new")
+        self.assertEqual(normal_response.status_code, 200)
+        self.assertIn('data-race="0"', normal_response.get_data(as_text=True))
+
+        race_response = self.client.get("/play/new/True")
+        self.assertEqual(race_response.status_code, 200)
+        self.assertIn('data-race="1"', race_response.get_data(as_text=True))
+
+    def test_generate_js_caches_non_sensitive_settings(self) -> None:
+        with open("WebHostLib/static/assets/generate.js", encoding="utf-8") as js_file:
+            js_content = js_file.read()
+
+        self.assertIn("generate_settings", js_content)
+        self.assertIn("generate_race_settings", js_content)
+        self.assertIn("readCookie", js_content)
+        self.assertIn("saveStoredSettings", js_content)
+        self.assertIn("admin_password", js_content)
+        self.assertIn("file-input", js_content)
+        self.assertIn("form.submit()", js_content)
+
+    def test_get_meta_release_threshold(self) -> None:
+        from WebHostLib.generate import get_meta
+
+        meta = get_meta({"release_threshold": "37"})
+        self.assertEqual(meta["server_options"]["release_threshold"], 37)
+
+    def test_get_meta_admin_password(self) -> None:
+        from WebHostLib.generate import get_meta
+
+        self.assertIsNone(get_meta({})["server_options"]["admin_password"])
+        self.assertIsNone(get_meta({"admin_password": ""})["server_options"]["admin_password"])
+        self.assertEqual(get_meta({"admin_password": "hunter2"})["server_options"]["admin_password"], "hunter2")
+        # pre-rename clients still post server_password
+        self.assertEqual(get_meta({"server_password": "legacy"})["server_options"]["admin_password"], "legacy")
+
+    def test_get_meta_release_threshold_clamps_invalid_values(self) -> None:
+        from WebHostLib.generate import get_meta
+
+        self.assertEqual(get_meta({"release_threshold": "-5"})["server_options"]["release_threshold"], 0)
+        self.assertEqual(get_meta({"release_threshold": "150"})["server_options"]["release_threshold"], 100)
+        self.assertEqual(get_meta({"release_threshold": "bad"})["server_options"]["release_threshold"], 0)
+
+    def test_get_meta_progression_equalization_clamps_invalid_values(self) -> None:
+        from WebHostLib.generate import get_meta
+
+        self.assertEqual(get_meta({"progression_equalization": "37"})["generator_options"]
+                         ["progression_equalization"], 37)
+        self.assertEqual(get_meta({"progression_equalization": "-5"})["generator_options"]
+                         ["progression_equalization"], 0)
+        self.assertEqual(get_meta({"progression_equalization": "150"})["generator_options"]
+                         ["progression_equalization"], 100)
+
     def test_valid_yaml(self) -> None:
         """
         Verify that posting a valid yaml will start generating a game.
@@ -14,8 +68,8 @@ class TestGenerate(TestBase):
         with self.app.app_context(), self.app.test_request_context():
             yaml_data = """
             name: Player1
-            game: MultiworldGG
-            MultiworldGG: {}
+            game: Archipelago
+            Archipelago: {}
             """
             response = self.client.post(url_for("generate"),
                                         data={"file": (BytesIO(yaml_data.encode("utf-8")), "test.yaml")},
@@ -40,7 +94,7 @@ class TestGenerate(TestBase):
                                         follow_redirects=True)
             self.assertIn("user-message", response.text,
                           "Request did not call flash()")
-            self.assertIn("not find any valid files", response.text,
+            self.assertIn("not find any valid YAML files", response.text,
                           "Response shows unexpected error")
             self.assertIn("generate-game-form", response.text,
                           "Response did not get user back to the form")
@@ -58,8 +112,8 @@ class TestGenerate(TestBase):
         with self.app.app_context(), self.app.test_request_context():
             yaml_data = "---\n".join([
                 f"name: Player{n}\n"
-                "game: MultiworldGG\n"
-                "MultiworldGG: {}\n"
+                "game: Archipelago\n"
+                "Archipelago: {}\n"
                 for n in range(1, max_roll + 2)
             ])
             response = self.client.post(url_for("generate"),

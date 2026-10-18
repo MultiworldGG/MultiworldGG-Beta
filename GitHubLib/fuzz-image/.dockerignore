@@ -1,0 +1,6 @@
+# Build context is this directory. Only the Dockerfile, run_fuzz.sh, and the two
+# vendored harness scripts are COPYed; keep everything else out of the image layers.
+README.md
+.dockerignore
+.git
+*.md

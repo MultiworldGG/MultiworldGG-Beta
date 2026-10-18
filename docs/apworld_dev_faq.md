@@ -246,7 +246,7 @@ Release on your world's repo, the workflow builds a pip-installable wheel from y
 `worlds/<slug>/` source and attaches it as a release asset. The **Oliver-Multiworld-Squirrel**
 GitHub App watches for that workflow to finish and opens a PR on **`MultiworldGG-Index`** to
 register your release. Karen's automated review checks run on that PR (schema validation,
-dependency audit, security smells) — these run *for* you to protect end-users, not as preflight
+dependency audit, security smells) - these run *for* you to protect end-users, not as preflight
 homework you have to satisfy.
 
 For the step-by-step author guide, see the
@@ -255,4 +255,5 @@ For the step-by-step author guide, see the
 *"I want to write my own `pyproject.toml`"* branch if you need custom Python packaging.
 
 Once your PR merges, a daily cron rebuilds the four orphan `game_index_*` branches with your world
-included; users get it via `pip install git+https://github.com/MultiworldGG/MultiworldGG-Index@<branch>`.
+included; the launcher installs it for users from the branch's source tarball
+(`https://github.com/MultiworldGG/MultiworldGG-Index/archive/refs/heads/<branch>.tar.gz`).

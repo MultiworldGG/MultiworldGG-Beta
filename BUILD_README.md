@@ -1,6 +1,6 @@
-# MultiWorldGG Build System
+# MultiworldGG Build System
 
-This directory contains the build system for creating standalone executables of MultiWorldGG using cx_Freeze.
+This directory contains the build system for creating standalone executables of MultiworldGG using cx_Freeze.
 
 ## Files
 
@@ -44,7 +44,7 @@ the `Build executable` steps in `release.yml` and `build-release-test.yml`. When
 the repos go public the var can be unset and anonymous fetches will work.
 
 Worlds (infra `_bizhawk`, `_debug`, `_manual`, `_sni`, `_tracker`, `generic`) are bundled
-directly from `src/worlds/` source — there is no separate worlds wheel build. Per-game
+directly from `src/worlds/` source - there is no separate worlds wheel build. Per-game
 worlds and the mwgg_igdb game index are NOT installed at build time; they're git-pulled
 at first run by ModuleUpdate.update() and ModuleUpdate.install_worlds().
 
@@ -115,13 +115,20 @@ python build_exe.py --skip-requirements --skip-wheels --skip-modules
 
 ## Generated Executables
 
-The build process creates the following executables:
+The build process creates the following executables (see `BaseUtils.FROZEN_TARGETS` for the
+single source of truth these names are derived from):
 
-- **MultiWorld.exe** - GUI application (main client)
-- **MultiWorldDebug.exe** - Console version for debugging (Windows only)
-- **MultiServer.exe** - Command-line server
-- **Generate.exe** - Command-line generator
-- **Patch.exe** - Command-line patcher
+- **MultiworldGG.exe** - the client. Boots straight into a game when launched with `--game`
+  (or a routable patch/URL); with no game it opens the reconnect UI, not a game list.
+- **MultiworldGGClientDebug.exe** - console version of the client, for debugging (Windows only)
+- **MultiworldGGServer.exe** - command-line server
+- **MultiworldGGGenerate.exe** - command-line generator
+- **MultiworldGGPatch.exe** - command-line patcher
+- **MultiworldGGLauncher.exe** - the standalone Launcher. Shows the
+  game list and tools, stays open, and spawns everything else -- including the client -- as a
+  separate process.
+- **MultiworldGGLauncherDebug.exe** - console version of the Launcher, for debugging and CI
+  smoke tests (Windows only)
 
 ## Build Output
 
@@ -188,7 +195,7 @@ ls build/exe.*/*.exe
 ls build/exe.*/
 
 # Test an executable
-./build/exe.*/MultiWorld.exe --help
+./build/exe.*/MultiworldGGLauncher.exe --version
 ```
 
 ## Platform Support
@@ -207,8 +214,8 @@ Edit `setup.py` to modify executable configurations:
 executables = [
     Executable(
         script="MultiWorld.py",
-        target_name="MultiWorld.exe",
-        icon="data/khapicon.ico",
+        target_name="MultiworldGG.exe",
+        icon="data/icon.ico",
         base="Win32GUI",  # GUI mode
         # base=None,      # Console mode
     ),
@@ -275,4 +282,4 @@ When modifying the build system:
 
 ## License
 
-This build system is part of MultiWorldGG and is licensed under the same terms as the main project.
+This build system is part of MultiworldGG and is licensed under the same terms as the main project.

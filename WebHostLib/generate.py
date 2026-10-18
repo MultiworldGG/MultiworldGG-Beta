@@ -9,17 +9,21 @@ from pickle import PicklingError
 from typing import Any
 
 from flask import flash, redirect, render_template, request, session, url_for
-from pony.orm import commit, db_session
 
 from BaseClasses import get_seed, seeddigits
-from Generate import PlandoOptions, handle_name, mystery_argparse
-from Main import main as ERmain
 from Utils import __version__, restricted_dumps, DaemonThreadPoolExecutor
 from WebHostLib import app
 from settings import ServerOptions, GeneratorOptions
 from .check import get_yaml_data, roll_options
-from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID
+from .models import Generation, STATE_ERROR, STATE_QUEUED, Seed, UUID, db, commit
 from .upload import upload_zip_to_db
+
+
+def _clamp_int(value: Any, default: int, minimum: int, maximum: int) -> int:
+    try:
+        return max(minimum, min(int(value), maximum))
+    except (ValueError, TypeError):
+        return default
 
 
 def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | dict[str, Any]]:
@@ -28,19 +32,27 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
         if options_source.get(f"plando_{substr}", substr in GeneratorOptions.plando_options):
             plando_options.add(substr)
 
+    # pre-rename forms and API callers may still send server_password
+    admin_password = options_source.get("admin_password") or options_source.get("server_password") or None
     server_options = {
-        "hint_cost": int(options_source.get("hint_cost", ServerOptions.hint_cost)),
+        "hint_cost": _clamp_int(options_source.get("hint_cost", ServerOptions.hint_cost),
+                                ServerOptions.hint_cost, 0, 100),
         "release_mode": str(options_source.get("release_mode", ServerOptions.release_mode)),
         "remaining_mode": str(options_source.get("remaining_mode", ServerOptions.remaining_mode)),
         "collect_mode": str(options_source.get("collect_mode", ServerOptions.collect_mode)),
+        "release_threshold": _clamp_int(options_source.get("release_threshold", ServerOptions.release_threshold),
+                                        ServerOptions.release_threshold, 0, 100),
         "countdown_mode": str(options_source.get("countdown_mode", ServerOptions.countdown_mode)),
         "hint_mode": str(options_source.get("hint_mode", ServerOptions.hint_mode)),
         "item_cheat": bool(int(options_source.get("item_cheat", not ServerOptions.disable_item_cheat))),
-        "server_password": str(options_source.get("server_password", None)),
+        "admin_password": str(admin_password) if admin_password else None,
     }
     generator_options = {
         "spoiler": int(options_source.get("spoiler", GeneratorOptions.spoiler)),
         "race": race,
+        "progression_equalization": _clamp_int(
+            options_source.get("progression_equalization", GeneratorOptions.progression_equalization),
+            GeneratorOptions.progression_equalization, 0, 100),
     }
 
     if race:
@@ -55,18 +67,18 @@ def get_meta(options_source: dict, race: bool = False) -> dict[str, list[str] | 
     }
 
 
-@app.route('/generate', methods=['GET', 'POST'])
-@app.route('/generate/<race>', methods=['GET', 'POST'])
+@app.route('/play/new', methods=['GET', 'POST'])
+@app.route('/play/new/<race>', methods=['GET', 'POST'])
 def generate(race=False):
     if request.method == 'POST':
         # check if the post request has the file part
         if 'file' not in request.files:
-            flash('No file part')
+            flash('No file part', 'error')
         else:
             files = request.files.getlist('file')
             options = get_yaml_data(files)
             if isinstance(options, str):
-                flash(options)
+                flash(options, 'error')
             else:
                 meta = get_meta(request.form, race)
                 return start_generation(options, meta)
@@ -83,10 +95,14 @@ def start_generation(options: dict[str, dict | str], meta: dict[str, Any]):
         return render_template("checkResult.html", results=results)
     elif len(gen_options) > app.config["MAX_ROLL"]:
         flash(f"Sorry, generating of multiworlds is limited to {app.config['MAX_ROLL']} players. "
-              f"If you have a larger group, please generate it yourself and upload it.")
+              f"If you have a larger group, please generate it yourself and upload it.", "error")
         return redirect(url_for(request.endpoint, **(request.view_args or {})))
     elif len(gen_options) >= app.config["JOB_THRESHOLD"]:
         try:
+            # Stash the per-player game list in meta so the worker can call
+            # set_game_names BEFORE restricted_loads imports world option modules.
+            gen_games = [vars(p).get("game") for p in gen_options.values()]
+            meta = {**meta, "games": [g for g in gen_games if g]}
             gen = Generation(
                 options=restricted_dumps({name: vars(options) for name, options in gen_options.items()}),
                 # convert to json compatible
@@ -125,6 +141,8 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
     race = meta.setdefault("generator_options", {}).setdefault("race", False)
 
     def task():
+        from Generate import PlandoOptions, handle_name, mystery_argparse
+        from Main import main as ERmain
         target = tempfile.TemporaryDirectory()
         playercount = len(gen_options)
         seed = get_seed()
@@ -166,9 +184,13 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
             args.name[player] = handle_name(args.name[player], player, name_counter)
         if len(set(args.name.values())) != len(args.name):
             raise Exception(f"Names have to be unique. Names: {Counter(args.name.values())}")
-        ERmain(args, seed, baked_server_options=meta["server_options"])
+        ERmain(args, seed, baked_server_options=meta["server_options"],
+               baked_generator_options=meta["generator_options"])
 
-        return upload_to_db(target.name, sid, owner, race)
+        # Flask app contexts are thread-local and task() runs in an executor
+        # sub-thread; push one here for upload_to_db's Session(db.engine).
+        with app.app_context():
+            return upload_to_db(target.name, sid, owner, race)
 
     thread_pool = DaemonThreadPoolExecutor(max_workers=1)
     thread = thread_pool.submit(task)
@@ -177,30 +199,32 @@ def gen_game(gen_options: dict, meta: dict[str, Any] | None = None, owner=None, 
         return thread.result(timeout)
     except concurrent.futures.TimeoutError as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = ("Allowed time for Generation exceeded, " +
-                                     "please consider generating locally instead. " +
-                                     format_exception(e))
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = ("Allowed time for Generation exceeded, " +
+                                      "please consider generating locally instead. " +
+                                      format_exception(e))
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise  # Re-raise so the pool callback handles this as a failure
     except (KeyboardInterrupt, SystemExit):
         # don't update db, retry next time
         raise
     except BaseException as e:
         if sid:
-            with db_session:
-                gen = Generation.get(id=sid)
+            from sqlalchemy.orm import Session
+            with Session(db.engine) as _session:
+                gen = _session.get(Generation, sid)
                 if gen is not None:
                     gen.state = STATE_ERROR
-                    meta = json.loads(gen.meta)
-                    meta["error"] = format_exception(e)
-                    gen.meta = json.dumps(meta)
-                    commit()
+                    _meta = json.loads(gen.meta)
+                    _meta["error"] = format_exception(e)
+                    gen.meta = json.dumps(_meta)
+                    _session.commit()
         raise
     finally:
         # free resources claimed by thread pool, if possible
@@ -227,18 +251,20 @@ def wait_seed(seed: UUID):
 
 
 def upload_to_db(folder, sid, owner, race):
+    # Callers (Flask routes, or task() in this module) push an app_context before
+    # calling, so upload_zip_to_db / db.session work uniformly here.
     for file in os.listdir(folder):
         file = os.path.join(folder, file)
         if file.endswith(".zip"):
-            with db_session:
-                with zipfile.ZipFile(file) as zfile:
-                    res = upload_zip_to_db(zfile, owner, {"race": race}, sid)
-                if type(res) == "str":
-                    raise Exception(res)
-                elif res:
-                    seed = res
-                    gen = Generation.get(id=seed.id)
-                    if gen is not None:
-                        gen.delete()
-                    return seed.id
+            with zipfile.ZipFile(file) as zfile:
+                res = upload_zip_to_db(zfile, owner, {"race": race}, sid)
+            if isinstance(res, str):
+                raise Exception(res)
+            elif res:
+                seed = res
+                gen = db.session.get(Generation, seed.id)
+                if gen is not None:
+                    db.session.delete(gen)
+                db.session.commit()
+                return seed.id
     raise Exception("Generation zipfile not found.")

@@ -1,4 +1,4 @@
-# [MultiworldGG](https://multiworld.gg) ![Discord Shield](https://discordapp.com/api/guilds/1345801058609270794/widget.png?style=shield) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
+# [MultiworldGG](https://multiworld.gg) | [Install](https://github.com/MultiworldGG/MultiworldGG/releases)
 
 MultiworldGG is a cross-game modification system which randomizes different games, then uses the result to build a single unified multi-player game, or, simpler,
 a **Multi-Game Multiworld Randomizer**.
@@ -16,6 +16,7 @@ It is a project forked from the 'Archipelago' project.
 Currently, the following games are supported:
 
 * 2048
+* Archipelaballs
 * Adventure
 * Against the Storm
 * A Hat in Time
@@ -33,6 +34,7 @@ Currently, the following games are supported:
 * Blasphemous
 * Bomb Rush Cyberfunk
 * Brotato
+* Build a Jetpack
 * Bumper Stickers
 * Candy Box 2
 * Castlevania 64
@@ -55,6 +57,7 @@ Currently, the following games are supported:
 * Dark Souls II
 * Dark Souls III
 * Dark Souls Remastered
+* DELTARUNE
 * Diddy Kong Racing
 * Digimon World
 * Donkey Kong Country
@@ -79,19 +82,25 @@ Currently, the following games are supported:
 * Final Fantasy V (Career Day)
 * Flipwitch
 * Frogmonster
+* Funi Raccoon Game
+* Gauntlet Legends
 * Getting Over It
+* Glass Animals Discography
 * Golden Sun: The Lost Age
 * Hades
+* Hades II
 * Hatsune Miku: Project Diva Mega Mix+
 * Here comes Niko!
 * Heretic
 * HITMAN World of Assassination
 * Hollow Knight
+* Hollow Knight: Silksong
 * HuniePop
 * HuniePop 2
 * Hylics 2
 * Inscryption
 * Into the Breach
+* Isles of Trials
 * Jak and Daxter: The Precursor Legacy
 * Jigsaw Puzzles
 * Kindergarten 2
@@ -114,6 +123,7 @@ Currently, the following games are supported:
 * Mega Man 3
 * Mega Man Battle Network 3
 * Mega Man X3
+* Mega Man Zero 3
 * Meritous
 * Metroid Fusion
 * Metroid Prime
@@ -139,6 +149,7 @@ Currently, the following games are supported:
 * Peggle Deluxe
 * Peggle Nights
 * Phoenotopia: Awakening
+* Pikuniku
 * Pinball FX3
 * Placid Plastic Duck Simulator
 * Pokémon Crystal
@@ -152,6 +163,8 @@ Currently, the following games are supported:
 * Quake 1
 * Rabi-Ribi
 * Raft
+* Ratchet & Clank: The Odd Couple
+* Ratchet & Clank: Size Matters
 * Ratchet & Clank 2
 * Ratchet & Clank 3: Up Your Arsenal
 * Refunct
@@ -168,7 +181,9 @@ Currently, the following games are supported:
 * Secret of Evermore
 * Shapez
 * Shivers
+* Skul The Hero Slayer
 * Slay the Spire
+* Slime Rancher
 * Sly Cooper and the Thievius Raccoonus
 * Sonic Adventure 2: Battle
 * Sonic Adventure DX
@@ -191,10 +206,13 @@ Currently, the following games are supported:
 * Super Mario World (+ Spicy Mycena Waffles Fork)
 * Super Metroid
 * Super Metroid/A Link to the Past Combo
+* Super Smash Bros. Melee
+* Taylor Swift Discography
 * The Binding of Isaac: Rebirth
 * Terraria
 * Tetris Attack
 * Timespinner
+* The Grinch
 * The Legend of Zelda
 * The Legend of Zelda: A Link Between Worlds
 * The Legend of Zelda: A Link to the Past
@@ -219,6 +237,7 @@ Currently, the following games are supported:
 * UFO 50
 * Ultrakill
 * Undertale
+* Uncanny Cat Golf
 * Vampire Survivors
 * VVVVVV
 * Wargroove
@@ -228,10 +247,12 @@ Currently, the following games are supported:
 * Wordipelago
 * Xenoblade X
 * Yacht Dice
+* Yellow Taxi Goes Vroom
 * Yoshi's Island
 * Yu-Gi-Oh! Dungeon Dice Monsters
 * Yu-Gi-Oh! Forbidden Memories
 * Yu-Gi-Oh! Ultimate Masters: World Championship Tournament 2006
+* WarioWare, Inc. - Mega Microgame$!
 * Zelda II: The Adventure of Link
 * Zillion
 * Zork: Grand Inquisitor

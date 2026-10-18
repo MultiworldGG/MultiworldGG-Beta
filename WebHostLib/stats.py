@@ -9,10 +9,10 @@ from bokeh.models import HoverTool
 from bokeh.plotting import figure, ColumnDataSource
 from bokeh.resources import INLINE
 from flask import render_template, request
-from pony.orm import select
+from sqlalchemy import select
 
 from . import app, cache
-from .models import Room, Slot
+from .models import Room, Slot, db
 
 PLOT_WIDTH = 600
 
@@ -23,15 +23,14 @@ def get_db_data(known_games: set[str]) -> tuple[Counter[str], defaultdict[date, 
     total_games: Counter[str] = Counter()
     cutoff = date.today() - timedelta(days=30)
 
-    # Explicit join: filter Room by date first, then join to Slot via shared seed
-    query = select(
-        (room.creation_time, slot.game)
-        for room in Room
-        for slot in Slot
-        if room.creation_time >= cutoff and slot.seed == room.seed
+    # JOIN Room to Slot via shared seed_id, filter Room by creation_time
+    stmt = (
+        select(Room.creation_time, Slot.game)
+        .join(Slot, Slot.seed_id == Room.seed_id)
+        .where(Room.creation_time >= cutoff)
     )
 
-    for creation_time, game in query:
+    for creation_time, game in db.session.execute(stmt):
         current_game = game if game in known_games else "Other"
         total_games[current_game] += 1
         games_played[creation_time.date()][current_game] += 1

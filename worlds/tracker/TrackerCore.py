@@ -1,6 +1,10 @@
 
+import asyncio
 import logging
 import inspect
+import os
+import pathlib
+import re
 import tempfile
 from typing import Union, Any, TYPE_CHECKING, NamedTuple
 from enum import StrEnum
@@ -9,19 +13,110 @@ from Options import PerGameCommonOptions
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds import AutoWorld
 from collections import Counter, defaultdict
-from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode
+from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode, TrackerException
 import sys
-from Utils import __version__, output_path, open_filename
+from Utils import __version__, output_path, open_filename, cache_path
+from yaml import safe_dump
 
 from Generate import main as GMain, mystery_argparse
 from worlds.generic.Rules import exclusion_rules
 from argparse import Namespace
-from typing import Optional,Callable
+from typing import Optional, Callable, Awaitable
 from NetUtils import NetworkItem, HintStatus
 
 
     
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
+
+
+def world_needs_yaml(world_cls: type) -> bool:
+    """False when the world regenerates from slot_data on Connected or has UT disabled."""
+    return not (getattr(world_cls, "disable_ut", False) or getattr(world_cls, "ut_can_gen_without_yaml", False))
+
+
+class PlayerYaml(NamedTuple):
+    path: pathlib.Path
+    doc: dict[str, Any]
+
+
+_NAME_PLACEHOLDER = re.compile(r"\{(?:player|PLAYER|number|NUMBER)\}|%(?:player|number)%")
+
+
+def yaml_name_matches(yaml_name: Any, slot_name: str) -> bool:
+    """Mirrors Generate.handle_name: placeholders stand for digits, plain names truncate to 16."""
+    names = yaml_name.keys() if isinstance(yaml_name, dict) else [yaml_name]
+    for name in names:
+        if not isinstance(name, str):
+            continue
+        name = name.strip()
+        if _NAME_PLACEHOLDER.search(name):
+            pattern = r"\d*".join(re.escape(part) for part in _NAME_PLACEHOLDER.split(name))
+            if re.fullmatch(pattern, slot_name, re.IGNORECASE):
+                return True
+        elif name[:16].strip().casefold() == slot_name.casefold():
+            return True
+    return False
+
+
+def yaml_game_matches(yaml_game: Any, game: str | None) -> bool:
+    if game is None:
+        return True
+    return game in yaml_game if isinstance(yaml_game, dict) else yaml_game == game
+
+
+def read_player_yaml(path: pathlib.Path) -> str | None:
+    try:
+        return path.read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError):
+        logging.getLogger("Client").warning("Skipping unreadable player yaml %s", path, exc_info=True)
+        return None
+
+
+def parse_player_yaml_docs(path: pathlib.Path, text: str) -> list[dict[str, Any]]:
+    """Safe-loads one player file's text; a malformed file is skipped so it cannot abort the scan."""
+    from Utils import parse_yamls
+    try:
+        return [doc for doc in parse_yamls(text) if isinstance(doc, dict)]
+    except Exception:
+        logging.getLogger("Client").warning("Skipping unreadable player yaml %s", path, exc_info=True)
+        return []
+
+
+def load_player_yaml_docs(path: pathlib.Path) -> list[dict[str, Any]]:
+    text = read_player_yaml(path)
+    return parse_player_yaml_docs(path, text) if text is not None else []
+
+
+def match_player_doc(docs: list[dict[str, Any]], path: pathlib.Path, slot_name: str,
+                     game: str | None) -> PlayerYaml | None:
+    for doc in docs:
+        if yaml_name_matches(doc.get("name", path.stem), slot_name) and yaml_game_matches(doc.get("game"), game):
+            return PlayerYaml(path, doc)
+    return None
+
+
+def find_player_yaml(folder: str | None, slot_name: str, game: str | None = None) -> PlayerYaml | None:
+    """First document in folder whose name (file stem when unnamed) and game match the connected slot.
+
+    Parsing dominates the scan, so files that mention the slot (at a word start, so "me" does
+    not hit every "game:") are parsed first; the rest only when none of those match, since
+    placeholder names and escaped strings never mention the slot literally.
+    """
+    if not folder:
+        return None
+    try:
+        paths = sorted(p for p in pathlib.Path(folder).iterdir() if p.suffix.lower() in (".yaml", ".yml"))
+    except OSError:
+        return None
+    mentions = re.compile(r"(?<!\w)" + re.escape(slot_name.casefold()))
+    candidates = [(path, text) for path in paths if (text := read_player_yaml(path)) is not None]
+    candidates.sort(key=lambda candidate: not (mentions.search(candidate[0].stem.casefold())
+                                               or mentions.search(candidate[1].casefold())))
+    for path, text in candidates:
+        found = match_player_doc(parse_player_yaml_docs(path, text), path, slot_name, game)
+        if found is not None:
+            return found
+    return None
 
 class TrackerLogLineGroup(StrEnum):
     UT_ERROR = "error"
@@ -71,21 +166,26 @@ class TrackerCore():
         self.tracker_items_received = []
         self.manual_items: list[str] = []
         self.player_folder_override = None
+        self.player_yaml_declined = False
         self.gen_error:str = ""
+        self.connect_mode: bool = False
+        self.tracker_disabled = False
 
         self.ignored_locations: set[int] = set()
         self.missing_locations: set[int] = set()
         self.log_lines: dict[int, list[TrackerLogLine]] = {}
-        self.sorting_priorities: dict[str, int] = {}
+        self.sorting_priorities: dict[str, int] = {"error": -1, "other": 0, "ut_status": 1}
         self.sorting_method: str = None
 
     def disconnect(self):
         self.re_gen_passthrough = None
         self.player_id = None
         self.multiworld = None
+        self.tracker_disabled = False
         self.manual_items = []
         self.ignored_locations = set()
         self.player_folder_override = None
+        self.player_yaml_declined = False
         self.location_alias_map = {}
         self.log_lines = {}
 
@@ -273,6 +373,88 @@ class TrackerCore():
             tracker_settings["use_split_map_icons"], defered_mode, tracker_settings['display_glitched_logic'], \
             sorting_priorities, sorting_method
     
+    def _players_folder(self) -> str | None:
+        from . import TrackerWorld
+        return TrackerWorld.settings["player_files_path"]
+
+    async def prepare_generation(self, connected_cls: type,
+                                 report: Callable[[str], Awaitable[None]] | None = None) -> None:
+        """Stages the slot's yaml ahead of run_generator, scanning off the event loop thread, and
+        reports each step so a frontend can narrate it; a world that regenerates from slot_data
+        only gets the generation notice.
+        """
+        if getattr(connected_cls, "disable_ut", False):
+            return
+
+        async def say(message: str) -> None:
+            self.logger.info(message)
+            if report is not None:
+                await report(message)
+
+        if world_needs_yaml(connected_cls) and self.launch_multiworld is None \
+                and not self.player_folder_override and not self.player_yaml_declined:
+            folder = self._players_folder()
+            found = None
+            if folder and self.slot_name:
+                await say(f"Searching {folder} for {self.slot_name}'s yaml...")
+                found = await asyncio.to_thread(find_player_yaml, folder, self.slot_name, self.game)
+            if found is None:
+                await say(f"No yaml for {self.slot_name} in {folder or 'the Players folder'}; "
+                          "choose one in the file dialog...")
+            staged = self.stage_player_yaml(found, folder)
+            if staged is None:
+                self.player_yaml_declined = True
+                return
+            self.player_folder_override = staged
+        await say(f"Generating {self.game} logic...")
+
+    def _stage_player_yaml(self, players_folder: str | None) -> str | None:
+        found = find_player_yaml(players_folder, self.slot_name, self.game) if self.slot_name else None
+        return self.stage_player_yaml(found, players_folder)
+
+    def stage_player_yaml(self, found: PlayerYaml | None, players_folder: str | None = None) -> str | None:
+        """Stages the scan's pick (prompting for a file when it found nothing) as the one document
+        Generate will see, and returns the staging folder, or None when no usable yaml was chosen.
+
+        Generate scans a folder, so the document goes alone into one stable cache dir; name and
+        game are pinned to the server's so placeholder names and weighted games resolve to the slot.
+        The prompt opens in ``players_folder`` when it exists.
+        """
+        if found is None:
+            # trailing separator: zenity opens inside the folder instead of selecting it
+            suggest = os.path.join(players_folder, "") if players_folder and os.path.isdir(players_folder) else ""
+            picked = open_filename(f"Select the YAML for {self.slot_name or 'tracking'}", [("YAML", ["*.yaml", "*.yml"])],
+                                   suggest=suggest)
+            if not picked:
+                self.add_log_line(TrackerLogLine("No YAML selected; tracking cannot start without one.", "",
+                                                 TrackerLogLineGroup.UT_STATUS))
+                return None
+            path = pathlib.Path(picked)
+            docs = load_player_yaml_docs(path)
+            found = match_player_doc(docs, path, self.slot_name, self.game) if self.slot_name else None
+            if found is None:
+                if len(docs) != 1:
+                    self.add_log_line(TrackerLogLine(f"No document in {path.name} matches slot {self.slot_name!r}.", "",
+                                                     TrackerLogLineGroup.UT_STATUS))
+                    return None
+                found = PlayerYaml(path, docs[0])
+                if not yaml_game_matches(found.doc.get("game"), self.game):
+                    self.logger.warning("%s is not a %s yaml; its options will not apply to slot %s",
+                                        path.name, self.game, self.slot_name)
+        self.logger.info("Tracking %s with %s", self.slot_name, found.path)
+        doc = {key: value for key, value in found.doc.items() if key != "quantity"}
+        if self.slot_name:
+            doc["name"] = self.slot_name
+        if self.game:
+            doc["game"] = self.game
+        staging = pathlib.Path(cache_path("ut_picked_yaml"))
+        staging.mkdir(parents=True, exist_ok=True)
+        for stale in staging.iterdir():
+            stale.unlink()
+        (staging / f"{found.path.stem}.yaml").write_text(safe_dump(doc, allow_unicode=True, sort_keys=False),
+                                                         encoding="utf-8")
+        return str(staging)
+
     def run_generator(self, slot_data: dict | None = None, override_yaml_path: str | None = None, super_override_yaml_path: str|None = None):
         def move_slots(args: "Namespace", slot_name: str):
             """
@@ -319,8 +501,13 @@ class TrackerCore():
                 args.player_files_path = override_yaml_path
             elif self.player_folder_override:
                 args.player_files_path = self.player_folder_override
-            elif yaml_path:
-                args.player_files_path = yaml_path
+            elif self.player_yaml_declined:
+                return
+            else:
+                staged = self._stage_player_yaml(yaml_path)
+                if staged is None:
+                    return
+                args.player_files_path = staged
             self.player_folder_override = args.player_files_path
             args.skip_output = True
             args.multi = 0
@@ -364,6 +551,11 @@ class TrackerCore():
                 temp_items = [item for item in items if item.code is None]
                 temp_precollect[player_id] = temp_items
             self.multiworld.precollected_items = temp_precollect
+        except TrackerException as e:
+            self.multiworld = None
+            self.tracker_disabled = True
+            self.gen_error = e.message
+            self.set_page(TrackerLogLine("The world has informed UT that your options are incompatible, for more infomation check /faris_asked","",TrackerLogLineGroup.UT_ERROR))
         except Exception as e:
             tb = traceback.format_exc()
             self.gen_error = tb
@@ -409,6 +601,8 @@ class TrackerCore():
         return multiworld
     
     def updateTracker(self) -> CurrentTrackerState:
+        if self.tracker_disabled:
+            return CurrentTrackerState.init_empty_state() #Return nop
         if self.player_id is None or self.multiworld is None:
             self.logger.error("Player YAML not installed or Generator failed")
             error_label: str = f"Check Player YAMLs for error; Tracker {UT_VERSION} for AP version {__version__}"
@@ -437,7 +631,7 @@ class TrackerCore():
         for item_name, item_flags, item_loc, item_player in [(item_id_to_name[item.item],item.flags,item.location, item.player) for item in self.tracker_items_received if item.item > 0] + [(name,ItemClassification.progression,-1,-1) for name in self.manual_items]:
             try:
                 world_item = self.multiworld.create_item(item_name, self.player_id)
-                if item_loc>0 and item_player == self.slot and item_loc in location_id_to_name:
+                if item_loc>0 and item_player == self.slot and item_loc in location_id_to_name and location_id_to_name[item_loc] in self.multiworld.regions.location_cache[self.player_id]:
                     world_item.location = self.multiworld.get_location(location_id_to_name[item_loc],self.player_id)
                 world_item.classification = world_item.classification | item_flags
                 state.collect(world_item, True)
@@ -565,7 +759,8 @@ class TrackerCore():
     def initalize_tracker_core(self,connected_cls:type[AutoWorld.World],raw_slot_data):
         if getattr(connected_cls, "disable_ut", False):
             disabled_label: str = "World Author has requested UT be disabled on this world, please respect their decision"
-            self.add_log_line(TrackerLogLine(disabled_label, "", TrackerLogLineGroup.UT_STATUS))
+            self.set_page(TrackerLogLine(disabled_label, "", TrackerLogLineGroup.UT_ERROR))
+            self.tracker_disabled = True
             return
         # first check if we don't need a yaml
         if getattr(connected_cls, "ut_can_gen_without_yaml", False):
@@ -581,21 +776,30 @@ class TrackerCore():
                     self.re_gen_passthrough = {self.game: slot_data}
                     self.run_generator(raw_slot_data, tempdir)
                     if self.multiworld is None:
-
-                        self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS), False)
-                        self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS), False)
+                        if not self.tracker_disabled:
+                            self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS))
+                            self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS))
+                        self.sort_log_lines()
+                        self.log_all_to_tab()
                         return
                     world = self.get_current_world()
                 self.regen_slots(world, slot_data, tempdir)
                 if self.multiworld is None:
-                    self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS), False)
-                    self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS), False)
+                    if not self.tracker_disabled:
+                        self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS))
+                        self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS))
+                    self.sort_log_lines()
+                    self.log_all_to_tab()
                     return
 
         else:
             if self.launch_multiworld is None:
-                self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS), False)
-                self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS), False)
+                if self.connect_mode:
+                    self.add_log_line(TrackerLogLine(f"World '{self.game}' does not support yaml-less tracking.", "", TrackerLogLineGroup.UT_STATUS))
+                    self.add_log_line(TrackerLogLine("To track this world, launch UT from a generation where you have the yaml in Players/.", "", TrackerLogLineGroup.UT_STATUS))
+                else:
+                    self.add_log_line(TrackerLogLine("Internal world was not able to be generated, check your yamls and relaunch", "", TrackerLogLineGroup.UT_STATUS))
+                    self.add_log_line(TrackerLogLine("If this issue persists, reproduce with the debug launcher and post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS))
                 return
 
             if self.slot_name in self.launch_multiworld.world_name_lookup:
@@ -625,3 +829,10 @@ class TrackerCore():
         if self.multiworld:
             world = self.get_current_world()
             self.location_alias_map = getattr(world, "location_id_to_alias", {})
+        else:
+            if not self.tracker_disabled:
+                self.add_log_line(TrackerLogLine("Yamlless world was not able to be generated, something very bad has happened", "", TrackerLogLineGroup.UT_STATUS))
+                self.add_log_line(TrackerLogLine("If you can reproduce with the debug launcher, post the error message to the discord channel", "", TrackerLogLineGroup.UT_STATUS))
+            self.sort_log_lines()
+            self.log_all_to_tab()
+            return

@@ -105,9 +105,8 @@ def find_client_func(init_path: Path) -> Optional[str]:
                 continue
             if isinstance(kw.value, ast.Name):
                 return kw.value.id
-            # func=lambda ... or func=foo.bar — not resolvable as a top-level
-            # symbol; treat this Component as having no extractable func and
-            # keep searching for a later CLIENT Component that does.
+            # func=lambda / func=foo.bar: not resolvable as a top-level symbol;
+            # keep searching for a later CLIENT Component with a plain name.
             break
 
     return None

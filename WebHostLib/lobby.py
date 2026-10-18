@@ -3,7 +3,9 @@ import logging
 from datetime import datetime, timedelta
 
 from flask import flash, redirect, render_template, request, session, url_for, abort
-from pony.orm import commit, db_session, select, desc, count
+from sqlalchemy import select, func, desc
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm.exc import StaleDataError
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from Utils import __version__, utcnow, instance_name
@@ -20,10 +22,11 @@ except Exception as e:
 from WebHostLib import app, limiter
 from WebHostLib.generate import get_meta
 from WebHostLib.models import (
-    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml,
+    Lobby, LobbyPlayer, LobbyMessage, LobbyYaml, LobbyApworld, LobbyAuxiliaryApworld,
     LOBBY_OPEN, LOBBY_GENERATING, LOBBY_DONE, LOBBY_CLOSED, LOBBY_LOCKED,
-    UUID,
+    UUID, db, commit, rollback,
 )
+from WebHostLib.ownership import is_authorized
 
 
 def _expire_lobby_if_needed(lobby: Lobby) -> None:
@@ -36,7 +39,11 @@ def _expire_lobby_if_needed(lobby: Lobby) -> None:
 
 def _get_player_in_lobby(lobby: Lobby) -> LobbyPlayer | None:
     """Get the current session's player record in a lobby, or None."""
-    return LobbyPlayer.get(lobby=lobby, session_id=session["_id"])
+    return db.session.scalars(
+        select(LobbyPlayer)
+        .where(LobbyPlayer.lobby_id == lobby.id, LobbyPlayer.session_id == session["_id"])
+        .limit(1)
+    ).first()
 
 
 def _is_lobby_viewer(lobby_id) -> bool:
@@ -44,11 +51,13 @@ def _is_lobby_viewer(lobby_id) -> bool:
     return bool(session.get(f"lobby_{lobby_id}_viewer"))
 
 
-@app.route('/lobbies')
+@app.route('/play/lobbies')
 def lobby_list():
-    lobbies = select(
-        l for l in Lobby if l.state == LOBBY_OPEN
-    ).order_by(lambda l: desc(l.last_activity))[:50]
+    # Unlisted lives in the meta JSON, so the public cap is applied after filtering.
+    lobbies = db.session.scalars(
+        select(Lobby).where(Lobby.state == LOBBY_OPEN)
+        .order_by(desc(Lobby.last_activity))
+    ).all()
 
     any_expired = False
     for lobby in lobbies:
@@ -61,11 +70,15 @@ def lobby_list():
     my_session_id = session.get("_id")
     my_lobby_records = []
     if my_session_id:
-        my_lobby_records = select(
-            p.lobby for p in LobbyPlayer
-            if p.session_id == my_session_id
-            and p.lobby.state in (LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING)
-        ).order_by(lambda l: desc(l.last_activity))[:]
+        my_lobby_records = db.session.scalars(
+            select(Lobby)
+            .join(LobbyPlayer, LobbyPlayer.lobby_id == Lobby.id)
+            .where(
+                LobbyPlayer.session_id == my_session_id,
+                Lobby.state.in_([LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING])
+            )
+            .order_by(desc(Lobby.last_activity))
+        ).all()
         for lobby in my_lobby_records:
             old_state = lobby.state
             _expire_lobby_if_needed(lobby)
@@ -75,20 +88,32 @@ def lobby_list():
     if any_expired:
         commit()
 
-    active_lobbies = [l for l in lobbies if l.state != LOBBY_CLOSED]
+    active_lobbies = [
+        l for l in lobbies if l.state != LOBBY_CLOSED and not json.loads(l.meta).get("unlisted")
+    ][:50]
 
     lobby_ids = [l.id for l in active_lobbies]
     player_counts = {}
     yaml_counts = {}
     owner_names = {}
     if lobby_ids:
-        for lid, cnt in select((p.lobby.id, count()) for p in LobbyPlayer if p.lobby.id in lobby_ids):
+        for lid, cnt in db.session.execute(
+            select(LobbyPlayer.lobby_id, func.count()).where(LobbyPlayer.lobby_id.in_(lobby_ids))
+            .group_by(LobbyPlayer.lobby_id)
+        ):
             player_counts[lid] = cnt
-        for lid, cnt in select((y.lobby.id, count()) for y in LobbyYaml if y.lobby.id in lobby_ids):
+        for lid, cnt in db.session.execute(
+            select(LobbyYaml.lobby_id, func.count()).where(LobbyYaml.lobby_id.in_(lobby_ids))
+            .group_by(LobbyYaml.lobby_id)
+        ):
             yaml_counts[lid] = cnt
-        for lid, name in select(
-            (p.lobby.id, p.player_name) for p in LobbyPlayer
-            if p.lobby.id in lobby_ids and p.session_id == p.lobby.owner
+        for lid, name in db.session.execute(
+            select(LobbyPlayer.lobby_id, LobbyPlayer.player_name)
+            .join(Lobby, Lobby.id == LobbyPlayer.lobby_id)
+            .where(
+                LobbyPlayer.lobby_id.in_(lobby_ids),
+                LobbyPlayer.session_id == Lobby.owner,
+            )
         ):
             owner_names[lid] = name
 
@@ -107,13 +132,23 @@ def lobby_list():
     my_yaml_counts = {}
     my_owner_names = {}
     if my_lobby_ids:
-        for lid, cnt in select((p.lobby.id, count()) for p in LobbyPlayer if p.lobby.id in my_lobby_ids):
+        for lid, cnt in db.session.execute(
+            select(LobbyPlayer.lobby_id, func.count()).where(LobbyPlayer.lobby_id.in_(my_lobby_ids))
+            .group_by(LobbyPlayer.lobby_id)
+        ):
             my_player_counts[lid] = cnt
-        for lid, cnt in select((y.lobby.id, count()) for y in LobbyYaml if y.lobby.id in my_lobby_ids):
+        for lid, cnt in db.session.execute(
+            select(LobbyYaml.lobby_id, func.count()).where(LobbyYaml.lobby_id.in_(my_lobby_ids))
+            .group_by(LobbyYaml.lobby_id)
+        ):
             my_yaml_counts[lid] = cnt
-        for lid, name in select(
-            (p.lobby.id, p.player_name) for p in LobbyPlayer
-            if p.lobby.id in my_lobby_ids and p.session_id == p.lobby.owner
+        for lid, name in db.session.execute(
+            select(LobbyPlayer.lobby_id, LobbyPlayer.player_name)
+            .join(Lobby, Lobby.id == LobbyPlayer.lobby_id)
+            .where(
+                LobbyPlayer.lobby_id.in_(my_lobby_ids),
+                LobbyPlayer.session_id == Lobby.owner,
+            )
         ):
             my_owner_names[lid] = name
     my_lobby_metas = {l.id: json.loads(l.meta) for l in my_lobbies}
@@ -136,13 +171,13 @@ def lobby_create():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         if not title:
-            flash('Lobby title is required.')
+            flash('Lobby title is required.', 'error')
             return redirect(url_for('lobby_create'))
         if len(title) > 48:
-            flash('Lobby title must be 48 characters or fewer.')
+            flash('Lobby title must be 48 characters or fewer.', 'error')
             return redirect(url_for('lobby_create'))
         if _is_profane(title):
-            flash('Lobby title contains inappropriate language and cannot be used.')
+            flash('Lobby title contains inappropriate language and cannot be used.', 'error')
             return redirect(url_for('lobby_create'))
 
         password = request.form.get('password', '').strip()
@@ -158,7 +193,7 @@ def lobby_create():
             max_yamls = int(request.form.get('max_yamls_per_player', 1))
         except (ValueError, TypeError):
             max_yamls = 1
-        max_yamls = max(1, min(max_yamls, 20))
+        max_yamls = max(1, min(max_yamls, 100))
 
         race = bool(request.form.get('race'))
 
@@ -169,20 +204,22 @@ def lobby_create():
 
         allow_custom_apworlds = bool(request.form.get('allow_custom_apworlds'))
 
-        owned_active = count(
-            l for l in Lobby
-            if l.owner == session["_id"] and l.state in (LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING)
-        )
+        owned_active = db.session.scalar(
+            select(func.count()).select_from(Lobby)
+            .where(Lobby.owner == session["_id"], Lobby.state.in_([LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING]))
+        ) or 0
         if owned_active >= 3:
-            flash('You can only host up to 3 active lobbies at a time. Close or finish an existing one first.')
+            flash('You can only host up to 3 active lobbies at a time. Close or finish an existing one first.', 'error')
             return redirect(url_for('lobby_create'))
 
         creator_name = request.form.get('player_name', '').strip() or 'Anonymous'
         if _is_profane(creator_name):
-            flash('Player name contains inappropriate language and cannot be used.')
+            flash('Player name contains inappropriate language and cannot be used.', 'error')
             return redirect(url_for('lobby_create'))
 
         meta = get_meta(request.form, race)
+        meta["host_display_name"] = creator_name
+        meta["unlisted"] = bool(request.form.get('unlisted'))
 
         lobby = Lobby(
             title=title,
@@ -198,13 +235,13 @@ def lobby_create():
         )
         commit()
         player = LobbyPlayer(
-            lobby=lobby,
+            lobby_id=lobby.id,
             session_id=session["_id"],
             player_name=creator_name,
         )
         LobbyMessage(
-            lobby=lobby,
-            player=None,
+            lobby_id=lobby.id,
+            player_id=None,
             sender_name="System",
             content=f"{creator_name} created the lobby.",
         )
@@ -218,7 +255,7 @@ def lobby_create():
     return render_template("lobbyCreate.html", race=False, version=__version__)
 
 
-@app.route('/lobby/<suuid:lobby>')
+@app.route('/play/lobby/<suuid:lobby>')
 def lobby_view(lobby: UUID):
     lobby = Lobby.get(id=lobby)
     if not lobby:
@@ -230,33 +267,52 @@ def lobby_view(lobby: UUID):
         commit()
 
     if lobby.state == LOBBY_CLOSED:
-        flash('This lobby has expired.')
+        flash('This lobby has expired.', 'info')
         return redirect(url_for('lobby_list'))
 
     player = _get_player_in_lobby(lobby)
-    is_owner = (lobby.owner == session["_id"])
+    is_owner = is_authorized(lobby, session["_id"])
     is_viewer = _is_lobby_viewer(lobby.id) and not player
     show_view_form = not player and not is_viewer and request.args.get('view') == '1'
     needs_password = bool(lobby.password_hash) and not player and lobby.state in (LOBBY_OPEN, LOBBY_LOCKED)
 
     # Pre-fetch last 200 messages to avoid loading entire set in template
-    recent_messages = list(select(
-        m for m in LobbyMessage if m.lobby == lobby
-    ).order_by(lambda m: desc(m.id))[:200])[::-1]
+    recent_messages = list(db.session.scalars(
+        select(LobbyMessage).where(LobbyMessage.lobby_id == lobby.id)
+        .order_by(desc(LobbyMessage.id)).limit(200)
+    ).all())[::-1]
 
-    yaml_count = count(y for y in LobbyYaml if y.lobby == lobby)
-    player_count = count(p for p in LobbyPlayer if p.lobby == lobby)
-    has_custom = bool(count(y for y in LobbyYaml if y.lobby == lobby and y.is_custom))
+    yaml_count = db.session.scalar(
+        select(func.count()).select_from(LobbyYaml).where(LobbyYaml.lobby_id == lobby.id)
+    ) or 0
+    player_count = db.session.scalar(
+        select(func.count()).select_from(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
+    ) or 0
+    has_custom = bool(db.session.scalar(
+        select(func.count()).select_from(LobbyYaml)
+        .where(LobbyYaml.lobby_id == lobby.id, LobbyYaml.is_custom == True)
+    ))
+    has_upgrade_apworld = bool(db.session.scalar(
+        select(func.count()).select_from(LobbyApworld)
+        .join(LobbyYaml, LobbyApworld.yaml_id == LobbyYaml.id)
+        .where(LobbyApworld.lobby_id == lobby.id, LobbyYaml.is_custom == False)
+    ))
+    has_auxiliary = bool(db.session.scalar(
+        select(func.count()).select_from(LobbyAuxiliaryApworld)
+        .where(LobbyAuxiliaryApworld.lobby_id == lobby.id)
+    ))
+    force_local_generation = has_custom or has_upgrade_apworld or has_auxiliary or yaml_count > 25
     is_full = lobby.max_players > 0 and player_count >= lobby.max_players
 
     meta = json.loads(lobby.meta)
     server_opts = meta.get("server_options", {})
     gen_opts = meta.get("generator_options", {})
 
-    owner_name = select(
-        p.player_name for p in LobbyPlayer
-        if p.lobby == lobby and p.session_id == lobby.owner
-    ).first() or "Unknown"
+    owner_name = db.session.scalar(
+        select(LobbyPlayer.player_name)
+        .where(LobbyPlayer.lobby_id == lobby.id, LobbyPlayer.session_id == lobby.owner)
+        .limit(1)
+    ) or "Unknown"
 
     return render_template(
         "lobby.html",
@@ -270,9 +326,11 @@ def lobby_view(lobby: UUID):
         yaml_count=yaml_count,
         player_count=player_count,
         has_custom=has_custom,
+        force_local_generation=force_local_generation,
         is_full=is_full,
         server_opts=server_opts,
         gen_opts=gen_opts,
+        unlisted=bool(meta.get("unlisted")),
         owner_name=owner_name,
         instance_name= instance_name or "Archipelago",
     )
@@ -291,11 +349,11 @@ def lobby_view_auth(lobby: UUID):
         commit()
 
     if lobby.state == LOBBY_CLOSED:
-        flash('This lobby has expired.')
+        flash('This lobby has expired.', 'info')
         return redirect(url_for('lobby_list'))
 
     if lobby.state not in (LOBBY_OPEN, LOBBY_LOCKED):
-        flash('This lobby cannot be viewed in its current state.')
+        flash('This lobby cannot be viewed in its current state.', 'warning')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if _get_player_in_lobby(lobby):
@@ -304,7 +362,7 @@ def lobby_view_auth(lobby: UUID):
     if lobby.password_hash:
         password = request.form.get('password', '')
         if not check_password_hash(lobby.password_hash, password):
-            flash('Incorrect lobby password.')
+            flash('Incorrect lobby password.', 'error')
             return redirect(url_for('lobby_view', lobby=lobby.id, view='1'))
 
     session[f"lobby_{lobby.id}_viewer"] = True
@@ -314,7 +372,11 @@ def lobby_view_auth(lobby: UUID):
 @app.route('/lobby/<suuid:lobby>/join', methods=['POST'])
 @limiter.limit("5 per minute")
 def lobby_join(lobby: UUID):
-    lobby = Lobby.get(id=lobby)
+    lobby_id = lobby
+    # Serialize joins for this lobby so capacity and name checks cannot race.
+    lobby = db.session.scalars(
+        select(Lobby).where(Lobby.id == lobby_id).with_for_update()
+    ).first()
     if not lobby:
         abort(404)
 
@@ -324,62 +386,80 @@ def lobby_join(lobby: UUID):
         commit()
 
     if lobby.state != LOBBY_OPEN:
-        flash('This lobby is no longer accepting new players.')
+        flash('This lobby is no longer accepting new players.', 'warning')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     existing = _get_player_in_lobby(lobby)
     if existing:
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
-    active_memberships = count(
-        p for p in LobbyPlayer
-        if p.session_id == session["_id"] and p.lobby.state in (LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING)
-    )
+    active_memberships = db.session.scalar(
+        select(func.count()).select_from(LobbyPlayer)
+        .join(Lobby, Lobby.id == LobbyPlayer.lobby_id)
+        .where(
+            LobbyPlayer.session_id == session["_id"],
+            Lobby.state.in_([LOBBY_OPEN, LOBBY_LOCKED, LOBBY_GENERATING])
+        )
+    ) or 0
     if active_memberships >= 5:
-        flash('You can only be part of up to 5 active lobbies at a time.')
+        flash('You can only be part of up to 5 active lobbies at a time.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if lobby.max_players > 0:
-        current_player_count = count(p for p in LobbyPlayer if p.lobby == lobby)
+        current_player_count = db.session.scalar(
+            select(func.count()).select_from(LobbyPlayer).where(LobbyPlayer.lobby_id == lobby.id)
+        ) or 0
         if current_player_count >= lobby.max_players:
-            flash('This lobby is full.')
+            flash('This lobby is full.', 'warning')
             return redirect(url_for('lobby_view', lobby=lobby.id))
 
     if lobby.password_hash and not _is_lobby_viewer(lobby.id):
         password = request.form.get('password', '')
         if not check_password_hash(lobby.password_hash, password):
-            flash('Incorrect lobby password.')
+            flash('Incorrect lobby password.', 'error')
             return redirect(url_for('lobby_view', lobby=lobby.id))
 
     player_name = request.form.get('player_name', '').strip()
     if not player_name:
-        flash('Please provide a display name.')
+        flash('Please provide a display name.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
     if len(player_name) > 32:
-        flash('Display name must be 32 characters or fewer.')
+        flash('Display name must be 32 characters or fewer.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
     if _is_profane(player_name):
-        flash('Player name contains inappropriate language and cannot be used.')
+        flash('Player name contains inappropriate language and cannot be used.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
-    existing_names = select(p.player_name for p in LobbyPlayer if p.lobby == lobby)[:]
+    existing_names = db.session.scalars(
+        select(LobbyPlayer.player_name).where(LobbyPlayer.lobby_id == lobby.id)
+    ).all()
     if player_name in existing_names:
-        flash('That name is already taken in this lobby.')
+        flash('That name is already taken in this lobby.', 'error')
         return redirect(url_for('lobby_view', lobby=lobby.id))
 
     player = LobbyPlayer(
-        lobby=lobby,
+        lobby_id=lobby.id,
         session_id=session["_id"],
         player_name=player_name,
     )
     LobbyMessage(
-        lobby=lobby,
-        player=None,
+        lobby_id=lobby.id,
+        player_id=None,
         sender_name="System",
         content=f"{player_name} joined the lobby.",
     )
     lobby.last_activity = utcnow()
-    commit()
+    try:
+        commit()
+    except (OperationalError, StaleDataError):
+        # SQLite ignores the FOR UPDATE above, so cleanup can delete the lobby
+        # before the commit-time flush (StaleDataError); lock/deadlock failures
+        # surface as OperationalError. A failed commit does NOT roll back the
+        # session - rollback() restores it and expunges the pending player and
+        # message.
+        rollback()
+        flash('The lobby changed while you were joining. Please try again.', 'error')
+        return redirect(url_for('lobby_view', lobby=lobby_id))
 
     session.pop(f"lobby_{lobby.id}_viewer", None)
     return redirect(url_for('lobby_view', lobby=lobby.id))

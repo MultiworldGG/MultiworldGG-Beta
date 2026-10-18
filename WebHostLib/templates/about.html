@@ -1,0 +1,62 @@
+{% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
+
+{% block head %}
+    <title>About · MultiworldGG</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/about.css") }}" />
+{% endblock %}
+
+{% block body %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([('About', none)]) }}
+
+    <div id="about-wrapper">
+        <img id="about-logo" src="{{ url_for('static', filename='static/branding/landing-logo.png') }}"
+             alt="MultiworldGG Logo" />
+        <div id="about-body">
+            <h1>About MultiworldGG</h1>
+            <h5 style="color: var(--mw-sys-color-accent-text)">A multi-game multiworld randomizer</h5>
+            <p>
+                This is a cross-game system which randomizes different games, then uses the result to
+                build a single unified multi-player game. Items from one game may be present in another, and
+                you will need your fellow players to find items you need in their games to help you complete
+                your own.
+            </p>
+            <p>
+                This project is based on <a href="https://github.com/ArchipelagoMW/Archipelago">Archipelago</a>, a cumulative effort of many
+                <a href="https://github.com/ArchipelagoMW/Archipelago/graphs/contributors">talented people.</a><br />We also link to or include a few amazing third party open source clients and tracking tools created by amazing contributors, like the <a href="https://cheesetrackers.theincrediblewheelofchee.se/">Cheese Trackers</a> by <a href="https://github.com/cdhowie/cheese-trackers">Cheese</a>, the <a href="https://drawesome4333.github.io/ap-tracker/">AP checklist tracker</a> by <a href="https://github.com/DrAwesome4333/ap-tracker">DrAwesome4333</a>, the <a href="https://archipelago.miraheze.org/wiki/Main_Page">AP Wiki</a>  maintained by Flit, Rooby, and others, or the <a href="https://ap-lobby.bananium.fr/">Bananium AP Lobby</a> by <a href="https://github.com/Eijebong/Archipelago-lobby">Eijebong</a>, who inspired our current lobby system.
+            </p>
+            <p>
+                MultiworldGG is a fork, incorporating many tweaks and additional worlds of many 3rd party developers
+                that cannot be part of the original project. We also offer worlds that are still in earlier stages of development.
+                Found a bug? Please contact <b>us</b> first through <a href="https://discord.multiworld.gg">Discord</a> to minimize support load for the developers.
+            </p>
+            <h1>About the MultiworldGG Developers</h1>
+            <h5 style="color: var(--mw-sys-color-accent-text)">TreZc0 and DelilahIsDidi</h5>
+            <p>
+                Friends since before the COVID times having met through the Ocarina of Time Randomizer, they played in multiworlds with only lua and tears. 
+                TreZ and Delilah are the primary developers of the MultiworldGG project. 
+            </p>
+            <p>
+                They have been programming for a combined 50+ years, in languages spanning from machine code, C, Java, Python, and more.
+                They've worked on projects for small businesses, large corporations, through a number of different industries and domains.
+                They've teamed up, worked with and for countless people from many different countries, backgrounds, and skin colors, 
+                with varying skills, genders, non-genders, and fursuits. (If you're a dev that doesn't know a furry, you
+                do.) They fully entrench themselves in a world where all people are humans, and all
+                humans have intrinsic worth. That said, bigots, racists, TERFs, and general egotists can &*#@* and &$+$!~^*@.
+            </p>
+            <h5 style="color: var(--mw-sys-color-accent-text)">Artificial Intelligence</h5>
+            <p>
+                TreZ and Delilah are vehemently against using generative AI for creative work including creative writing, art, and music. TreZ is a musician, and Delilah thrives
+                in varying creative outlets. They will be the change that they want to see in the world, and will consistently ensure
+                that artists are valued, paid, and won't be replaced. 
+            </p>
+            <p>
+                With that context, they have been using new tools to help with programming for decades, and Agentic AI is the newest tool. MultiworldGG runs a number of automated tools (not AI) to 
+                verify safety for our codebase and users, some of which were written by agents at the direction of TreZ & Delilah. Additionally they have and use specific
+                coding agents and models for work that they otherwise have no time to do. They will continue to ensure that the <b>quality</b> of the codebase is maintained, even
+                through the use of agentic ai models.
+            </p>
+        </div>
+    </div>
+{% endblock %}

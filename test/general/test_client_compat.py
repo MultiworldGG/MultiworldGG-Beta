@@ -1,0 +1,784 @@
+"""Client compatibility shims (websockets legacy attrs, kvui TUI stand-ins, legacy make_gui() resolution); add new client-compat tests here."""
+
+import ast
+import asyncio
+import configparser
+import contextlib
+import logging
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from types import SimpleNamespace
+from unittest import mock
+
+import websockets
+
+from websockets.asyncio.client import ClientConnection
+from websockets.asyncio.connection import Connection
+from websockets.frames import Close, CloseCode
+from websockets.protocol import State
+
+import ClientBuilder
+import CommonClient  # noqa: F401  importing it installs the compat properties
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+# --------------------------------------------------------------------------- #
+# World clients written against websockets 13.x (shipped MWGG) check
+# server liveness via the legacy `ctx.server.socket.closed` / `.open`
+# attributes (e.g. kh3's _is_ap_connected). The websockets 14+ asyncio
+# Connection removed both, so CommonClient restores them as State-backed
+# properties; these pin that compat surface and its legacy semantics (both
+# False while opening/closing).
+# --------------------------------------------------------------------------- #
+
+class TestWebsocketsLegacyCompat(unittest.TestCase):
+    def test_compat_properties_installed(self) -> None:
+        for name in ("closed", "open"):
+            with self.subTest(name=name):
+                self.assertIsInstance(getattr(Connection, name, None), property)
+
+    def test_client_connection_inherits_compat(self) -> None:
+        # The object world clients actually touch is ctx.server.socket, a
+        # ClientConnection returned by websockets.connect in server_loop.
+        for name in ("closed", "open"):
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(ClientConnection, name))
+
+    def test_closed_matches_legacy_semantics(self) -> None:
+        # legacy: closed is True only once fully CLOSED
+        for state, expected in ((State.CONNECTING, False), (State.OPEN, False),
+                                (State.CLOSING, False), (State.CLOSED, True)):
+            # subTest param must be a plain string: pytest-xdist ships subtest
+            # reports over execnet, which cannot serialize the State enum
+            with self.subTest(state=state.name):
+                stub = SimpleNamespace(state=state)
+                self.assertIs(Connection.closed.fget(stub), expected)
+
+    def test_open_matches_legacy_semantics(self) -> None:
+        # legacy: open is True only while fully OPEN
+        for state, expected in ((State.CONNECTING, False), (State.OPEN, True),
+                                (State.CLOSING, False), (State.CLOSED, False)):
+            with self.subTest(state=state.name):
+                stub = SimpleNamespace(state=state)
+                self.assertIs(Connection.open.fget(stub), expected)
+
+    def test_world_client_liveness_check_pattern(self) -> None:
+        # The exact expression kh3 uses: bool(server and socket and not socket.closed)
+        server = SimpleNamespace(socket=SimpleNamespace(state=State.OPEN))
+        server.socket.closed = Connection.closed.fget(server.socket)
+        self.assertTrue(bool(server and server.socket and not server.socket.closed))
+
+    def test_deprecation_warning_once_per_call_site(self) -> None:
+        # Accessing a legacy attribute surfaces a warning in the client log,
+        # but only once per call site -- these checks sit in per-package loops.
+        stub = SimpleNamespace(state=State.OPEN)
+        with self.assertLogs("Client", level="WARNING") as logs:
+            for _ in range(3):
+                Connection.closed.fget(stub)  # one call site, three accesses
+        records = [r for r in logs.output if "socket.closed" in r]
+        self.assertEqual(len(records), 1)
+        self.assertIn("Deprecated websockets API", records[0])
+        # Windows drive-letter casing can differ between __file__ and the frame
+        # filename inspect/traceback report, so compare case-insensitively.
+        self.assertIn(__file__.lower(), records[0].lower())  # points at the offending call site
+
+
+# --------------------------------------------------------------------------- #
+# kvui TUI branch: world clients that route all Kivy access through kvui
+# must be able to `from kvui import <kivy names>` under MWGG_FRONTEND=tui
+# WITHOUT importing Kivy (importing kivy.core.window would open a rogue
+# window over the Textual TUI). These run in a clean subprocess because
+# (a) the parent test process has no MWGG_FRONTEND set, so importing kvui
+# here would take the GUI branch and pull in kivymd, and (b) a fresh
+# interpreter is the only rigorous way to assert that importing kvui did
+# not drag Kivy into sys.modules.
+# --------------------------------------------------------------------------- #
+
+# Mirrors the unconditional first line of a kh3/kh2/albw-style run_gui() override.
+WORLD_CLIENT_IMPORT = (
+    "from kvui import (Clock, GameManager, HoverBehavior, MDBoxLayout, MDButton, "
+    "MDButtonText, MDGridLayout, MDIconButton, MDLabel, MDTextField, Window, dp)"
+)
+
+
+def _run_tui(script: str) -> subprocess.CompletedProcess:
+    env = {**os.environ, "MWGG_FRONTEND": "tui"}
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=REPO_ROOT, env=env, capture_output=True, text=True,
+    )
+
+
+class TestKvuiTuiStandins(unittest.TestCase):
+    def _assert_ok(self, script: str) -> None:
+        result = _run_tui(script + "\nprint('KVUI_TUI_OK')")
+        self.assertEqual(
+            result.returncode, 0,
+            msg=f"subprocess failed\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}",
+        )
+        self.assertIn("KVUI_TUI_OK", result.stdout)
+
+    def test_world_client_import_succeeds_without_kivy(self) -> None:
+        """The import that crashes today must succeed and pull in no Kivy."""
+        self._assert_ok(
+            WORLD_CLIENT_IMPORT + "\n"
+            "import sys; assert 'kivy' not in sys.modules, 'Kivy was imported'"
+        )
+
+    def test_dp_returns_its_argument(self) -> None:
+        self._assert_ok("from kvui import dp, sp\nassert dp(30) == 30 and sp(12) == 12")
+
+    def test_standins_support_inheritance_and_instantiation(self) -> None:
+        """Stand-ins are usable as base classes (incl. multiple inheritance) and
+        instantiable, with dp()/factory calls in the class body."""
+        self._assert_ok(
+            WORLD_CLIENT_IMPORT + "\n"
+            "from kvui import StringProperty\n"
+            "class Panel(MDBoxLayout): pass\n"
+            "class Hoverable(HoverBehavior, MDLabel):\n"
+            "    height = dp(30)\n"
+            "    color = StringProperty('')\n"
+            "assert Hoverable.height == 30\n"
+            "assert MDBoxLayout in Panel.__mro__\n"
+            "assert MDButton().anything is not None  # instance attr is inert, not error\n"
+        )
+
+    def test_game_manager_is_real_takeover_class(self) -> None:
+        """GameManager must stay a real class whose async_run drives the takeover
+        and then hands its declared base_title to the live app (worlds building the
+        manager in run_gui skip build_for_live_app); its inert __getattr__ must not
+        shadow that, and __init__ accepts extra args."""
+        self._assert_ok(
+            "import asyncio\n"
+            "from kvui import GameManager\n"
+            "class M(GameManager):\n"
+            "    base_title = 'M Client'\n"
+            "    def __init__(self, ctx): super().__init__(ctx, app=None)\n"
+            "class LiveApp:\n"
+            "    base_title = 'MultiworldGG'\n"
+            "class Ctx:\n"
+            "    took_over = False\n"
+            "    def _can_takeover_existing_ui(self): return True\n"
+            "    async def _takeover_existing_ui(self):\n"
+            "        self.took_over = True\n"
+            "        self.ui = LiveApp()\n"
+            "ctx = Ctx()\n"
+            "m = M(ctx)\n"
+            "assert m.run() is None\n"
+            "asyncio.run(m.async_run())\n"
+            "assert ctx.took_over, 'async_run did not reach the takeover handshake'\n"
+            "assert ctx.ui.base_title == 'M Client', 'manager base_title not applied to the live app'\n"
+        )
+
+    def test_tracker_hint_patch_import_and_classic_screen(self) -> None:
+        """The tracker's hint-patch import line (worlds/tracker/gui.py) and the
+        classic hint screen must resolve to inert stand-ins without Kivy."""
+        self._assert_ok(
+            "from kvui import HintLog, HintLabel, TooltipLabel\n"
+            "from kvui import ClassicHintScreen\n"
+            "import sys; assert 'kivy' not in sys.modules, 'Kivy was imported'"
+        )
+
+    def test_catch_all_handles_unenumerated_names_but_not_dunders(self) -> None:
+        """Any non-dunder name resolves to a stable inert class; dunders still raise."""
+        self._assert_ok(
+            "import kvui\n"
+            "from kvui import SomeFutureCustomWidget as a\n"
+            "assert kvui.SomeFutureCustomWidget is a, 'stub identity not stable'\n"
+            "assert isinstance(a(), a)\n"
+            "raised = False\n"
+            "try:\n"
+            "    kvui.__not_a_real_dunder__\n"
+            "except AttributeError:\n"
+            "    raised = True\n"
+            "assert raised, 'catch-all manufactured a dunder'\n"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# kvui GUI branch legacy config: upstream Manual clients override build_config
+# and call super().build_config(config), which never reaches GameManager's
+# __getattr__. GameManager is exec'd from source because importing the GUI
+# branch pulls in mwgg_gui and kivy.core.window, which opens an SDL window.
+# --------------------------------------------------------------------------- #
+
+class _KivyConfigParser(configparser.ConfigParser):
+    """kivy.config.ConfigParser surface used by _load_legacy_config and Manual's build_config."""
+
+    filename = None
+
+    def setdefaults(self, section: str, keyvalues: dict) -> None:
+        if not self.has_section(section):
+            self.add_section(section)
+        for key, value in keyvalues.items():
+            if not self.has_option(section, key):
+                self.set(section, key, value)
+
+    def write(self) -> None:
+        with open(self.filename, "w", encoding="utf-8") as f:
+            super().write(f)
+
+
+def _gui_game_manager() -> type:
+    with open(os.path.join(REPO_ROOT, "kvui.py"), encoding="utf-8") as f:
+        tree = ast.parse(f.read())
+    gui_branch = next(node for node in tree.body if isinstance(node, ast.If)).orelse
+    class_def = next(
+        node for node in gui_branch if isinstance(node, ast.ClassDef) and node.name == "GameManager"
+    )
+    namespace = {
+        "os": os, "logging": logging, "App": type("App", (), {}),
+        "KivyJSONtoTextParser": object, "MDNavigationItemBase": object, "Widget": object,
+    }
+    exec(compile(ast.Module(body=[class_def], type_ignores=[]), "kvui.py", "exec"), namespace)
+    return namespace["GameManager"]
+
+
+class TestKvuiLegacyConfig(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.GameManager = _gui_game_manager()
+
+    def setUp(self) -> None:
+        patcher = mock.patch.dict(sys.modules, {"kivy.config": SimpleNamespace(ConfigParser=_KivyConfigParser)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.ini = os.path.join(tmp.name, "manual_client.ini")
+
+    def test_super_build_config_populates_sections(self) -> None:
+        ini = self.ini
+
+        class ManualManager(self.GameManager):
+            def get_application_config(self, defaultpath: str = "") -> str:
+                return ini
+
+            def build_config(self, config):
+                super().build_config(config)
+                config.setdefaults("manual", {"items_sorting_order": "default"})
+                config.setdefaults("universal-tracker", {"block_unreachable_location_press": "Yes"})
+
+        manager = ManualManager(ctx=None)
+        manager._load_legacy_config()
+        self.assertEqual(manager.config.sections(), ["manual", "universal-tracker"])
+        self.assertEqual(manager.config.get("manual", "items_sorting_order"), "default")
+        self.assertTrue(os.path.exists(ini), "world ini was not written")
+
+    def test_without_override_config_forwards_to_live_app(self) -> None:
+        manager = type("Plain", (self.GameManager,), {})(ctx=None)
+        manager._load_legacy_config()
+        self.assertNotIn("config", vars(manager))
+
+
+# --------------------------------------------------------------------------- #
+# Takeover path: LegacyKvuiClientBuilder resolves the per-world UI class from
+# ctx.make_gui(). Upstream world clients (e.g. SMS) return a subclass of the
+# frontend App class with a build() override; that shape must reach the live
+# app via build_legacy_kvui, while the bare frontend class and unrelated
+# classes must not.
+# --------------------------------------------------------------------------- #
+
+class _Frontend:
+    """Stand-in for the running frontend App class (mwgg_gui.app.MultiMDApp)."""
+
+    def __init__(self):
+        self.built = []
+
+    def build_legacy_kvui(self, ctx, manager_cls):
+        self.built.append(manager_cls)
+        return manager_cls
+
+
+class _GameManager:
+    """kvui.GameManager stand-in; importing the real one takes the Kivy branch."""
+
+
+class _Ctx:
+    def __init__(self, manager_cls, explicit_gui: bool = False):
+        self.make_gui = lambda: manager_cls
+        self.explicit_built = []
+        if explicit_gui:
+            self.build_gui = self.explicit_built.append
+
+
+def _patched_frontend() -> contextlib.ExitStack:
+    """Pin the frontend class, keep the kvui import Kivy-free, force the GUI branch."""
+    stack = contextlib.ExitStack()
+    stack.enter_context(mock.patch.object(ClientBuilder, "resolve_frontend_class", lambda: _Frontend))
+    stack.enter_context(mock.patch.dict(sys.modules, {"kvui": SimpleNamespace(GameManager=_GameManager)}))
+    stack.enter_context(mock.patch.dict(os.environ, {"MWGG_FRONTEND": "gui"}))
+    return stack
+
+
+class TestLegacyManagerClassResolution(unittest.TestCase):
+    def _resolve(self, manager_cls):
+        ctx = _Ctx(manager_cls)  # the builder only weak-refs it
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx)
+        with _patched_frontend():
+            return builder._legacy_manager_class(_Frontend())
+
+    def test_frontend_class_itself_is_ignored(self) -> None:
+        self.assertIsNone(self._resolve(_Frontend))
+
+    def test_frontend_subclass_is_returned(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        self.assertIs(self._resolve(Wrapper), Wrapper)
+
+    def test_game_manager_subclass_is_returned(self) -> None:
+        class Manager(_GameManager):
+            pass
+
+        self.assertIs(self._resolve(Manager), Manager)
+
+    def test_unrelated_class_is_ignored(self) -> None:
+        class Unrelated:
+            pass
+
+        self.assertIsNone(self._resolve(Unrelated))
+
+    def test_build_hands_frontend_subclass_to_live_app(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": Wrapper})
+
+    def test_build_runs_explicit_hook_and_frontend_subclass(self) -> None:
+        """TrackerGameContext worlds (e.g. SMS) declare build_gui via the tracker
+        and still return their own make_gui() subclass; both must build."""
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper, explicit_gui=True)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(ctx.explicit_built, [app])
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builders": ["build_gui", "legacy_kvui"], "manager": Wrapper})
+
+    def test_build_explicit_hook_only_when_make_gui_is_frontend(self) -> None:
+        app = _Frontend()
+        ctx = _Ctx(_Frontend, explicit_gui=True)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        self.assertEqual(ctx.explicit_built, [app])
+        self.assertEqual(app.built, [])
+        self.assertEqual(result, {"builders": ["build_gui"]})
+
+    def test_failing_explicit_hook_does_not_skip_frontend_subclass(self) -> None:
+        class Wrapper(_Frontend):
+            def build(self):
+                return None
+
+        def broken(app):
+            raise RuntimeError("tracker view failed")
+
+        app = _Frontend()
+        ctx = _Ctx(Wrapper)
+        ctx.build_gui = broken
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app)
+        with _patched_frontend(), self.assertLogs("Client", level="ERROR"):
+            result = asyncio.run(builder.build())
+        self.assertEqual(app.built, [Wrapper])
+        self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": Wrapper})
+
+
+# --------------------------------------------------------------------------- #
+# BizHawk attaches like SNI and the text client: launch() awaits the takeover
+# itself and titles the live app afterwards. A make_gui() override or a
+# run_gui() call (upstream's shape) would put it back on the legacy probe.
+# --------------------------------------------------------------------------- #
+
+class TestBizHawkDirectTakeover(unittest.TestCase):
+    def _launch(self, can_takeover: bool):
+        from worlds._bizhawk import context
+        seen = {}
+        errors = []
+
+        async def fake_takeover(ctx):
+            ctx.ui = SimpleNamespace(base_title="")
+            ctx.takeover_complete.set()
+
+        async def fake_watcher(ctx):
+            seen["ctx"] = ctx
+            ctx.exit_event.set()
+
+        with mock.patch.object(sys, "argv", ["BizHawkClient"]), \
+                mock.patch.object(context.Utils, "init_logging"), \
+                mock.patch.object(context.BizHawkClientContext, "_can_takeover_existing_ui",
+                                  return_value=can_takeover), \
+                mock.patch.object(context.BizHawkClientContext, "_takeover_existing_ui", fake_takeover), \
+                mock.patch.object(context.BizHawkClientContext, "run_gui",
+                                  side_effect=AssertionError("run_gui called")), \
+                mock.patch.object(context.BizHawkClientContext, "run_cli"), \
+                mock.patch.object(context, "_game_watcher", fake_watcher):
+            CommonClient._set_pending_launch_callbacks(None, lambda: errors.append(True))
+            context.launch()
+        return context, seen, errors
+
+    def test_context_keeps_the_common_make_gui(self) -> None:
+        from worlds._bizhawk.context import BizHawkClientContext
+        self.assertIs(BizHawkClientContext.make_gui, CommonClient.CommonContext.make_gui)
+
+    def test_launch_takes_over_and_titles_the_live_app(self) -> None:
+        context, seen, errors = self._launch(can_takeover=True)
+        self.assertEqual(seen["ctx"].ui.base_title, f"{context.apname} | BizHawk Client")
+        self.assertEqual(errors, [])
+
+    def test_launch_without_a_frontend_fires_the_error_callback(self) -> None:
+        _, seen, errors = self._launch(can_takeover=False)
+        self.assertEqual(errors, [True])
+        self.assertNotIn("ctx", seen)
+
+
+# --------------------------------------------------------------------------- #
+# server_loop retries ws:// as wss:// by recursing, so two finally blocks run
+# per connection attempt; only the innermost may close the connection and
+# schedule the auto-reconnect. Nothing is scheduled once the exit event is
+# set: asyncio.run cancels the loop during shutdown before ctx.shutdown()
+# has cleared server_address.
+# --------------------------------------------------------------------------- #
+def _loop_ctx(exit_set: bool = False) -> SimpleNamespace:
+    ctx = SimpleNamespace(
+        takeover_complete=asyncio.Event(), exit_event=asyncio.Event(), server=None,
+        server_address="ws://localhost:38281", username="Player1", max_size=None,
+        disconnected_intentionally=False, autoreconnect_task=None, server_task=None,
+        starting_reconnect_delay=5, current_reconnect_delay=5, server_tags=[], hostname="localhost",
+        _messagebox_connection_loss=None, ui=None, closed=0, losses=[],
+        cancel_autoreconnect=lambda: False,
+    )
+    ctx.takeover_complete.set()
+    if exit_set:
+        ctx.exit_event.set()
+
+    async def connection_closed():
+        ctx.closed += 1
+
+    ctx.connection_closed = connection_closed
+    ctx.handle_connection_loss = lambda msg: ctx.losses.append(msg)
+    return ctx
+
+
+def _closing_socket(exc: BaseException):
+    """Stands in for an open websocket whose first read raises exc."""
+    class Socket:
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise exc
+
+    return Socket()
+
+
+def _closed_socket(code: int, reason: str = ""):
+    """Stands in for a websocket the server closed cleanly: iteration ends without raising
+    and the close frame is left on the socket, as websockets does for 1000/1001."""
+    class Socket:
+        close_code = code
+        close_reason = reason
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            raise StopAsyncIteration
+
+    return Socket()
+
+
+class TestServerLoopReconnect(unittest.TestCase):
+    """Auto-reconnect only chases a server that went away unexpectedly: never after a
+    fresh connect fails, never after the server said GOING_AWAY, and never once a
+    reconnect is refused."""
+
+    def _run(self, ctx, connect, reconnect_attempt: bool = False) -> None:
+        with mock.patch.object(CommonClient.websockets, "connect", connect):
+            asyncio.run(CommonClient.server_loop(ctx, ctx.server_address, reconnect_attempt=reconnect_attempt))
+
+    @staticmethod
+    async def _refused(address, **kwargs):
+        raise ConnectionRefusedError()
+
+    @staticmethod
+    async def _timed_out(address, **kwargs):
+        raise asyncio.TimeoutError()
+
+    @staticmethod
+    def _closed_by(exc):
+        async def connect(address, **kwargs):
+            return _closing_socket(exc)
+        return connect
+
+    @staticmethod
+    def _closed_with(code, reason=""):
+        async def connect(address, **kwargs):
+            return _closed_socket(code, reason)
+        return connect
+
+    def test_wss_retry_schedules_one_reconnect(self):
+        attempts = []
+
+        async def connect(address, **kwargs):
+            attempts.append(address)
+            if address.startswith("ws://"):
+                raise websockets.InvalidMessage("not a websocket upgrade")
+            raise asyncio.TimeoutError()
+
+        ctx = _loop_ctx()
+        self._run(ctx, connect, reconnect_attempt=True)
+        self.assertEqual(attempts, ["ws://localhost:38281", "wss://localhost:38281"])
+        self.assertEqual(ctx.closed, 1)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+
+    def test_no_reconnect_after_exit_event(self):
+        ctx = _loop_ctx(exit_set=True)
+        self._run(ctx, self._timed_out, reconnect_attempt=True)
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+
+    def test_fresh_connect_failure_does_not_reconnect(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._refused)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("/connect" in line for line in logs.output), logs.output)
+
+    def test_refused_reconnect_stops_retrying(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._refused, reconnect_attempt=True)
+        self.assertEqual(ctx.closed, 1)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("/connect" in line for line in logs.output), logs.output)
+
+    def test_transient_reconnect_failure_keeps_retrying(self):
+        ctx = _loop_ctx()
+        self._run(ctx, self._timed_out, reconnect_attempt=True)
+        self.assertEqual(len(ctx.losses), 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+
+    def test_unexpected_close_reconnects(self):
+        ctx = _loop_ctx()
+        self._run(ctx, self._closed_by(websockets.ConnectionClosedError(None, None)))
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNotNone(ctx.autoreconnect_task)
+
+    def test_server_going_away_does_not_reconnect(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_with(CloseCode.GOING_AWAY, "Shutting down due to inactivity"))
+        self.assertEqual(ctx.closed, 1)
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
+        self.assertFalse(any("/me/rooms" in line for line in logs.output), logs.output)
+
+    def test_going_away_without_close_handshake_does_not_reconnect(self):
+        close = Close(CloseCode.GOING_AWAY, "Shutting down due to inactivity")
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_by(websockets.ConnectionClosedError(close, None)))
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Shutting down due to inactivity" in line for line in logs.output), logs.output)
+
+    def test_clean_close_without_going_away_reconnects(self):
+        ctx = _loop_ctx()
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_with(CloseCode.NORMAL_CLOSURE))
+        self.assertIsNotNone(ctx.autoreconnect_task)
+        self.assertTrue(any("Server closed the connection" in line for line in logs.output), logs.output)
+
+    def test_webhost_going_away_points_at_the_rooms_page(self):
+        ctx = _loop_ctx()
+        ctx.server_tags = ["AP", "WebHost"]
+        ctx.hostname = "mw.example.com"
+        with self.assertLogs(CommonClient.logger, "INFO") as logs:
+            self._run(ctx, self._closed_with(CloseCode.GOING_AWAY, "Shutting down due to inactivity"))
+        self.assertIsNone(ctx.autoreconnect_task)
+        self.assertTrue(any(
+            "Please resume the multiworld room at https://mw.example.com/me/rooms before typing /connect to reconnect"
+            in line for line in logs.output), logs.output)
+
+    def test_autoreconnect_doubles_delay_after_sleep(self):
+        ctx = _loop_ctx()
+        attempts = []
+
+        async def fake_server_loop(ctx_, address=None, *, reconnect_attempt=False):
+            attempts.append(reconnect_attempt)
+
+        async def run():
+            with mock.patch.object(CommonClient, "server_loop", fake_server_loop), \
+                    mock.patch.object(CommonClient.asyncio, "sleep", mock.AsyncMock()) as sleep:
+                await CommonClient.server_autoreconnect(ctx)
+                await ctx.server_task
+            return sleep
+
+        sleep = asyncio.run(run())
+        sleep.assert_awaited_once_with(5)
+        self.assertEqual(ctx.current_reconnect_delay, 10)
+        self.assertEqual(attempts, [True])
+
+
+class TestUpdateMwggHints(unittest.TestCase):
+    def test_update_merges_instead_of_replacing(self):
+        sent = []
+
+        async def send_msgs(msgs):
+            sent.extend(msgs)
+
+        ctx = SimpleNamespace(team=0, slot=3, send_msgs=send_msgs)
+        ctx.update_mwgg_hints = lambda statuses: CommonClient.CommonContext.update_mwgg_hints(ctx, statuses)
+
+        async def run():
+            CommonClient.CommonContext.update_mwgg_hints(ctx, {"2_10": 9})
+            CommonClient.CommonContext.update_mwgg_hint(ctx, 11, 2, CommonClient.MWGGUIHintStatus.HINT_GOAL)
+            await asyncio.sleep(0)
+
+        asyncio.run(run())
+        self.assertEqual([msg["key"] for msg in sent], ["hints_0_3_mwgg"] * 2)
+        self.assertEqual([msg["operations"] for msg in sent],
+                         [[{"operation": "update", "value": {"2_10": 9}}],
+                          [{"operation": "update", "value": {"2_11": 2}}]])
+
+
+
+# --------------------------------------------------------------------------- #
+# Upstream SNES worlds lazily `from SNIClient import snes_read, ...` inside
+# their validate_rom/game_watcher bodies. worlds._sni.context is upstream's
+# SNIClient.py, so it registers itself under that name in sys.modules; the
+# game loop that calls those bodies lives in context, so the alias always
+# exists before a world needs it.
+# --------------------------------------------------------------------------- #
+
+class TestSNIClientAlias(unittest.TestCase):
+    def test_context_registers_itself_as_sniclient(self) -> None:
+        from worlds import _sni
+        from worlds._sni import context
+        import SNIClient
+
+        self.assertIs(SNIClient, context)
+        for name in ("snes_read", "snes_write", "snes_buffered_write", "snes_flush_writes"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(_sni, name))
+        for name in ("DeathState", "SNIContext", "SNIClientCommandProcessor"):
+            with self.subTest(name=name):
+                self.assertIs(getattr(SNIClient, name), getattr(context, name))
+
+
+def _snes_ctx(**overrides):
+    from worlds._sni import SNESState
+    fields = dict(snes_address="localhost:23074", snes_state=SNESState.SNES_DISCONNECTED,
+                  snes_reconnect_address=None, snes_connect_task=None)
+    fields.update(overrides)
+    return SimpleNamespace(**fields)
+
+
+class TestSnesCommandArguments(unittest.TestCase):
+    def test_parse_accepts_every_documented_form(self) -> None:
+        from worlds._sni.context import parse_snes_options
+        cases = {
+            "": ("localhost:23074", -1),
+            "1": ("localhost:23074", 1),
+            "127.0.0.1:23074": ("127.0.0.1:23074", -1),
+            "ws://sni.local:23074": ("ws://sni.local:23074", -1),
+            "127.0.0.1:8080 2": ("127.0.0.1:8080", 2),
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(parse_snes_options(text, "localhost:23074"), expected)
+
+    def test_parse_rejects_garbage_with_usage(self) -> None:
+        from worlds._sni.context import parse_snes_options
+        for text in ("close", "sni 1", "localhost:23074 two", "localhost:23074 1 extra"):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(ValueError, "Usage: /snes"):
+                    parse_snes_options(text, "localhost:23074")
+
+    def test_cmd_snes_reports_bad_arguments_instead_of_raising(self) -> None:
+        from worlds._sni import SNESState
+        from worlds._sni.context import SNIClientCommandProcessor
+        ctx = _snes_ctx(snes_state=SNESState.SNES_CONNECTED)
+        processor = SNIClientCommandProcessor(ctx)
+        outputs: list = []
+        processor.output = outputs.append
+        with mock.patch.object(processor, "_cmd_snes_close") as close:
+            self.assertFalse(processor("/snes close"))
+        self.assertIn("Usage: /snes", outputs[-1])
+        close.assert_not_called()
+        self.assertIsNone(ctx.snes_connect_task)
+
+    def test_cmd_snes_accepts_a_bare_address(self) -> None:
+        from worlds._sni import context
+        calls = []
+
+        async def fake_snes_connect(ctx, address, device_index=-1):
+            calls.append((address, device_index))
+
+        ctx = _snes_ctx()
+
+        async def run():
+            processor = context.SNIClientCommandProcessor(ctx)
+            with mock.patch.object(context, "snes_connect", fake_snes_connect):
+                self.assertTrue(processor("/snes 127.0.0.1:23074"))
+                await ctx.snes_connect_task
+
+        asyncio.run(run())
+        self.assertEqual(calls, [("127.0.0.1:23074", -1)])
+
+
+class TestNoDeviceHint(unittest.TestCase):
+    def test_hint_logged_once_after_delay(self) -> None:
+        from worlds import _sni
+        ctx = SimpleNamespace(snes_address="localhost:23074", exit_event=None)
+
+        class FakeSocket:
+            polls = 0
+
+            async def send(self, _request) -> None:
+                pass
+
+            async def recv(self) -> str:
+                self.polls += 1
+                if self.polls >= 4:
+                    ctx.exit_event.set()
+                return '{"Results": []}'
+
+            async def close(self) -> None:
+                pass
+
+        async def fake_connect(_ctx, _address):
+            return FakeSocket()
+
+        async def run():
+            ctx.exit_event = asyncio.Event()
+            with mock.patch.object(_sni, "_snes_connect", fake_connect), \
+                    mock.patch.object(_sni, "_NO_DEVICE_HINT_DELAY", 0), \
+                    self.assertLogs("SNES", level="ERROR") as logs:
+                devices = await _sni.get_snes_devices(ctx)
+            return devices, logs.output
+
+        devices, output = asyncio.run(run())
+        self.assertEqual(devices, [])
+        self.assertEqual(len(output), 1)
+        self.assertIn("correct emulator", output[0])

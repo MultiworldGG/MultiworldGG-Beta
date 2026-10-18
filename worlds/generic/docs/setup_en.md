@@ -50,8 +50,8 @@ YAML files may be generated on the MultiworldGG website by visiting the [games p
 "Options Page" link under the relevant game. Clicking "Export Options" in a game's options page will download the
 YAML to your system.
 
-Alternatively, you can run `MultiworldGGLauncher.exe` and click on `Generate Template Options` to create a set of template 
-YAMLs for each game in your MultiworldGG install (including for APWorlds). These will be placed in your `Players/Templates` folder.
+Alternatively, you can run `MultiworldGGLauncher.exe`, open the `Tools` section, and click `Create YAML` to build an
+options YAML for the selected game (including installed APWorlds). Saved YAMLs are placed in your `Players` folder.
 
 In a multiworld there must be one YAML per world. Any number of players can play on each world using either the game's
 native coop system or using MultiworldGG's coop support. Each world will hold one slot in the multiworld and will have a
@@ -172,8 +172,8 @@ servers will shut down after 4 hours of inactivity, saving the multiworld progre
 room server can be started back up, and the multiworld can continue to be played. If the link to the room is lost, the
 creator of the room can find it on their [User Content Page](/user-content). The person who created the room becomes the
 "owner" of the room, and as such has access to the server console. Clearing cookies will remove access to this console,
-and there is no way to regain it. If a server password was set when generating the multiworld game, server admin
-privileges may be gained by entering `!admin <password>` from the `MultiworldGGTextClient.exe`.
+and there is no way to regain it. If an admin password was set when generating the multiworld game, server admin
+privileges may be gained by entering `!admin <admin_password>` from the `MultiworldGGTextClient.exe`.
 
 #### The room page
 

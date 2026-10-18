@@ -20,13 +20,27 @@ from settings import get_settings
 from worlds import AutoWorld
 from worlds.generic.Rules import exclusion_rules, locality_rules
 
-__all__ = ["main"]
+__all__ = ["main", "embedded_server_options"]
 
 
-def main(args, seed=None, baked_server_options: dict[str, object] | None = None):
+def embedded_server_options(server_options: dict[str, object]) -> dict[str, object]:
+    """Server options as written into the multidata.
+
+    Upstream Archipelago hosts read only server_password, this server admin_password;
+    a zip must carry both so it hosts anywhere."""
+    admin_password = server_options.get("admin_password") or server_options.get("server_password") or None
+    return {**server_options, "admin_password": admin_password, "server_password": admin_password}
+
+
+def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
+         baked_generator_options: dict[str, object] | None = None):
     if not baked_server_options:
         baked_server_options = get_settings().server_options.as_dict()
     assert isinstance(baked_server_options, dict)
+    baked_server_options = embedded_server_options(baked_server_options)
+    if baked_generator_options is None:
+        baked_generator_options = get_settings().generator.as_dict()
+    assert isinstance(baked_generator_options, dict)
     if args.outputpath:
         os.makedirs(args.outputpath, exist_ok=True)
         output_path.cached_path = args.outputpath
@@ -49,7 +63,9 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
     multiworld.state = CollectionState(multiworld)
     logger.info('%s Version %s  -  Seed: %s\n', instance_name, __version__, multiworld.seed)
 
-    logger.info(f"Found {len(AutoWorld.AutoWorldRegister.world_types)} World Types:")
+    listed_worlds = {name: cls for name, cls in AutoWorld.AutoWorldRegister.world_types.items()
+                     if not cls.hidden and len(cls.item_names) > 0}
+    logger.info(f"Found {len(listed_worlds)} World Types:")
     longest_name = max(len(text) for text in AutoWorld.AutoWorldRegister.world_types)
 
     world_classes = AutoWorld.AutoWorldRegister.world_types.values()
@@ -58,12 +74,11 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
     item_count = len(str(max(len(cls.item_names) for cls in world_classes)))
     location_count = len(str(max(len(cls.location_names) for cls in world_classes)))
 
-    for name, cls in AutoWorld.AutoWorldRegister.world_types.items():
-        if not cls.hidden and len(cls.item_names) > 0:
-            logger.info(f" {name:{longest_name}}: "
-                        f"v{cls.world_version.as_simple_string():{version_count}} | "
-                        f"Items: {len(cls.item_names):{item_count}} | "
-                        f"Locations: {len(cls.location_names):{location_count}}")
+    for name, cls in listed_worlds.items():
+        logger.info(f" {name:{longest_name}}: "
+                    f"v{cls.world_version.as_simple_string():{version_count}} | "
+                    f"Items: {len(cls.item_names):{item_count}} | "
+                    f"Locations: {len(cls.location_names):{location_count}}")
 
     del item_count, location_count
 
@@ -196,7 +211,11 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
     if multiworld.algorithm == 'flood':
         flood_items(multiworld)  # different algo, biased towards early game progress items
     elif multiworld.algorithm == 'balanced':
-        distribute_items_restrictive(multiworld, get_settings().generator.panic_method)
+        distribute_items_restrictive(
+            multiworld,
+            baked_generator_options.get("panic_method", get_settings().generator.panic_method),
+            baked_generator_options.get("progression_equalization", get_settings().generator.progression_equalization),
+        )
 
     AutoWorld.call_all(multiworld, 'post_fill')
 
@@ -204,6 +223,8 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
         balance_multiworld_progression(multiworld)
     else:
         logger.info("Progression balancing skipped.")
+
+    logger.info("Running pre-output steps.")
 
     AutoWorld.call_all(multiworld, "finalize_multiworld")
     AutoWorld.call_all(multiworld, "pre_output")
@@ -307,6 +328,9 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
                         elif any([location.item.name in multiworld.worlds[player].options.start_hints
                                   for player in multiworld.groups.get(location.item.player, {}).get("players", [])]):
                             precollect_hint(location, auto_status)
+                
+                allow_collecting_from: dict[int, bool] = {player: multiworld.worlds[player].options.allow_collecting_from.value != 0
+                                                     for player in multiworld.player_ids}
 
                 # embedded data package
                 data_package = {
@@ -327,6 +351,29 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
                     if current_sphere:
                         spheres.append(dict(current_sphere))
 
+                # Determine which slugs are index-managed (have module_location in mwgg_igdb).
+                # Custom/off-index worlds lack module_location; be defensive if mwgg_igdb is unavailable.
+                try:
+                    from mwgg_igdb import GameIndex as _gi
+                    _index_games: dict = _gi.get_all_games()
+                except Exception:
+                    _index_games = {}
+
+                def _is_custom_world(world: AutoWorld.World) -> bool:
+                    slug = world.__module__.split(".")[1]
+                    entry = _index_games.get(slug)
+                    # In-index worlds have module_location; custom worlds added via
+                    # register_custom_worlds / GameIndex.add_game do not.
+                    return entry is None or not entry.get("module_location")
+
+                world_versions: dict[int, NetUtils.WorldVersionPin] = {
+                    slot: {
+                        "version": tuple(multiworld.worlds[slot].world_version),  # type: ignore[typeddict-item]
+                        "custom": _is_custom_world(multiworld.worlds[slot]),
+                    }
+                    for slot in multiworld.player_ids
+                }
+
                 multidata: NetUtils.MultiData = {
                     "slot_data": slot_data,
                     "slot_info": slot_info,
@@ -344,7 +391,18 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None)
                     "spheres": spheres,
                     "datapackage": data_package,
                     "race_mode": int(multiworld.is_race),
+                    "allow_collecting_from": allow_collecting_from,
+                    "world_versions": world_versions,
                 }
+                # Record the mwgg_igdb release tag this seed was generated against, so a
+                # client can reconstruct the same world set from that index snapshot.
+                try:
+                    import ModuleUpdate
+                    mwgg_index_tag = ModuleUpdate.installed_mwgg_index_tag()
+                except Exception:
+                    mwgg_index_tag = None
+                if mwgg_index_tag:
+                    multidata["mwgg_index_tag"] = mwgg_index_tag
                 # TODO: change to `"version": version_tuple` after getting better serialization
                 AutoWorld.call_all(multiworld, "modify_multidata", multidata)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-cx_Freeze setup script for MultiWorldGG
+cx_Freeze setup script for MultiworldGG
 """
 
 import os
@@ -10,6 +10,7 @@ import logging
 
 from cx_Freeze import setup, Executable, build_exe
 from cx_Freeze.command.bdist_mac import bdist_mac
+from Cython.Build import cythonize
 
 # cx_Freeze's bundled numpy hook (cx_Freeze/hooks/_numpy_.py) is for numpy < 2.0, 
 # so the workaround is not needed; stub the hook to prevent frozen exe errors.
@@ -19,7 +20,30 @@ def _no_overrides_patch(self, finder, module):
 _cxf_numpy_hook.Hook.numpy__core_overrides = _no_overrides_patch
 _cxf_numpy_hook.Hook.numpy_core_overrides = _no_overrides_patch
 
-from Utils import version_tuple, instance_name, is_windows
+from Utils import version_tuple, instance_name, is_windows, is_macos, FROZEN_TARGETS
+
+
+def _find_libmtdev() -> str | None:
+    """Locate libmtdev.so.1 on the build machine for explicit bundling.
+
+    cx_Freeze's `bin_includes` only overrides exclusion of libs it already
+    sees as link-time deps; libmtdev is runtime-loaded via ctypes from
+    `kivy/lib/mtdev.py`, so cx_Freeze never finds it. We bundle it
+    ourselves via `include_files` instead.
+    """
+    if platform.system() != "Linux":
+        return None
+    for path in (
+        "/usr/lib/x86_64-linux-gnu/libmtdev.so.1",
+        "/usr/lib64/libmtdev.so.1",
+        "/usr/lib/libmtdev.so.1",
+    ):
+        if os.path.exists(path):
+            return path
+    return None
+
+
+_libmtdev_path = _find_libmtdev()
 
 logger = logging.getLogger("MultiWorld")
 
@@ -34,7 +58,6 @@ if not logging.getLogger("MultiWorld").hasHandlers():
 logging.getLogger("cx_Freeze").setLevel(logging.getLogger().level)
 logging.getLogger("kivy").setLevel(logging.getLogger().level)
 
-# Import project utilities
 sys.path.insert(0, os.path.dirname(__file__))
 
 # Build configuration
@@ -74,7 +97,9 @@ build_exe_options = {
     ],
     "includes": [
         "ModuleUpdate",
+        "packaging",
         "BaseUtils",
+        "LauncherComponents",
         "CommonClient",
         "ClientBuilder",
         "BaseClasses",
@@ -85,7 +110,8 @@ build_exe_options = {
     "excludes": [
         "Cython",
         "PySide2",
-        "pygments",
+        # pygments must NOT be excluded: mwgg_gui.yaml_creator hard-imports it
+        # (YamlLexer) and the frozen build dies without it.
         "pandas",
         "matplotlib",
         "scipy",
@@ -100,7 +126,9 @@ build_exe_options = {
         "kivy_deps.angle"
     ],
     "zip_include_packages": ["*"],
-    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy"],
+    # cffi/pycparser must stay outside the zip for pythonnet (BFBB lib freezing)
+    "zip_exclude_packages": ["kivymd", "mwgg_gui", "kivy", "worlds", "PIL", "mwgg_tui", "mwgg_splash", "numpy",
+                             "cffi", "pycparser"],
     "include_files": [
         ("data", "data"),
         ("LICENSE", "LICENSE"),
@@ -110,9 +138,13 @@ build_exe_options = {
         ("data/EnemizerCLI", "EnemizerCLI") if os.path.exists("data/EnemizerCLI") else None,
         ("kivy/data", "lib/kivy/data"),
         ("kivy/include", "lib/kivy/include"),
-        # Mac/Linux only: ship astral's install.sh so first launch can install uv if it's not on PATH.
+        # Mac/Linux only: ship the uv binary next to the frozen exe so the runtime can exec it
         # Windows installs uv via Inno Setup (winget, with PowerShell installer fallback) at install time.
-        ("uv_runtime/install-uv.sh", "install-uv.sh") if not is_windows and os.path.exists("uv_runtime/install-uv.sh") else None,
+        ("uv_runtime/uv", "uv") if (not is_windows and not is_macos and os.path.exists("uv_runtime/uv")) else None,
+        ("uv_runtime/uv-arm64", "uv-arm64") if (is_macos and os.path.exists("uv_runtime/uv-arm64")) else None,
+        ("uv_runtime/uv-x86_64", "uv-x86_64") if (is_macos and os.path.exists("uv_runtime/uv-x86_64")) else None,
+        # NOTE: libmtdev.so.1 is copied at post-build time (see post_build_setup);
+        # `include_files` put it under lib/ where Kivy's ctypes CDLL didn't find it.
     ],
     "include_msvcr": True,
     "replace_paths": ["*."],
@@ -124,51 +156,79 @@ build_exe_options = {
 build_exe_options["include_files"] = [item for item in build_exe_options["include_files"] if item is not None]
 build_exe_options["packages"] = [item for item in build_exe_options["packages"] if item is not None]
 
+# Launcher exe names derive from BaseUtils.FROZEN_TARGETS so they can't drift.
+# test_launcher_stack.py greps this file's target_name literals against
+# FROZEN_TARGETS.values(); the Debug variant has no entry, hence computed here.
+_exe_suffix = ".exe" if is_windows else ""
+_launcher_exe_name = FROZEN_TARGETS["Launcher"] + _exe_suffix
+_launcher_debug_exe_name = FROZEN_TARGETS["Launcher"] + "Debug" + _exe_suffix
+
 # Executable configurations
 executables = [
     Executable(
         script="MultiWorld.py",
-        target_name="MultiWorldGG.exe" if is_windows else "MultiWorldGG",
+        target_name="MultiworldGG.exe" if is_windows else "MultiworldGG",
         icon="data/icon.ico" if is_windows else "data/icon.png",
-        base="Win32GUI" if is_windows else None,
-        shortcut_name="MultiWorldGG",
+        base="gui" if is_windows else None,
+        shortcut_name="MultiworldGG",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="MultiServer.py", 
-        target_name="MultiWorldGGServer.exe" if is_windows else "MultiWorldGGServer",
+        target_name="MultiworldGGServer.exe" if is_windows else "MultiworldGGServer",
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGServer",
+        shortcut_name="MultiworldGGServer",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="Generate.py",
-        target_name="MultiWorldGGGenerate.exe" if is_windows else "MultiWorldGGGenerate", 
+        target_name="MultiworldGGGenerate.exe" if is_windows else "MultiworldGGGenerate", 
         icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGGenerate",
+        shortcut_name="MultiworldGGGenerate",
         shortcut_dir="DesktopFolder"
     ),
     Executable(
         script="Patch.py",
-        target_name="MultiWorldGGPatch.exe" if is_windows else "MultiWorldGGPatch",
-        icon="data/icon.ico" if is_windows else "data/icon.png", 
+        target_name="MultiworldGGPatch.exe" if is_windows else "MultiworldGGPatch",
+        icon="data/icon.ico" if is_windows else "data/icon.png",
         base=None,
-        shortcut_name="MultiWorldGGPatch",
+        shortcut_name="MultiworldGGPatch",
+        shortcut_dir="DesktopFolder"
+    ),
+    # Standalone Launcher: stays open, spawning everything else as separate
+    # processes; bare double-click behaves like the pre-split client (gui base,
+    # no console window). cx_Freeze >= 8.5 dropped the legacy "Win32GUI" name.
+    Executable(
+        script="Launcher.py",
+        target_name=_launcher_exe_name,
+        icon="data/icon.ico" if is_windows else "data/icon.png",
+        base="gui" if is_windows else None,
+        shortcut_name="MultiworldGG Launcher",
         shortcut_dir="DesktopFolder"
     )
 ]
 
-# Windows-specific: Add debug version of MultiWorld
+# Windows-specific: Add debug versions
 if is_windows:
     executables.append(
         Executable(
             script="MultiWorld.py",
-            target_name="MultiWorldGGClientDebug.exe",
+            target_name="MultiworldGGClientDebug.exe",
             icon="data/icon.ico",
             base=None,  # Console version for debugging
-            shortcut_name="MultiWorldGGClient Debug",
+            shortcut_name="MultiworldGGClient Debug",
+            shortcut_dir="DesktopFolder"
+        )
+    )
+    executables.append(
+        Executable(
+            script="Launcher.py",
+            target_name=_launcher_debug_exe_name,
+            icon="data/icon.ico",
+            base=None,  # Console version for debugging / CI smoke testing
+            shortcut_name="MultiworldGG Launcher Debug",
             shortcut_dir="DesktopFolder"
         )
     )
@@ -183,11 +243,47 @@ def pre_build_setup():
     except ImportError as e:
         logger.warning(f"Warning: Could not load custom kivy hook: {e}")
 
+def bundle_extensions(build_ext, build_exe_dir):
+    """Copy build_ext outputs into lib/; cx_Freeze's finder never sees them."""
+    import shutil
+    outputs = build_ext.get_outputs()
+    if not outputs:
+        raise RuntimeError("build_ext produced no extension modules; is ext_modules set?")
+    lib_dir = os.path.join(build_exe_dir, "lib")
+    for src in outputs:
+        shutil.copy(src, lib_dir)
+        logger.info(f"Bundled {src} -> {lib_dir}")
+
+
 def post_build_setup(build_exe_dir):
     """Run post-build setup tasks to include SDL2 and GLEW dependencies"""
     logger.debug("Running post-build setup...")
-    os.mkdir(os.path.join(build_exe_dir, "Players"))
-    os.mkdir(os.path.join(build_exe_dir, "custom_worlds"))
+
+    # world_launcher_cache.json.gz is a stray from the removed pre-split launcher
+    # cache; the ("data", "data") copy would ship it from a dev checkout, so delete it.
+    stray_cache = os.path.join(build_exe_dir, "data", "world_launcher_cache.json.gz")
+    if os.path.isfile(stray_cache):
+        os.remove(stray_cache)
+        logger.info(f"Removed stray {stray_cache} from frozen build output.")
+
+    # Ship empty Players/ and custom_worlds/ dirs. No README breadcrumb: a stray
+    # .txt gets picked up by the player-file / custom-world scanners.
+    for subdir in ("Players", "custom_worlds"):
+        os.makedirs(os.path.join(build_exe_dir, subdir), exist_ok=True)
+
+    # Linux: copy libmtdev.so.1 to the bundle root. include_files/bin_includes are
+    # unreliable for it (runtime ctypes load, not a link-time dep); $ORIGIN placement
+    # plus MultiWorld.py's absolute-path pre-load is the combination that works.
+    if platform.system() == "Linux":
+        import shutil
+        libmtdev = _find_libmtdev()
+        if libmtdev:
+            dest = os.path.join(build_exe_dir, "libmtdev.so.1")
+            shutil.copy(libmtdev, dest)  # follows symlink, dest is a regular file
+            logger.info(f"Bundled {libmtdev} -> {dest}")
+        else:
+            logger.warning("libmtdev.so.1 not found on build host; AppImage will "
+                           "log a benign 'MTDev is not supported' warning at startup.")
 
 
 def _register_custom_hooks():
@@ -229,16 +325,19 @@ class CustomBuildExe(build_exe):
     """Custom build command that includes post-build setup and custom hooks"""
 
     def run(self):
-        # Register our custom hooks before building
         _register_custom_hooks()
 
-        # Run the normal build
+        # cx_Freeze never runs build_ext itself. Not in-place: a root-level .pyd
+        # shadows pyximport in dev checkouts and stays locked on Windows.
+        build_ext = self.distribution.get_command_obj("build_ext")
+        build_ext.inplace = False
+        self.run_command("build_ext")
+
         super().run()
-        # Get the build directory
         build_dir = self.build_exe
         if build_dir:
             logger.info(f"Build completed in: {build_dir}")
-            # Run post-build setup
+            bundle_extensions(build_ext, build_dir)
             post_build_setup(build_dir)
 
 
@@ -248,6 +347,16 @@ class CustomBdistMac(bdist_mac):
     def run(self):
         _register_custom_hooks()
         super().run()
+        # bdist_mac strands loose build-dir files in Contents/Resources (only
+        # directories get MacOS symlinks); the runtime probes the exe dir for
+        # uv-<arch>, so move the bundled uv into Contents/MacOS.
+        import shutil
+        for name in ("uv-arm64", "uv-x86_64"):
+            source = os.path.join(self.resources_dir, name)
+            if os.path.exists(source):
+                target = os.path.join(self.bin_dir, name)
+                shutil.move(source, target)
+                os.chmod(target, 0o755)
 
 
 if __name__ == "__main__":
@@ -272,6 +381,7 @@ if __name__ == "__main__":
         version=version_tuple.as_pep440_string(),
         description=f"{instance_name} - MultiWorld.GG - More, and Faster",
         author="DelilahIsDidi, TreZc0",
+        ext_modules=cythonize("_speedups.pyx"),
         options=options,
         executables=executables,
         cmdclass=cmdclass,

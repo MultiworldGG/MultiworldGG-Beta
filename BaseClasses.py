@@ -8,10 +8,10 @@ import secrets
 import warnings
 from argparse import Namespace
 from collections import Counter, deque, defaultdict
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, MutableSequence, Set
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, MutableSequence, Set as AbstractSet
 from enum import IntEnum, IntFlag
-from typing import (AbstractSet, Any, ClassVar, Dict, List, Literal, NamedTuple,
-                    Optional, Protocol, Tuple, Union, TYPE_CHECKING, overload)
+from typing import (Any, ClassVar, Dict, List, Literal, NamedTuple,
+                    Optional, Protocol, Set, Tuple, Union, TYPE_CHECKING, overload)
 import dataclasses
 
 from typing_extensions import NotRequired, TypedDict
@@ -50,7 +50,7 @@ class ThreadBarrierProxy:
             return getattr(self.obj, name)
         else:
             raise RuntimeError("You are in a threaded context and global random state was removed for your safety. "
-                               "Please use multiworld.per_slot_randoms[player] or randomize ahead of output.")
+                               "Please use world.random or randomize ahead of output.")
 
 
 class HasNameAndPlayer(Protocol):
@@ -94,14 +94,15 @@ class MultiWorld():
     start_hints: Dict[int, Options.StartHints]
     start_location_hints: Dict[int, Options.StartLocationHints]
     item_links: Dict[int, Options.ItemLinks]
+    _recursive_logic_dependents: dict[int, frozenset[int]]
+    _recursive_logic_dependencies: dict[int, set[int]]
+    _direct_logic_dependencies: dict[int, set[int]]
 
     plando_item_blocks: Dict[int, List[PlandoItemBlock]]
 
     game: Dict[int, str]
 
     random: random.Random
-    per_slot_randoms: Utils.DeprecateDict[int, random.Random]
-    """Deprecated. Please use `self.random` instead."""
 
     class AttributeProxy():
         def __init__(self, rule):
@@ -166,6 +167,10 @@ class MultiWorld():
         self.indirect_connections = {}
         self.start_inventory_from_pool: Dict[int, Options.StartInventoryPool] = {}
         self.plando_item_blocks = {}
+        # Each player's logic depends only on their own world to begin with.
+        self._recursive_logic_dependents = {player: frozenset({player}) for player in self.player_ids}
+        self._recursive_logic_dependencies = {player: {player} for player in self.player_ids}
+        self._direct_logic_dependencies = {player: {player} for player in self.player_ids}
 
         for player in range(1, players + 1):
             def set_player_attr(attr: str, val) -> None:
@@ -174,8 +179,6 @@ class MultiWorld():
             set_player_attr('game', "Archipelago")
             set_player_attr('completion_condition', lambda state: True)
         self.worlds = {}
-        self.per_slot_randoms = Utils.DeprecateDict("Using per_slot_randoms is now deprecated. Please use the "
-                                                    "world's random object instead (usually self.random)", True)
         self.plando_options = PlandoOptions.none
 
     def get_all_ids(self) -> Tuple[int, ...]:
@@ -195,6 +198,11 @@ class MultiWorld():
         self.regions.add_group(new_id)
         self.game[new_id] = game
         self.player_types[new_id] = NetUtils.SlotType.group
+        # The group ID is added to the logic dependency sets before creating the group world to avoid crashing if the
+        # group world tries to register a logic dependency during its __init__().
+        self._recursive_logic_dependents[new_id] = frozenset({new_id})
+        self._recursive_logic_dependencies[new_id] = {new_id}
+        self._direct_logic_dependencies[new_id] = {new_id}
         world_type = AutoWorld.AutoWorldRegister.world_types[game]
         self.worlds[new_id] = world_type.create_group(self, new_id, players)
         self.worlds[new_id].collect_item = AutoWorld.World.collect_item.__get__(self.worlds[new_id])
@@ -511,7 +519,7 @@ class MultiWorld():
         state.can_reach(Region) in the Entrance's traversal condition, as opposed to pure transition logic."""
         self.indirect_connections.setdefault(region, set()).add(entrance)
 
-    def get_locations(self, player: Optional[int] = None) -> Iterable[Location]:
+    def get_locations(self, player: int | None = None) -> Collection[Location]:
         if player is not None:
             return self.regions.location_cache[player].values()
         return Utils.RepeatableChain(tuple(self.regions.location_cache[player].values()
@@ -562,21 +570,31 @@ class MultiWorld():
     def can_beat_game(self,
                       starting_state: Optional[CollectionState] = None,
                       locations: Optional[Iterable[Location]] = None) -> bool:
+        unbeaten_game_players: list[int]
         if starting_state:
-            if self.has_beaten_game(starting_state):
+            unbeaten_game_players = [player for player in self.player_ids
+                                     if not self.has_beaten_game(starting_state, player)]
+            if not unbeaten_game_players:
                 return True
             state = starting_state.copy()
         else:
             state = CollectionState(self)
-            if self.has_beaten_game(state):
+            unbeaten_game_players = [player for player in self.player_ids
+                                     if not self.has_beaten_game(state, player)]
+            if not unbeaten_game_players:
                 return True
 
-        for _ in state.sweep_for_advancements(locations,
-                                              yield_each_sweep=True,
-                                              checked_locations=state.locations_checked):
-            if self.has_beaten_game(state):
+        for players_to_check in state.sweep_for_advancements(locations,
+                                                             yield_each_sweep=True,
+                                                             checked_locations=state.locations_checked):
+            # Update the list of players that have yet to beat their game.
+            unbeaten_game_players = [player for player in unbeaten_game_players
+                                     if not (player in players_to_check and self.has_beaten_game(state, player))]
+            if not unbeaten_game_players:
+                # All players have beaten their games.
                 return True
 
+        # Ran out of locations before the game was beaten.
         return False
 
     def get_spheres(self) -> Iterator[Set[Location]]:
@@ -588,23 +606,40 @@ class MultiWorld():
         unreachable locations.
         """
         state = CollectionState(self)
-        locations = set(self.get_filled_locations())
+        locations_per_player: dict[int, set[Location]] = {}
+        for player in self.get_all_ids():
+            player_locations = set(self.get_filled_locations(player))
+            if player_locations:
+                locations_per_player[player] = player_locations
 
-        while locations:
-            sphere: Set[Location] = set()
+        players_to_check: AbstractSet[int] = set(locations_per_player.keys())
+        while locations_per_player:
+            sphere: set[Location] = set()
 
-            for location in locations:
-                if location.can_reach(state):
-                    sphere.add(location)
+            for player in players_to_check:
+                if player not in locations_per_player:
+                    continue
+                player_locations = locations_per_player[player]
+                reachable_player_locations = [location for location in player_locations if location.can_reach(state)]
+                sphere.update(reachable_player_locations)
+                player_locations.difference_update(reachable_player_locations)
+                if not player_locations:
+                    del locations_per_player[player]
             yield sphere
             if not sphere:
-                if locations:
-                    yield locations  # unreachable locations
+                if locations_per_player:
+                    # unreachable locations
+                    yield {loc for locations in locations_per_player.values() for loc in locations}
                 break
 
+            state_changed_players: set[int] = set()
             for location in sphere:
-                state.collect(location.item, True, location)
-            locations -= sphere
+                item = location.item
+                if state.collect(location.item, True, location):
+                    # State changed, so there may be players that can reach additional locations in the next sphere.
+                    state_changed_players.add(item.player)
+
+            players_to_check = self.get_players_logically_dependent_on_players(state_changed_players)
 
     def get_sendable_spheres(self) -> Iterator[Set[Location]]:
         """
@@ -711,6 +746,84 @@ class MultiWorld():
                 return True
 
         return False
+
+    # Rather than one method with a `*players: int` argument, separate methods are used for 1 player/many players for
+    # better performance.
+    def get_players_logically_dependent_on_players(self, players: Iterable[int]) -> AbstractSet[int]:
+        """
+        Get a set of all player IDs whose logic depends on any worlds belonging to a player in `players`
+
+        :param players: Players IDs to get the logical dependents of.
+        :return: A set of all player IDs logically dependent on any of the player IDs in `players`.
+        """
+        # This function is optimised for the typical case of each world only logically depending on themselves.
+        recursive_logic_dependencies = self._recursive_logic_dependencies
+        return {dependent_player for player in players
+                for dependent_player in recursive_logic_dependencies[player]}
+
+    def get_players_logically_dependent_on(self, player: int) -> AbstractSet[int]:
+        """
+        Get the set of player IDs whose logic depends on `player`'s World.
+
+        :param: The player ID to get the logical dependents of.
+        :return: The set of all player IDs logically dependent on `player`.
+        """
+        return self._recursive_logic_dependents[player]
+
+    def register_logic_dependency(self, player: int, dependent_on_players: int | Iterable[int]) -> None:
+        """
+        Register that `player`'s world has access rules and/or completion condition that are logically dependent on
+        `dependent_on_players`' worlds.
+
+        If an access rule belonging to `player`, or `player`'s completion condition, checks for being able to reach a
+        Location/Entrance/Region belonging to a different player, or checks for CollectionState having items belonging
+        to a different player, that different player must be registered as a logic dependency of `player`.
+
+        Entrance access rules belonging to `player` cannot check for being able to reach a Location/Entrance/Region
+        belonging to a different player because indirect conditions do not work across worlds.
+
+        Any required logic dependencies should be registered before the end of `set_rules()`/`stage_set_rules()`.
+
+        :param player: The player ID that is registering their logical dependency
+        :param dependent_on_players: The player IDs to register that `player` logically depends on.
+        """
+        if player not in self._direct_logic_dependencies:
+            raise KeyError(f"No world found for player {player}")
+
+        if isinstance(dependent_on_players, int):
+            dependent_on_players = [dependent_on_players]
+
+        for dependent_on_player in dependent_on_players:
+            if dependent_on_player == player:
+                # All players are logically dependent on themselves from the start.
+                continue
+
+            # Protect against putting invalid IDs into the dictionaries.
+            # `self._direct_logic_dependencies` starts with every player ID being directly logically dependent on
+            # itself, so if `dependent_on_player` is not present in `self._direct_logic_dependencies`, then
+            # `dependent_on_player` is not a valid player ID.
+            if dependent_on_player not in self._direct_logic_dependencies:
+                raise KeyError(f"No world found for dependent on player ID {dependent_on_player}")
+
+            direct_dependencies = self._direct_logic_dependencies[player]
+            if dependent_on_player in direct_dependencies:
+                # The world has already been registered, so there's nothing to do.
+                return
+
+            direct_dependencies.add(dependent_on_player)
+
+            self._recursive_logic_dependencies[player].add(dependent_on_player)
+
+            # Get all players dependent on `player`. These players are now also dependent on dependent_on_player.
+            recursive_dependents_of_player = self._recursive_logic_dependents[player]
+
+            recursive_logic_dependents_to_add = {player}
+            for logic_dependent in recursive_dependents_of_player:
+                if logic_dependent != player:
+                    self._recursive_logic_dependencies[logic_dependent].add(dependent_on_player)
+                recursive_logic_dependents_to_add.add(logic_dependent)
+
+            self._recursive_logic_dependents[dependent_on_player] |= recursive_logic_dependents_to_add
 
 
 PathValue = Tuple[str, Optional["PathValue"]]
@@ -864,7 +977,7 @@ class CollectionState():
         return self.sweep_for_advancements(locations)
 
     def _sweep_for_advancements_impl(self, advancements_per_player: List[Tuple[int, List[Location]]],
-                                     yield_each_sweep: bool) -> Iterator[None]:
+                                     yield_each_sweep: bool) -> Iterator[AbstractSet[int]]:
         """
         The implementation for sweep_for_advancements is separated here because it returns a generator due to the use
         of a yield statement.
@@ -875,6 +988,11 @@ class CollectionState():
         # are allowed to logically depend on other worlds, so once there are no more players that should be checked
         # under this assumption, an extra sweep iteration is performed that checks every player, to confirm that the
         # sweep is finished.
+        # Because it is typically only a small part of a world that is made logically dependent on another world, this
+        # assumption usually performs better than correctly updating `players_to_check` to include cross-world logic
+        # dependencies. It is highly likely that a world with cross-world logic will collect some of its own items and
+        # will be included in the next `players_to_check` anyway, meaning that spending extra time to correctly update
+        # `players_to_check` is usually pointless.
         checking_if_finished = False
         while players_to_check:
             next_advancements_per_player: List[Tuple[int, List[Location]]] = []
@@ -934,12 +1052,12 @@ class CollectionState():
             advancements_per_player = next_advancements_per_player
 
             if yield_each_sweep:
-                yield
+                yield players_to_check
 
     @overload
     def sweep_for_advancements(self, locations: Optional[Iterable[Location]] = None, *,
                                yield_each_sweep: Literal[True],
-                               checked_locations: Optional[Set[Location]] = None) -> Iterator[None]: ...
+                               checked_locations: Optional[Set[Location]] = None) -> Iterator[AbstractSet[int]]: ...
 
     @overload
     def sweep_for_advancements(self, locations: Optional[Iterable[Location]] = None,
@@ -947,15 +1065,21 @@ class CollectionState():
                                checked_locations: Optional[Set[Location]] = None) -> None: ...
 
     def sweep_for_advancements(self, locations: Optional[Iterable[Location]] = None, yield_each_sweep: bool = False,
-                               checked_locations: Optional[Set[Location]] = None) -> Optional[Iterator[None]]:
+                               checked_locations: Optional[Set[Location]] = None
+                               ) -> Optional[Iterator[AbstractSet[int]]]:
         """
         Sweep through the locations that contain uncollected advancement items, collecting the items into the state
         until there are no more reachable locations that contain uncollected advancement items.
 
         :param locations: The locations to sweep through, defaulting to all locations in the multiworld.
-        :param yield_each_sweep: When True, return a generator that yields at the end of each sweep iteration.
+        :param yield_each_sweep: When True, return a Generator that yields, at the end of each sweep iteration, a set of
+        players that may now be able to reach additional locations. When some worlds logically depend on parts of other
+        worlds, each yielded set is not guaranteed to include all players that could now reach additional locations, but
+        each player that can reach additional locations will eventually be included in a yielded set.
         :param checked_locations: Optional override of locations to filter out from the locations argument, defaults to
         self.advancements when None.
+        :return: With yield_each_sweep=True, a Generator that yields, at the end of each sweep iteration, a set of
+        players that may now be able to reach additional locations. With yield_each_sweep=False, None.
         """
         if checked_locations is None:
             checked_locations = self.advancements
@@ -1035,6 +1159,8 @@ class CollectionState():
 
     def has_from_list(self, items: Iterable[str], player: int, count: int) -> bool:
         """Returns True if the state contains at least `count` items matching any of the item names from a list."""
+        if count <= 0:
+            return True
         found: int = 0
         player_prog_items = self.prog_items[player]
         for item_name in items:
@@ -1046,6 +1172,8 @@ class CollectionState():
     def has_from_list_unique(self, items: Iterable[str], player: int, count: int) -> bool:
         """Returns True if the state contains at least `count` items matching any of the item names from a list.
         Ignores duplicates of the same item."""
+        if count <= 0:
+            return True
         found: int = 0
         player_prog_items = self.prog_items[player]
         for item_name in items:
@@ -1074,6 +1202,8 @@ class CollectionState():
     # item name group related
     def has_group(self, item_name_group: str, player: int, count: int = 1) -> bool:
         """Returns True if the state contains at least `count` items present in a specified item group."""
+        if count <= 0:
+            return True
         found: int = 0
         player_prog_items = self.prog_items[player]
         for item_name in self.multiworld.worlds[player].item_name_groups[item_name_group]:
@@ -1086,6 +1216,8 @@ class CollectionState():
         """Returns True if the state contains at least `count` items present in a specified item group.
         Ignores duplicates of the same item.
         """
+        if count <= 0:
+            return True
         found: int = 0
         player_prog_items = self.prog_items[player]
         for item_name in self.multiworld.worlds[player].item_name_groups[item_name_group]:
@@ -1118,7 +1250,8 @@ class CollectionState():
 
         changed = self.multiworld.worlds[item.player].collect(self, item)
 
-        self.stale[item.player] = True
+        for dependent_player in self.multiworld.get_players_logically_dependent_on(item.player):
+            self.stale[dependent_player] = True
 
         if changed and not prevent_sweep:
             self.sweep_for_advancements()
@@ -1139,10 +1272,11 @@ class CollectionState():
     def remove(self, item: Item):
         changed = self.multiworld.worlds[item.player].remove(self, item)
         if changed:
-            # invalidate caches, nothing can be trusted anymore now
-            self.reachable_regions[item.player] = set()
-            self.blocked_connections[item.player] = set()
-            self.stale[item.player] = True
+            for dependent_player in self.multiworld.get_players_logically_dependent_on(item.player):
+                # invalidate caches, nothing can be trusted anymore now
+                self.reachable_regions[dependent_player] = set()
+                self.blocked_connections[dependent_player] = set()
+                self.stale[dependent_player] = True
 
     def remove_item(self, item: str, player: int, count: int = 1) -> None:
         """
@@ -1596,7 +1730,7 @@ class ItemClassification(IntFlag):
 
     def as_flag(self) -> int:
         """As Network API flag int."""
-        return int(self & 0b00111)
+        return int(self & 0b11111)
 
 
 class Item:
@@ -1688,6 +1822,10 @@ class EntranceInfo(TypedDict, total=False):
     direction: str
 
 
+class SpoilerPlaythroughError(RuntimeError):
+    """Unique Exception type to indicate that a Spoiler's playthrough calculation failed in some way."""
+
+
 class Spoiler:
     multiworld: MultiWorld
     hashes: Dict[int, str]
@@ -1754,26 +1892,140 @@ class Spoiler:
 
         # in the second phase, we cull each sphere such that the game is still beatable,
         # reducing each range of influence to the bare minimum required inside it
-        required_locations = {location for sphere in collection_spheres for location in sphere}
+        required_spheres: deque[Set[Location]] = deque()
+
+        def try_to_beat_game_and_update_spheres(culled_state: CollectionState) -> bool:
+            """
+            Try to beat the game from the given culled state. The state should be immediately prior to the first sphere
+            in `required_spheres`.
+
+            If the game could be beaten, but required moving locations into a later sphere to do so, those locations are
+            moved to their new spheres. New spheres are added if necessary.
+            """
+            # Iterate through each higher sphere of locations required to beat the game, checking that all the locations
+            # are reachable.
+            # Any locations in a sphere which cannot be reached might be possible to reach at a later sphere while still
+            # keeping the game beatable. These locations are carried over and tried again in the next sphere.
+            carried_over_locations: List[Location] = []
+            # The original sphere of each carried over location needs to be tracked, so that if the location needs to
+            # move to a later sphere, it can be moved from its original sphere to its new sphere.
+            original_spheres: Dict[Location, Set[Location]] = {}
+            # Moving locations to new spheres is only done at the end once the game is beaten, so they are stored in
+            # this list until then, or discarded if the game could not be beaten.
+            move_location_to_new_sphere: List[Tuple[Location, Set[Location]]] = []
+
+            for required_sphere in required_spheres:
+                unreachable_sphere_locations: List[Location] = []
+                reachable_sphere_locations: List[Location] = []
+
+                for loc in carried_over_locations:
+                    if loc.can_reach(culled_state):
+                        # The carried over location is reachable from this new sphere.
+                        reachable_sphere_locations.append(loc)
+                        move_location_to_new_sphere.append((loc, required_sphere))
+                    else:
+                        # The carried over location is still not reachable, so carry it over to the next sphere.
+                        unreachable_sphere_locations.append(loc)
+
+                for loc in required_sphere:
+                    if loc.can_reach(culled_state):
+                        reachable_sphere_locations.append(loc)
+                    else:
+                        unreachable_sphere_locations.append(loc)
+                        original_spheres[loc] = required_sphere
+
+                if not reachable_sphere_locations:
+                    # If there were no reachable locations, then it is not possible to reach any locations in higher
+                    # spheres and the game is therefore unbeatable.
+                    return False
+
+                # Carry over any unreachable locations to the next sphere to see if they are reachable from a later
+                # sphere.
+                carried_over_locations = unreachable_sphere_locations
+
+                # Collect the items from the reachable locations and move on to the next sphere.
+                for loc in reachable_sphere_locations:
+                    culled_state.collect(loc.item, True, loc)
+
+            # If there were some locations that could not be reached and were carried over from the last sphere, iterate
+            # through them a sphere at a time.
+            new_spheres: List[List[Location]] = []
+            while carried_over_locations:
+                unreachable_locations: List[Location] = []
+                reachable_locations: List[Location] = []
+                for loc in carried_over_locations:
+                    if loc.can_reach(culled_state):
+                        reachable_locations.append(loc)
+                    else:
+                        unreachable_locations.append(loc)
+
+                if not reachable_locations:
+                    # None of the remaining locations required to beat the game could be reached, so the game cannot be
+                    # beaten.
+                    return False
+
+                for loc in reachable_locations:
+                    culled_state.collect(loc.item, True, loc)
+                # If the game is beatable, then the reachable locations will need to go into a new sphere.
+                new_spheres.append(reachable_locations)
+
+                carried_over_locations = unreachable_locations
+
+            # All locations required to beat the game could be reached. Finally, check if the game is beaten. This is
+            # necessary because a culled item could be relevant to only a world's completion condition and nothing else.
+            if not multiworld.has_beaten_game(culled_state):
+                return False
+
+            # Update any locations that have moved to an existing sphere.
+            for loc, new_sphere in move_location_to_new_sphere:
+                original_sphere = original_spheres[loc]
+                original_sphere.remove(loc)
+                new_sphere.add(loc)
+
+            # Add any new spheres.
+            if new_spheres:
+                logging.debug("Adding %d new spheres to playthrough", len(new_spheres))
+
+                # Remove the locations from their old spheres.
+                for new_sphere in new_spheres:
+                    for loc in new_sphere:
+                        original_sphere = original_spheres[loc]
+                        original_sphere.remove(loc)
+
+                # Convert the new spheres to sets and append them to the deque of required spheres.
+                required_spheres.extend(map(set, new_spheres))
+
+            return True
+
         for num, sphere in reversed(tuple(enumerate(collection_spheres))):
-            to_delete: Set[Location] = set()
-            for location in sphere:
-                # we remove the location from required_locations to sweep from, and check if the game is still beatable
+            # The sphere is modified while iterating, so a tuple copy of the sphere is iterated instead.
+            for location in tuple(sphere):
+                # we remove the item at location and check if game is still beatable
                 logging.debug('Checking if %s (Player %d) is required to beat the game.', location.item.name,
                               location.item.player)
-                required_locations.remove(location)
-                if multiworld.can_beat_game(state_cache[num], required_locations):
-                    to_delete.add(location)
-                else:
-                    # still required, got to keep it around
-                    required_locations.add(location)
 
-            # cull entries in spheres for spoiler walkthrough at end
-            sphere -= to_delete
+                sphere.remove(location)
+
+                state_at_prev_sphere = state_cache[num]
+                if state_at_prev_sphere is None:
+                    state = CollectionState(multiworld)
+                else:
+                    state = state_at_prev_sphere.copy()
+
+                # Collect from all the locations in the current sphere that have not been culled.
+                for sphere_location in sphere:
+                    state.collect(sphere_location.item, True, sphere_location)
+
+                if not try_to_beat_game_and_update_spheres(state):
+                    # The item at this location is needed to beat the game, so add it back into the sphere.
+                    sphere.add(location)
+
+            if sphere:
+                # Prepend the sphere to the deque of required spheres.
+                required_spheres.appendleft(sphere)
 
         # second phase, sphere 0
         removed_precollected: List[Item] = []
-
         for precollected_items in multiworld.precollected_items.values():
             # The list of items is mutated by removing one item at a time to determine if each item is required to beat
             # the game, and re-adding that item if it was required, so a copy needs to be made before iterating.
@@ -1782,53 +2034,92 @@ class Spoiler:
                     continue
                 logging.debug('Checking if %s (Player %d) is required to beat the game.', item.name, item.player)
                 precollected_items.remove(item)
-                multiworld.state.remove(item)
-                if not multiworld.can_beat_game(multiworld.state, required_locations):
+                state = CollectionState(multiworld)
+                if try_to_beat_game_and_update_spheres(state):
+                    # The precollected item is not needed to beat the game.
+                    removed_precollected.append(item)
+                else:
+                    # The precollected item is needed to beat the game.
                     # Add the item back into `precollected_items` and collect it into `multiworld.state`.
                     multiworld.push_precollected(item)
-                else:
-                    removed_precollected.append(item)
 
-        # we are now down to just the required progress items in collection_spheres. Unfortunately
-        # the previous pruning stage could potentially have made certain items dependant on others
-        # in the same or later sphere (because the location had 2 ways to access but the item originally
-        # used to access it was deemed not required.) So we need to do one final sphere collection pass
-        # to build up the correct spheres
-
-        required_locations = {item for sphere in collection_spheres for item in sphere}
+        # we are now down to just the required progress items in collection_spheres. Unfortunately, logic issues in
+        # worlds could cause the produced spheres to no longer be a valid playthrough, so verify the playthrough to make
+        # sure.
+        # For the first attempt, try to reach each location at the sphere it is expected to be reached.
         state = CollectionState(multiworld)
-        collection_spheres = []
-        while required_locations:
-            sphere = set(filter(state.can_reach, required_locations))
-
+        final_spheres: list[set[Location]] = []
+        failed_sphere_locations: list[Location] = []
+        failed_sphere: int = -1
+        for i, sphere in enumerate(required_spheres, start=1):
+            unreachable_locations: list[Location] = []
+            for location in sphere:
+                if not location.can_reach(state):
+                    unreachable_locations.append(location)
+            if unreachable_locations:
+                # There is probably a logic issue in one of the worlds. Abort the first attempt and try constructing all
+                # spheres from scratch instead.
+                failed_sphere_locations.extend(sphere)
+                failed_sphere = i
+                break
+            # All the locations in the sphere were reachable, so append the sphere and collect the items before moving
+            # on to the next sphere.
+            final_spheres.append(sphere)
             for location in sphere:
                 state.collect(location.item, True, location)
 
-            collection_spheres.append(sphere)
+        # For the second attempt, abandon the calculated spheres and try to build new spheres from scratch.
+        if failed_sphere_locations:
+            # When running with assertions enabled, error instead of trying the second attempt.
+            if __debug__:
+                raise SpoilerPlaythroughError(
+                    f"Not all required items were reachable at their expected spheres. The first failure occurred in"
+                    f" sphere {failed_sphere} with unreachable locations: {failed_sphere_locations}"
+                )
 
-            logging.debug('Calculated final sphere %i, containing %i of %i progress items.', len(collection_spheres),
-                          len(sphere), len(required_locations))
+            required_locations = {location for sphere in collection_spheres for location in sphere}
+            state = CollectionState(multiworld)
+            final_spheres = []
+            while required_locations:
+                sphere = {location for location in required_locations if location.can_reach(state)}
 
-            required_locations -= sphere
-            if not sphere:
-                raise RuntimeError(f'Not all required items reachable. Unreachable locations: {required_locations}')
+                if not sphere:
+                    raise SpoilerPlaythroughError(f"Not all required items reachable. Unreachable locations:"
+                                                  f" {required_locations}")
+
+                for location in sphere:
+                    state.collect(location.item, True, location)
+
+                final_spheres.append(sphere)
+
+                logging.debug("Calculated final sphere %i, containing %i of %i progress items.",
+                              len(final_spheres), len(sphere), len(required_locations))
+
+                required_locations.difference_update(sphere)
+
+        # Verify that, by following the playthrough, the multiworld has been beaten.
+        if not multiworld.has_beaten_game(state):
+            missing_goals = {player for player in multiworld.player_ids
+                             if not multiworld.has_beaten_game(state, player)}
+            raise SpoilerPlaythroughError(f"All required items reached, but not all games beaten. Unbeaten games:"
+                                          f" {[multiworld.get_player_name(player) for player in missing_goals]}")
 
         # we can finally output our playthrough
         self.playthrough = {"0": sorted([self.multiworld.get_name_string_for_object(item) for item in
                                          chain.from_iterable(multiworld.precollected_items.values())
                                          if item.advancement])}
 
-        for i, sphere in enumerate(collection_spheres):
+        for i, sphere in enumerate(final_spheres):
             self.playthrough[str(i + 1)] = {
                 str(location): str(location.item) for location in sorted(sphere)}
         if create_paths:
-            self.create_paths(state, collection_spheres)
+            self.create_paths(state, final_spheres)
 
         # repair the multiworld again
         for item in removed_precollected:
             multiworld.push_precollected(item)
 
-    def create_paths(self, state: CollectionState, collection_spheres: List[Set[Location]]) -> None:
+    def create_paths(self, state: CollectionState, collection_spheres: Collection[Set[Location]]) -> None:
         from itertools import zip_longest
         multiworld = self.multiworld
 
@@ -1924,10 +2215,11 @@ class Spoiler:
             outfile.write('\n'.join(
                 ['%s: %s' % (location, item) for location, item in locations]))
 
-            outfile.write('\n\nPlaythrough:\n\n')
-            outfile.write('\n'.join(['%s: {\n%s\n}' % (sphere_nr, '\n'.join(
-                [f"  {location}: {item}" for (location, item) in sphere.items()] if isinstance(sphere, dict) else
-                [f"  {item}" for item in sphere])) for (sphere_nr, sphere) in self.playthrough.items()]))
+            if self.playthrough:
+                outfile.write('\n\nPlaythrough:\n\n')
+                outfile.write('\n'.join(['%s: {\n%s\n}' % (sphere_nr, '\n'.join(
+                    [f"  {location}: {item}" for (location, item) in sphere.items()] if isinstance(sphere, dict) else
+                    [f"  {item}" for item in sphere])) for (sphere_nr, sphere) in self.playthrough.items()]))
             if self.unreachables:
                 outfile.write('\n\nUnreachable Progression Items:\n\n')
                 outfile.write(

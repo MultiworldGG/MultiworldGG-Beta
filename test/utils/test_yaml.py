@@ -35,8 +35,19 @@ class TestYaml(unittest.TestCase):
         self.assertIsInstance(string, str)
 
     def test_dump(self) -> None:
-        self.assertIsNonEmptyString(self.safe_str)
-        self.assertIsNonEmptyString(self.unsafe_str)
+        # Safe data dumps to real YAML text that round-trips back to the original value.
+        safe_str = self.safe_str
+        self.assertIsNonEmptyString(safe_str)
+        self.assertEqual(safe_str, "a:\n- 1\n- 2\n- 3\nb: null\nc: true\n")
+        self.assertEqual(self.safe_data, parse_yaml(safe_str))
+
+        # Dumper is the *unsafe* full dumper, so arbitrary Python objects are serialized
+        # via the python/object tag (a SafeDumper would raise instead) and round-trip back.
+        unsafe_str = self.unsafe_str
+        self.assertIsNonEmptyString(unsafe_str)
+        self.assertIn("!!python/object:", unsafe_str)
+        self.assertIn(AClass.__module__ + "." + AClass.__qualname__, unsafe_str)
+        self.assertEqual(self.unsafe_data, unsafe_parse_yaml(unsafe_str))
 
     def test_safe_parse(self) -> None:
         self.assertEqual(self.safe_data, parse_yaml(self.safe_str))

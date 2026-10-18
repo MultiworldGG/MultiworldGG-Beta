@@ -5,31 +5,41 @@ import logging
 import io
 import warnings
 import json
-from enum import IntFlag
+import shlex
+import shutil
+import subprocess
 from pathlib import Path
 
-__all__ = ("Version", 
-           "tuplize_version", 
-           "__version__", 
-           "version_tuple", 
-           "instance_name", 
-           "archipelago_guid", 
-           "is_linux", 
+__all__ = ("Version",
+           "tuplize_version",
+           "__version__",
+           "version_tuple",
+           "core_version",
+           "core_version_tuple",
+           "instance_name",
+           "archipelago_guid",
+           "FROZEN_TARGETS",
+           "is_linux",
            "is_macos",
            "is_windows",
            "is_frozen",
            "local_path",
+           "home_path",
            "user_path",
            "output_path",
            "cache_path",
            "write_path",
            "use_worlds_venv",
            "mwgg_venv_site_packages",
+           "mwgg_venv_python",
            "reload_application_options",
+           "get_frontend_versions",
            "init_logging",
            "loglevel_mapping",
-           "WORLDS_EXIST",
-           "ByValue")
+           "ByValue",
+           "get_client_exe",
+           "launch_exe",
+           "spawn_client")
 
 class Version(typing.NamedTuple):
     major: int
@@ -71,22 +81,42 @@ def tuplize_version(version: str) -> Version:
         # If packaging fails to parse, fall back to simple parsing
         pass
     
-    # Simple parsing fallback for backward compatibility
+    # int() would crash on suffixed parts like "0b7" and yield Version(0, 0, 0),
+    # making every Connect packet get refused with IncompatibleVersion.
+    import re
+    def _leading_int(part: str) -> int:
+        m = re.match(r"^(\d+)", part)
+        return int(m.group(1)) if m else 0
     try:
         parts = version.split(".")
         return Version(
-            int(parts[0]) if len(parts) > 0 else 0,
-            int(parts[1]) if len(parts) > 1 else 0,
-            int(parts[2]) if len(parts) > 2 else 0
+            _leading_int(parts[0]) if len(parts) > 0 else 0,
+            _leading_int(parts[1]) if len(parts) > 1 else 0,
+            _leading_int(parts[2]) if len(parts) > 2 else 0,
         )
     except (ValueError, IndexError):
         return Version(0, 0, 0)
 
-__version__ = "0.6.7"
+__version__ = "0.6.9"
 version_tuple = tuplize_version(__version__)
+# Core compatibility should ignore application.yaml branding/version overrides.
+core_version = __version__
+core_version_tuple = version_tuple
 
 instance_name = "MultiworldGG"
 archipelago_guid = "{{918BA46A-FAB8-460C-9DFF-AE691E1C865D}}"
+
+# Frozen exe base names (no .exe suffix), single source of truth. Do NOT derive
+# from instance_name: application.yaml's app_name overrides it at runtime and
+# silently breaks exe resolution in non-default channels.
+FROZEN_TARGETS = {
+    "MultiWorld": "MultiworldGG",
+    "MultiServer": "MultiworldGGServer",
+    "Generate": "MultiworldGGGenerate",
+    "Patch": "MultiworldGGPatch",
+    "MultiWorldDebug": "MultiworldGGClientDebug",
+    "Launcher": "MultiworldGGLauncher",
+}
 
 _default_version = __version__
 _default_instance_name = instance_name
@@ -95,6 +125,8 @@ _default_archipelago_guid = archipelago_guid
 is_linux = sys.platform.startswith("linux")
 is_macos = sys.platform == "darwin"
 is_windows = sys.platform in ("win32", "cygwin", "msys")
+
+_stdio_wrapped_for_logging = False
 
 def get_config_file_path() -> str:
     if getattr(sys, 'frozen', False):
@@ -189,7 +221,7 @@ def home_path(*path: str) -> str:
     elif sys.platform == 'darwin':
         try:
             import platformdirs
-            home_path.cached_path = platformdirs.user_data_dir("Archipelago", False)
+            home_path.cached_path = platformdirs.user_data_dir(instance_name, False)
         except (AttributeError, OSError, ImportError) as e:
             # Fallback for macOS if platformdirs fails
             import warnings
@@ -290,6 +322,22 @@ def write_path(*path: str) -> str:
     else:
         raise RuntimeError("Unsupported platform")
 
+def mwgg_venv_python() -> str:
+    """Path to the Python interpreter inside the mwgg_venv.
+
+    Frozen builds need this to spawn helper subprocesses that have to actually
+    run Python code (e.g. mwgg-gui's yaml worker, pip introspection);
+    `sys.executable` in a frozen build points at the cx_Freeze launcher, which
+    just runs MultiWorld.py and rejects unknown CLI args.
+
+    On Windows: <write_path('mwgg_venv')>/Scripts/python.exe
+    On Linux/macOS: <write_path('mwgg_venv')>/bin/python
+    """
+    if is_windows:
+        return write_path("mwgg_venv", "Scripts", "python.exe")
+    return write_path("mwgg_venv", "bin", "python")
+
+
 def mwgg_venv_site_packages(*path: str) -> str:
     """Path under <write_path('mwgg_venv')>/<lib>/site-packages, where <lib> is
     'Lib' on Windows and 'lib/python<X>.<Y>' on Linux/macOS"""
@@ -298,12 +346,6 @@ def mwgg_venv_site_packages(*path: str) -> str:
     else:
         lib_segments = ("lib", f"python{sys.version_info.major}.{sys.version_info.minor}")
     return write_path("mwgg_venv", *lib_segments, "site-packages", *path)
-
-class WORLDS_EXIST(IntFlag):
-    NOT_INSTALLED = 0b00
-    HAS_WORLDS = 0b01
-    UPDATED = 0b10
-    INSTALLED = HAS_WORLDS | UPDATED
 
 class ByValue:
     """
@@ -368,12 +410,40 @@ def _print_startup_logo() -> None:
         _startup_logo_printed = True
 
 
+_FRONTEND_PACKAGES = ("mwgg_gui", "mwgg_tui", "mwgg_splash")
+
+
+def get_frontend_versions() -> "dict[str, str]":
+    """Return {package: version} for the bundled frontend packages.
+
+    Reads dist-info via importlib.metadata so the heavy modules (which pull in
+    Kivy) are never imported just to read a version. Absent packages report
+    "not installed"; packages with unreadable metadata report "unknown".
+    """
+    import importlib.metadata as _md
+    versions: dict[str, str] = {}
+    for name in _FRONTEND_PACKAGES:
+        try:
+            versions[name] = _md.version(name)
+        except _md.PackageNotFoundError:
+            versions[name] = "not installed"
+        except Exception:
+            versions[name] = "unknown"
+    return versions
+
+
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
                  write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
                  add_timestamp: bool = False, exception_logger: typing.Optional[str] = None,
-                 show_logo: bool = False):
+                 show_logo: bool = False, log_network: typing.Optional[bool] = None):
+    """Install the root file + stream handlers; log_network (None: host.yaml) gates websockets frame tracing."""
     import datetime
     loglevel: int = loglevel_mapping.get(loglevel, loglevel)
+    if log_network is None and loglevel < logging.INFO:
+        # before the handler swap: the settings import reaches ModuleUpdate, whose
+        # basicConfig fallback fires on a handler-less root logger
+        from settings import get_settings
+        log_network = get_settings().server_options.log_network
     log_folder = user_path("logs")
     os.makedirs(log_folder, exist_ok=True)
     root_logger = logging.getLogger()
@@ -381,7 +451,8 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         root_logger.removeHandler(handler)
         handler.close()
     root_logger.setLevel(loglevel)
-    logging.getLogger("websockets").setLevel(loglevel)  # make sure level is applied for websockets
+    # websockets traces every frame at DEBUG; that is the traffic log_network gates
+    logging.getLogger("websockets").setLevel(loglevel if log_network else max(loglevel, logging.INFO))
     for logger_name in ("asyncio", "PIL"):
         logging.getLogger(logger_name).setLevel(max(loglevel, logging.INFO))
     if "a" not in write_mode:
@@ -422,10 +493,15 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
     file_handler.addFilter(UnescapeMarkupFilter())
     root_logger.addHandler(file_handler)
     # TODO: Make console better, use rich/blessed/something else
-    # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles)
-    if hasattr(sys.stdout, "buffer") and hasattr(sys.stderr, "buffer") and (is_macos or is_linux) and is_frozen():
+    # Force UTF-8 stream wrapper for stdout/stderr (fixes UnicodeEncodeError in macOS .app bundles).
+    # Only wrap once per process; see _stdio_wrapped_for_logging above.
+    global _stdio_wrapped_for_logging
+    if (not _stdio_wrapped_for_logging
+            and hasattr(sys.stdout, "buffer") and hasattr(sys.stderr, "buffer")
+            and (is_macos or is_linux) and is_frozen()):
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+        _stdio_wrapped_for_logging = True
     # TODO: Fix here to use rich/blessed
     if sys.stdout:
         stream_handler = logging.StreamHandler(sys.stdout)
@@ -482,6 +558,9 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         f" running Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
         f"{' (frozen)' if is_frozen() else ''}"
     )
+    logging.info(
+        "Frontends: " + ", ".join(f"{name} {ver}" for name, ver in get_frontend_versions().items())
+    )
 
 def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
     """ Get the constants from the archipelago.json file for a given world
@@ -493,6 +572,7 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
         A tuple of the game name, authors, minimum AP version, and world version
     """
     from mwgg_igdb import GameIndex
+    import pkgutil
     data: dict = {}
     try:
         if is_frozen():
@@ -504,8 +584,18 @@ def get_archipelago_json(world: str) -> typing.Tuple[str, list[str], str, str]:
             with open(archipelago_json_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
         else:
-            with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
-                data = json.load(f)
+            # Resolve via the import system so archipelago.json comes from wherever
+            # worlds.<name> actually loaded from. Matches WebHostLib/misc.py.
+            manifest_bytes = None
+            try:
+                manifest_bytes = pkgutil.get_data("worlds." + world, "archipelago.json")
+            except (ImportError, FileNotFoundError, OSError):
+                manifest_bytes = None
+            if manifest_bytes:
+                data = json.loads(manifest_bytes.decode("utf-8-sig"))
+            else:
+                with open(local_path("worlds", world, "archipelago.json"), "r", encoding="utf-8") as f:
+                    data = json.load(f)
     except FileNotFoundError:
         pass
     game_name = "Archipelago" if world == "generic" else data.get("game", GameIndex.get_game(world).get("game_name"))
@@ -536,4 +626,231 @@ def get_apworld_manifest(world: str) -> dict[str, object]:
         return data
     except FileNotFoundError:
         return {}
+
+
+def _detached_popen_kwargs() -> dict[str, typing.Any]:
+    """Popen kwargs that detach the child from this process. Children
+    deliberately survive launcher exit: closing the launcher window must not
+    kill an in-progress game session or tool."""
+    if is_windows:
+        return {"creationflags": subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP}
+    return {"start_new_session": True}
+
+
+def get_client_exe() -> list[str]:
+    """Resolve the command line that launches the beta's single client entry point.
+
+    Centralizes exe-name resolution (frozen name vs source script) so callers
+    never hardcode "MultiworldGG(.exe)" themselves."""
+    if is_frozen():
+        suffix = ".exe" if is_windows else ""
+        return [local_path(f"{FROZEN_TARGETS['MultiWorld']}{suffix}")]
+    return [sys.executable, local_path("MultiWorld.py")]
+
+
+class _Terminal(typing.NamedTuple):
+    """Argv shape for one Linux terminal emulator: `window` flags open the
+    launcher's own window on its first launch and `tab` flags add to it
+    afterwards (where supported), `title` parts are formatted with {title},
+    and `command` precedes the argv (empty = positional)."""
+    name: str
+    window: tuple[str, ...] = ()
+    tab: tuple[str, ...] = ()
+    title: tuple[str, ...] = ()
+    command: tuple[str, ...] = ()
+
+
+# Preference order: tab-capable desktop terminals first so launches bucket into
+# one window, then the Debian alternative, then single-window emulators.
+_LINUX_TERMINALS = (
+    _Terminal("ptyxis", window=("--new-window",), tab=("--tab",), title=("-T", "{title}"), command=("--",)),
+    # kgx positionals are directories to open, so the command needs "--"
+    _Terminal("kgx", tab=("--tab",), title=("-T", "{title}"), command=("--",)),
+    _Terminal("gnome-terminal", window=("--window",), tab=("--tab",), title=("--title", "{title}"),
+              command=("--",)),
+    _Terminal("konsole", tab=("--new-tab",), command=("-e",)),
+    _Terminal("xfce4-terminal", window=("--window",), tab=("--tab",), title=("-T", "{title}"), command=("-x",)),
+    _Terminal("mate-terminal", window=("--window",), tab=("--tab",), title=("-t", "{title}"), command=("-x",)),
+    _Terminal("terminator", tab=("--new-tab",), title=("-T", "{title}"), command=("-x",)),
+    _Terminal("x-terminal-emulator", command=("-e",)),
+    _Terminal("ghostty", title=("--title={title}",), command=("-e",)),
+    _Terminal("kitty", title=("-T", "{title}")),
+    _Terminal("wezterm", command=("start", "--")),
+    _Terminal("alacritty", title=("-T", "{title}"), command=("-e",)),
+    _Terminal("foot", title=("-T", "{title}")),
+    _Terminal("urxvt", title=("-title", "{title}"), command=("-e",)),
+    _Terminal("xterm", title=("-T", "{title}"), command=("-e",)),
+)
+
+_ITERM_APP_PATHS = ("/Applications/iTerm.app", "~/Applications/iTerm.app")
+_ITERM_SCRIPT = (
+    "on run argv",
+    'tell application "iTerm2"',
+    'if (item 3 of argv) is "window" or (count of windows) is 0 then',
+    "create window with default profile",
+    "else",
+    "tell current window to create tab with default profile",
+    "end if",
+    "tell current session of current window",
+    "write text (item 1 of argv)",
+    "set name to (item 2 of argv)",
+    "end tell",
+    "activate",
+    "end tell",
+    "end run",
+)
+_TERMINAL_APP_SCRIPT = (
+    "on run argv",
+    'tell application "Terminal"',
+    "do script (item 1 of argv)",
+    "activate",
+    "end tell",
+    "end run",
+)
+
+
+# Launcher-owned variables that a terminal server's own environment lacks; a
+# tab request lands in that already-running process, so they travel explicitly.
+_FORWARDED_ENV_PREFIXES = ("MWGG_", "KIVY_")
+_FORWARDED_ENV_NAMES = frozenset({"PATH", "SSL_CERT_FILE", "REQUESTS_CA_BUNDLE"})
+
+_terminal_window_opened = False
+
+
+def _env_prefixed(exe: list[str], extra_env: typing.Mapping[str, str] = {}) -> list[str]:
+    forwarded = {name: value for name, value in os.environ.items()
+                 if name.startswith(_FORWARDED_ENV_PREFIXES) or name in _FORWARDED_ENV_NAMES}
+    forwarded.update(extra_env)
+    if not forwarded:
+        return exe
+    return [shutil.which("env") or "/usr/bin/env",
+            *(f"{name}={value}" for name, value in sorted(forwarded.items())), *exe]
+
+
+def _linux_terminal_command(exe: list[str], title: str, new_window: bool,
+                            extra_env: typing.Mapping[str, str] = {}) -> typing.Optional[list[str]]:
+    exe = _env_prefixed(exe, extra_env)
+    xdg = shutil.which("xdg-terminal-exec")
+    if xdg:
+        return [xdg, "--", *exe]
+    for spec in _LINUX_TERMINALS:
+        path = shutil.which(spec.name)
+        if path:
+            flags = spec.window if new_window else spec.tab
+            return [path, *flags, *(part.format(title=title) for part in spec.title), *spec.command, *exe]
+    return None
+
+
+def _windows_terminal_command(exe: list[str], title: str) -> typing.Optional[list[str]]:
+    wt = shutil.which("wt")
+    if not wt:
+        return None
+    # wt hands this process's environment to the new tab along with the commandline;
+    # it splits its command line on ";" between subcommands, "\;" is a literal one
+    return [wt, "-w", instance_name, "new-tab", "--title", title, "-d", os.getcwd(),
+            *(arg.replace(";", "\\;") for arg in exe)]
+
+
+def _osascript(lines: typing.Iterable[str], *args: str) -> list[str]:
+    command = ["osascript"]
+    for line in lines:
+        command += ["-e", line]
+    return [*command, *args]
+
+
+def _macos_terminal_command(exe: list[str], title: str, new_window: bool,
+                            extra_env: typing.Mapping[str, str] = {}) -> list[str]:
+    # A shell parses the command, so relative paths need the launcher's cwd
+    command = f"cd {shlex.quote(os.getcwd())} && {shlex.join(_env_prefixed(exe, extra_env))}"
+    if any(os.path.isdir(os.path.expanduser(path)) for path in _ITERM_APP_PATHS):
+        return _osascript(_ITERM_SCRIPT, command, title, "window" if new_window else "tab")
+    return _osascript(_TERMINAL_APP_SCRIPT, command)
+
+
+def _terminal_command(exe: list[str], title: str, new_window: bool,
+                      extra_env: typing.Mapping[str, str] = {}) -> typing.Optional[list[str]]:
+    """Argv that runs `exe` in a terminal on this platform, or None when no
+    known terminal is installed. `new_window` asks for the launcher's own
+    window rather than a tab in it; Windows Terminal always targets the window
+    named after the instance. Windows Terminal takes `extra_env` from the
+    spawning process instead, so only the argv-wrapping platforms need it."""
+    if is_windows:
+        return _windows_terminal_command(exe, title)
+    if is_linux:
+        return _linux_terminal_command(exe, title, new_window, extra_env)
+    if is_macos:
+        return _macos_terminal_command(exe, title, new_window, extra_env)
+    return None
+
+
+def launch_exe(exe: typing.Iterable[str], in_terminal: bool = False, *,
+               title: typing.Optional[str] = None,
+               extra_env: typing.Optional[typing.Mapping[str, str]] = None) -> bool:
+    """Run the command line `exe` in a new process. With `in_terminal`, try to
+    run it in a terminal; the return value reports whether one was used.
+    The first terminal launch of this process opens a new window and later
+    ones add tabs titled `title` to it where the terminal supports that, so
+    repeated launches stay grouped. `extra_env` names variables the child needs
+    on top of the launcher's own environment. Beta equivalent of upstream
+    Launcher.launch (which the monorepo lacks)."""
+    global _terminal_window_opened
+    exe = list(exe)
+    # the spawned process is the terminal, which hands its own environment on
+    env = {"env": {**os.environ, **extra_env}} if extra_env else {}
+    if in_terminal:
+        title = title or instance_name
+        command = _terminal_command(exe, title, new_window=not _terminal_window_opened,
+                                    extra_env=extra_env or {})
+        if command:
+            subprocess.Popen(command, **env)
+            _terminal_window_opened = True
+            return True
+        if is_windows:
+            # "Running " keeps a space in the title so start treats the quoted arg as a title
+            subprocess.Popen(["start", f"Running {title}", *exe], shell=True, **env)
+            return True
+    subprocess.Popen(exe, **env)
+    return False
+
+
+def spawn_client(game: typing.Optional[str] = None, *, server_address: typing.Optional[str] = None,
+                 slot_name: typing.Optional[str] = None, password: typing.Optional[str] = None,
+                 client_type: typing.Union[str, typing.Iterable[str]] = "game",
+                 component: typing.Optional[str] = None,
+                 launch_file: typing.Optional[str] = None,
+                 extra_args: typing.Iterable[str] = ()) -> "subprocess.Popen[typing.Any]":
+    """Spawn a detached client process; children deliberately survive launcher
+    exit. MWGG_SKIP_UPDATE=1 goes in the child env (there is no CLI flag): the
+    child still fronts its boot with the splash, but must not re-run the world
+    updater under a live launcher.
+
+    `component` names a `Component.display_name` registered by `game`'s world
+    module (e.g. a map tracker); the child resolves it after its world load and
+    falls back to default client resolution if the name doesn't match."""
+    argv = list(get_client_exe())
+    if launch_file:
+        argv.append(launch_file)
+    if game is not None:
+        argv += ["--game", game]
+    if server_address is not None:
+        argv += ["--server-address", server_address]
+    if slot_name is not None:
+        argv += ["--slot-name", slot_name]
+    if password is not None:
+        argv += ["--password", password]
+    client_types = [client_type] if isinstance(client_type, str) else list(client_type)
+    if client_types:
+        argv += ["--client-type", *client_types]
+    if component is not None:
+        if game is None:
+            raise ValueError("spawn_client(component=...) requires game=")
+        argv += ["--component", component]
+    argv += list(extra_args)
+
+    env = os.environ.copy()
+    env["MWGG_ROLE"] = "client"
+    env["MWGG_CLIENT_TYPE"] = " ".join(client_types)
+    env["MWGG_SKIP_UPDATE"] = "1"
+
+    return subprocess.Popen(argv, env=env, **_detached_popen_kwargs())
 

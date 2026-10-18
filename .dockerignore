@@ -4,7 +4,6 @@
 docs
 test
 typings
-*Client.py
 
 .idea
 .vscode
@@ -46,7 +45,6 @@ dist
 /prof/
 README.html
 .vs/
-EnemizerCLI/
 /Players/
 /SNI/
 /sni-*/
@@ -55,6 +53,8 @@ EnemizerCLI/
 /options.yaml
 /config.yaml
 /logs/
+/uploads/
+/roms/
 _persistent_storage.yaml
 mystery_result_*.yaml
 *-errors.txt
@@ -69,6 +69,7 @@ Output Logs/
 /setup.ini
 /installdelete.iss
 /data/user.kv
+/data/jak1/
 /datapackage
 /custom_worlds
 

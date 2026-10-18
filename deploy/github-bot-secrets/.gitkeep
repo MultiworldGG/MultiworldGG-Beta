@@ -2,7 +2,7 @@
 # This directory is bind-mounted into the bot container at /run/secrets:ro
 # (see deploy/docker-compose.yml).
 #
-# Recommended files (any subset — only those referenced by *_FILE vars in
+# Recommended files (any subset - only those referenced by *_FILE vars in
 # github-bot.env need to exist):
 #   oliver_app_id            # one-line numeric App ID for Oliver
 #   oliver_private_key.pem   # full PEM for Oliver, including BEGIN/END lines

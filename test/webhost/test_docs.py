@@ -7,22 +7,25 @@ import Utils
 from werkzeug.utils import secure_filename
 
 import WebHost
+from WebHostLib import app
 from worlds.AutoWorld import AutoWorldRegister
 
 class TestDocs(unittest.TestCase):
+    world_relevant = True
+
     @classmethod
     def setUpClass(cls) -> None:
         WebHost.copy_tutorials_files_to_static()
 
     def test_has_tutorial(self):
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             if not world_type.hidden:
                 with self.subTest(game_name):
                     tutorials = world_type.web.tutorials
                     self.assertGreater(len(tutorials), 0, msg=f"{game_name} has no setup tutorial.")
 
                     safe_name = secure_filename(game_name)
-                    target_path = Utils.local_path("WebHostLib", "static", "generated", "docs", safe_name)
+                    target_path = os.path.join(app.config["GENERATED_FOLDER"], "docs", safe_name)
                     for tutorial in tutorials:
                         self.assertTrue(
                             os.path.isfile(Utils.local_path(target_path, secure_filename(tutorial.file_name))),
@@ -50,10 +53,10 @@ class TestDocs(unittest.TestCase):
                     self.fail(f'{game_name} missing game author information.')
               
     def test_has_game_info(self):
-        for game_name, world_type in AutoWorldRegister.world_types.items():
+        for game_name, world_type in AutoWorldRegister.testable_worlds.items():
             if not world_type.hidden:
                 safe_name = secure_filename(game_name)
-                target_path = Utils.local_path("WebHostLib", "static", "generated", "docs", safe_name)
+                target_path = os.path.join(app.config["GENERATED_FOLDER"], "docs", safe_name)
                 for game_info_lang in world_type.web.game_info_languages:
                     with self.subTest(game_name):
                         self.assertTrue(

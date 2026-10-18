@@ -1,2 +1,3 @@
 pytest>=9.0.1,<10  # this includes subtests support
 pytest-xdist>=3.8.0
+jsonschema>=4.19,<5  # used by test/github (karen_review.py uses Draft202012Validator.FORMAT_CHECKER, added in 4.19)

@@ -37,7 +37,7 @@ COPY intset.h .
 RUN cythonize -b -i _speedups.pyx
 
 # MultiworldGG
-FROM python:3.13-slim-bookworm AS multiworldgg
+FROM python:3.13-slim-trixie AS multiworldgg
 ARG TARGETARCH
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH=$VIRTUAL_ENV/bin:$PATH
@@ -52,10 +52,10 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
-    gcc=4:12.2.0-3 \
+    gcc=4:14.2.0-1 \
     libc6-dev \
-    libtk8.6=8.6.13-2 \
-    g++=4:12.2.0-3 \
+    libtk8.6=8.6.16-1 \
+    g++=4:14.2.0-1 \
     jq \
     curl && \
     apt-get clean && \
@@ -69,7 +69,7 @@ RUN pip install --no-cache-dir uv
 
 # Copy and install requirements first (better caching).
 # Root requirements.txt: base + world-runtime deps (pathspec, PyYAML, xxtea,
-# aiohttp, etc.) — imported at module load or needed by world generation.
+# aiohttp, etc.) - imported at module load or needed by world generation.
 # WebHostLib/requirements.txt: Flask/web-specific deps.
 COPY requirements.txt requirements.txt
 COPY WebHostLib/requirements.txt WebHostLib/requirements.txt
@@ -81,7 +81,14 @@ RUN pip install --no-cache-dir \
 
 COPY . .
 
-RUN mkdir -p custom_worlds
+# Runtime data lives outside /app so nothing is ever mounted over the code
+# tree; deploy/docker-compose.yml mounts these paths. /app/roms -> /roms lets a
+# host.yaml use roms/<file> entries, the convention the fuzz image shares.
+ENV MWGG_DB_FILE=/db/ap.db3 \
+    MWGG_UPLOAD_FOLDER=/uploads \
+    MWGG_LOGS_FOLDER=/logs \
+    MWGG_GENERATED_FOLDER=/static/generated
+RUN mkdir -p custom_worlds /db /uploads /logs /static/generated /roms && ln -s /roms roms
 
 COPY --from=cython-builder /build/*.so ./
 
@@ -94,15 +101,6 @@ RUN apt-get purge -y \
     libc6-dev \
     g++ && \
     apt-get autoremove -y
-
-# Copy necessary components
-COPY --from=enemizer /release/EnemizerCLI /tmp/EnemizerCLI
-
-# No release for arm architecture. Skip.
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-    cp -r /tmp/EnemizerCLI EnemizerCLI; \
-    fi; \
-    rm -rf /tmp/EnemizerCLI
 
 # Define health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

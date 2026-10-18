@@ -6,7 +6,9 @@ COPY src/ src/
 RUN npx tsc
 
 FROM node:22-alpine AS prod
-RUN apk add --no-cache git ca-certificates
+# docker-cli: the Karen fuzz handler shells out to `docker run` against the
+# docker-socket-proxy (DOCKER_HOST) to spawn hardened per-world fuzz containers.
+RUN apk add --no-cache git ca-certificates docker-cli
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev --no-audit --no-fund || npm install --omit=dev --no-audit --no-fund

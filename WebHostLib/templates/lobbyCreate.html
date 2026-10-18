@@ -6,9 +6,9 @@
 {% endblock %}
 
 {% block body %}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
     <div id="lobby-create-wrapper">
-        <div id="lobby-create" class="grass-island">
+        <div id="lobby-create">
             <h1>Create Lobby</h1>
             <p>
                 Create a lobby for players to join and upload their YAML configs.
@@ -40,7 +40,7 @@
                                 <tr>
                                     <td>
                                         <label for="timeout_minutes">Inactivity Timeout:
-                                            <span class="interactive" data-tooltip="Lobby will expire after this much time of no activity (player joining/leaving, chat, yaml changes). Max 4 weeks.">(?)
+                                            <span class="interactive" data-tooltip="The lobby is abandoned after this much time passes without new YAML uploads, chat messages, or players joining/leaving. Max 4 weeks.">(?)
                                             </span>
                                         </label>
                                     </td>
@@ -70,8 +70,8 @@
                                     </td>
                                     <td>
                                         <input type="number" id="max_yamls_per_player" name="max_yamls_per_player"
-                                               min="1" max="20" value="1" style="width:80px">
-                                        <span style="font-size:0.8rem;color:#aaa">(max. 20)</span>
+                                               min="1" max="100" value="1" style="width:80px">
+                                        <span style="font-size:0.8rem;color:#aaa">(max. 100)</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -108,6 +108,17 @@
                                         <input type="checkbox" id="allow_custom_apworlds" name="allow_custom_apworlds" value="1">
                                     </td>
                                 </tr>
+                                <tr>
+                                    <td>
+                                        <label for="unlisted">Unlisted:
+                                            <span class="interactive" data-tooltip="Keeps the lobby off the public lobby list. Players join through the lobby link. This can be changed later from lobby settings.">(?)
+                                            </span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <input type="checkbox" id="unlisted" name="unlisted" value="1">
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -119,7 +130,7 @@
                                 <tr>
                                     <td>
                                         <label for="release_mode">Release Permission:
-                                            <span class="interactive" data-tooltip="Permissions on when players are able to release all remaining items from their world.">(?)
+                                            <span class="interactive" data-tooltip="Controls when players can release all remaining items from their world.&#10;Automatic on goal completion: releases as soon as the player finishes.&#10;Allow !release after goal completion: manual command unlocks after goal.&#10;Automatic + manual !release: auto on goal, but manual is always allowed.&#10;Manual !release: command is always allowed.&#10;Disabled: no client release.">(?)
                                             </span>
                                         </label>
                                     </td>
@@ -136,15 +147,15 @@
                                 <tr>
                                     <td>
                                         <label for="collect_mode">Collect Permission:
-                                            <span class="interactive" data-tooltip="Permissions on when players are able to collect all their remaining items.">(?)
+                                            <span class="interactive" data-tooltip="Controls when players can collect all remaining items for themselves.&#10;Automatic on goal completion: collects as soon as the player finishes.&#10;Allow after goal completion: manual command unlocks after goal.&#10;Automatic + manual: auto on goal, but manual is always allowed.&#10;Manual !collect: command is always allowed.&#10;Disabled: no client collect.">(?)
                                             </span>
                                         </label>
                                     </td>
                                     <td>
                                         <select name="collect_mode" id="collect_mode">
                                             <option value="auto">Automatic on goal completion</option>
-                                            <option selected value="goal">Allow !collect after goal completion</option>
-                                            <option value="auto-enabled">Automatic + manual !collect</option>
+                                            <option selected value="goal">Allow after goal completion</option>
+                                            <option value="auto-enabled">Automatic + manual</option>
                                             <option value="enabled">Manual !collect</option>
                                             <option value="disabled">Disabled</option>
                                         </select>
@@ -152,8 +163,20 @@
                                 </tr>
                                 <tr>
                                     <td>
+                                        <label for="release_threshold">Release Threshold:
+                                            <span class="interactive" data-tooltip="Minimum percentage of locations a player must check before !release or !collect can be used. Also applies to automatic release and collect,  but only if the threshold is met at reaching your goal.">(?)
+                                            </span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="release_threshold" id="release_threshold"
+                                               min="0" max="100" step="1" value="0" required>%
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
                                         <label for="remaining_mode">Remaining Permission:
-                                            <span class="interactive" data-tooltip="Remaining lists all items still in your world by name only.">(?)
+                                            <span class="interactive" data-tooltip="Controls !remaining, which lists items still in a player's world by name only.&#10;Allow !remaining after goal completion: command unlocks after goal.&#10;Manual !remaining: command is always allowed.&#10;Disabled: no client remaining command.">(?)
                                             </span>
                                         </label>
                                     </td>
@@ -213,16 +236,28 @@
                                 <tr>
                                     <td>
                                         <label for="hint_mode">Hint Mode:
-                                            <span class="interactive" data-tooltip="Decide if hints include exact location data or just reference the respective world. Rehint to see full location">(?)
+                                            <span class="interactive" data-tooltip="Item hints can conceal exact locations; location hints instead conceal exact items. Rehint to reveal the hidden detail.">(?)
                                             </span>
                                         </label>
                                     </td>
                                     <td>
                                         <select name="hint_mode" id="hint_mode">
-                                            <option value="all">Hide All locations</option>
-                                            <option value="own">Hide Own World locations</option>
-                                            <option selected value="default">Default (show full location)</option>
+                                            <option value="all">Hide All placement details</option>
+                                            <option value="own">Hide Own placement details</option>
+                                            <option selected value="default">Default (show full details)</option>
                                         </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <label for="progression_equalization">Progression Equalization:
+                                            <span class="interactive" data-tooltip="Controls how evenly progression items are distributed between slots. 0% gives every location an equal chance; 100% aims for the same number of progression items in each slot.">(?)
+                                            </span>
+                                        </label>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="progression_equalization" id="progression_equalization"
+                                               min="0" max="100" step="1" value="20" required>%
                                     </td>
                                 </tr>
                                 <tr>
@@ -233,13 +268,7 @@
                                         </label>
                                     </td>
                                     <td>
-                                        <select name="hint_cost" id="hint_cost">
-                                            {% for n in range(0, 110, 5) %}
-                                                <option {% if n == 5 %}selected{% endif %} value="{{ n }}">
-                                                    {% if n > 100 %}Off{% else %}{{ n }}%{% endif %}
-                                                </option>
-                                            {% endfor %}
-                                        </select>
+                                        <input type="number" name="hint_cost" id="hint_cost" min="0" max="100" step="1" value="5" required>%
                                     </td>
                                 </tr>
                             </tbody>
@@ -252,13 +281,13 @@
                             <tbody>
                                 <tr>
                                     <td>
-                                        <label for="server_password">Server Password:
+                                        <label for="admin_password">Admin Password
                                             <span class="interactive" data-tooltip="Allows issuing server console commands using !admin.">(?)
                                             </span>
                                         </label>
                                     </td>
                                     <td>
-                                        <input id="server_password" name="server_password">
+                                        <input id="admin_password" name="admin_password">
                                     </td>
                                 </tr>
                                 <tr>
@@ -291,10 +320,14 @@
     </div>
     <script>
     (function () {
+        const form = document.getElementById("lobby-create-form");
         const raceCheckbox = document.getElementById("race");
         const spoilerSelect = document.getElementById("spoiler");
         const remainingSelect = document.getElementById("remaining_mode");
         const itemCheatSelect = document.getElementById("item_cheat");
+        const COOKIE_NAME = "lobby_create_settings";
+        const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+        const EXCLUDED_IDS = new Set(["title", "password", "admin_password"]);
 
         const RACE_FORCED = { spoiler: "0", remaining_mode: "disabled", item_cheat: "0" };
         const savedValues = {};
@@ -312,8 +345,48 @@
             });
         }
 
+        function readCookie(name) {
+            const prefix = name + "=";
+            return document.cookie
+                .split(";")
+                .map(part => part.trim())
+                .find(part => part.startsWith(prefix))
+                ?.slice(prefix.length);
+        }
+
+        function loadStoredSettings() {
+            const raw = readCookie(COOKIE_NAME);
+            if (!raw) return;
+            let settings;
+            try {
+                settings = JSON.parse(decodeURIComponent(raw));
+            } catch (e) {
+                return;
+            }
+
+            form.querySelectorAll("input, select").forEach(el => {
+                if (!el.name || EXCLUDED_IDS.has(el.id) || !(el.name in settings)) return;
+                if (el.type === "checkbox") {
+                    el.checked = !!settings[el.name];
+                } else {
+                    el.value = settings[el.name];
+                }
+            });
+        }
+
+        function saveStoredSettings() {
+            const settings = {};
+            form.querySelectorAll("input, select").forEach(el => {
+                if (!el.name || EXCLUDED_IDS.has(el.id)) return;
+                settings[el.name] = el.type === "checkbox" ? el.checked : el.value;
+            });
+            document.cookie = `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(settings))}; max-age=${COOKIE_MAX_AGE}; path=/; samesite=lax`;
+        }
+
+        loadStoredSettings();
+        applyRaceMode(raceCheckbox.checked);
         raceCheckbox.addEventListener("change", () => applyRaceMode(raceCheckbox.checked));
+        form.addEventListener("submit", saveStoredSettings);
     })();
     </script>
-    {% include 'islandFooter.html' %}
 {% endblock %}

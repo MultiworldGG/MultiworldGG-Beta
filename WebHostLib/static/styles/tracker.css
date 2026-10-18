@@ -1,14 +1,17 @@
+:root {
+    --tracker-gutter: 70px;
+}
+
 #tracker-wrapper {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    margin-left: auto;
-    margin-right: auto;
-    width: calc(100% - 1rem);
+    margin: 0 auto var(--tracker-gutter) auto;
+    width: calc(100% - 2 * var(--tracker-gutter));
 }
 
 #tracker-wrapper a {
-    color: #ea166c;
+    color: var(--mw-sys-color-primary);
     text-decoration: none;
     cursor: pointer;
 }
@@ -16,15 +19,16 @@
 #tracker-header-bar {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: flex-start;
-    align-content: center;
+    align-items: center;
     line-height: 20px;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
 #tracker-header-bar .info {
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
     padding: 2px;
     flex-grow: 1;
     align-self: center;
@@ -34,14 +38,16 @@
 #tracker-navigation {
     display: flex;
     flex-wrap: wrap;
-    margin: 0 0.5rem 0.5rem 0.5rem;
+    align-items: center;
+    gap: 0.5rem;
+    margin: var(--tracker-gutter) var(--tracker-gutter) 0.5rem var(--tracker-gutter);
     user-select: none;
-    height: 2rem;
+    min-height: 2rem;
 }
 
 .tracker-navigation-bar {
     display: flex;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     border-radius: 4px;
 }
 
@@ -55,16 +61,16 @@
     border-radius: 4px;
     text-align: center;
     font-size: 14px;
-    color: #ffffff !important;
+    color: var(--mw-sys-color-white) !important;
     font-weight: lighter;
 }
 
 .tracker-navigation-button:hover {
-    background-color: #652895 !important;
+    background-color: var(--mw-sys-color-tertiary) !important;
 }
 
 .tracker-navigation-button.selected {
-    background-color: #4a2272;
+    background-color: var(--mw-sys-color-tertiary-container);
 }
 
 .table-wrapper {
@@ -78,7 +84,7 @@
     display: flex;
     align-items: center;
     margin-bottom: 0.5rem;
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 .table-options label {
@@ -94,12 +100,15 @@
 }
 
 #search {
-    border: 1px solid #5a3080;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
     border-radius: 3px;
     padding: 3px;
-    width: 200px;
-    background-color: #1e1438;
-    color: #ffffff;
+    width: 240px;
+    max-width: 100%;
+    box-sizing: border-box;
+    flex: 0 1 240px;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
+    color: var(--mw-sys-color-white);
 }
 
 div.dataTables_wrapper.no-footer .dataTables_scrollBody {
@@ -107,7 +116,7 @@ div.dataTables_wrapper.no-footer .dataTables_scrollBody {
 }
 
 table.dataTable {
-    color: #ffffff;
+    color: var(--mw-sys-color-white);
 }
 
 table.dataTable thead {
@@ -115,12 +124,12 @@ table.dataTable thead {
 }
 
 table.dataTable tbody, table.dataTable tfoot {
-    background-color: #1e1438;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
     font-family: Inter-Light, sans-serif;
 }
 
 table.dataTable tbody tr:hover, table.dataTable tfoot tr:hover {
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
 }
 
 table.dataTable tbody td, table.dataTable tfoot td {
@@ -128,7 +137,7 @@ table.dataTable tbody td, table.dataTable tfoot td {
 }
 
 table.dataTable, table.dataTable.no-footer {
-    border-left: 1px solid #5a3080;
+    border-left: 1px solid var(--mw-sys-color-tertiary-outline);
     width: calc(100% - 2px) !important;
     font-size: 1rem;
 }
@@ -136,14 +145,14 @@ table.dataTable, table.dataTable.no-footer {
 table.dataTable thead th {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     top: 0;
 }
 
 table.dataTable thead th.upper-row {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     height: 36px;
     top: 0;
 }
@@ -151,13 +160,13 @@ table.dataTable thead th.upper-row {
 table.dataTable thead th.lower-row {
     position: -webkit-sticky;
     position: sticky;
-    background-color: #2d1b4e;
+    background-color: var(--mw-sys-color-tertiary-surface);
     height: 22px;
     top: 46px;
 }
 
 table.dataTable tbody td, table.dataTable tfoot td {
-    border: 1px solid #5a3080;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
 }
 
 table.dataTable tfoot td {
@@ -179,14 +188,21 @@ img.icon-sprite {
 }
 
 .item-acquired {
-    background-color: #652895;
+    background-color: var(--mw-sys-color-tertiary);
+}
+
+/* Phones can't spare a 70px gutter on both sides. */
+@media all and (max-width: 900px) {
+    :root {
+        --tracker-gutter: 16px;
+    }
 }
 
 @media all and (max-width: 1700px) {
     table.dataTable thead th.upper-row{
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 27px;
         top: 0;
     }
@@ -194,7 +210,7 @@ img.icon-sprite {
     table.dataTable thead th.lower-row {
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 20px;
         top: 37px;
     }
@@ -214,7 +230,7 @@ img.icon-sprite {
     table.dataTable thead th.upper-row{
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 22px;
         top: 0;
     }
@@ -222,7 +238,7 @@ img.icon-sprite {
     table.dataTable thead th.lower-row {
         position: -webkit-sticky;
         position: sticky;
-        background-color: #2d1b4e;
+        background-color: var(--mw-sys-color-tertiary-surface);
         height: 19px;
         top: 32px;
     }
@@ -236,4 +252,130 @@ img.icon-sprite {
         max-height: 20px;
         min-height: 10px;
     }
+}
+
+/* Player avatars (multitracker name cell + per-player slot tracker) */
+.slot-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.tracker-slot-avatar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+    background-color: var(--mw-sys-color-tertiary-surface);
+    border-radius: 4px;
+}
+
+.slot-avatar-large {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--mw-sys-color-secondary-container);
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
+}
+
+/* "Set avatar" opens as a dropdown so the form never overlaps the tables. */
+.avatar-setter {
+    position: relative;
+}
+
+.avatar-setter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: lighter;
+    color: var(--mw-sys-color-white);
+    cursor: pointer;
+    list-style: none;
+}
+
+.avatar-setter-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.avatar-setter-toggle::after {
+    content: "▾";
+    font-size: 11px;
+}
+
+.avatar-setter-toggle:hover {
+    background-color: var(--mw-sys-color-tertiary);
+}
+
+.avatar-setter[open] > .avatar-setter-toggle {
+    background-color: var(--mw-sys-color-tertiary-container);
+}
+
+.avatar-setter[open] > .avatar-setter-toggle::after {
+    content: "▴";
+}
+
+.avatar-setter-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: min(18rem, calc(100vw - 2rem));
+    max-width: calc(100vw - 2rem);
+    padding: 12px;
+    background-color: var(--mw-sys-color-tertiary-surface-low);
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px var(--mw-sys-color-shadow-soft);
+    color: var(--mw-sys-color-white);
+    font-size: 0.85rem;
+    line-height: 1.35;
+}
+
+.avatar-setter-panel input[type="file"] {
+    max-width: 100%;
+    color: var(--mw-sys-color-white);
+    font-size: 0.8rem;
+}
+
+.avatar-setter-panel input[type="file"]::file-selector-button {
+    margin-right: 8px;
+    padding: 4px 10px;
+    border: 1px solid var(--mw-sys-color-tertiary-outline);
+    border-radius: 4px;
+    background-color: var(--mw-sys-color-tertiary-surface);
+    color: var(--mw-sys-color-white);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.avatar-setter-panel input[type="file"]::file-selector-button:hover {
+    background-color: var(--mw-sys-color-tertiary);
+}
+
+.avatar-setter-panel button[type="submit"] {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--mw-sys-color-tertiary);
+    color: var(--mw-sys-color-white);
+}
+
+.avatar-setter-panel button[type="submit"]:hover {
+    background-color: var(--mw-sys-color-tertiary-hover);
+}
+
+.avatar-setter-panel button[type="submit"]:active {
+    margin: 0;
+    padding: 6px 14px;
 }

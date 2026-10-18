@@ -65,6 +65,17 @@ class AutoBizHawkClientRegister(abc.ABCMeta):
 
         return None
 
+    @staticmethod
+    def is_bizhawk_world(module_name: str) -> bool:
+        """Check if a world module has a registered BizHawk client"""
+        module_normalized = module_name.lower().replace(' ', '_').replace('-', '_')
+        for handlers in AutoBizHawkClientRegister.game_handlers.values():
+            for game_name in handlers.keys():
+                game_normalized = game_name.lower().replace(' ', '_').replace('-', '_')
+                if module_normalized in game_normalized or game_normalized in module_normalized:
+                    return True
+        return False
+
 
 class BizHawkClient(abc.ABC, metaclass=AutoBizHawkClientRegister):
     system: ClassVar[str | tuple[str, ...]]

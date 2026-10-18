@@ -10,9 +10,11 @@ import subprocess
 from typing import Any
 import urllib
 
+from websockets.protocol import State
+
 import settings
 
-from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger, gui_enabled
+from CommonClient import CommonContext, ClientCommandProcessor, get_base_parser, server_loop, logger
 import Patch
 import Utils
 apname = Utils.instance_name if Utils.instance_name else "Archipelago"
@@ -123,7 +125,6 @@ class BizHawkClientCommandProcessor(ClientCommandProcessor):
 class BizHawkClientContext(CommonContext):
     command_processor = BizHawkClientCommandProcessor
     text_passthrough_categories: set[str]
-    server_seed_name: str | None = None
     auth_status: AuthStatus
     password_requested: bool
     client_handler: BizHawkClient | None
@@ -163,17 +164,10 @@ class BizHawkClientContext(CommonContext):
             if self._categorize_text(args) in self.text_passthrough_categories:
                 Utils.async_start(display_message(self.bizhawk_ctx, self.rawjsontotextparser(copy.deepcopy(args["data"]))))
 
-    def make_gui(self):
-        ui = super().make_gui()
-        ui.base_title = apname + " BizHawk Client"
-        return ui
-
     def on_package(self, cmd, args):
         if cmd == "Connected":
             self.slot_data = args.get("slot_data", None)
             self.auth_status = AuthStatus.AUTHENTICATED
-        elif cmd == "RoomInfo":
-            self.server_seed_name = args.get("seed_name", None)
 
         if self.client_handler is not None:
             self.client_handler.on_package(self, cmd, args)
@@ -206,7 +200,6 @@ class BizHawkClientContext(CommonContext):
 
     async def disconnect(self, allow_autoreconnect: bool=False):
         self.auth_status = AuthStatus.NOT_AUTHENTICATED
-        self.server_seed_name = None
         await super().disconnect(allow_autoreconnect)
 
 
@@ -265,7 +258,7 @@ async def _game_watcher(ctx: BizHawkClientContext):
 
             rom_hash = await get_hash(ctx.bizhawk_ctx)
             if ctx.rom_hash is not None and ctx.rom_hash != rom_hash:
-                if ctx.server is not None and not ctx.server.socket.closed:
+                if ctx.server is not None and ctx.server.socket.state is not State.CLOSED:
                     logger.info(f"ROM changed. Disconnecting from server.")
 
                 ctx.auth = None
@@ -296,7 +289,7 @@ async def _game_watcher(ctx: BizHawkClientContext):
             continue
 
         # Server auth
-        if ctx.server is not None and not ctx.server.socket.closed:
+        if ctx.server is not None and ctx.server.socket.state is not State.CLOSED:
             if ctx.auth_status == AuthStatus.NOT_AUTHENTICATED:
                 Utils.async_start(ctx.server_auth(ctx.password_requested))
         else:
@@ -353,7 +346,7 @@ def launch(*launch_args: str) -> None:
     async def main():
         parser = get_base_parser()
         parser.add_argument("patch_file", default="", type=str, nargs="?", help="Path to a MultiworldGG patch file")
-        args = parser.parse_args(launch_args)
+        args = parser.parse_args(launch_args if launch_args else None)
 
         if args.patch_file.startswith("archipelago://"):
             url = urllib.parse.urlparse(args.patch_file)
@@ -364,14 +357,20 @@ def launch(*launch_args: str) -> None:
                 args.password = urllib.parse.unquote(url.password)
         elif args.patch_file != "":
             metadata = _patch_and_run_game(args.patch_file)
-            if "server" in metadata:
-                args.connect = metadata["server"]
+            server = metadata.get("server")
+            if server:  # ignore missing and empty string servers
+                args.connect = server
 
         ctx = BizHawkClientContext(args.connect, args.password)
-        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
+        if ctx._can_takeover_existing_ui():
+            await ctx._takeover_existing_ui()
+        else:
+            logger.critical("BizHawk client did not launch properly, exiting.")
+            ctx._error_callback()
+            return
 
-        if gui_enabled:
-            ctx.run_gui()
+        ctx.ui.base_title = apname + " | BizHawk Client"
+        ctx.server_task = asyncio.create_task(server_loop(ctx), name="ServerLoop")
         ctx.run_cli()
 
         watcher_task = asyncio.create_task(_game_watcher(ctx), name="GameWatcher")

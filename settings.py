@@ -3,8 +3,11 @@ Application settings / host.yaml interface using type hints.
 This is different from player options.
 """
 
+import copy
+import io
 import os
 import os.path
+import pathlib
 import shutil
 import sys
 import types
@@ -17,34 +20,33 @@ from typing import cast, Any, BinaryIO, ClassVar, TextIO, TypeVar, Union
 
 __all__ = [
     "get_settings", "fmt_doc", "no_gui",
-    "Group", "Bool", "Path", "UserFilePath", "UserFolderPath", "LocalFilePath", "LocalFolderPath",
+    "Group", "Bool", "APPathLib", "UserFilePath", "UserFolderPath", "LocalFilePath", "LocalFolderPath",
     "OptionalUserFilePath", "OptionalUserFolderPath", "OptionalLocalFilePath", "OptionalLocalFolderPath",
     "GeneralOptions", "ServerOptions", "GeneratorOptions", "SNIOptions", "Settings"
 ]
 
 no_gui = False
 skip_autosave = False
-_world_settings_name_cache: dict[str, str] = {}
-_world_settings_name_cache_updated = False
 _lock = Lock()
 
 
-def _update_cache() -> None:
-    """Load world settings metadata from currently loaded worlds."""
-    global _world_settings_name_cache_updated
-    if _world_settings_name_cache_updated:
-        return
+def _loaded_world_settings_names() -> dict[str, str]:
+    """{settings_key: "module.WorldClass"} for worlds that are already imported.
 
-    try:
-        from worlds import AutoWorldRegister
-        _world_settings_name_cache.clear()
-        for world in AutoWorldRegister.world_types.values():
-            annotation = world.__annotations__.get("settings", None)
-            if annotation is None or annotation == "ClassVar[Optional['Group']]":
-                continue
-            _world_settings_name_cache[world.settings_key] = f"{world.__module__}.{world.__name__}"
-    finally:
-        _world_settings_name_cache_updated = True
+    Resolves purely against sys.modules. Users load only the worlds they play, and
+    the webhost queues its full catalog before `worlds` may be imported (the
+    package's load loop is one-shot), so a settings access must never trigger a
+    world load.
+    """
+    # getattr: a partially-initialized worlds.AutoWorld (mid-import) is "not loaded yet"
+    register = getattr(sys.modules.get("worlds.AutoWorld"), "AutoWorldRegister", None)
+    if register is None:
+        return {}
+    return {
+        world.settings_key: f"{world.__module__}.{world.__name__}"
+        for world in register.world_types.values()
+        if world.__annotations__.get("settings") not in (None, "ClassVar[Optional['Group']]")
+    }
 
 
 def fmt_doc(cls: type, level: int) -> str:
@@ -86,8 +88,9 @@ class Group:
 
     def __getattribute__(self, item: str) -> Any:
         attr = super().__getattribute__(item)
-        if isinstance(attr, Path) and not super().__getattribute__("_dumping"):
-            if attr.required and not attr.exists() and not super().__getattribute__("_has_attr"):
+        if isinstance(attr, APPathLib) and not super().__getattribute__("_dumping"):
+            resolved = pathlib.Path(attr.resolve())
+            if attr.required and not resolved.exists() and not super().__getattribute__("_has_attr"):
                 # if a file is required, and the one from settings does not exist, ask the user to provide it
                 # unless we are dumping the settings, because that would ask for each entry
                 with _lock:  # lock to avoid opening multiple
@@ -98,8 +101,14 @@ class Group:
                     setattr(self, item, new)
                     self._changed = True
                     attr = new
-            # resolve the path immediately when accessing it
-            return attr.__class__(attr.resolve())
+                    resolved = pathlib.Path(attr.resolve())
+            # validate the file's hash hasn't been tampered with (per upstream #5854);
+            # an unset FilePath resolves to a directory, which is not a file to open
+            if resolved.is_file():
+                attr.__class__.validate(str(resolved))
+            # return as the original APPathLib subclass (string) for backward compat with
+            # downstream code that may pass it to APIs expecting str
+            return attr.__class__(str(resolved))
         return attr
 
     @property
@@ -231,8 +240,10 @@ class Group:
                         return res
 
                     def represent_str(self, data: str) -> ScalarNode:
-                        # default double quote all strings
-                        return self.represent_scalar("tag:yaml.org,2002:str", data, style='"')
+                        # default double quote all strings; backslash-bearing values (Windows
+                        # paths) go single-quoted so hand edits that copy the style stay literal
+                        style = "'" if "\\" in data else '"'
+                        return self.represent_scalar("tag:yaml.org,2002:str", data, style=style)
 
                 Dumper.add_representer(str, Dumper.represent_str)
                 Group._dumper = Dumper
@@ -303,16 +314,18 @@ class Bool:
 
 
 # Types for generic settings
-T = TypeVar("T", bound="Path")
+T = TypeVar("T", bound="APPathLib")
 
 
 def _resolve_exe(s: str) -> str:
-    """Append exe file extension if the file is an executable"""
-    if isinstance(s, Path):
+    """Expand env vars and ~, then append exe file extension if the file is an executable"""
+    # expand before callers test isabs, or "%USERPROFILE%\x" gets rooted under user_path
+    expanded = str(os.path.expanduser(os.path.expandvars(s)))
+    if isinstance(s, APPathLib):
         from Utils import is_windows
-        if s.is_exe and is_windows and not s.lower().endswith(".exe"):
-            return str(s + ".exe")
-    return str(s)
+        if s.is_exe and is_windows and not expanded.lower().endswith(".exe"):
+            return expanded + ".exe"
+    return expanded
 
 
 def _to_builtin(o: object) -> Any:
@@ -325,7 +338,7 @@ def _to_builtin(o: object) -> Any:
     return c.__call__(o)
 
 
-class Path(str):
+class APPathLib(str):
     # paths in host.yaml are str
     required: bool = True
     """Marks the file as required and opens a file browser when missing"""
@@ -343,7 +356,7 @@ class Path(str):
 
     def browse(self: T, **kwargs: Any) -> T | None:
         """Opens a file browser to search for the file"""
-        raise NotImplementedError(f"Please use a subclass of Path for {self.__class__.__name__}")
+        raise NotImplementedError(f"Please use a subclass of APPathLib for {self.__class__.__name__}")
 
     def resolve(self) -> str:
         return _resolve_exe(self)
@@ -354,21 +367,25 @@ class Path(str):
 
 class _UserPath(str):
     def resolve(self) -> str:
-        if os.path.isabs(self):
-            return str(self)
+        # apply .exe suffix first (uses self.is_exe, which is class-level on APPathLib subclasses),
+        # then decide whether to root under user_path
+        s = _resolve_exe(self)
+        if os.path.isabs(s):
+            return s
         from Utils import user_path
-        return user_path(_resolve_exe(self))
+        return user_path(s)
 
 
 class _LocalPath(str):
     def resolve(self) -> str:
-        if os.path.isabs(self):
-            return str(self)
+        s = _resolve_exe(self)
+        if os.path.isabs(s):
+            return s
         from Utils import local_path
-        return local_path(_resolve_exe(self))
+        return local_path(s)
 
 
-class FilePath(Path):
+class FilePath(APPathLib):
     # path to a file
 
     md5s: ClassVar[list[str | bytes]] = []
@@ -441,7 +458,7 @@ class FilePath(Path):
                 raise ValueError(f"File hash does not match for {path}")
 
 
-class FolderPath(Path):
+class FolderPath(APPathLib):
     # path to a folder
 
     def browse(self: T, **kwargs: Any) -> T | None:
@@ -522,7 +539,17 @@ class GeneralOptions(Group):
         """
         # created on demand, so marked as optional
 
+    class AutoInstallPinnedWorlds(Bool):
+        """
+        When a room specifies the apworld version it was generated with and the installed
+        version differs, the launcher installs that pinned version before launching the client
+        without asking. When false (the default), the launcher offers the install in a
+        confirmation dialog instead. Only applies to managed (index-tracked) worlds;
+        custom/off-index worlds are never installed automatically.
+        """
+
     output_path: OutputPath = OutputPath("output")
+    auto_install_pinned_worlds: AutoInstallPinnedWorlds | bool = False
 
 
 class ServerOptions(Group):
@@ -532,7 +559,7 @@ class ServerOptions(Group):
     These overwrite command line arguments!
     """
 
-    class ServerPassword(str):
+    class AdminPassword(str):
         """
         Allows for clients to log on and manage the server.  If this is null, no remote administration is possible.
         """
@@ -578,10 +605,10 @@ class ServerOptions(Group):
     class HintMode(str):
         """
         Hint modes
-        Decides if hints pointing towards a player's own world display the exact location
-        "default" -> hints are shown in full no matter which world
-        "own" -> hints pointing towards the hinting player's world do not expose the exact location unless hinted and paid for again.
-        "all" -> hints do not expose the exact location unless hinted and paid for again.
+        Controls whether item hints expose exact locations and location hints expose exact items.
+        "default" -> hints are shown in full
+        "own" -> conceal details for items placed in their owner's world unless rehinted and paid for again
+        "all" -> conceal details for all placements unless rehinted and paid for again
         """
 
     class RemainingMode(str):
@@ -602,6 +629,16 @@ class ServerOptions(Group):
         "enabled" -> Client can always initiate a countdown with !countdown.
         "disabled" -> Client can never initiate a countdown with !countdown.
         "auto" -> !countdown will be available for any room with less than 30 slots.
+        """
+
+    class ReleaseThreshold(int):
+        """
+        Minimum percentage of checks a player must have found before being allowed to use !release or !collect.
+        Also applies to automatic releases/collects if those are enabled.
+
+        For example, a value of 0 means that a player can release/collect at any time (if also allowed by the release/collect mode),
+        a value of 50 means that a player must have found at least half of their locations before being allowed to release/collect,
+        and a value of 100 means that a player must have found all of their locations before being allowed to collect.
         """
 
     class AutoShutdown(int):
@@ -631,7 +668,7 @@ class ServerOptions(Group):
     disable_save: bool = False
     loglevel: str = "info"
     logtime: bool = False
-    server_password: ServerPassword | None = None
+    admin_password: AdminPassword | None = None
     disable_item_cheat: DisableItemCheat | bool = False
     location_check_points: LocationCheckPoints = LocationCheckPoints(1)
     hint_cost: HintCost = HintCost(10)
@@ -640,17 +677,23 @@ class ServerOptions(Group):
     hint_mode: HintMode = HintMode("default")
     remaining_mode: RemainingMode = RemainingMode("goal")
     countdown_mode: CountdownMode = CountdownMode("auto")
+    release_threshold: ReleaseThreshold = ReleaseThreshold(0)
     auto_shutdown: AutoShutdown = AutoShutdown(0)
     compatibility: Compatibility = Compatibility(2)
     log_network: LogNetwork = LogNetwork(0)
 
+    def update(self, dct: dict[str, Any]) -> None:
+        # upstream's server_password became admin_password; old files and multidata still carry it
+        if "server_password" in dct:
+            dct = dict(dct)
+            legacy = dct.pop("server_password")
+            if legacy and not dct.get("admin_password"):
+                dct["admin_password"] = legacy
+        super().update(dct)
+
 
 class GeneratorOptions(Group):
     """Options for Generation"""
-
-    class EnemizerPath(LocalFilePath):
-        """Location of your Enemizer CLI, available here: https://github.com/Ijwu/Enemizer/releases"""
-        is_exe = True
 
     class PlayerFilesPath(OptionalUserFolderPath):
         """Folder from which the player yaml files are pulled from"""
@@ -658,6 +701,12 @@ class GeneratorOptions(Group):
 
     class Players(int):
         """amount of players, 0 to infer from player files"""
+
+    class AllowQuantity(Bool):
+        """
+        allow players to set an individual quantity for their yaml settings
+        with 'false' any amounts from the players will be ignored and set to 1
+        """
 
     class WeightsFilePath(str):
         """
@@ -702,15 +751,26 @@ class GeneratorOptions(Group):
         start_inventory -> Move remaining items to start_inventory, generate additional filler items to fill locations.
         """
 
-    enemizer_path: EnemizerPath = EnemizerPath("EnemizerCLI/EnemizerCLI.Core")  # + ".exe" is implied on Windows
+    class ProgressionEqualization(int):
+        """
+        Percentage value from 0-100.
+        If set to a non-zero value, slots with fewer locations will have more progression filled into them.
+        This can help balance the experience of a multiworld by making all seeds feel worth playing.
+        0 means that each location across the whole multiworld has the same chance to receive a progression item.
+        100 means that each slot will have the same number of progression items in it, regardless of location count.
+        Values between 0 and 100 linearly interpolate between the two.
+        """
+
     player_files_path: PlayerFilesPath = PlayerFilesPath("Players")
     players: Players = Players(0)
+    allow_quantity: AllowQuantity | bool = False
     weights_file_path: WeightsFilePath = WeightsFilePath("weights.yaml")
     meta_file_path: MetaFilePath = MetaFilePath("meta.yaml")
     spoiler: Spoiler = Spoiler(3)
     race: Race = Race(0)
     plando_options: PlandoOptions = PlandoOptions("bosses, connections, texts")
     panic_method: PanicMethod = PanicMethod("swap")
+    progression_equalization: ProgressionEqualization = ProgressionEqualization(20)
     loglevel: str = "info"
     logtime: bool = False
 
@@ -752,6 +812,33 @@ class BizHawkClientOptions(Group):
     rom_start: RomStart | bool = True
 
 
+def _parse_options(text: str) -> dict[str, Any] | None:
+    """Parse host.yaml text with every backslash read as a forward slash.
+
+    Hand-edited Windows paths in double quotes are invalid YAML escapes, and
+    Windows accepts / wherever \\ works. Line and column marks are unchanged."""
+    from Utils import parse_yaml
+    return parse_yaml(text.replace("\\", "/"))
+
+
+_MISSING = object()
+
+
+def _merge_changes(on_disk: dict[str, Any], baseline: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
+    """on_disk with every key that changed between baseline and current applied.
+
+    Keys this process never touched keep their on-disk value, so hand edits and
+    other processes' saves survive; nothing on disk is deleted."""
+    merged = copy.deepcopy(on_disk)
+    for key, value in current.items():
+        old = baseline.get(key, _MISSING)
+        if isinstance(value, dict) and isinstance(merged.get(key), dict) and (old is _MISSING or isinstance(old, dict)):
+            merged[key] = _merge_changes(merged[key], old if isinstance(old, dict) else {}, value)
+        elif old is _MISSING or old != value:
+            merged[key] = copy.deepcopy(value)
+    return merged
+
+
 # Top-level group with lazy loading of worlds
 
 class Settings(Group):
@@ -768,19 +855,16 @@ class Settings(Group):
             # not a group or a hard-coded group
             pass
         elif key not in dir(self) or isinstance(super().__getattribute__(key), dict):
-            # settings class not loaded yet
-            if key not in _world_settings_name_cache:
-                # find world that provides the settings class
-                _update_cache()
-                # check for missing keys to update _changed
-                for world_settings_name in _world_settings_name_cache:
-                    if world_settings_name not in dir(self):
-                        self._changed = True
-            if key not in _world_settings_name_cache:
-                # not a world group
+            # settings class not materialized yet
+            world_settings_names = _loaded_world_settings_names()
+            existing = dir(self)
+            if any(name not in existing for name in world_settings_names):
+                self._changed = True  # a loaded world's section is new -> write on next save
+            if key not in world_settings_names:
+                # not the settings group of a loaded world
                 return super().__getattribute__(key)
-            # directly import world and grab settings class
-            world_mod, world_cls_name = _world_settings_name_cache[key].rsplit(".", 1)
+            # grab the settings class off the already-imported world module
+            world_mod, world_cls_name = world_settings_names[key].rsplit(".", 1)
             try:
                 world = cast(type, getattr(__import__(world_mod, fromlist=[world_cls_name]), world_cls_name))
             except AttributeError:
@@ -820,27 +904,39 @@ class Settings(Group):
 
         return super().__getattribute__(key)
 
-    def __init__(self, location: str | None):  # change to PathLike[str] once we drop 3.8?
+    def __init__(self, location: str | None, *, autosave: bool = True):
         super().__init__()
+        self._baseline: dict[str, Any] = {}  # parsed file content at load; save() diffs against it
         if location:
-            from Utils import parse_yaml
+            import logging
+            from yaml.error import MarkedYAMLError
             with open(location, encoding="utf-8-sig") as f:
-                from yaml.error import MarkedYAMLError
-                try:
-                    options = parse_yaml(f.read())
-                except MarkedYAMLError as ex:
-                    if ex.problem_mark:
-                        f.seek(0)
-                        lines = f.readlines()
+                text = f.read()
+            try:
+                options = _parse_options(text)
+            except MarkedYAMLError as ex:
+                # A malformed host.yaml must not take down everything that reads
+                # settings: fall back to defaults and skip _filename so autosave
+                # can't clobber the file the user needs to repair by hand.
+                detail = ""
+                if ex.problem_mark:
+                    lines = text.splitlines()
+                    if 0 <= ex.problem_mark.line < len(lines):
                         problem_line = lines[ex.problem_mark.line]
                         error_line = " " * ex.problem_mark.column + "^"
-                        raise Exception(f"{ex.context} {ex.problem}\n{problem_line}{error_line}")
-                    raise ex
-                # TODO: detect if upgrade is required
+                        detail = f"\n{problem_line}\n{error_line}"
+                logging.error(
+                    f"Could not parse {location}: {ex.context} {ex.problem}{detail}\n"
+                    f"Using default settings; fix the file and restart to restore your configuration."
+                )
+            else:
+                if "\\" in text:
+                    self._changed = True  # autosave rewrites it with forward slashes
                 self.update(options or {})
-            self._filename = location
+                self._filename = location
+                self._baseline = copy.deepcopy(options or {})
 
-        def autosave() -> None:
+        def flush() -> None:
             if __debug__:
                 import __main__
                 main_file = getattr(__main__, "__file__", "")
@@ -849,16 +945,43 @@ class Settings(Group):
             if self._filename and self.changed and not skip_autosave:
                 self.save()
 
-        if not skip_autosave:
+        if autosave and not skip_autosave:
             import atexit
-            atexit.register(autosave)
+            atexit.register(flush)
 
     def save(self, location: str | None = None) -> None:  # as above
+        """Apply this object's changes since load onto the file's current content and write it.
+
+        Several processes share host.yaml and users edit it by hand, so a save
+        never writes the whole in-memory snapshot: keys this process did not touch
+        keep whatever is on disk now. A file that no longer parses is left alone."""
         from Utils import parse_yaml
+        from yaml.error import MarkedYAMLError
         location = location or self._filename
         assert location, "No file specified"
+        buffer = io.StringIO()
+        self.dump(buffer)
+        current = parse_yaml(buffer.getvalue()) or {}
+        try:
+            with open(location, encoding="utf-8-sig") as f:
+                on_disk = _parse_options(f.read())
+        except FileNotFoundError:
+            merged = current
+        except MarkedYAMLError:
+            import logging
+            logging.error(f"Not saving settings: {location} is not valid yaml, fix it by hand first.")
+            return
+        else:
+            merged = _merge_changes(on_disk or {}, self._baseline, current)
+        target = Settings(None, autosave=False)
+        target.update(merged)
+        target._write(location)
+        self._filename = location
+        self._baseline = current
+
+    def _write(self, location: str) -> None:
+        from Utils import parse_yaml
         temp_location = location + ".tmp"  # not using tempfile to test expected file access
-        # remove old temps
         if os.path.exists(temp_location):
             os.unlink(temp_location)
         # can't use utf-8-sig because it breaks backward compat: pyyaml on Windows with bytes does not strip the BOM
@@ -870,19 +993,13 @@ class Settings(Group):
         # validate new file is valid yaml
         with open(temp_location, encoding="utf-8") as f:
             parse_yaml(f.read())
-        # replace old with new, try atomic operation first
-        try:
-            os.rename(temp_location, location)
-        except (OSError, FileExistsError):
-            os.unlink(location)
-            os.rename(temp_location, location)
-        self._filename = location
+        os.replace(temp_location, location)
 
     def dump(self, f: TextIO, level: int = 0) -> None:
-        # load all world setting classes
-        _update_cache()
-        for key in _world_settings_name_cache:
-            self.__getattribute__(key)  # load all worlds
+        # Materialize settings groups of already-loaded worlds; unloaded worlds'
+        # sections stay raw dicts and round-trip as-is. Never triggers a world load.
+        for key in _loaded_world_settings_names():
+            self.__getattribute__(key)
         super().dump(f, level)
 
     @property
@@ -894,6 +1011,7 @@ class Settings(Group):
 
 def get_settings() -> Settings:
     """Returns settings from the default host.yaml"""
+    save_location: str | None = None
     with _lock:  # make sure we only have one instance
         res = getattr(get_settings, "_cache", None)
         if not res:
@@ -912,6 +1030,16 @@ def get_settings() -> Settings:
             else:
                 warnings.warn(f"Could not find {filenames[1]} to load options. Creating a new one.")
                 res = Settings(None)
-                res.save(user_path(filenames[1]))
+                save_location = user_path(filenames[1])
             setattr(get_settings, "_cache", res)
-        return res
+
+    if save_location:
+        try:
+            res.save(save_location)
+        except Exception:
+            with _lock:
+                if getattr(get_settings, "_cache", None) is res:
+                    delattr(get_settings, "_cache")
+            raise
+
+    return res

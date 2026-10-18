@@ -12,7 +12,7 @@ from ..param import classvar_matrix
 
 class MultiworldTestBase(TestCase):
     multiworld: MultiWorld
-    '''TODO: FIX THIS TEST - it's dependent on having all worlds loaded and we now only load the worlds we need (so here it's none)'''
+
     # similar to the implementation in WorldTestBase.test_fill
     # but for multiple players and doesn't allow minimal accessibility
     def fulfills_accessibility(self) -> bool:
@@ -65,13 +65,24 @@ class TestAllGamesMultiworld(MultiworldTestBase):
             self.assertTrue(self.fulfills_accessibility(), "Collected all locations, but can't beat the game")
 
 
-@classvar_matrix(game=AutoWorldRegister.world_types.keys())
+class TestMatrixSeeded(TestCase):
+    def test_testable_worlds_not_empty(self) -> None:
+        """Guard against a vacuous pass: classvar_matrix unrolls TestTwoPlayerMulti at
+        import time, so an empty testable_worlds registry would generate zero test
+        classes and this module would pass without testing anything."""
+        self.assertTrue(AutoWorldRegister.testable_worlds,
+                        "AutoWorldRegister.testable_worlds is empty; test/__init__ did not "
+                        "seed the fixture worlds, so no TestTwoPlayerMulti classes were generated.")
+
+
+@classvar_matrix(game=AutoWorldRegister.testable_worlds.keys())
 class TestTwoPlayerMulti(MultiworldTestBase):
+    world_relevant = True
     game: ClassVar[str]
 
     def test_two_player_single_game_fills(self) -> None:
         """Tests that a multiworld of two players for each registered game world can generate."""
-        world_type = AutoWorldRegister.world_types[self.game]
+        world_type = AutoWorldRegister.testable_worlds[self.game]
         self.multiworld = setup_multiworld([world_type, world_type], ())
         for world in self.multiworld.worlds.values():
             world.options.accessibility.value = Accessibility.option_full

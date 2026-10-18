@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { handleWorkflowRun } from "../src/handlers/workflow_run";
+import { resetReleaseCoalescingForTests } from "../src/handlers/shared";
 import { IndexBotData } from "../src/index-pr";
 
 interface ReleaseFixture {
@@ -152,12 +153,17 @@ beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "oliver-handler-test-"));
   process.env.OLIVER_LOG_DIR = tmpDir;
   process.env.OLIVER_INDEX_REPO = "MultiworldGG/MultiworldGG-Index";
+  // Cases reuse the same repo+tag; drop the duplicate-delivery coalescing state.
+  resetReleaseCoalescingForTests();
+  // Make the asset-digest wait instant in tests (no real backoff sleeps).
+  process.env.OLIVER_DIGEST_WAIT_MS = "0";
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
   delete process.env.OLIVER_LOG_DIR;
   delete process.env.OLIVER_INDEX_REPO;
+  delete process.env.OLIVER_DIGEST_WAIT_MS;
 });
 
 function readEvents(): any[] {
@@ -173,12 +179,12 @@ function makeMinimalProbot() {
 const KAREN_DATA: IndexBotData = {
   id: 0,
   client_id: "k",
-  slug: "karen-multiworld-bot",
+  slug: "karen-head-of-multiworld-qa",
   owner: {},
-  name: "Karen-Multiworld-Bot",
+  name: "Karen-Head-of-Multiworld-QA",
   description: "",
   external_url: "",
-  html_url: "https://github.com/apps/karen-multiworld-bot",
+  html_url: "https://github.com/apps/karen-head-of-multiworld-qa",
   created_at: "",
   updated_at: "",
   permissions: {},
@@ -188,12 +194,12 @@ const KAREN_DATA: IndexBotData = {
 const OLIVER_DATA: IndexBotData = {
   id: 0,
   client_id: "o",
-  slug: "oliver-multiworld-squirrel",
+  slug: "oliver-the-multiworld-squirrel",
   owner: {},
-  name: "Oliver-Multiworld-Squirrel",
+  name: "Oliver-The-Multiworld-Squirrel",
   description: "",
   external_url: "",
-  html_url: "https://github.com/apps/oliver-multiworld-squirrel",
+  html_url: "https://github.com/apps/oliver-the-multiworld-squirrel",
   created_at: "",
   updated_at: "",
   permissions: {},
@@ -268,7 +274,15 @@ describe("handleWorkflowRun", () => {
     // Tag `v1.0.0` has no `-`, so Oliver cannot resolve a slug.
     const state: RepoState = {
       variables: {},
-      releases: [{ tag_name: "v1.0.0", tagSha: "release-sha-abc" }],
+      // A wheel IS attached, so the unparseable tag is the author's to fix and
+      // still belongs on /status; an assetless release is ignored instead.
+      releases: [
+        {
+          tag_name: "v1.0.0",
+          tagSha: "release-sha-abc",
+          assets: [wheelAsset({ slug: "myclgm", version: "1.0.0", tag: "v1.0.0" })],
+        },
+      ],
     };
     const probot = makeMinimalProbot();
     const karenProbot = makeMinimalProbot();

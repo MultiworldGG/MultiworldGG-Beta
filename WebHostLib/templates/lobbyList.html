@@ -1,17 +1,23 @@
 {% extends 'pageWrapper.html' %}
+{% from 'header/breadcrumb.html' import breadcrumb %}
 
 {% block head %}
     <title>Game Lobbies</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename="styles/lobby.css") }}" />
+    <script defer src="{{ url_for('static', filename='assets/lobbyList.js') }}"></script>
 {% endblock %}
 
 {% block body %}
 {%- macro fmt_timeout(m) -%}
 {%- if m < 60 -%}{{ m }} min{%- elif m < 1440 -%}{{ (m // 60) }} hr{%- else -%}{{ (m // 1440) }} days{%- endif -%}
 {%- endmacro -%}
-    {% include 'header/oceanIslandHeader.html' %}
+    {% include 'header/baseHeader.html' %}
+    {{ breadcrumb([
+        ('Play', url_for('play_hub')),
+        ('Lobbies', none),
+    ]) }}
     <div id="lobby-list-wrapper">
-        <div id="lobby-list" class="grass-island">
+        <div id="lobby-list">
             <h1>Game Lobbies</h1>
             <p>
                 Lobbies let you gather a group before generating a multiworld.
@@ -27,7 +33,7 @@
             </div>
         </div>
         {% if my_lobbies %}
-        <div id="my-lobbies" class="grass-island">
+        <div id="my-lobbies">
             <h2>My Active Lobbies</h2>
             <table id="my-lobby-table" class="lobby-table-shared">
                 <thead>
@@ -51,7 +57,7 @@
                         {% set hm = s.get('hint_mode', 'default') %}
                         {% set hc = s.get('hint_cost', 10) %}
                         <tr>
-                            <td data-label="Lobby">{{ lobby.title }}</td>
+                            <td data-label="Lobby">{{ lobby.title }}{% if meta.get('unlisted') %} <span class="lobby-unlisted-tag">Unlisted</span>{% endif %}</td>
                             <td data-label="Host">{{ my_owner_names.get(lobby.id, '?') }}</td>
                             <td data-label="Players">
                                 {{ my_player_counts.get(lobby.id, 0) }}{% if lobby.max_players > 0 %}/{{ lobby.max_players }}{% endif %}
@@ -75,11 +81,13 @@
                                     <div class="settings-tip-content">
                                         <div>Release: {{ s.get('release_mode', 'auto') }}</div>
                                         <div>Collect: {{ s.get('collect_mode', 'auto') }}</div>
+                                        <div>Threshold: {{ s.get('release_threshold', 0) }}%</div>
                                         <div>Remaining: {{ s.get('remaining_mode', 'goal') }}</div>
                                         <div>Hints: {% if hm == 'default' %}Full{% elif hm == 'own' %}Hide Own{% elif hm == 'all' %}Hide All{% else %}{{ hm }}{% endif %} @ {% if hc > 100 %}Off{% else %}{{ hc }}%{% endif %}</div>
-                                        <div>Item Cheat: {{ 'On' if s.get('item_cheat', True) else 'Off' }}</div>
-                                        <div>Spoiler: {% set sp = g.get('spoiler', 3) %}{% if sp == 0 %}Off{% elif sp == 1 %}On{% elif sp == 2 %}+Playthrough{% else %}Full{% endif %}</div>
-                                        <div>Max YAMLs/player: {{ lobby.max_yamls_per_player }}</div>
+                                         <div>Item Cheat: {{ 'On' if s.get('item_cheat', True) else 'Off' }}</div>
+                                         <div>Spoiler: {% set sp = g.get('spoiler', 3) %}{% if sp == 0 %}Off{% elif sp == 1 %}On{% elif sp == 2 %}+Playthrough{% else %}Full{% endif %}</div>
+                                         <div>Prog. Equal.: {{ g.get('progression_equalization', 20) }}%</div>
+                                         <div>Max YAMLs/player: {{ lobby.max_yamls_per_player }}</div>
                                         <div>Expires: <time class="lobby-expiry-time" datetime="{{ my_lobby_expiries.get(lobby.id, '') }}"></time></div>
                                         <div>Mode: {{ 'Race' if lobby.race else 'Standard' }}</div>
                                     </div>
@@ -94,9 +102,21 @@
             </table>
         </div>
         {% endif %}
-        <div id="lobby-list-table" class="grass-island">
+        <div id="lobby-list-table">
             <h2>Open Lobbies</h2>
             {% if lobbies %}
+                <div id="lobby-filters" hidden>
+                    <div class="lobby-title-search">
+                        <label for="lobby-title-search">Search by title</label>
+                        <input id="lobby-title-search" type="search" placeholder="Search lobbies…"
+                               aria-controls="lobby-table" />
+                    </div>
+                    <button type="button" id="hide-full-lobbies" class="lobby-filter-button"
+                            aria-pressed="false" aria-controls="lobby-table">Hide full lobbies</button>
+                    <button type="button" id="hide-password-lobbies" class="lobby-filter-button"
+                            aria-pressed="false" aria-controls="lobby-table">Hide password-protected lobbies</button>
+                </div>
+                <p id="lobby-filter-empty" class="no-lobbies" role="status" hidden>No lobbies match your search and filters.</p>
                 <table id="lobby-table">
                     <thead>
                         <tr>
@@ -118,7 +138,8 @@
                             {% set g = meta.get('generator_options', {}) %}
                             {% set hm = s.get('hint_mode', 'default') %}
                             {% set hc = s.get('hint_cost', 10) %}
-                            <tr>
+                            <tr data-full="{{ 'true' if lobby.max_players > 0 and player_counts.get(lobby.id, 0) >= lobby.max_players else 'false' }}"
+                                data-password="{{ 'true' if lobby.password_hash else 'false' }}">
                                 <td data-label="Lobby">{{ lobby.title }}</td>
                                 <td data-label="Host">{{ owner_names.get(lobby.id, '?') }}</td>
                                 <td data-label="Players">
@@ -141,11 +162,13 @@
                                         <div class="settings-tip-content">
                                             <div>Release: {{ s.get('release_mode', 'auto') }}</div>
                                             <div>Collect: {{ s.get('collect_mode', 'auto') }}</div>
+                                            <div>Threshold: {{ s.get('release_threshold', 0) }}%</div>
                                             <div>Remaining: {{ s.get('remaining_mode', 'goal') }}</div>
                                             <div>Hints: {% if hm == 'default' %}Full{% elif hm == 'own' %}Hide Own{% elif hm == 'all' %}Hide All{% else %}{{ hm }}{% endif %} @ {% if hc > 100 %}Off{% else %}{{ hc }}%{% endif %}</div>
-                                            <div>Item Cheat: {{ 'On' if s.get('item_cheat', True) else 'Off' }}</div>
-                                            <div>Spoiler: {% set sp = g.get('spoiler', 3) %}{% if sp == 0 %}Off{% elif sp == 1 %}On{% elif sp == 2 %}+Playthrough{% else %}Full{% endif %}</div>
-                                            <div>Max YAMLs/player: {{ lobby.max_yamls_per_player }}</div>
+                                             <div>Item Cheat: {{ 'On' if s.get('item_cheat', True) else 'Off' }}</div>
+                                             <div>Spoiler: {% set sp = g.get('spoiler', 3) %}{% if sp == 0 %}Off{% elif sp == 1 %}On{% elif sp == 2 %}+Playthrough{% else %}Full{% endif %}</div>
+                                             <div>Prog. Equal.: {{ g.get('progression_equalization', 20) }}%</div>
+                                             <div>Max YAMLs/player: {{ lobby.max_yamls_per_player }}</div>
                                             <div>Expires: <time class="lobby-expiry-time" datetime="{{ lobby_expiries.get(lobby.id, '') }}"></time></div>
                                             <div>Mode: {{ 'Race' if lobby.race else 'Standard' }}</div>
                                         </div>
@@ -171,12 +194,11 @@
         </div>
         <div id="lobby-credits">
             <p>
-                Our lobby feature was inspired by the <a href="https://ap-lobby.bananium.fr/">Bananium AP Lobby</a>
-                created by <a href="https://github.com/Eijebong/Archipelago-lobby">Eijebong</a>. Thanks for the great work!
+                Our lobby feature was inspired by the Bananium AP Lobby
+                created by Eijebong. Thank you for the idea and your work!
             </p>
         </div>
     </div>
-    {% include 'islandFooter.html' %}
     <script>
         document.querySelectorAll(".settings-tip").forEach(function(tip) {
             tip.addEventListener("mouseenter", function() {

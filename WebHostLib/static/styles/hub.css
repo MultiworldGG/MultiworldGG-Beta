@@ -1,0 +1,364 @@
+/* ===========================================================
+   Hub pages (/play, /learn) - Phase 7
+   ===========================================================
+   Icons (.mdi, .mdi-NAME) are declared in themes/base.css.
+   =========================================================== */
+
+.mw-hub {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 22px;
+    font-family: var(--mw-font-sans);
+    color: var(--mw-sys-color-on-background);
+}
+
+.mw-hub h1 {
+    font-size: 45px;
+    margin: 0 0 8px;
+    color: var(--mw-sys-color-on-surface);
+    font-weight: 500;
+    text-align: center;
+}
+
+.mw-hub-lead {
+    text-align: center;
+    color: var(--mw-sys-color-on-surface-variant);
+    font-size: 21px;
+    margin: 0 auto 36px;
+    max-width: 520px;
+}
+
+.mw-hub-cta-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    margin: 0 auto 36px;
+}
+
+.mw-hub-cta-label {
+    font-size: 21px;
+    font-weight: 500;
+    color: var(--mw-sys-color-on-surface);
+}
+
+.mw-hub-cta-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+}
+
+.mw-hub-cta {
+    display: inline-block;
+    background: var(--mw-sys-color-tertiary);
+    color: var(--mw-sys-color-white);
+    font-size: 19px;
+    font-weight: 700;
+    text-decoration: none;
+    padding: 14px 28px;
+    border-radius: var(--mw-radius-full);
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.mw-hub-cta:hover {
+    background: var(--mw-sys-color-tertiary-bright);
+    transform: translateY(-2px);
+}
+
+.mw-hub-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.mw-hub-card {
+    background: var(--mw-sys-color-surface-container-low);
+    border: 1px solid var(--mw-sys-color-outline-variant);
+    border-radius: var(--mw-radius-lg);
+    padding: 22px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.mw-hub-card:hover {
+    border-color: var(--mw-sys-color-primary);
+    transform: translateY(-2px);
+}
+
+.mw-hub-card.primary {
+    border-color: var(--mw-sys-color-primary);
+    border-width: 2px;
+    padding: 21px;
+}
+
+.mw-hub-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--mw-radius-lg);
+    background: var(--mw-sys-color-surface-container);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.mw-hub-card.primary .mw-hub-icon {
+    background: var(--mw-sys-color-primary);
+}
+
+.mw-hub-icon .mdi {
+    font-size: 33.5px;
+    color: var(--mw-sys-color-secondary);
+}
+
+.mw-hub-card.primary .mw-hub-icon .mdi {
+    color: var(--mw-sys-color-white);
+}
+
+.mw-hub-card h3 {
+    font-size: 24px;
+    margin: 0 0 6px;
+    color: var(--mw-sys-color-on-surface);
+    font-weight: 500;
+}
+
+.mw-hub-card p {
+    font-size: 19px;
+    color: var(--mw-sys-color-on-surface-variant);
+    margin: 0;
+    line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+    .mw-hub { padding: 24px 14px; }
+    .mw-hub h1 { font-size: 33.5px; }
+    .mw-hub-grid { grid-template-columns: 1fr; }
+}
+
+/* ===========================================================
+   Play setup checklist - pop-out on /play
+   =========================================================== */
+
+.mw-checklist-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9000;
+    display: inline-flex;
+    align-items: stretch;
+    background: var(--mw-sys-color-primary);
+    color: var(--mw-sys-color-white);
+    border-radius: var(--mw-radius-full);
+    box-shadow: 0 6px 20px var(--mw-sys-color-shadow-soft);
+    transition: transform 0.15s ease;
+}
+
+.mw-checklist-fab:hover {
+    transform: translateY(-2px);
+}
+
+.mw-checklist-fab[hidden] {
+    display: none;
+}
+
+.mw-checklist-fab-open,
+.mw-checklist-fab-dismiss {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: var(--mw-font-sans);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mw-checklist-fab-open:hover,
+.mw-checklist-fab-dismiss:hover {
+    background: var(--mw-sys-color-primary-container);
+}
+
+.mw-checklist-fab-open {
+    gap: 8px;
+    padding: 12px 16px 12px 20px;
+    border-radius: var(--mw-radius-full) 0 0 var(--mw-radius-full);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.mw-checklist-fab-open .mdi {
+    font-size: 24px;
+}
+
+.mw-checklist-fab-dismiss {
+    padding: 0 14px 0 10px;
+    border-left: 1px solid var(--mw-sys-color-primary-container);
+    border-radius: 0 var(--mw-radius-full) var(--mw-radius-full) 0;
+}
+
+.mw-checklist-fab-dismiss .mdi {
+    font-size: 20px;
+}
+
+.mw-checklist {
+    position: fixed;
+    right: 20px;
+    bottom: 76px;
+    z-index: 9000;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    background: var(--mw-sys-color-surface-container-low);
+    border: 1px solid var(--mw-sys-color-outline);
+    border-radius: var(--mw-radius-lg);
+    padding: 18px 20px 14px;
+    font-family: var(--mw-font-sans);
+    color: var(--mw-sys-color-on-background);
+    box-shadow: 0 12px 40px var(--mw-sys-color-scrim-medium);
+}
+
+.mw-checklist[hidden] {
+    display: none;
+}
+
+.mw-checklist:focus {
+    outline: none;
+}
+
+.mw-checklist-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mw-checklist-head h2 {
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0;
+    color: var(--mw-sys-color-on-surface);
+}
+
+.mw-checklist-close {
+    background: transparent;
+    border: none;
+    color: var(--mw-sys-color-on-surface-variant);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--mw-radius-sm);
+}
+
+.mw-checklist-close:hover {
+    color: var(--mw-sys-color-on-surface);
+    background: var(--mw-sys-color-surface-container);
+}
+
+.mw-checklist-close .mdi {
+    font-size: 25px;
+}
+
+.mw-checklist-lead {
+    font-size: 15px;
+    color: var(--mw-sys-color-on-surface-variant);
+    margin: 4px 0 12px;
+}
+
+.mw-checklist-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mw-checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 6px;
+    border-radius: var(--mw-radius-md);
+    font-size: 19px;
+    color: var(--mw-sys-color-on-surface);
+    cursor: pointer;
+}
+
+.mw-checklist-item:hover {
+    background: var(--mw-sys-color-surface-container);
+}
+
+.mw-checklist-item input {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    accent-color: var(--mw-sys-color-primary);
+    cursor: pointer;
+}
+
+.mw-checklist-item span {
+    flex: 1;
+}
+
+.mw-checklist-item input:checked + span {
+    text-decoration: line-through;
+    color: var(--mw-sys-color-on-surface-variant);
+}
+
+.mw-checklist-item .mdi-help-circle {
+    font-size: 20px;
+    color: var(--mw-sys-color-on-surface-muted);
+}
+
+/* Site tooltips centre on the anchor and are hover-only; anchor these to the
+   left edge of the row so they stay inside the panel, and show on keyboard focus. */
+.mw-checklist-item[data-tooltip]:after {
+    left: 0;
+    margin-left: 0;
+}
+
+.mw-checklist-item:focus-within:before,
+.mw-checklist-item:focus-within:after {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(-12px);
+}
+
+.mw-checklist-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--mw-sys-color-outline-variant);
+    font-size: 15px;
+    color: var(--mw-sys-color-on-surface-variant);
+}
+
+.mw-checklist-reset {
+    background: transparent;
+    border: 1px solid var(--mw-sys-color-outline);
+    color: var(--mw-sys-color-on-surface-variant);
+    border-radius: var(--mw-radius-full);
+    padding: 4px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mw-checklist-reset:hover {
+    color: var(--mw-sys-color-on-surface);
+    border-color: var(--mw-sys-color-primary);
+}
+
+@media (max-height: 600px) {
+    .mw-checklist {
+        top: 12px;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .mw-checklist-fab { right: 12px; bottom: 12px; }
+    .mw-checklist { right: 12px; left: 12px; bottom: 68px; width: auto; max-width: none; }
+}

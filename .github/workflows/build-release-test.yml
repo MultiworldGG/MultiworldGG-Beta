@@ -47,13 +47,10 @@ jobs:
         include:
           - os: windows-2025-vs2026
             artifact_name: windows-exe
-            exe_pattern: '*.exe'
           - os: ubuntu-latest
             artifact_name: linux-exe
-            exe_pattern: 'MultiworldGG'
           - os: macos-latest
             artifact_name: macos-exe
-            exe_pattern: 'MultiworldGG'
     
     steps:
       - uses: actions/checkout@v6
@@ -106,7 +103,20 @@ jobs:
           cd src
           pip install -r requirements.txt
           pip install -r build_requirements.txt
-      
+
+      - name: Install Linux system libs for cx_Freeze bundling
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          # libmtdev1: setup.py's include_files copies libmtdev.so.1 from
+          # /usr/lib/x86_64-linux-gnu/ into the build so Kivy's ctypes load
+          # at runtime succeeds. Must be installed BEFORE `setup.py build_exe`.
+          sudo apt -y install libmtdev1
+          # libcairo2-dev: kivymd>=2.0.0 -> materialshapes -> pycairo, which has no
+          # Linux wheel and needs cairo headers via pkg-config to build. build_exe.py
+          # installs the mwgg-gui wheel, so this must precede it.
+          sudo apt -y install libcairo2-dev
+
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -135,7 +145,30 @@ jobs:
           source venv/bin/activate
           cd src
           python build_exe.py
-      
+
+      - name: Launcher smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cd src/build/exe*
+          ./MultiworldGGLauncherDebug.exe --version
+
+      - name: Launcher smoke test (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd src/build/exe*
+          # macOS runners are BSD userland and don't ship GNU coreutils'
+          # `timeout` (only `gtimeout` when coreutils happens to be present);
+          # Linux runners have `timeout`. Fall back to a bare invocation if
+          # neither is found rather than failing the smoke test outright.
+          t=$(command -v timeout || command -v gtimeout || true)
+          if [ -n "$t" ]; then
+            "$t" 30 ./MultiworldGGLauncher --version
+          else
+            ./MultiworldGGLauncher --version
+          fi
+
       - name: Upload executable artifact
         uses: actions/upload-artifact@v7
         with:
@@ -175,7 +208,38 @@ jobs:
         with:
           name: linux-exe
           path: src/build/
-      
+
+      - name: Create Linux tarball
+        run: |
+          cd src/build
+          # cx_Freeze outputs to exe.<platform>-<python_version>/ (e.g.
+          # exe.linux-x86_64-3.13). Glob it so a future Python minor bump
+          # doesn't break this step, then rename it to the conventional
+          # `<tarball-stem>/` so `tar xf foo.tar.gz` extracts `foo/`.
+          exe_dir=$(echo exe.*/)
+          exe_dir="${exe_dir%/}"
+          release_name="MultiworldGG-${APP_VERSION}-linux-x86_64"
+          # Chmod every exe (uniform MultiworldGG prefix) plus the bundled uv;
+          # a masked wrong-case chmod once shipped non-executable binaries.
+          chmod -c 755 "${exe_dir}"/MultiworldGG* "${exe_dir}"/uv*
+          mv "${exe_dir}" "${release_name}"
+          tar -czvf "${release_name}.tar.gz" "${release_name}"
+          mkdir -p ../dist
+          mv *.tar.gz ../dist/
+          cd ../dist
+          for file in *.tar.gz; do
+            sha256sum "$file" > "$file.sha256"
+          done
+
+      - name: Upload Linux tarball artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-tarball
+          path: |
+            src/dist/*.tar.gz
+            src/dist/*.tar.gz.sha256
+          retention-days: 90
+
       - name: Create virtual environment
         run: |
           python -m venv venv
@@ -188,7 +252,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
@@ -199,6 +263,14 @@ jobs:
           owner: MultiworldGG
           repositories: mwgg-gui,mwgg-tui,mwgg-splash
 
+      - name: Install Linux system libs for sibling wheels
+        run: |
+          sudo apt update
+          # libcairo2-dev: pycairo (kivymd>=2.0.0 -> materialshapes, and PyGObject<3.51)
+          # has no Linux wheel; its meson build needs cairo headers via pkg-config
+          # (without this the pip install fails with `Dependency "cairo" not found`).
+          sudo apt -y install libcairo2-dev
+
       - name: Install sibling-repo wheels
         env:
           MWGG_BUILD_GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
@@ -206,6 +278,37 @@ jobs:
           source venv/bin/activate
           cd src
           python -c "import build_exe; import sys; sys.exit(0 if build_exe.install_wheels() else 1)"
+
+      - name: Install AppImage build dependencies
+        # Mirrors release.yml's appimage-deps step, but downloads appimagetool
+        # into src/ since this workflow runs `setup.py bdist_appimage` from there.
+        run: |
+          sudo apt update
+          sudo apt -y install build-essential p7zip xz-utils wget libglib2.0-0
+          sudo apt -y install python3-gi libgirepository1.0-dev
+          # libmtdev1: bundled via cx_Freeze bin_includes; needed at build time so it can be found.
+          sudo apt -y install libmtdev1
+          source venv/bin/activate
+          pip install "PyGObject<3.51.0" charset-normalizer
+
+          # NOTE: since appimage/appimagetool and appimage/type2-runtime does not have tags anymore,
+          #       we check the sha256 and require manual intervention if it was updated.
+          APPIMAGE_FORK='PopTracker'
+          APPIMAGETOOL_VERSION='r-2025-10-19'
+          APPIMAGETOOL_X86_64_HASH='9493a6b253a01f84acb9c624c38810ecfa11d99daa829b952b0bff43113080f9'
+          APPIMAGE_RUNTIME_VERSION='r-2025-08-11'
+          APPIMAGE_RUNTIME_X86_64_HASH='e70ffa9b69b211574d0917adc482dd66f25a0083427b5945783965d55b0b0a8b'
+
+          echo "PYTHON=python3.13" >> $GITHUB_ENV
+          cd src
+          wget -nv https://github.com/$APPIMAGE_FORK/appimagetool/releases/download/$APPIMAGETOOL_VERSION/appimagetool-x86_64.AppImage
+          echo "$APPIMAGETOOL_X86_64_HASH appimagetool-x86_64.AppImage" | sha256sum -c
+          wget -nv https://github.com/$APPIMAGE_FORK/type2-runtime/releases/download/$APPIMAGE_RUNTIME_VERSION/runtime-x86_64
+          echo "$APPIMAGE_RUNTIME_X86_64_HASH runtime-x86_64" | sha256sum -c
+          chmod a+rx appimagetool-x86_64.AppImage
+          ./appimagetool-x86_64.AppImage --appimage-extract
+          echo -e '#/bin/sh\n./squashfs-root/AppRun --runtime-file runtime-x86_64 "$@"' > appimagetool
+          chmod a+rx appimagetool
 
       - name: Build AppImage
         run: |
@@ -234,12 +337,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.AppImage; do
+            sha256sum "$file" > "$file.sha256"
+          done
+
       - name: Upload AppImage artifact
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
-          path: src/dist/*.AppImage
+          path: |
+            src/dist/*.AppImage
+            src/dist/*.AppImage.sha256
           retention-days: 90
 
   build-mac-bundle:
@@ -286,7 +394,7 @@ jobs:
           # mwgg_gui / mwgg_tui / mwgg_splash are pulled from their GitHub
           # releases at build time by build_exe.install_wheels(). mwgg_igdb is
           # git-pulled at first run by ModuleUpdate.install_mwgg_igdb(). Worlds
-          # bundle directly from src/worlds/ source — no wheel install here.
+          # bundle directly from src/worlds/ source; no wheel install here.
 
       - name: Mint mwgg-build-fetch App installation token
         id: app-token
@@ -341,13 +449,17 @@ jobs:
               fi
             fi
           done
-      
+          for file in *.dmg; do
+            shasum -a 256 "$file" > "$file.sha256"
+          done
+
       - name: Upload macOS bundle artifact
         uses: actions/upload-artifact@v7
         with:
           name: macos-bundle
           path: |
             src/build/*.dmg
+            src/build/*.dmg.sha256
           retention-days: 90
 
   build-windows-installer:
@@ -411,20 +523,34 @@ jobs:
           Get-ChildItem python_installers
       
       - name: Install Inno Setup
-        run: |
-          choco install innosetup -y
-      
+        uses: ./src/.github/actions/install-inno-setup
+
       - name: Build Windows installer
         shell: pwsh
         run: |
           cd src
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
-      
+          # Unsigned build. Warnings and errors arrive as JSONL on stderr; re-emit them as annotations.
+          & $env:ISCC --quiet-progress --no-signing --messages-jsonl inno_setup.iss 2> iscc-messages.jsonl
+          $isccExit = $LASTEXITCODE
+          foreach ($line in Get-Content iscc-messages.jsonl) {
+            $msg = $line | ConvertFrom-Json
+            $kind = if ($msg.severity -eq "error") { "error" } else { "warning" }
+            $where = if ($msg.line) { " file=$(Split-Path -Leaf $msg.filename),line=$($msg.line)" } else { "" }
+            $text = $msg.message -replace "%", "%25" -replace "`r", "%0D" -replace "`n", "%0A"
+            Write-Host "::$kind$where::$text"
+          }
+          if ($isccExit -ne 0) { exit $isccExit }
+          $SETUP_NAME = (Get-ChildItem -Path setups/*.exe)[0].Name
+          $SETUP_HASH = (Get-FileHash -Algorithm SHA256 "setups/$SETUP_NAME").Hash.ToLower()
+          "$SETUP_HASH  $SETUP_NAME" | Out-File -Encoding ascii "setups/$SETUP_NAME.sha256"
+
       - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v7
         with:
           name: windows-installer
-          path: src/setups/*.exe
+          path: |
+            src/setups/*.exe
+            src/setups/*.exe.sha256
           retention-days: 90
 
   create-release:
@@ -450,56 +576,23 @@ jobs:
       - name: Display structure of downloaded files
         run: ls -R release-artifacts/
       
-      - name: Create release notes
-        run: |
-          cat > release-notes.md << 'EOF'          
-          ## Downloads
-          
-          ### Windows
-          - **Installer**: `Setup MultiworldGG-Test *.exe` (recommended)
-          - **Portable**: Extract from `windows-exe.zip`
-          
-          ### Linux
-          - **AppImage**: `*.AppImage` (recommended)
-          - **Portable**: Extract from `linux-exe.zip`
-          
-          ### macOS
-          - **Bundle**: `*.app` or `*.dmg`
-          - **Portable**: Extract from `macos-exe.zip`
-          
-          ## Installation
-          
-          ### Windows
-          Run the installer or extract the portable version.
-          
-          ### Linux
-          ```bash
-          chmod +x MultiworldGG-*.AppImage
-          ./MultiworldGG-*.AppImage
-          ```
-          
-          ### macOS
-          Mount the DMG and drag to Applications, or run the .app directly.
-          
-          ---
-          
-          **Note**: This is an alpha release. Expect bugs and breaking changes.
-          
-          **Manual action required**: If you've added new worlds, you may need to replace placeholder strings in template files.
-          EOF
-      
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.version-input.outputs.version }}
           name: MultiworldGG-Test ${{ needs.version-input.outputs.version }}
-          body_path: release-notes.md
+          generate_release_notes: true
           draft: false
           prerelease: true
           files: |
             release-artifacts/windows-installer/*.exe
+            release-artifacts/windows-installer/*.exe.sha256
             release-artifacts/linux-appimage/*.AppImage
+            release-artifacts/linux-appimage/*.AppImage.sha256
+            release-artifacts/linux-tarball/*.tar.gz
+            release-artifacts/linux-tarball/*.tar.gz.sha256
             release-artifacts/macos-bundle/*.dmg
+            release-artifacts/macos-bundle/*.dmg.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

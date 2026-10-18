@@ -1,7 +1,7 @@
 # Tracker Prerequisites
 
 1) Have MultiworldGG installed with the generator enabled
-2) Have the relevant player .yaml files in the Players folder in the AP install directory
+2) Have your player .yaml in the Players folder (`player_files_path` in host.yaml); the tracker picks the file named after your slot, and asks you for one when the folder holds no match
 
 # Install
 
@@ -32,7 +32,7 @@ in either case, if you ping Faris with the yaml in the Universal Tracker channel
 
 # Host.yaml options
 
-* `player_files_path` : Sets a different location for the players folder, this is useful as fewer yamls that UT tries to generate means faster launch times, and can also allow for un-randomized yamls without editing the original file
+* `player_files_path` : Sets a different location for the players folder. UT only generates the yaml whose name matches the connected slot, so this mainly allows un-randomized yamls without editing the original file; when the folder is missing or holds no match, the client prompts for a single yaml file
 * `include_region_name` : Chooses if the tracker output will include the region name, for some games this can be useful, but for others it just adds duplicate information or worse *missleading* information to the user
 * `include_location_name` : Chooses if the tracker output will include the location name... this is likely less useful for users, but can be useful for devs trying to debug logic issues, and it will display the regions you can access regardless of location logic
 * `hide_excluded_locations` : Chooses if the tracker output will include excluded locations, usually not an issue but for some games/yaml settings the number of excluded locations can be considerable so this reduces visual clutter
