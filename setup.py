@@ -258,7 +258,7 @@ if __name__ == "__main__":
 
     bdist_mac_options = {
         "bundle_name": instance_name,
-        "iconfile": "data/icon.icns" if os.path.exists("data/icon.icns") else None,
+        "iconfile": "data/macos/MultiworldGG.icns",
     }
     options["bdist_mac"] = {k: v for k, v in bdist_mac_options.items() if v is not None}
 
