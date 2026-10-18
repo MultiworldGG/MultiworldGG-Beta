@@ -3077,7 +3077,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('multidata', nargs="?", default=defaults["multidata"])
     parser.add_argument('--host', default=defaults["host"])
     parser.add_argument('--port', default=defaults["port"], type=int)
-    parser.add_argument('--admin-password', default=defaults["admin_password"])
+    parser.add_argument('--admin-password')
     parser.add_argument('--server-password', dest="admin_password", default=argparse.SUPPRESS,
                         help=argparse.SUPPRESS)  # pre-rename alias
     parser.add_argument('--password', default=defaults["password"])
@@ -3146,6 +3146,10 @@ def parse_args() -> argparse.Namespace:
     """)
     parser.add_argument('--log_network', default=defaults["log_network"], action="store_true")
     args = parser.parse_args()
+    # a command-line admin password outranks the one a save restores; host.yaml's does not
+    args.admin_password_given = args.admin_password is not None
+    if not args.admin_password_given:
+        args.admin_password = defaults["admin_password"]
     return args
 
 
@@ -3237,6 +3241,8 @@ async def main(args: argparse.Namespace):
         raise
 
     ctx.init_save(not args.disable_save)
+    if args.admin_password_given:
+        ctx.admin_password = args.admin_password
 
     # Set up signal handler for Ctrl+C (SIGINT) - cross-platform compatible
     def shutdown_handler():

@@ -93,7 +93,9 @@ build_exe_options = {
         "mwgg_gui",
         "mwgg_tui",
         "mwgg_splash",
-        "worlds"
+        "worlds",
+        # Submodules like cached_world are only imported by out-of-tree worlds.
+        "rule_builder",
     ],
     "includes": [
         "ModuleUpdate",
