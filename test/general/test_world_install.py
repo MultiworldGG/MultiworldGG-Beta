@@ -648,6 +648,22 @@ def test_set_game_names_serves_manual_apworld_without_manifest(tmp_path, monkeyp
     assert GameIndex.get_module_for_game("Manual_Autonauts_Hopop") == slug
 
 
+def test_set_game_names_serves_indexed_apworld_without_manifest(tmp_path, monkeypatch):
+    GameIndex.add_game("baz", {"game_name": "Baz"})
+    apworld = tmp_path / "baz.apworld"
+    with zipfile.ZipFile(apworld, "w") as zf:
+        zf.writestr("baz/__init__.py", "")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "install_worlds",
+                              return_value=ModuleUpdate.WorldInstallResult(["worlds.baz"])):
+        Utils.set_game_names(["Baz"])
+
+    assert [(entry.path, entry.game) for entry in Utils.game_names()] == [(apworld, "Baz")]
+
+
 def test_apworld_without_manifest_or_manual_data_still_raises(tmp_path):
     apworld = tmp_path / "plain.apworld"
     with zipfile.ZipFile(apworld, "w") as zf:

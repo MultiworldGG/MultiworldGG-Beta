@@ -129,6 +129,14 @@ def _manual_apworld_manifest(opened_zipfile: zipfile.ZipFile) -> Optional[dict[s
         return None
 
 
+def _indexed_apworld_manifest(opened_zipfile: zipfile.ZipFile) -> Optional[dict[str, Any]]:
+    """A manifest-less apworld whose module is in the game index serves the indexed game."""
+    from ModuleUpdate import apworld_module_name
+    from mwgg_igdb import GameIndex
+    game = GameIndex.get_game_name_for_module(apworld_module_name(opened_zipfile))
+    return {"game": game} if game else None
+
+
 class APWorldContainer(APContainer):
     """A zipfile containing a world implementation."""
     game: str | None = None
@@ -143,7 +151,7 @@ class APWorldContainer(APContainer):
         try:
             manifest = super().read_contents(opened_zipfile)
         except KeyError as e:
-            manifest = _manual_apworld_manifest(opened_zipfile)
+            manifest = _manual_apworld_manifest(opened_zipfile) or _indexed_apworld_manifest(opened_zipfile)
             if manifest is None:
                 # Feature gate: archipelago.json is optional for versions < 0.7.300
                 if version_tuple < (0, 7, 300):
