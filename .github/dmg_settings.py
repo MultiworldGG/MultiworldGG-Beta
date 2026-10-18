@@ -11,7 +11,7 @@ size = '750m'
 
 icon = 'data/macos/MultiworldGG.icns'
 
-window_rect = ((100, 100), (640, 320))
+window_rect = ((100, 100), (640, 325))
 icon_locations = {
     application: (140, 140),
     'Applications': (500, 140)
