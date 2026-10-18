@@ -682,6 +682,37 @@ def test_route_awaits_launch_notice_and_reports_failure(monkeypatch):
     assert app.calls == ["client_console_init", "before_module_launch", "failed:papermario"]
 
 
+# --- _show_worlds_venv_error: a failed worlds-venv bootstrap reaches the user ---
+
+def test_worlds_venv_error_shows_dialog_once_frontend_is_up(monkeypatch, tmp_path):
+    import asyncio
+    import frontend_protocol
+    app = _fake_frontend()
+    type(app).show_error_dialog = lambda self, title, message: self.calls.append((title, message))
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: type(app))
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: tmp_path / "mwgg_venv")
+
+    asyncio.run(MultiWorld._show_worlds_venv_error("error: No interpreter found for Python 3.13"))
+
+    assert len(app.calls) == 1
+    title, message = app.calls[0]
+    assert title == "Game installs are broken"
+    assert str(tmp_path / "mwgg_venv") in message
+    assert "error: No interpreter found for Python 3.13" in message
+
+
+def test_worlds_venv_error_without_frontend_returns_quietly(monkeypatch):
+    import asyncio
+    import frontend_protocol
+
+    class NoFrontend:
+        _active_instance = None
+
+    monkeypatch.setattr(frontend_protocol, "resolve_frontend_class", lambda: NoFrontend)
+
+    assert asyncio.run(MultiWorld._show_worlds_venv_error("boom", timeout=0.3)) is None
+
+
 # --- _route_module_when_ui_ready: a patch room's pinned world installs before the launch ---
 
 _PINNED_WORLD = {"version": [1, 2, 3], "custom": False}
@@ -2169,14 +2200,30 @@ def test_inno_post_install_writes_variant_marker():
     assert "GetSelectedVariantToken" in text
 
 
+def _inno_run_entry(marker: str) -> str:
+    return next(line for line in _read_inno_text().splitlines()
+                if marker in line and not line.lstrip().startswith(";"))
+
+
+_EXPLORER_LAUNCH = 'Filename: "{win}\\explorer.exe"; Parameters: """{app}\\{#MyAppExeName}"""'
+
+
 def test_inno_updater_relaunch_runs_launcher_as_original_user():
-    text = _read_inno_text()
-    entry = next(line for line in text.splitlines()
-                 if "Check: IsUpdaterRelaunch" in line and not line.lstrip().startswith(";"))
-    assert 'Filename: "{app}\\{#MyAppExeName}"' in entry
+    entry = _inno_run_entry("Check: IsUpdaterRelaunch")
+    assert entry.startswith(_EXPLORER_LAUNCH)
     assert "runasoriginaluser" in entry
     assert "skipifnotsilent" in entry
-    assert "{param:relaunch|0}" in text
+    assert "{param:relaunch|0}" in _read_inno_text()
+
+
+def test_inno_postinstall_launch_goes_through_explorer():
+    """Setup's direct children inherit its RedirectionGuard and cannot traverse uv's
+    Python junction, so the launcher must start as the shell's child."""
+    entry = _inno_run_entry("postinstall")
+    assert entry.startswith(_EXPLORER_LAUNCH)
+    assert "skipifsilent" in entry
+    assert not any(line.startswith('Filename: "{app}\\{#MyAppExeName}"')
+                   for line in _read_inno_text().splitlines())
 
 
 # --------------------------------------------------------------------------- #

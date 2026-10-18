@@ -1,0 +1,35 @@
+name: 'Install Inno Setup'
+description: 'Install a pinned Inno Setup release in portable mode under RUNNER_TEMP and export ISCC (the path to ISCC.exe) to the job environment.'
+inputs:
+  url:
+    description: 'Installer asset on github.com/jrsoftware/issrc releases. The default below is the canonical pin: release.yml and build-release-test.yml call this action without overriding it. (Chocolatey and the runner image stop at 6.7.1.)'
+    required: false
+    default: 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe'
+  sha256:
+    description: "SHA-256 of the installer, from `gh api repos/jrsoftware/issrc/releases/tags/<tag> --jq '.assets[].digest'`."
+    required: false
+    default: '0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Inno Setup
+      shell: pwsh
+      env:
+        INNO_URL: ${{ inputs.url }}
+        INNO_SHA256: ${{ inputs.sha256 }}
+      run: |
+        $installer = Join-Path $env:RUNNER_TEMP "innosetup.exe"
+        Invoke-WebRequest -Uri $env:INNO_URL -OutFile $installer
+        if ((Get-FileHash -Algorithm SHA256 $installer).Hash -ne $env:INNO_SHA256) {
+          throw "SHA-256 mismatch for $env:INNO_URL"
+        }
+        # Portable: no uninstaller or registry entry, so it never collides with the image's Inno Setup 6.
+        $dir = Join-Path $env:RUNNER_TEMP "InnoSetup"
+        $proc = Start-Process -FilePath $installer -Wait -PassThru -ArgumentList @(
+          "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-", "/CURRENTUSER", "/PORTABLE=1", "/DIR=`"$dir`"")
+        if ($proc.ExitCode -ne 0) {
+          throw "Inno Setup installer exited with $($proc.ExitCode)"
+        }
+        $iscc = Join-Path $dir "ISCC.exe"
+        Write-Host "Inno Setup $(& $iscc --version) at $iscc"
+        "ISCC=$iscc" >> $env:GITHUB_ENV

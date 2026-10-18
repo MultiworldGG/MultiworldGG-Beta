@@ -7,8 +7,8 @@ scan -> venv create/repair + sys.path insert -> installer wheel_cache
 (variant marker, mwgg_igdb bootstrap, cached-wheel install).
 
 Mutable module globals (update_ran, requirements_files, worlds_files,
-custom_worlds_dir, python_cmd, the MWGG_IGDB_* trio) are public API: callers
-and tests read and write them through the module namespace.
+custom_worlds_dir, python_cmd, worlds_venv_error, the MWGG_IGDB_* trio) are
+public API: callers and tests read and write them through the module namespace.
 """
 
 import sys
@@ -102,10 +102,15 @@ _VENV_READONLY = _worlds_venv_is_readonly()
 if _VENV_READONLY:
     logger.info("Worlds venv is read-only; installs disabled (mwgg_upgrader owns writes).")
 
+# uv's error when _bootstrap_worlds_venv() could not create the venv; disables installs
+# like _VENV_READONLY, and the launcher shows it to the user.
+worlds_venv_error: Optional[str] = None
+
 
 def _skip_all_installs() -> bool:
-    """Installs are off via explicit env opt-out or a read-only worlds venv."""
-    return bool(os.environ.get("SKIP_ALL_INSTALLS")) or _VENV_READONLY
+    """Installs are off via explicit env opt-out, a read-only worlds venv, or a
+    worlds venv that could not be created."""
+    return bool(os.environ.get("SKIP_ALL_INSTALLS")) or _VENV_READONLY or worlds_venv_error is not None
 
 
 # True in spawned children (any multiprocessing child not named "MultiworldGG",
@@ -301,8 +306,13 @@ def venv_is_healthy(venv_path: Path) -> bool:
 
 _venv_just_created = False
 
-if use_worlds_venv():
-    # Route worlds + mwgg_igdb into a dedicated venv under user data
+
+def _bootstrap_worlds_venv() -> None:
+    """Route worlds + mwgg_igdb into a dedicated venv under user data, creating or
+    repairing it via uv. Tests monkeypatch the module globals and call this directly."""
+    global python_cmd, _venv_just_created, worlds_venv_error
+    if not use_worlds_venv():
+        return
     if is_frozen():
         exe_dir = Path(sys.exec_prefix)
         default_libs_dir = Path(exe_dir, "lib")
@@ -310,9 +320,11 @@ if use_worlds_venv():
             sys.path.append(str(default_libs_dir))
 
     venv_path = install_path()
+    # Never sys.executable: frozen, that is the launcher exe, which uv cannot query.
+    python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
     venv_ready = True
     if not venv_is_healthy(venv_path):
-        # Any failure must degrade to "install on demand later", never crash
+        # Any failure must degrade to "installs disabled", never crash
         # the import: this runs at module load for every consumer.
         try:
             venv_path.mkdir(parents=True, exist_ok=True)
@@ -328,22 +340,24 @@ if use_worlds_venv():
             )
             venv_ready = venv_result.returncode == 0
             _venv_just_created = venv_ready
+            if not venv_ready:
+                worlds_venv_error = (venv_result.stderr.strip()
+                                     or f"uv venv exited with code {venv_result.returncode}")
         except Exception as e:
-            logger.debug(f"Worlds venv setup failed: {e!r}")
+            worlds_venv_error = repr(e)
             venv_ready = False
         if not venv_ready:
-            logger.warning(
-                "Could not create the worlds venv. Worlds will be installed on demand "
-                "the next time uv is available."
-            )
+            logger.warning(f"Could not create the worlds venv at {venv_path}; "
+                           f"world installs are disabled until it is repaired:\n{worlds_venv_error}")
 
     if venv_ready:
-        python_cmd = venv_path / ("Scripts" if is_windows() else "bin") / ("python.exe" if is_windows() else "python")
-
         # Make worlds-venv packages (mwgg_igdb etc.) importable from this process.
         site_packages = mwgg_venv_site_packages()
         if site_packages not in sys.path:
             sys.path.insert(0, site_packages)
+
+
+_bootstrap_worlds_venv()
 
 
 # ── mwgg_igdb index & variants ───────────────────────────────────────────────
