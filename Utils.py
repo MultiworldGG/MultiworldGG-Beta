@@ -342,15 +342,6 @@ def register_custom_worlds() -> typing.List[str]:
             found.append(module_name)
     return found
 
-def _manual_apworld_game(zipf: zipfile.ZipFile, stem: str) -> Optional[str]:
-    """Manual apworlds ship no archipelago.json; their game id is Manual_<game>_<creator>."""
-    try:
-        game = json.loads(zipf.read(f"{stem}/data/game.json"))
-        return f"Manual_{game['game']}_{game['creator']}"
-    except (KeyError, TypeError, ValueError):
-        return None
-
-
 def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     """Register a single custom world's manifest in the in-memory GameIndex and
     return its module name. Returns None for anything that isn't a recognized
@@ -385,14 +376,7 @@ def discover_custom_world_module(custom_world: Path) -> Optional[str]:
     elif custom_world.suffix == ".apworld":
         with zipfile.ZipFile(custom_world, 'r') as custom_apworld:
             module_name = ModuleUpdate.apworld_module_name(custom_apworld)
-            try:
-                manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
-            except KeyError:
-                # No archipelago.json: only Manual apworlds are accepted without one.
-                manual_game = _manual_apworld_game(custom_apworld, module_name)
-                if manual_game is None:
-                    raise
-                manifest = {"game": manual_game}
+            manifest = APWorldContainer(custom_world).read_contents(custom_apworld)
             manifest["game_name"] = manifest.pop("game", module_name)
             manifest["cover_url"] = manifest.pop("cover_url", "")
             if GameIndex.get_game_name_for_module(module_name):

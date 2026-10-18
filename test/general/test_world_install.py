@@ -633,6 +633,46 @@ def test_manual_apworld_without_manifest_gets_its_manual_game_id(tmp_path, monke
     assert GameIndex.get_game_name_for_module(slug) == "Manual_Autonauts_Hopop"
 
 
+def test_set_game_names_serves_manual_apworld_without_manifest(tmp_path, monkeypatch):
+    slug = "manual_autonauts_hopop"
+    with zipfile.ZipFile(tmp_path / f"{slug}.apworld", "w") as zf:
+        zf.writestr(f"{slug}/data/game.json", json.dumps({"game": "Autonauts", "creator": "Hopop"}))
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "install_worlds", return_value=ModuleUpdate.WorldInstallResult()):
+        Utils.set_game_names(["Manual_Autonauts_Hopop"])
+
+    assert [entry.game for entry in Utils.game_names()] == ["Manual_Autonauts_Hopop"]
+    assert GameIndex.get_module_for_game("Manual_Autonauts_Hopop") == slug
+
+
+def test_set_game_names_serves_indexed_apworld_without_manifest(tmp_path, monkeypatch):
+    GameIndex.add_game("baz", {"game_name": "Baz"})
+    apworld = tmp_path / "baz.apworld"
+    with zipfile.ZipFile(apworld, "w") as zf:
+        zf.writestr("baz/__init__.py", "")
+    monkeypatch.setattr(ModuleUpdate, "custom_worlds_dir", tmp_path)
+    monkeypatch.setattr(Utils, "_worlds_to_load", [])
+
+    with mock.patch.object(ModuleUpdate, "find_world_modules", return_value=set()), \
+            mock.patch.object(ModuleUpdate, "install_worlds",
+                              return_value=ModuleUpdate.WorldInstallResult(["worlds.baz"])):
+        Utils.set_game_names(["Baz"])
+
+    assert [(entry.path, entry.game) for entry in Utils.game_names()] == [(apworld, "Baz")]
+
+
+def test_apworld_without_manifest_or_manual_data_still_raises(tmp_path):
+    apworld = tmp_path / "plain.apworld"
+    with zipfile.ZipFile(apworld, "w") as zf:
+        zf.writestr("plain/__init__.py", "")
+
+    with zipfile.ZipFile(apworld) as zf, pytest.raises(KeyError):
+        APWorldContainer(apworld).read_contents(zf)
+
+
 def test_apworld_manifest_game_outranks_manual_game_json(tmp_path, monkeypatch):
     slug = "manual_autonauts_hopop"
     _make_apworld(tmp_path / f"{slug}.apworld", "Manual_Autonauts_Hopop2",
