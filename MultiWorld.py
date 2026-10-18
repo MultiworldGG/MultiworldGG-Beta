@@ -416,6 +416,43 @@ async def _install_patch_room_world(app, patch_file: str) -> None:
         logger.warning(f"Could not install {game} apworld {pin.want}; launching the installed version.")
 
 
+async def _wait_for_frontend(timeout: float):
+    """Poll for the launcher frontend until it is up. After `timeout`, returns the
+    last instance seen even if it is not up yet, or None if there was none."""
+    from frontend_protocol import resolve_frontend_class
+
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    app = None
+    while loop.time() < deadline:
+        app = getattr(resolve_frontend_class(), "_active_instance", None)
+        if app is not None and (getattr(app, "root", None) is not None      # Kivy: root built
+                                or getattr(app, "is_running", False)):      # Textual: running
+            break
+        await asyncio.sleep(0.2)
+    return app
+
+
+async def _show_worlds_venv_error(error: str, timeout: float = 30.0) -> None:
+    """Tell the user games cannot be installed: ModuleUpdate could not create the worlds venv."""
+    import ModuleUpdate
+
+    app = await _wait_for_frontend(timeout)
+    if app is None:
+        return
+    try:
+        app.show_error_dialog(
+            "Game installs are broken",
+            f"MultiworldGG could not set up the folder it installs games into:\n"
+            f"{ModuleUpdate.install_path()}\n\n"
+            "Games cannot be installed or updated until this is fixed. Close MultiworldGG "
+            "and start it again from its shortcut, not from the installer. If this keeps "
+            "happening, delete that folder and restart MultiworldGG.\n\n"
+            f"Details:\n{error}")
+    except Exception:
+        logging.getLogger("MultiWorld").exception("Could not show the worlds venv error")
+
+
 async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, **launch_kwargs) -> None:
     """Launch a world module's client once the launcher frontend is up.
 
@@ -435,18 +472,9 @@ async def _route_module_when_ui_ready(module_name: str, timeout: float = 30.0, *
     patch_client_type preference unless --client-type named one, and first
     installs the world version its room was generated with
     (_install_patch_room_world)."""
-    from frontend_protocol import resolve_frontend_class
-
     logger = logging.getLogger("MultiWorld")
     loop = asyncio.get_event_loop()
-    deadline = loop.time() + timeout
-    app = None
-    while loop.time() < deadline:
-        app = getattr(resolve_frontend_class(), "_active_instance", None)
-        if app is not None and (getattr(app, "root", None) is not None      # Kivy: root built
-                                or getattr(app, "is_running", False)):      # Textual: running
-            break
-        await asyncio.sleep(0.2)
+    app = await _wait_for_frontend(timeout)
     if app is None:
         logger.error(f"Frontend did not come up; cannot launch module {module_name}")
         return
@@ -550,6 +578,10 @@ def run_client(args=None, queue=None):
         logger.info("Launching default GUI")
         try:
             ctx.run_gui(splash_queue=queue)
+            import ModuleUpdate
+            if ModuleUpdate.worlds_venv_error is not None:
+                venv_error_task = asyncio.create_task(  # noqa: F841
+                    _show_worlds_venv_error(ModuleUpdate.worlds_venv_error), name="WorldsVenvError")
             if route_module is not None:
                 # Keep a reference so the routing task isn't garbage-collected.
                 # "" (text client) is a valid route, hence the None check.

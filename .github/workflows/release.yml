@@ -500,33 +500,22 @@ jobs:
           Get-ChildItem python_installers
 
       - name: Install Inno Setup
-        run: |
-          choco install innosetup -y
-
-      - name: Verify Inno Setup version supports the [Files] download flag
-        shell: pwsh
-        run: |
-          # ISCC.exe ships zeroed VERSIONINFO resources; the real version is only in the uninstall registry key.
-          $version = @(
-            "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1",
-            "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Inno Setup 6_is1"
-          ) | ForEach-Object { (Get-ItemProperty $_ -ErrorAction SilentlyContinue).DisplayVersion } |
-            Where-Object { $_ } | Select-Object -First 1
-          Write-Host "Inno Setup DisplayVersion: $version"
-          if ($version -notmatch '^(\d+)\.(\d+)') {
-            throw "Could not parse an Inno Setup version out of '$version'"
-          }
-          $major = [int]$Matches[1]
-          $minor = [int]$Matches[2]
-          # inno_setup.iss's wheel_downloads region uses the [Files] 'download' flag, added in 6.5.0.
-          if ($major -lt 6 -or ($major -eq 6 -and $minor -lt 5)) {
-            throw "Inno Setup $version is older than 6.5.0; the [Files] 'download' flag (wheel_downloads region) requires 6.5.0+."
-          }
+        uses: ./.github/actions/install-inno-setup
 
       - name: Build Windows installer
         shell: pwsh
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" inno_setup.iss /DNO_SIGNTOOL
+          # Unsigned build. Warnings and errors arrive as JSONL on stderr; re-emit them as annotations.
+          & $env:ISCC --quiet-progress --no-signing --messages-jsonl inno_setup.iss 2> iscc-messages.jsonl
+          $isccExit = $LASTEXITCODE
+          foreach ($line in Get-Content iscc-messages.jsonl) {
+            $msg = $line | ConvertFrom-Json
+            $kind = if ($msg.severity -eq "error") { "error" } else { "warning" }
+            $where = if ($msg.line) { " file=$(Split-Path -Leaf $msg.filename),line=$($msg.line)" } else { "" }
+            $text = $msg.message -replace "%", "%25" -replace "`r", "%0D" -replace "`n", "%0A"
+            Write-Host "::$kind$where::$text"
+          }
+          if ($isccExit -ne 0) { exit $isccExit }
           $SETUP_NAME = (Get-ChildItem -Path setups/*.exe)[0].Name
           $SETUP_HASH = (Get-FileHash -Algorithm SHA256 "setups/$SETUP_NAME").Hash.ToLower()
           "$SETUP_HASH  $SETUP_NAME" | Out-File -Encoding ascii "setups/$SETUP_NAME.sha256"

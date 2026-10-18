@@ -533,6 +533,82 @@ def test_bootstrap_fresh_venv_igdb_installs_and_invalidates_when_just_created(mo
     invalidate.assert_called_once_with()
 
 
+# --------------------------------------------------------------------------- #
+# Worlds-venv bootstrap: a failed `uv venv` keeps uv's error, disables installs,
+# and never leaves `--python` on sys.executable (the launcher exe when frozen).
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def broken_venv_bootstrap(tmp_path, monkeypatch):
+    """Worlds-venv mode against an unhealthy venv under tmp_path; returns the venv path."""
+    venv_path = tmp_path / "mwgg_venv"
+    monkeypatch.setattr(ModuleUpdate, "use_worlds_venv", lambda: True)
+    monkeypatch.setattr(ModuleUpdate, "is_frozen", lambda: False)
+    monkeypatch.setattr(ModuleUpdate, "install_path", lambda: venv_path)
+    monkeypatch.setattr(ModuleUpdate, "venv_is_healthy", lambda path: False)
+    monkeypatch.setattr(ModuleUpdate, "mwgg_venv_site_packages", lambda: str(venv_path / "site-packages"))
+    monkeypatch.setattr(ModuleUpdate, "python_cmd", ModuleUpdate.python_cmd)
+    monkeypatch.setattr(ModuleUpdate, "worlds_venv_error", None)
+    monkeypatch.setattr(ModuleUpdate, "_venv_just_created", False)
+    monkeypatch.setattr(ModuleUpdate, "_VENV_READONLY", False)
+    monkeypatch.delenv("SKIP_ALL_INSTALLS", raising=False)
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    return venv_path
+
+
+def _venv_python(venv_path: Path) -> Path:
+    if ModuleUpdate.is_windows():
+        return venv_path / "Scripts" / "python.exe"
+    return venv_path / "bin" / "python"
+
+
+@pytest.mark.parametrize("stderr, expected", [
+    ("error: No interpreter found for Python 3.13\n", "error: No interpreter found for Python 3.13"),
+    ("", "uv venv exited with code 2"),
+])
+def test_bootstrap_worlds_venv_failure_keeps_uv_error_and_disables_installs(
+        broken_venv_bootstrap, monkeypatch, caplog, stderr, expected):
+    monkeypatch.setattr(ModuleUpdate, "_uv_run",
+                        lambda args, timeout=120, check=False: subprocess.CompletedProcess(args, 2, "", stderr))
+    assert ModuleUpdate._skip_all_installs() is False
+
+    with caplog.at_level(logging.WARNING, logger="Update"):
+        ModuleUpdate._bootstrap_worlds_venv()
+
+    assert ModuleUpdate.worlds_venv_error == expected
+    assert any(expected in r.getMessage() for r in caplog.records)
+    assert ModuleUpdate._skip_all_installs() is True
+    assert ModuleUpdate._venv_just_created is False
+    assert ModuleUpdate.python_cmd == _venv_python(broken_venv_bootstrap)
+    assert ModuleUpdate._uv_pip("list")[-1] != sys.executable
+    assert str(broken_venv_bootstrap / "site-packages") not in sys.path
+
+
+def test_bootstrap_worlds_venv_exception_keeps_error(broken_venv_bootstrap, monkeypatch):
+    def timeout(args, timeout=120, check=False):
+        raise subprocess.TimeoutExpired(["uv", *args], timeout)
+
+    monkeypatch.setattr(ModuleUpdate, "_uv_run", timeout)
+
+    ModuleUpdate._bootstrap_worlds_venv()
+
+    assert "TimeoutExpired" in ModuleUpdate.worlds_venv_error
+    assert ModuleUpdate._skip_all_installs() is True
+    assert ModuleUpdate.python_cmd == _venv_python(broken_venv_bootstrap)
+
+
+def test_bootstrap_worlds_venv_success_targets_venv(broken_venv_bootstrap, monkeypatch):
+    monkeypatch.setattr(ModuleUpdate, "_uv_run",
+                        lambda args, timeout=120, check=False: subprocess.CompletedProcess(args, 0, "", ""))
+
+    ModuleUpdate._bootstrap_worlds_venv()
+
+    assert ModuleUpdate.worlds_venv_error is None
+    assert ModuleUpdate._skip_all_installs() is False
+    assert ModuleUpdate._venv_just_created is True
+    assert ModuleUpdate.python_cmd == _venv_python(broken_venv_bootstrap)
+    assert sys.path[0] == str(broken_venv_bootstrap / "site-packages")
+
+
 def test_register_custom_worlds_invalidates_import_caches(tmp_path, monkeypatch):
     """register_custom_worlds is one of the two first-launch call sites that
     import mwgg_igdb (via discover_custom_world_module); it must refresh the
