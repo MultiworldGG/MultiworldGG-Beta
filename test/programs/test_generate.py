@@ -685,3 +685,32 @@ class TestGenerateFailureReporting(unittest.TestCase):
         self.assertIn("FillError: No more spots to place 25 items.", message)
         self.assertNotIn("Unplaced items", message)
         self.assertLess(len(message), 500)
+
+    def test_player_file_failure_leaves_no_traceback_on_stderr(self):
+        child = (
+            "import os, runpy, sys\n"
+            "import Utils\n"
+            "Utils.user_path.cached_path = os.environ['MWGG_TEST_USER_PATH']\n"
+            "sys.argv = ['Generate.py', '--player_files_path', os.environ['MWGG_TEST_PLAYERS']]\n"
+            "runpy.run_path('Generate.py', run_name='__main__')\n"
+        )
+        with TemporaryDirectory(prefix="AP_user_") as user_dir, TemporaryDirectory(prefix="AP_players_") as players:
+            with open(os.path.join(players, "broken.yaml"), "w", encoding="utf-8") as f:
+                f.write("game: [unclosed\n")
+            env = {
+                **os.environ,
+                "SKIP_REQUIREMENTS_UPDATE": "1",
+                "SKIP_ALL_INSTALLS": "1",
+                "MWGG_TEST_USER_PATH": user_dir,
+                "MWGG_TEST_PLAYERS": players,
+                "PYTHONPATH": os.pathsep.join(
+                    [os.path.join(REPO_ROOT, "test", "_stubs")]
+                    + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])),
+            }
+            result = subprocess.run([sys.executable, "-c", child], cwd=REPO_ROOT, env=env,
+                                    capture_output=True, text=True, timeout=300)
+        self.assertEqual(result.returncode, 1, msg=f"STDERR:\n{result.stderr[-2000:]}")
+        self.assertNotIn("Traceback", result.stderr)
+        last_line = result.stdout.strip().splitlines()[-1]
+        self.assertTrue(last_line.startswith("Generation failed: ValueError: Encountered 1 error(s) in player files."),
+                        msg=last_line)
