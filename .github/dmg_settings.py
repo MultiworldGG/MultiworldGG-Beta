@@ -9,10 +9,27 @@ symlinks = {'Applications': '/Applications'}
 format = 'UDZO'
 size = '750m'
 
-window_rect = ((100, 100), (640, 280))
+icon = 'data/macos/MultiworldGG.icns'
+
+window_rect = ((100, 100), (640, 325))
 icon_locations = {
-    application: (140, 120),
-    'Applications': (500, 120)
+    application: (140, 140),
+    'Applications': (500, 140)
 }
 
-background = 'builtin-arrow'
+# Generated together with the app icon by tools/build_macos_assets.swift.
+background = 'data/macos/dmg-background.tiff'
+default_view = 'icon-view'
+include_icon_view_settings = True
+arrange_by = None
+grid_spacing = 80
+scroll_position = (0, 0)
+icon_size = 128
+text_size = 16
+label_pos = 'bottom'
+show_icon_preview = False
+show_status_bar = False
+show_tab_view = False
+show_toolbar = False
+show_pathbar = False
+show_sidebar = False
