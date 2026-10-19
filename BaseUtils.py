@@ -8,6 +8,7 @@ import json
 import shlex
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 __all__ = ("Version",
@@ -35,6 +36,8 @@ __all__ = ("Version",
            "reload_application_options",
            "get_frontend_versions",
            "init_logging",
+           "ProgressTicker",
+           "progress_ticker",
            "loglevel_mapping",
            "ByValue",
            "get_client_exe",
@@ -432,6 +435,49 @@ def get_frontend_versions() -> "dict[str, str]":
     return versions
 
 
+class ProgressTicker:
+    """Alternating glyphs on one console line while a long loop runs, so a slow phase is visibly alive.
+
+    A glyph prints only once `stream` has been quiet for `interval` seconds. init_logging sets `stream` to the
+    console its stream handler writes to and ends the glyph line before each record; without it nothing prints.
+    """
+    glyphs = "△▲"
+
+    def __init__(self, interval: float = 2.0, clock: typing.Callable[[], float] = time.monotonic) -> None:
+        self.interval = interval
+        self.clock = clock
+        self.stream: typing.Optional[typing.TextIO] = None
+        self.quiet_since = clock()
+        self.line_length = 0
+
+    def tick(self) -> None:
+        """Call once per pass of a long loop."""
+        now = self.clock()
+        if now - self.quiet_since < self.interval:
+            return
+        self.quiet_since = now
+        if self._write(self.glyphs[self.line_length % len(self.glyphs)]):
+            self.line_length += 1
+
+    def end_line(self) -> None:
+        """Finish the glyph line so other output starts on its own line, and restart the quiet interval."""
+        if self.line_length:
+            self._write("\n")
+            self.line_length = 0
+        self.quiet_since = self.clock()
+
+    def _write(self, text: str) -> bool:
+        try:
+            self.stream.write(text)
+            self.stream.flush()
+        except (AttributeError, OSError, ValueError):  # no stream, closed, or cannot encode the glyphs
+            return False
+        return True
+
+
+progress_ticker = ProgressTicker()
+
+
 def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
                  write_mode: str = "w", log_format: str = "[%(name)s at %(asctime)s]: %(message)s",
                  add_timestamp: bool = False, exception_logger: typing.Optional[str] = None,
@@ -487,6 +533,12 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
             record.msg = msg.replace('&bl;', '[').replace('&br;', ']').replace('&amp;', '&')
             return True
 
+    class EndProgressLineFilter(logging.Filter):
+        """Start each streamed record on a line of its own after progress glyphs."""
+        def filter(self, record: logging.LogRecord) -> bool:
+            progress_ticker.end_line()
+            return True
+
     file_handler.addFilter(Filter("NoStream", lambda record: not getattr(record, "NoFile", False)))
     file_handler.addFilter(Filter("NoCarriageReturn", lambda record: '\r' not in record.getMessage()))
     file_handler.addFilter(BytesCleanupFilter())
@@ -509,6 +561,8 @@ def init_logging(name: str, loglevel: typing.Union[str, int] = logging.INFO,
         stream_handler.addFilter(Filter("NoFile", lambda record: not getattr(record, "NoStream", False)))
         stream_handler.addFilter(BytesCleanupFilter())
         stream_handler.addFilter(UnescapeMarkupFilter())
+        stream_handler.addFilter(EndProgressLineFilter())
+        progress_ticker.stream = sys.stdout
         if add_timestamp:
             formatter = logging.Formatter(fmt='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
             stream_handler.setFormatter(formatter)
