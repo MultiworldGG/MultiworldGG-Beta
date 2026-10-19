@@ -1,5 +1,6 @@
 from typing import List, Iterable
 import unittest
+from unittest import mock
 
 from Options import Accessibility
 from test.general import generate_items, generate_locations, generate_test_multiworld
@@ -638,6 +639,31 @@ class TestDistributeItemsRestrictive(unittest.TestCase):
         locations[2].progress_type = LocationProgressType.EXCLUDED
 
         self.assertRaises(FillError, distribute_items_restrictive, multiworld)
+
+    def test_excess_progression_fails_before_placing(self):
+        """Test that more progression items than locations fails without attempting a fill"""
+        multiworld = generate_test_multiworld(2)
+        generate_player_data(multiworld, 1, 4, prog_item_count=1, basic_item_count=3)
+        generate_player_data(multiworld, 2, 1, prog_item_count=5)
+
+        with mock.patch("Fill.fill_restrictive") as fill, self.assertRaises(FillError) as raised:
+            distribute_items_restrictive(multiworld)
+
+        fill.assert_not_called()
+        summary = str(raised.exception).splitlines()[0]
+        self.assertIn("6 progression items for 5 locations", summary)
+        self.assertIn("Tester2 (Test Game) has 5 progression items for 1 locations", summary)
+        self.assertNotIn("Tester1", summary)
+
+    def test_excess_progression_moves_to_start_inventory(self):
+        """Test that the start_inventory panic method still absorbs progression that cannot fit"""
+        multiworld = generate_test_multiworld()
+        generate_player_data(multiworld, 1, 2, prog_item_count=4)
+        multiworld.worlds[1].create_filler = lambda: generate_items(1, 1)[0]
+
+        distribute_items_restrictive(multiworld, panic_method="start_inventory")
+
+        self.assertEqual(len(multiworld.precollected_items[1]), 2)
 
     def test_non_excluded_item_must_distribute(self):
         """Test that fill fails if it can't place useful items due to too many excluded locations"""

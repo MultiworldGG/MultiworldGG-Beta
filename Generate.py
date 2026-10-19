@@ -1123,8 +1123,8 @@ if __name__ == '__main__':
         atexit.register(input, "Press enter to close.")
     try:
         erargs, seed = main()
-    except RuntimeError as e:
-        logging.error(str(e))
+    except Exception as e:
+        _report_generation_failure(e)
         sys.exit(1)
     from Main import main as ERmain
     try:

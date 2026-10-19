@@ -1364,6 +1364,20 @@ def distribute_items_restrictive(multiworld: MultiWorld,
     defaultlocations = locations[LocationProgressType.DEFAULT]
     excludedlocations = locations[LocationProgressType.EXCLUDED]
 
+    progression_spots = prioritylocations + defaultlocations
+    if panic_method != "start_inventory" and len(progitempool) > len(progression_spots):
+        # fill_restrictive only gives up after exhausting every swap, which can take hours
+        item_counts = Counter(item.player for item in progitempool)
+        spot_counts = Counter(location.player for location in progression_spots)
+        over = "; ".join(f"{multiworld.get_player_name(player)} ({multiworld.game[player]}) has {count} "
+                         f"progression items for {spot_counts[player]} locations"
+                         for player, count in sorted(item_counts.items()) if count > spot_counts[player])
+        raise FillError(
+            f"Not enough locations for progression items: {len(progitempool)} progression items "
+            f"for {len(progression_spots)} locations. {over}.",
+            multiworld=multiworld,
+        )
+
     # can't lock due to accessibility corrections touching things, so we remember which ones got placed and lock later
     lock_later: list[Location] = []
 
