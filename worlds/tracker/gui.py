@@ -238,7 +238,8 @@ def _ensure_widgets():
     from mwgg_gui.legacy import SelectableLabel, SelectableRecycleBoxLayout  # noqa: F401
 
     class ApAsyncImage(_KivyAsyncImage):
-        pass
+        def is_uri(self, filename):
+            return filename.startswith("ap:") or super().is_uri(filename)
 
     from worlds.tracker import UT_VERSION, ItemLayoutSection
     from worlds.tracker.TrackerClient import get_ut_color
