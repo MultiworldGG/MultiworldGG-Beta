@@ -21,6 +21,19 @@ class ImgUrlRewriteTest(unittest.TestCase):
         html = self.markdown("![Image](image.png)")
         self.assertIn(f'src="{self.base_url}/image.png"', html)
 
+    def test_img_inside_link_rewrite(self) -> None:
+        html = self.markdown("[![Image](image.png)](https://example.com)")
+        self.assertIn(f'src="{self.base_url}/image.png"', html)
+
+    def test_img_inside_emphasis_rewrite(self) -> None:
+        html = self.markdown("*![Image](image.png)*")
+        self.assertIn(f'src="{self.base_url}/image.png"', html)
+
+    def test_reference_img_inside_reference_link_rewrite(self) -> None:
+        html = self.markdown("[![Image]][page]\n\n[Image]: image.png\n[page]: page.html")
+        self.assertIn(f'src="{self.base_url}/image.png"', html)
+        self.assertIn('href="page.html"', html)
+
     def test_absolute_img_no_rewrite(self) -> None:
         html = self.markdown("![Image](/image.png)")
         self.assertIn(f'src="/image.png"', html)

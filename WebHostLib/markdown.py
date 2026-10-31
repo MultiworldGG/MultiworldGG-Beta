@@ -1,5 +1,7 @@
 import re
 from collections import Counter
+from collections.abc import MutableMapping
+from typing import Any
 
 import mistune
 from werkzeug.utils import secure_filename
@@ -27,11 +29,12 @@ class ImgUrlRewriteInlineParser(mistune.InlineParser):
                 return world_name
         return None
 
-    def parse_link(self, m: re.Match[str], state: mistune.InlineState) -> int | None:
-        res = super().parse_link(m, state)
-        if res is not None and state.tokens and state.tokens[-1]["type"] == "image":
-            image_token = state.tokens[-1]
-            url: str = image_token["attrs"]["url"]
+    def _rewrite_image_urls(self, tokens: list[dict[str, Any]]) -> None:
+        for token in tokens:
+            self._rewrite_image_urls(token.get("children", []))
+            if token["type"] != "image":
+                continue
+            url: str = token["attrs"]["url"]
             if not url.startswith("/") and not "://" in url:
                 # replace relative URL to another world's doc folder with the webhost folder layout
                 if url.startswith("../../") and "/docs/" in self.relative_url_base:
@@ -42,8 +45,12 @@ class ImgUrlRewriteInlineParser(mistune.InlineParser):
                             url = "/".join(parts[1:2] + [secure_filename(game_name)] + parts[4:])
                 # change relative URL to point to deployment folder
                 url = f"{self.relative_url_base}/{url}"
-                image_token['attrs']['url'] = url
-        return res
+                token["attrs"]["url"] = url
+
+    def __call__(self, s: str, env: MutableMapping[str, Any]) -> list[dict[str, Any]]:
+        tokens = super().__call__(s, env)
+        self._rewrite_image_urls(tokens)
+        return tokens
 
 
 def render_markdown(path: str, img_url_base: str | None = None) -> str:
