@@ -6,12 +6,16 @@ path. Widget construction (build_map_view et al) is mocked out since it
 requires a live Kivy app; see gui.py for that surface.
 """
 
+import os
+import shutil
 import sys
+import tempfile
 import unittest
+import zipfile
 from types import SimpleNamespace
 from unittest import mock
 
-from worlds.tracker.map_controller import UTMapController, cmd_load_map, cmd_list_maps
+from worlds.tracker.map_controller import UTMapController, cmd_load_map, cmd_list_maps, cmd_reload_pack
 
 
 class _Processor:
@@ -156,6 +160,7 @@ class TestActivate(unittest.TestCase):
         self.assertIn("icon_key", notified)
         self.assertIs(ctx.command_processor.commands["load_map"], cmd_load_map)
         self.assertIs(ctx.command_processor.commands["list_maps"], cmd_list_maps)
+        self.assertIs(ctx.command_processor.commands["reload_pack"], cmd_reload_pack)
         self.assertTrue(ctx._map_activated)
 
     def test_idempotent(self):
@@ -171,9 +176,8 @@ class TestActivate(unittest.TestCase):
 
         self.assertEqual(calls["load_pack"], 1)
 
-    def test_load_pack_failure_skips_tab_but_keeps_commands(self):
-        """Mirrors TrackerGameContext.on_package: commands still register
-        even if load_pack invalidates tracker_world (e.g. bad external pack)."""
+    def test_load_pack_failure_skips_tab_and_leaves_only_reload_pack(self):
+        """load_pack invalidates tracker_world on a bad external pack; /reload_pack is the retry."""
         ctx = _ctx()
         controller = self._stub_controller(ctx, _core())
         ctx.tracker_world = _activation_world(
@@ -188,7 +192,8 @@ class TestActivate(unittest.TestCase):
         controller.activate(object())
 
         self.assertEqual(shown, [])
-        self.assertIn("load_map", ctx.command_processor.commands)
+        self.assertIn("reload_pack", ctx.command_processor.commands)
+        self.assertNotIn("load_map", ctx.command_processor.commands)
 
     def _shown_tabs(self, **world):
         ctx = _ctx()
@@ -278,6 +283,7 @@ class TestDisconnect(unittest.TestCase):
         ctx.tracker_world = SimpleNamespace()
         ctx.command_processor.commands["load_map"] = cmd_load_map
         ctx.command_processor.commands["list_maps"] = cmd_list_maps
+        ctx.command_processor.commands["reload_pack"] = cmd_reload_pack
         ctx.coord_dict = {1: []}
         ctx._map_activated = True
         ctx.logical_path_entrances.append("Door")
@@ -287,14 +293,95 @@ class TestDisconnect(unittest.TestCase):
         self.assertIsNone(ctx.tracker_world)
         self.assertNotIn("load_map", ctx.command_processor.commands)
         self.assertNotIn("list_maps", ctx.command_processor.commands)
+        self.assertNotIn("reload_pack", ctx.command_processor.commands)
         self.assertFalse(ctx._map_activated)
         self.assertEqual(ctx.logical_path_entrances, [])
+        self.assertEqual(ctx.coord_dict, {})
 
     def test_safe_without_prior_activation(self):
         ctx = _ctx()
         controller = UTMapController(ctx, _core())
         controller.disconnect()  # should not raise
         self.assertIsNone(ctx.tracker_world)
+
+    def test_failed_pack_still_drops_reload_pack(self):
+        ctx = _ctx()
+        controller = UTMapController(ctx, _core())
+        ctx.command_processor.commands["reload_pack"] = cmd_reload_pack
+        controller.disconnect()
+        self.assertNotIn("reload_pack", ctx.command_processor.commands)
+
+
+class TestReloadPack(unittest.TestCase):
+    def _setup(self, **kwargs):
+        calls = []
+        ctx = _ctx(updateTracker=lambda: calls.append("refresh"), **kwargs)
+        controller = UTMapController(ctx, _core())
+        controller.load_pack = lambda: calls.append("load_pack")
+        ctx.enable_maps = lambda: calls.append("enable_maps")
+        ctx.load_map = lambda map_id: calls.append(("load_map", map_id))
+        return ctx, calls
+
+    def _reload(self, ctx, world_cls):
+        with mock.patch.dict("worlds.AutoWorld.AutoWorldRegister.world_types", {"TestGame": world_cls}):
+            cmd_reload_pack(SimpleNamespace(ctx=ctx))
+
+    def test_rebuilds_the_world_and_returns_to_the_same_map(self):
+        class Connected:
+            tracker_world = {"map_page_folder": "maps"}
+
+        ctx, calls = self._setup()
+        ctx.map_id = 3
+        ctx.root_pack_path = "ap:zip:old.zip"
+        ctx.coord_dict = {1: []}
+        self._reload(ctx, Connected)
+
+        self.assertEqual(calls, ["load_pack", "enable_maps", ("load_map", 3), "refresh"])
+        self.assertEqual(ctx.tracker_world.map_page_folder, "maps")
+        self.assertIsNone(ctx.root_pack_path)
+        self.assertEqual(ctx.coord_dict, {})
+
+    def test_world_without_a_map_only_clears_state(self):
+        class Connected:
+            pass
+
+        ctx, calls = self._setup()
+        ctx.tracker_world = object()
+        self._reload(ctx, Connected)
+
+        self.assertIsNone(ctx.tracker_world)
+        self.assertEqual(calls, [])
+
+    def test_no_game_loaded(self):
+        ctx, calls = self._setup(game="")
+        with self.assertLogs("Client", level="INFO"):
+            cmd_reload_pack(SimpleNamespace(ctx=ctx))
+        self.assertEqual(calls, [])
+
+    def test_failed_pack_can_be_retried(self):
+        """enable_maps is a no-op once load_pack drops tracker_world, and the next reload rebuilds it."""
+        class Connected:
+            tracker_world = {"map_page_folder": "maps", "map_page_maps": ["map.json"],
+                             "map_page_locations": ["locations.json"]}
+
+        ctx = _ctx(updateTracker=lambda: None)
+        controller = UTMapController(ctx, _core())
+        controller.load_map = lambda map_id: None
+        ctx.load_map = controller.load_map
+
+        def failing_load_pack():
+            ctx.tracker_world = None
+
+        controller.load_pack = failing_load_pack
+        self._reload(ctx, Connected)
+        self.assertIsNone(ctx.tracker_world)
+        self.assertNotIn("load_map", ctx.command_processor.commands)
+
+        controller.load_pack = lambda: None
+        controller.set_map_visible = lambda visible: None
+        self._reload(ctx, Connected)
+        self.assertIsNotNone(ctx.tracker_world)
+        self.assertIn("load_map", ctx.command_processor.commands)
 
 
 class TestLoadPack(unittest.TestCase):
@@ -343,6 +430,61 @@ class TestLoadPack(unittest.TestCase):
 
         self.assertEqual(loaded, [{"Sword": {"name": "Sword", "type": "toggle"},
                                    "Bomb": {"name": "Bomb", "type": "consumable"}}])
+
+
+class TestNestedPack(unittest.TestCase):
+    class _Settings(dict):
+        _changed = False
+
+    def setUp(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder, ignore_errors=True)
+        self.pack = os.path.join(folder, "my-pack-1.0.zip")
+
+    def _load(self, entry, nested):
+        with zipfile.ZipFile(self.pack, "w") as pack:
+            pack.writestr(entry, '[{"name": "map1"}]')
+        world = SimpleNamespace(settings=self._Settings(pack=self.pack))
+        ctx = _ctx()
+        controller = UTMapController(ctx, _core(current_world=world))
+        ctx.tracker_world = SimpleNamespace(
+            external_pack_key="pack", nested_pack=nested, map_page_folder="", map_page_maps=["maps/maps.json"],
+            map_page_locations=[], map_page_layouts=[], map_page_groups=[], item_page_items=[],
+            item_page_item_layouts=[])
+        controller.load_pack()
+        self.assertTrue(controller.set_root_pack_path())
+        return ctx
+
+    def test_nested_pack_reads_under_the_folder_named_after_the_zip(self):
+        ctx = self._load("my-pack-1.0/maps/maps.json", nested=True)
+        self.assertEqual(ctx.maps, [{"name": "map1"}])
+        self.assertEqual(ctx.root_pack_path, f"ap:zip:{self.pack}/my-pack-1.0")
+
+    def test_flat_pack_reads_from_the_zip_root(self):
+        ctx = self._load("maps/maps.json", nested=False)
+        self.assertEqual(ctx.maps, [{"name": "map1"}])
+        self.assertEqual(ctx.root_pack_path, f"ap:zip:{self.pack}")
+
+    def test_missing_page_names_the_nested_path(self):
+        with self.assertLogs("Client", level="WARNING") as logs:
+            ctx = self._load("maps/maps.json", nested=True)
+        self.assertEqual(ctx.maps, [])
+        self.assertIn("my-pack-1.0/maps/maps.json", logs.output[0])
+
+
+class TestItemLayouts(unittest.TestCase):
+    def test_dict_and_list_layouts_become_sections(self):
+        from worlds.tracker import ItemLayoutSection, UTMapTabData
+        data = UTMapTabData(1, 0, item_page_item_layouts={"name": "All", "items": "Everything", "cols": 10},
+                            map_page_item_layouts_left=[{"name": "A", "items": ["x"]},
+                                                        {"name": "B", "items": "y", "orientation": "tb", "rows": 2}])
+        self.assertIsInstance(data.item_page_item_layouts[0], ItemLayoutSection)
+        self.assertEqual(data.item_page_item_layouts[0].items, ["Everything"])
+        self.assertEqual(data.item_page_item_layouts[0].cols, 10)
+        self.assertEqual([section.name for section in data.map_page_item_layouts_left], ["A", "B"])
+        self.assertEqual(data.map_page_item_layouts_left[1].orientation, "tb")
+        self.assertEqual(data.map_page_item_layouts_right, [])
+        self.assertFalse(data.nested_pack)
 
 
 class TestLoadMap(unittest.TestCase):

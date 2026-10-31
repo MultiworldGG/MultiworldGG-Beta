@@ -8,7 +8,7 @@ import sys
 from typing import Union, TYPE_CHECKING
 
 
-from BaseClasses import CollectionState, Location
+from BaseClasses import CollectionState, Location, Entrance
 from Utils import __version__, async_start, persistent_load, persistent_store, instance_name
 apname = instance_name if instance_name else "AP"
 from worlds import AutoWorld
@@ -643,6 +643,7 @@ class TrackerGameContext(CommonContext):
                     self.tracker_core.initalize_tracker_core(connected_cls,args["slot_data"])
                     if self.tracker_core.tracker_disabled:
                         logger.error("World Author has requested UT be disabled on this world, please respect their decision")
+                        logger.error("For more information, if available, see /faris_asked")
                         return
                     if not self.tracker_core.multiworld:
                         logger.error("Internal generation failed, something has gone wrong")
@@ -841,7 +842,8 @@ def explain(ctx: TrackerGameContext, dest_name: str):
     from Utils import get_intended_text
     location_names = set(ctx.tracker_core.multiworld.regions.location_cache[ctx.tracker_core.player_id])
     region_names = set(ctx.tracker_core.multiworld.regions.region_cache[ctx.tracker_core.player_id])
-    result, usable, response = get_intended_text(dest_name, location_names.union(region_names))
+    entrance_names = set(ctx.tracker_core.multiworld.regions.entrance_cache[ctx.tracker_core.player_id])
+    result, usable, response = get_intended_text(dest_name, location_names.union(region_names).union(entrance_names))
     if not usable:
         logger.error(response)
         return
@@ -862,6 +864,15 @@ def explain(ctx: TrackerGameContext, dest_name: str):
         parent_region = location.parent_region
     elif dest_name in region_names:
         parent_region = ctx.tracker_core.multiworld.get_region(dest_name,ctx.tracker_core.player_id)
+    elif dest_name in entrance_names:
+        location = ctx.tracker_core.multiworld.get_entrance(dest_name, ctx.tracker_core.player_id)
+        if hasattr(location.access_rule,"explain_json"):
+            ctx.print_json(location.access_rule.explain_json(state))
+        elif location.access_rule is Entrance.access_rule:
+            logger.info("Entrance has a default access rule")
+        else:
+            logger.info("Entrance doesn't have a rule that supports explanation")
+        parent_region = location.parent_region
     else:
         logger.error(response)
         return

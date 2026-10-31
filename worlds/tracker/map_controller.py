@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import traceback
 from typing import Any, Union
 
@@ -53,6 +54,11 @@ def load_json_zip(pack, path):
             return json.loads(childFile.read().decode('utf-8-sig'))
 
 
+def _nested_pack_folder(pack_ref) -> str:
+    """Folder a nested pack keeps its files under, named after the zip itself."""
+    return os.path.splitext(os.path.basename(pack_ref))[0]
+
+
 def _refresh_ctx(ctx) -> None:
     """Best-effort tracker refresh after a map/setting change.
 
@@ -85,6 +91,22 @@ def cmd_list_maps(self) -> None:
             logger.info("Map[" + str(i) + "] = '" + map["name"] + "'")
     else:
         logger.info("No world with internal map loaded")
+
+
+def cmd_reload_pack(self) -> None:
+    """Force a reload of the map pack"""
+    ctx = self.ctx
+    if not ctx.game:
+        logger.info("Somehow no game is loaded")
+        return
+    old_map_id = ctx.map_id
+    ctx.disconnect_map()
+    ctx._map_controller.build_tracker_world(AutoWorld.AutoWorldRegister.world_types.get(ctx.game))
+    if ctx.tracker_world is not None:
+        ctx._map_controller.load_pack()
+        ctx.enable_maps()
+        ctx.load_map(old_map_id)
+        _refresh_ctx(ctx)
 
 
 class UTMapController:
@@ -134,6 +156,8 @@ class UTMapController:
 
         ctx._map_controller = self
         ctx.load_map = self.load_map
+        ctx.disconnect_map = self.disconnect_map
+        ctx.enable_maps = self.enable_maps
         ctx.set_map_visible = self.set_map_visible
         ctx.set_items_visible = self.set_items_visible
         ctx.update_location_icon_coords = self.update_location_icon_coords
@@ -246,10 +270,12 @@ class UTMapController:
                     current_world.settings._changed = True
                 if packRef:
                     if is_zipfile(packRef):
+                        prefix = f"{_nested_pack_folder(packRef)}/" if ctx.tracker_world.nested_pack else ""
                         current_world.settings.update({ctx.tracker_world.external_pack_key: packRef})
                         current_world.settings._changed = True
                         # Pack version skew is normal
                         def _try_load_zip(label, path):
+                            path = f"{prefix}{path}"
                             try:
                                 return load_json_zip(packRef, path)
                             except KeyError:
@@ -340,6 +366,8 @@ class UTMapController:
             packRef = current_world.settings[ctx.tracker_world.external_pack_key]
             if packRef and is_zipfile(packRef):
                 ctx.root_pack_path = f"ap:zip:{packRef}"
+                if ctx.tracker_world.nested_pack:
+                    ctx.root_pack_path += f"/{_nested_pack_folder(packRef)}"
             else:
                 logger.error("Player poptracker doesn't seem to exist :< (must be a zip file)")
                 return False
@@ -663,8 +691,8 @@ class UTMapController:
 
     def activate(self, app) -> None:
         """Finish wiring the map: load the pack, show the tab, subscribe to
-        the map/icon data storage keys, and register the load_map/list_maps
-        commands. Mirrors TrackerGameContext.on_package's Connected map
+        the map/icon data storage keys, and register the map commands.
+        Mirrors TrackerGameContext.on_package's Connected map
         block. Idempotent and a no-op without a live app or a known
         ``tracker_world`` -- safe to call from both the Connected handler
         (if the app is already live) and the Phase-2 overlay feature (if
@@ -699,23 +727,34 @@ class UTMapController:
         ctx = self.ctx
         self.prebuild_widget()
         self.load_pack()
-        if ctx.tracker_world:  # don't show the map if loading failed
-            if ctx.tracker_world.map_page_maps and ctx.tracker_world.map_page_locations:
-                self.set_map_visible(True)
-            if ctx.tracker_world.item_page_items and ctx.tracker_world.item_page_item_layouts:
-                self.set_items_visible(True)
-            if ctx.tracker_world.map_page_index:
-                key = ctx.tracker_world.map_page_setting_key or f"{ctx.slot}_{ctx.team}_{UT_MAP_TAB_KEY}"
-                ctx.set_notify(key)
-            icon_key = ctx.tracker_world.location_setting_key
-            if icon_key:
-                ctx.set_notify(icon_key)
+        self.enable_maps()
+        processor = ctx.command_processor
+        # Outside enable_maps: a failed pack still needs a way to retry.
+        if "reload_pack" not in processor.commands or not processor.commands["reload_pack"]:
+            processor.commands["reload_pack"] = cmd_reload_pack
+        ctx._map_activated = True
+
+    def enable_maps(self) -> None:
+        """Show the tabs, subscribe to the map/icon keys and register the map commands; a no-op
+        when loading the pack failed."""
+        ctx = self.ctx
+        if not ctx.tracker_world:
+            return
+        if ctx.tracker_world.map_page_maps and ctx.tracker_world.map_page_locations:
+            self.set_map_visible(True)
+        if ctx.tracker_world.item_page_items and ctx.tracker_world.item_page_item_layouts:
+            self.set_items_visible(True)
+        if ctx.tracker_world.map_page_index:
+            key = ctx.tracker_world.map_page_setting_key or f"{ctx.slot}_{ctx.team}_{UT_MAP_TAB_KEY}"
+            ctx.set_notify(key)
+        icon_key = ctx.tracker_world.location_setting_key
+        if icon_key:
+            ctx.set_notify(icon_key)
         processor = ctx.command_processor
         if "load_map" not in processor.commands or not processor.commands["load_map"]:
             processor.commands["load_map"] = cmd_load_map
         if "list_maps" not in processor.commands or not processor.commands["list_maps"]:
             processor.commands["list_maps"] = cmd_list_maps
-        ctx._map_activated = True
 
     def handle_stored_data(self, args: dict) -> None:
         """Reload the map / icon overlay when SetReply or Retrieved touches
@@ -744,13 +783,18 @@ class UTMapController:
             self.set_map_visible(False)
             self.set_items_visible(False)
         ctx.logical_path_entrances = []
+        ctx.command_processor.commands.pop("reload_pack", None)
         if ctx.tracker_world:
             ctx.command_processor.commands.pop("load_map", None)
             ctx.command_processor.commands.pop("list_maps", None)
-            ctx.map_id = None
-            ctx.root_pack_path = None
-            ctx.coord_dict.clear()
-            ctx.deferred_dict.clear()
-            ctx.ldeferred_dict.clear()
+            self.disconnect_map()
         ctx.tracker_world = None
         ctx._map_activated = False
+
+    def disconnect_map(self) -> None:
+        ctx = self.ctx
+        ctx.map_id = None
+        ctx.root_pack_path = None
+        ctx.coord_dict.clear()
+        ctx.deferred_dict.clear()
+        ctx.ldeferred_dict.clear()

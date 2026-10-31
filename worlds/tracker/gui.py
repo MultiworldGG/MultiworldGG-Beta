@@ -122,8 +122,12 @@ def build_tracker_view(ctx):
     from kvui import MDLabel, MDDivider
     from kivy.metrics import dp
     from worlds.tracker.TrackerClient import get_ut_color
+    from worlds.tracker.TrackerCore import HOST_FAILURE_TEXT
 
     tracker_view = _TrackerView_cls()
+    if ctx.tracker_core.something_has_gone_wrong:
+        tracker_view.data.append({"text": HOST_FAILURE_TEXT})
+
     # CustomLayout parents by pos/size; fill explicitly or the tracker
     # ends up 100x100 in the bottom-left corner.
     tracker = _TrackerLayout(orientation="vertical", size_hint=(1, 1),
@@ -756,10 +760,10 @@ def _ensure_widgets():
             for layout_config, grid in grids.items():
                 if layout_config.orientation == "lr":
                     grid.orientation = "lr-tb"
-                    grid.width = layout_config.item_width * layout_config.cols
+                    grid.width = (layout_config.item_width + 4) * layout_config.cols + 12
                 else:
                     grid.orientation = "tb-lr"
-                    grid.height = layout_config.item_height * layout_config.rows
+                    grid.height = (layout_config.item_height + 4) * layout_config.rows + 12
 
                 if len(grid.children) > 0:
                     grid_container = BoxLayout(orientation='vertical', size_hint=(None, None))
@@ -817,8 +821,13 @@ def _ensure_widgets():
     class VisualTracker(BoxLayout, ItemGrid):
         location_icons: list  # pooled ApLocationIcon widgets, see update_location_icon_widgets
 
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.location_icons = []
+
         def load_coords(self, coords, defered_coords, ldefered_coords, use_split, default_loc_size: int = 65):
             self.ids.location_canvas.clear_widgets()
+            clear_stray_tooltips()
             returnDict = defaultdict(list)
             deferredDict = defaultdict(list)
             ldeferredDict = defaultdict(list)

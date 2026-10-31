@@ -10,7 +10,7 @@ ADDONS_ERRORS:list[str] = []
 
 from Utils import tuplize_version
 
-UT_ADDONS_VERSION = "v0.1.3"
+UT_ADDONS_VERSION = "v0.1.4"
 
 UT_ADDONS_TUPLE = tuplize_version(UT_ADDONS_VERSION[1:].split("-",1)[0])
 
