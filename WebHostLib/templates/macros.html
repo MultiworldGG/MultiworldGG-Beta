@@ -54,52 +54,74 @@
                             {% if patch.game == "Jigsaw" %}
                             <a class="room-action-link"
                                href="https://jigsaw-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}"
-                               data-tooltip="jigsaw-ap.netlify.app">Connect Game</a>
+                               data-tooltip="jigsaw-ap.netlify.app"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Isles of Trials" %}
                             <a class="room-action-link"
                                href="https://www.chromanyan.page/islestrialsap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True"
-                               data-tooltip="chromanyan.page/islestrialsap">Connect Game</a>
+                               data-tooltip="chromanyan.page/islestrialsap"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Build a Jetpack" %}
                             <a class="room-action-link"
                                href="https://www.chromanyan.page/buildajetpackap/?Protocol=://{{ patch.player_name | urlencode }}:@{{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&amp;auto=True"
-                               data-tooltip="chromanyan.page/buildajetpackap">Connect Game</a>
+                               data-tooltip="chromanyan.page/buildajetpackap"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Candy Box 2" %}
                             <a class="room-action-link"
                                href="https://candybox2-ap.vicr123.com"
-                               data-tooltip="candybox2-ap.vicr123.com">Connect Game</a>
+                               data-tooltip="candybox2-ap.vicr123.com"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Clique" %}
                             <a class="room-action-link"
                                href="https://clique.pharware.com/"
-                               data-tooltip="clique.pharware.com">Connect Game</a>
+                               data-tooltip="clique.pharware.com"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Paint" %}
                             <a class="room-action-link"
                                href="https://mariomantaw.github.io/jspaint/"
-                               data-tooltip="mariomantaw.github.io/jspaint">Connect Game</a>
+                               data-tooltip="mariomantaw.github.io/jspaint"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Wordipelago" %}
                             <a class="room-action-link"
                                href="https://apworlds.com/wordipelago"
-                               data-tooltip="apworlds.com/wordipelago">Connect Game</a>
+                               data-tooltip="apworlds.com/wordipelago"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Yacht Dice" %}
                             <a class="room-action-link"
                                href="https://yacht-dice-ap.netlify.app/?hostport={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&name={{ patch.player_name | e}}&go=LS"
-                               data-tooltip="yacht-dice-ap.netlify.app">Connect Game</a>
+                               data-tooltip="yacht-dice-ap.netlify.app"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% elif patch.game == "Archipelaballs" %}
                             <a class="room-action-link"
                                href="https://archipelaballs.shinten.moe/?host={{ config['HOST_ADDRESS'] }}:{{ room.last_port }}&slot={{ patch.player_name | e}}"
-                               data-tooltip="archipelaballs.shinten.moe">Connect Game</a>
+                               data-tooltip="archipelaballs.shinten.moe"
+                               target="_blank" rel="noopener noreferrer">Connect Game</a>
                             {% else %}
                                 No file to download for this game.
                             {% endif %}
+                        {% endif %}
+                        {% if patch.game == "Donkey Kong 64" %}
+                        <br />
+                        <a class="room-action-link"
+                           href="https://dev.dk64randomizer.com/randomizer.html"
+                           data-tooltip="dev.dk64randomizer.com"
+                           target="_blank" rel="noopener noreferrer">Open Patcher</a>
+                        {% elif patch.game == "Twilight Princess" %}
+                        <br />
+                        <a class="room-action-link"
+                           href="http://ap.tprandomizer.com/"
+                           data-tooltip="ap.tprandomizer.com"
+                           target="_blank" rel="noopener noreferrer">Open Patcher</a>
                         {% endif %}
                     </td>
                     <td>
                         <a href="{{ url_for("get_player_tracker", tracker=room.tracker, tracked_team=0, tracked_player=patch.player_id) }}">Tracker</a>
                         {% if patch.game == "The Wind Waker" %}
                         <br />
-                        <a href="https://thesword1.github.io/WWRando-APTracker">Web Auto Tracker</a>
+                        <a href="https://thesword1.github.io/WWRando-APTracker" target="_blank" rel="noopener noreferrer">Web Auto Tracker</a>
                         {% elif patch.game == "Skyward Sword" %}
                         <br />
-                        <a href="https://youraveragelink.github.io/SS-Randomizer-Tracker">Web Auto Tracker</a>
+                        <a href="https://youraveragelink.github.io/SS-Randomizer-Tracker" target="_blank" rel="noopener noreferrer">Web Auto Tracker</a>
                         {% endif %}
                     </td>
                 </tr>

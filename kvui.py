@@ -172,6 +172,32 @@ else:
     )
     from mwgg_gui.overrides import HoverLabel as HovererableLabel
 
+    # KivyMD 2.0 assumes every scroll effect implements its stretch hooks, but world client
+    # kv files written against upstream kvui may select Kivy's plain ScrollEffect.
+    from kivymd.uix.scrollview import StretchOverScrollBehavior
+
+    def _legacy_scroll_effect_touch_move(self, touch):
+        handled = super(StretchOverScrollBehavior, self).on_touch_move(touch)
+        if touch.ud.get(self._touch_key()) and touch.grab_current in (None, self):
+            for effect in (self.effect_x, self.effect_y):
+                convert_overscroll = getattr(effect, "convert_overscroll", None)
+                if convert_overscroll is not None:
+                    convert_overscroll(touch)
+        return handled
+
+    def _legacy_scroll_effect_touch_up(self, touch):
+        handled = super(StretchOverScrollBehavior, self).on_touch_up(touch)
+        if touch.ud.get(self._touch_key()):
+            for effect in (self.effect_x, self.effect_y):
+                reset_scale = getattr(effect, "reset_scale", None)
+                if reset_scale is not None:
+                    reset_scale()
+            touch.ud.pop(self._touch_key(), None)
+        return handled
+
+    StretchOverScrollBehavior.on_touch_move = _legacy_scroll_effect_touch_move
+    StretchOverScrollBehavior.on_touch_up = _legacy_scroll_effect_touch_up
+
     class HoverBehavior(MDHoverBehavior):
         hovered = BooleanProperty(False)
         def __init__(self, **kwargs):

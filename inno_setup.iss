@@ -84,7 +84,6 @@ Name: "build_a_jetpack"; Description: "Build a Jetpack"; ExtraDiskSpaceRequired:
 Name: "cat_quest"; Description: "Cat Quest"; ExtraDiskSpaceRequired: 1_048_576
 Name: "cccharles"; Description: "Choo-Choo Charles"; ExtraDiskSpaceRequired: 38_912
 Name: "celeste"; Description: "Celeste"; ExtraDiskSpaceRequired: 46_080
-Name: "celeste_open_world"; Description: "Celeste (Open World)"; ExtraDiskSpaceRequired: 166_912
 Name: "chainedechoes"; Description: "Chained Echoes"; ExtraDiskSpaceRequired: 25_600
 Name: "chatipelago"; Description: "Chatipelago"; ExtraDiskSpaceRequired: 9_216
 Name: "checksfinder"; Description: "ChecksFinder"; ExtraDiskSpaceRequired: 9_216
@@ -206,7 +205,6 @@ Name: "rogue_legacy"; Description: "Rogue Legacy"; ExtraDiskSpaceRequired: 16_38
 Name: "ror1"; Description: "Risk of Rain"; ExtraDiskSpaceRequired: 14_336
 Name: "ror2"; Description: "Risk of Rain 2"; ExtraDiskSpaceRequired: 1_048_576
 Name: "rotn"; Description: "Rift of the Necrodancer"; ExtraDiskSpaceRequired: 19_456
-Name: "sa2b"; Description: "Sonic Adventure 2 Battle"; ExtraDiskSpaceRequired: 94_208
 Name: "sadx"; Description: "Sonic Adventure DX"; ExtraDiskSpaceRequired: 4_194_304
 Name: "satisfactory"; Description: "Satisfactory"; ExtraDiskSpaceRequired: 1_048_576
 Name: "sc2"; Description: "Starcraft 2"; ExtraDiskSpaceRequired: 1_048_576
@@ -224,7 +222,6 @@ Name: "sm64hacks"; Description: "SM64 Romhack"; ExtraDiskSpaceRequired: 1_048_57
 Name: "sm_map_rando"; Description: "Super Metroid Map Rando"; ExtraDiskSpaceRequired: 8_294_400
 Name: "smo"; Description: "Super Mario Odyssey"; ExtraDiskSpaceRequired: 73_728
 Name: "sms"; Description: "Super Mario Sunshine"; ExtraDiskSpaceRequired: 1_048_576
-Name: "smw"; Description: "Super Mario World"; ExtraDiskSpaceRequired: 321_536
 Name: "soe"; Description: "Secret of Evermore"; ExtraDiskSpaceRequired: 1_048_576
 Name: "sonic_heroes"; Description: "Sonic Heroes"; ExtraDiskSpaceRequired: 1_048_576
 Name: "sotn"; Description: "Symphony of the Night"; ExtraDiskSpaceRequired: 1_048_576
@@ -310,7 +307,6 @@ Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/wor
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_cat_quest-0.3.0-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_cat_quest-0.3.0-py3-none-any.whl"; ExternalSize: 20128; Hash: "5827dcbf63f5830b610707c76dd733dcd7b05ece756211a240cc2693a6ad51a8"; Components: cat_quest; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_cccharles-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_cccharles-0.0.1-py3-none-any.whl"; ExternalSize: 38844; Hash: "a5b8f56d2f60d66aac089aeea3b8ccb102e6a134929bf1090945cf67d1e27726"; Components: cccharles; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_celeste-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_celeste-0.0.1-py3-none-any.whl"; ExternalSize: 45787; Hash: "147619cde9ef563b2bb6fa94e53026ff569a03f33db9b628c1c2724764db16d4"; Components: celeste; Flags: external download ignoreversion
-Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_celeste_open_world-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_celeste_open_world-0.0.1-py3-none-any.whl"; ExternalSize: 166338; Hash: "67ae62f828e807004d575eef19395c3c00442b5e61ed145e1b4e3ec1e43670f8"; Components: celeste_open_world; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_chainedechoes-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_chainedechoes-0.0.1-py3-none-any.whl"; ExternalSize: 25486; Hash: "6aac4781fe6b736a3993abde615d7fc482243eb893e781adb67dd27bc67c9cde"; Components: chainedechoes; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_chatipelago-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_chatipelago-0.0.1-py3-none-any.whl"; ExternalSize: 8462; Hash: "ba9c323cf896e45f24727d2d80619eb114ed398c04f9dc02781431fb799372e0"; Components: chatipelago; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_checksfinder-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_checksfinder-0.0.1-py3-none-any.whl"; ExternalSize: 8350; Hash: "db2fd07b9e08f5320282ec267169830fbb4105fa5cfa22b919e87759af8cefc0"; Components: checksfinder; Flags: external download ignoreversion
@@ -432,7 +428,6 @@ Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/wor
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_ror1-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_ror1-0.0.1-py3-none-any.whl"; ExternalSize: 13782; Hash: "68ca0cbd69203a624fe9372a5f7ba4f70d58ea11bc845f591ec32c4a17533b16"; Components: ror1; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_ror2-1.5.0-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_ror2-1.5.0-py3-none-any.whl"; ExternalSize: 26659; Hash: "bd72c2859410de2a1c0e17ad9bac1f9d377ad114f129d9e217bb81097508e4c9"; Components: ror2; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-10-13/worlds_rotn-0.17.0-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_rotn-0.17.0-py3-none-any.whl"; ExternalSize: 19368; Hash: "f25c07b68090ff690ae088606a48ebe7256341a7c851984d5eb5712a5cc70421"; Components: rotn; Flags: external download ignoreversion
-Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_sa2b-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sa2b-0.0.1-py3-none-any.whl"; ExternalSize: 94183; Hash: "c2846a83403dcd660ddf200f6a774b0185e125b0bc1eece625816d2dc791822d"; Components: sa2b; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_sadx-1.2.2-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sadx-1.2.2-py3-none-any.whl"; ExternalSize: 3160885; Hash: "6799fd3b856cfa2ecc9a6058875e897a12aaeb8929638094bc6ce6a86a86adfe"; Components: sadx; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_satisfactory-2.3.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_satisfactory-2.3.1-py3-none-any.whl"; ExternalSize: 61289; Hash: "63a0a303d59a21bf36851d6016fc66c69cc25ab06656079c727a27f08e6bed68"; Components: satisfactory; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_sc2-4.0.0-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sc2-4.0.0-py3-none-any.whl"; ExternalSize: 345045; Hash: "7849784c6919ab51fec45a84761e927a57ded6a2494441d1d967a1247cfcbea7"; Components: sc2; Flags: external download ignoreversion
@@ -450,7 +445,6 @@ Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/wor
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_sm_map_rando-0.119.4-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sm_map_rando-0.119.4-py3-none-any.whl"; ExternalSize: 8293629; Hash: "8974379985a8c1939b9e2daa81f2f1ba7e41b9c7d85640b19338d484957c5944"; Components: sm_map_rando; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-10-13/worlds_smo-1.7.6-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_smo-1.7.6-py3-none-any.whl"; ExternalSize: 73033; Hash: "f29685e9ed5fd55fa30134a8da26acf2d9a53128d0cd3da24478ea86e0180370"; Components: smo; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_sms-0.6.2-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sms-0.6.2-py3-none-any.whl"; ExternalSize: 129915; Hash: "8d9a124062f7cf46fe685c436ff8747c19dc43a55a9ff220bdeda9497f1e112c"; Components: sms; Flags: external download ignoreversion
-Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-09-12/worlds_smw-0.0.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_smw-0.0.1-py3-none-any.whl"; ExternalSize: 320837; Hash: "3d93ac3c6bdf03ced01402971b8a8ef458971c7d334fd01f633e6582be23c6ad"; Components: smw; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_soe-0.50.1-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_soe-0.50.1-py3-none-any.whl"; ExternalSize: 28139; Hash: "0887b854e1181c17e662474190533f186b593a9169bb033c2f190b3b4426ca6e"; Components: soe; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_sonic_heroes-2.1.0-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sonic_heroes-2.1.0-py3-none-any.whl"; ExternalSize: 218005; Hash: "4e9d987d4cc6c1cd483090a3438d7d451aeb2e890240dfd2f1da065215b0de61"; Components: sonic_heroes; Flags: external download ignoreversion
 Source: "https://github.com/MultiworldGG/MultiworldGG-Beta/releases/download/worlds-wheels-2026-08-30/worlds_sotn-0.8.16-py3-none-any.whl"; DestDir: "{app}\wheel_cache"; DestName: "worlds_sotn-0.8.16-py3-none-any.whl"; ExternalSize: 166590; Hash: "57c50f1e7a053f719023beb151af3aeac43bde098b729b6d09975770c1660c6b"; Components: sotn; Flags: external download ignoreversion
@@ -556,11 +550,6 @@ Root: HKCR; Subkey: ".aptatk";                                   ValueData: "{#M
 Root: HKCR; Subkey: "{#MyAppName}tatkpatch";                     ValueData: "MultiworldGG Tetris Attack Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}tatkpatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                           ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}tatkpatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";                  ValueType: string;  ValueName: "";
-
-Root: HKCR; Subkey: ".apsmw";                                    ValueData: "{#MyAppName}smwpatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}smwpatch";                      ValueData: "MultiworldGG Super Mario World Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}smwpatch\DefaultIcon";          ValueData: "{app}\MultiworldGGLauncher.exe,0";                           ValueType: string;  ValueName: "";
-Root: HKCR; Subkey: "{#MyAppName}smwpatch\shell\open\command";   ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";                  ValueType: string;  ValueName: "";
 
 Root: HKCR; Subkey: ".apzl";                                     ValueData: "{#MyAppName}zlpatch";        Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}zlpatch";                       ValueData: "MultiworldGG Zillion Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
@@ -812,6 +801,11 @@ Root: HKCR; Subkey: "{#MyAppName}apoospatch";                     ValueData: "Mu
 Root: HKCR; Subkey: "{#MyAppName}apoospatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                        ValueType: string; ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apoospatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";               ValueType: string; ValueName: "";
 
+Root: HKCR; Subkey: ".apoot";                                     ValueData: "{#MyAppName}apoot";         Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apoot";                        ValueData: "MultiworldGG Ocarina of Time Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apoot\DefaultIcon";            ValueData: "{app}\MultiworldGGLauncher.exe,0";                           ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apoot\shell\open\command";     ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";                  ValueType: string;  ValueName: "";
+
 Root: HKCR; Subkey: ".appm64";                                     ValueData: "{#MyAppName}appm64patch";    Flags: uninsdeletevalue;          ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}appm64patch";                     ValueData: "MultiworldGG Paper Mario 64 Patch"; Flags: uninsdeletekey;     ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}appm64patch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                        ValueType: string; ValueName: "";
@@ -831,6 +825,11 @@ Root: HKCR; Subkey: ".apsms";                                     ValueData: "{#
 Root: HKCR; Subkey: "{#MyAppName}apsmspatch";                     ValueData: "MultiworldGG Super Mario Sunshine Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsmspatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                      ValueType: string; ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsmspatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";             ValueType: string; ValueName: "";
+
+Root: HKCR; Subkey: ".apsnap";                                     ValueData: "{#MyAppName}apsnappatch";    Flags: uninsdeletevalue;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsnappatch";                     ValueData: "MultiworldGG Pokemon Snap Patch"; Flags: uninsdeletekey;   ValueType: string;  ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsnappatch\DefaultIcon";         ValueData: "{app}\MultiworldGGLauncher.exe,0";                      ValueType: string; ValueName: "";
+Root: HKCR; Subkey: "{#MyAppName}apsnappatch\shell\open\command";  ValueData: """{app}\MultiworldGGLauncher.exe"" ""%1""";             ValueType: string; ValueName: "";
 
 Root: HKCR; Subkey: ".apsotn";                                   ValueData: "{#MyAppName}apsotnpatch";      Flags: uninsdeletevalue; ValueType: string;  ValueName: "";
 Root: HKCR; Subkey: "{#MyAppName}apsotnpatch";                     ValueData: "MultiworldGG SotN Patch"; Flags: uninsdeletekey;      ValueType: string;  ValueName: "";

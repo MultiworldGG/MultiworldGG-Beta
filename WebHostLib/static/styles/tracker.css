@@ -198,6 +198,18 @@ img.icon-sprite {
     }
 }
 
+@media all and (max-width: 600px) {
+    #tracker-header-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    #tracker-header-bar .info {
+        align-self: stretch;
+        text-align: left;
+    }
+}
+
 @media all and (max-width: 1700px) {
     table.dataTable thead th.upper-row{
         position: -webkit-sticky;
