@@ -80,6 +80,8 @@ for _key, _sub in _UPLOAD_SUBFOLDERS.items():
     app.config[_key] = os.path.join(UPLOAD_FOLDER, _sub)
 # YAML game-name prefixes allowed up to five auxiliary APWorlds per world per lobby.
 app.config["LOBBY_AUXILIARY_APWORLD_GAMES"] = []
+# Exact YAML game names whose lobby uploads show a licensing disclaimer.
+app.config["REMOVED_WORLD_LOBBY_INFO"] = []
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024 * 1024  # 64 megabyte limit
 # SECRET_KEY signs session cookies: $MWGG_SECRET_KEY, else config.yaml
 # SECRET_KEY, else the hostname fallback (dev only; get_app() refuses it in prod).
