@@ -13,7 +13,7 @@ from Options import PerGameCommonOptions
 from BaseClasses import CollectionState, MultiWorld, LocationProgressType, ItemClassification
 from worlds import AutoWorld
 from collections import Counter, defaultdict
-from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode, TrackerException
+from . import TrackerWorld, UTMapTabData, CurrentTrackerState, UT_VERSION, DeferredEntranceMode, TrackerException, HostImportException
 import sys
 from Utils import __version__, output_path, open_filename, cache_path
 from yaml import safe_dump
@@ -27,6 +27,8 @@ from NetUtils import NetworkItem, HintStatus
 
     
 REGEN_WORLDS = {name for name, world in AutoWorld.AutoWorldRegister.world_types.items() if getattr(world, "ut_can_gen_without_yaml", False)}
+
+HOST_FAILURE_TEXT = "Something has gone VERY wrong, run /faris_asked for more info"
 
 
 def world_needs_yaml(world_cls: type) -> bool:
@@ -155,6 +157,8 @@ class TrackerCore():
         self.quit_after_update = print_list or print_count
         self.print_list = print_list
         self.print_count = print_count
+        self.use_split = False
+        self.something_has_gone_wrong = False
         self._set_page = None
         self._log_to_tab = None
         self._clear_page = None
@@ -315,21 +319,35 @@ class TrackerCore():
             self.stored_data = {}
 
     def regen_slots(self, world, slot_data, tempdir: str | None = None) -> bool:
-        if callable(getattr(world, "interpret_slot_data", None)):
-            temp = world.interpret_slot_data(slot_data)
+        try:
+            if callable(getattr(world, "interpret_slot_data", None)):
+                temp = world.interpret_slot_data(slot_data)
 
-            # back compat for worlds that trigger regen with interpret_slot_data, will remove eventually
-            if temp:
-                self.player_id = 1
-                self.re_gen_passthrough = {self.game: temp}
-                self.run_generator(slot_data, tempdir)
-            return True
-        else:
-            return False
-        
+                # back compat for worlds that trigger regen with interpret_slot_data, will remove eventually
+                if temp:
+                    self.player_id = 1
+                    self.re_gen_passthrough = {self.game: temp}
+                    self.run_generator(slot_data, tempdir)
+                return True
+            else:
+                return False
+        except TrackerException as e:
+            self.multiworld = None
+            self.tracker_disabled = True
+            self.gen_error = e.message
+            self.set_page(TrackerLogLine("The world has informed UT that your options are incompatible, for more infomation check /faris_asked","",TrackerLogLineGroup.UT_ERROR))
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.gen_error = tb
+            self.logger.error(tb)
+        return False
+
     def _set_host_settings(self):
         from . import TrackerWorld
-        tracker_settings = TrackerWorld.settings
+        try:
+            tracker_settings = TrackerWorld.settings
+        except Exception as e:
+            raise HostImportException() from e
         sorting_method = tracker_settings["sorting_method"]
         report_type = "Both"
         if tracker_settings['include_location_name']:
@@ -556,6 +574,12 @@ class TrackerCore():
             self.tracker_disabled = True
             self.gen_error = e.message
             self.set_page(TrackerLogLine("The world has informed UT that your options are incompatible, for more infomation check /faris_asked","",TrackerLogLineGroup.UT_ERROR))
+        except HostImportException as e:
+            tb = traceback.format_exc()
+            self.gen_error = tb
+            self.something_has_gone_wrong = True
+            self.logger.error(HOST_FAILURE_TEXT)
+            self.log_to_tab(HOST_FAILURE_TEXT)
         except Exception as e:
             tb = traceback.format_exc()
             self.gen_error = tb

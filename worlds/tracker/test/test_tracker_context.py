@@ -305,6 +305,89 @@ class TestBeforePackage(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(ctx.calls, [])
 
 
+class TestRegenSlots(unittest.TestCase):
+    def setUp(self):
+        from worlds.tracker.TrackerCore import TrackerCore
+        self.core = TrackerCore(logging.getLogger("test"), False, False)
+
+    def _regen(self, error):
+        def interpret_slot_data(_slot_data):
+            raise error
+
+        return self.core.regen_slots(SimpleNamespace(interpret_slot_data=interpret_slot_data), {})
+
+    def test_incompatible_options_disable_the_tracker(self):
+        from worlds.tracker import TrackerException
+        self.core.multiworld = object()
+        self.assertFalse(self._regen(TrackerException(message="bad options")))
+        self.assertIsNone(self.core.multiworld)
+        self.assertTrue(self.core.tracker_disabled)
+        self.assertEqual(self.core.gen_error, "bad options")
+
+    def test_world_failure_is_kept_for_faris_asked(self):
+        with self.assertLogs("test", level="ERROR"):
+            self.assertFalse(self._regen(RuntimeError("boom")))
+        self.assertIn("boom", self.core.gen_error)
+        self.assertFalse(self.core.tracker_disabled)
+
+    def test_world_without_interpret_slot_data(self):
+        self.assertFalse(self.core.regen_slots(SimpleNamespace(), {}))
+        self.assertEqual(self.core.gen_error, "")
+
+
+class TestHostImportFailure(unittest.TestCase):
+    def test_unreadable_host_settings_are_reported_without_generating(self):
+        from worlds import tracker
+        from worlds.tracker.TrackerCore import HOST_FAILURE_TEXT, TrackerCore
+
+        class Broken:
+            @property
+            def settings(self):
+                raise RuntimeError("bad host.yaml")
+
+        tab = []
+        core = TrackerCore(logging.getLogger("test"), False, False)
+        core.set_log_to_tab(lambda line, sort: tab.append(line))
+        with mock.patch.object(tracker, "TrackerWorld", Broken()), self.assertLogs("test", level="ERROR") as logs:
+            core.run_generator(None, None)
+
+        self.assertTrue(core.something_has_gone_wrong)
+        self.assertIn("bad host.yaml", core.gen_error)
+        self.assertEqual(tab, [HOST_FAILURE_TEXT])
+        self.assertEqual(logs.records[0].getMessage(), HOST_FAILURE_TEXT)
+        self.assertIsNone(core.multiworld)
+
+
+class TestExplainEntrance(unittest.TestCase):
+    def _explain(self, entrance):
+        from worlds.tracker.TrackerClient import explain
+        printed = []
+        entrance.parent_region = SimpleNamespace(name="Hub", entrances=[])
+        regions = SimpleNamespace(location_cache={1: {}}, region_cache={1: {}}, entrance_cache={1: {"Door": entrance}})
+        core = SimpleNamespace(player_id=1, get_current_world=SimpleNamespace,
+                               multiworld=SimpleNamespace(regions=regions, get_entrance=lambda name, player: entrance))
+        ctx = SimpleNamespace(tracker_core=core, print_json=printed.append,
+                              updateTracker=lambda: SimpleNamespace(state=object(), glitches_state=None))
+        with self.assertLogs("Client", level="INFO") as logs:
+            explain(ctx, "Door")
+        return printed, [record.getMessage() for record in logs.records]
+
+    def test_rule_that_explains_itself_is_printed(self):
+        rule = SimpleNamespace(explain_json=lambda state: [{"type": "text", "text": "needs key"}])
+        printed, logged = self._explain(SimpleNamespace(access_rule=rule))
+        self.assertEqual(printed, [[{"type": "text", "text": "needs key"}]])
+        self.assertEqual(logged, ["Parent region (Hub)"])
+
+    def test_default_rule(self):
+        from BaseClasses import Entrance
+        _, logged = self._explain(SimpleNamespace(access_rule=Entrance.access_rule))
+        self.assertEqual(logged, ["Entrance has a default access rule", "Parent region (Hub)"])
+
+    def test_rule_without_explanation(self):
+        _, logged = self._explain(SimpleNamespace(access_rule=lambda state: True))
+        self.assertEqual(logged, ["Entrance doesn't have a rule that supports explanation", "Parent region (Hub)"])
+
+
 class TestConnectedFinishesLoading(unittest.TestCase):
     def _connect(self, ctx):
         from worlds.tracker.TrackerClient import TrackerGameContext
