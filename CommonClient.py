@@ -1330,28 +1330,19 @@ class CommonContext(InitContext):
             }])
 
     async def update_death_link(self, death_link: bool):
-        """Helper function to set Death Link connection tag on/off and update the connection if already connected.
-        TODO: FIX SET VS LIST TAGS"""
+        """Helper function to set Death Link connection tag on/off and update the connection if already connected."""
         old_tags = self.tags.copy()
         if death_link:
-            if isinstance(self.tags, set):
-                self.tags.add("DeathLink")
-            else:
-                if "DeathLink" not in self.tags:
-                    self.tags.append("DeathLink")
+            self.tags.add("DeathLink")
         else:
-            if isinstance(self.tags, set):
-                self.tags -= {"DeathLink"}
-            else:
-                if "DeathLink" in self.tags:
-                    self.tags.remove("DeathLink")
+            self.tags -= {"DeathLink"}
         if old_tags != self.tags and self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 
-    async def update_tags(self, tags: typing.Set[str]):
+    async def update_tags(self, tags: typing.Iterable[str]):
         """Helper function to update the tags of the client."""
         old_tags = self.tags.copy()
-        self.tags = tags
+        self.tags = set(tags)
         if old_tags != self.tags and self.server and self.server.socket and self.server.socket.state is not State.CLOSED:
             await self.send_msgs([{"cmd": "ConnectUpdate", "tags": self.tags}])
 

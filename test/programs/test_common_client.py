@@ -1,10 +1,13 @@
 import importlib.metadata
 import asyncio
+import json
 import os
 import types
 import unittest
 from contextlib import ExitStack
 from unittest import mock
+
+from websockets.protocol import State
 
 import NetUtils
 import Utils
@@ -269,3 +272,34 @@ class TestBeforePackageHook(unittest.IsolatedAsyncioTestCase):
             await process_server_cmd(Ctx(), {"cmd": "Unknown"})
         self.assertEqual(calls, ["Unknown"])
         self.assertIn("before_package failed", logs.output[0])
+
+
+class TestTagsStayASet(unittest.IsolatedAsyncioTestCase):
+    """World clients call ctx.tags.add/discard, so update_tags must leave a set even when the
+    GUI hands it a list."""
+
+    async def test_update_tags_with_a_list_leaves_a_set(self):
+        ctx = CommonContext()
+        await ctx.update_tags(["AP", "pronouns:x"])
+        self.assertIsInstance(ctx.tags, set)
+        ctx.tags.add("EnergyLink")
+        self.assertEqual(ctx.tags, {"AP", "pronouns:x", "EnergyLink"})
+
+    async def test_death_link_toggles_after_update_tags(self):
+        ctx = CommonContext()
+        await ctx.update_tags(["AP", "in_bk"])
+        await ctx.update_death_link(True)
+        self.assertEqual(ctx.tags, {"AP", "in_bk", "DeathLink"})
+        await ctx.update_death_link(False)
+        self.assertEqual(ctx.tags, {"AP", "in_bk"})
+
+    async def test_connect_update_with_set_tags_encodes_as_a_list(self):
+        ctx = CommonContext()
+        ctx.server = types.SimpleNamespace(socket=types.SimpleNamespace(state=State.OPEN))
+        with mock.patch.object(ctx, "send_msgs", new_callable=mock.AsyncMock) as send:
+            await ctx.update_tags(["AP", "deafened"])
+        msgs = send.await_args.args[0]
+        self.assertIsInstance(msgs[0]["tags"], set)
+        decoded = json.loads(NetUtils.encode(msgs))
+        self.assertEqual(decoded[0]["cmd"], "ConnectUpdate")
+        self.assertCountEqual(decoded[0]["tags"], ["AP", "deafened"])
