@@ -777,6 +777,8 @@ class CommonContext(InitContext):
         try:
             self.exit_event = existing_ctx.exit_event
 
+            # the manager a world's own run_gui made, about to be replaced by the live app
+            world_ui = self.ui
             if hasattr(existing_ctx, 'ui'):
                 self.ui = existing_ctx.ui
             if hasattr(existing_ctx, 'ui_task'):
@@ -784,7 +786,8 @@ class CommonContext(InitContext):
 
             game_client = GameClient(self, {
                 "ui_task": self.ui_task,
-                "ui": self.ui
+                "ui": self.ui,
+                "world_ui": world_ui,
             })
 
             app.ctx = self
