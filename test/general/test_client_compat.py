@@ -233,6 +233,7 @@ def _gui_game_manager() -> type:
     namespace = {
         "os": os, "logging": logging, "App": type("App", (), {}),
         "KivyJSONtoTextParser": object, "MDNavigationItemBase": object, "Widget": object,
+        "MDBoxLayout": lambda **kwargs: SimpleNamespace(**kwargs),
     }
     exec(compile(ast.Module(body=[class_def], type_ignores=[]), "kvui.py", "exec"), namespace)
     return namespace["GameManager"]
@@ -273,6 +274,91 @@ class TestKvuiLegacyConfig(unittest.TestCase):
         manager = type("Plain", (self.GameManager,), {})(ctx=None)
         manager._load_legacy_config()
         self.assertNotIn("config", vars(manager))
+
+
+# --------------------------------------------------------------------------- #
+# The live app's on_start ran before any world manager existed, so
+# build_for_live_app runs a manager's own on_start after its build, as kivy's
+# App.run would (sc2 resizes the window and adds a log handler there). The
+# default never forwards to the live app's on_start.
+# --------------------------------------------------------------------------- #
+
+class TestKvuiBuildForLiveApp(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.GameManager = _gui_game_manager()
+
+    def setUp(self) -> None:
+        patcher = mock.patch.dict(sys.modules, {"kivy.config": SimpleNamespace(ConfigParser=_KivyConfigParser)})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.live_started = []
+        self.app = SimpleNamespace(
+            root_layout="root", screen_manager="screens", main_layout="grid",
+            base_title="MultiworldGG", on_start=lambda: self.live_started.append(True),
+        )
+        self.ctx = SimpleNamespace(_state="GAME")
+
+    def test_on_start_override_runs_once_after_build(self) -> None:
+        app = self.app
+        events = []
+
+        class Manager(self.GameManager):
+            base_title = "World Client"
+
+            def build(self):
+                events.append("build")
+
+            def on_start(self):
+                super().on_start()
+                events.append(("on_start", app._legacy_kvui_manager is self, app.base_title))
+
+        Manager.build_for_live_app(self.ctx, app)
+        self.assertEqual(events, ["build", ("on_start", True, "World Client")])
+        self.assertEqual(self.live_started, [])
+
+    def test_without_override_the_live_on_start_is_not_rerun(self) -> None:
+        class Manager(self.GameManager):
+            def build(self):
+                pass
+
+        with self.assertNoLogs("kvui", level="ERROR"):
+            manager = Manager.build_for_live_app(self.ctx, self.app)
+        self.assertIs(self.app._legacy_kvui_manager, manager)
+        self.assertEqual(self.live_started, [])
+
+    def test_failing_on_start_is_logged_and_the_build_kept(self) -> None:
+        class Manager(self.GameManager):
+            def build(self):
+                pass
+
+            def on_start(self):
+                raise AttributeError("log_panels")
+
+        with self.assertLogs("kvui", level="ERROR"):
+            manager = Manager.build_for_live_app(self.ctx, self.app)
+        self.assertIs(self.app._legacy_kvui_manager, manager)
+        self.assertEqual(self.ctx._state, "GAME")
+
+    def test_run_gui_manager_is_built_in_place(self) -> None:
+        class Manager(self.GameManager):
+            made = 0
+            started = 0
+
+            def __init__(self, ctx):
+                super().__init__(ctx)
+                type(self).made += 1
+
+            def build(self):
+                pass
+
+            def on_start(self):
+                type(self).started += 1
+
+        made = Manager(self.ctx)
+        self.assertIs(Manager.build_for_live_app(self.ctx, self.app, manager=made), made)
+        self.assertEqual((Manager.made, Manager.started), (1, 1))
+        self.assertIs(made._running_app, self.app)
 
 
 # --------------------------------------------------------------------------- #
@@ -399,6 +485,71 @@ class TestLegacyManagerClassResolution(unittest.TestCase):
             result = asyncio.run(builder.build())
         self.assertEqual(app.built, [Wrapper])
         self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": Wrapper})
+
+
+# --------------------------------------------------------------------------- #
+# Worlds that override run_gui (factorio, kh2, sc2, tboir, ...) make their
+# manager there and run its async_run, which takes over the live app. The
+# takeover replaces ctx.ui with the live app, so it hands the world's manager
+# to the builder, which builds that instance instead of the make_gui() class.
+# --------------------------------------------------------------------------- #
+
+class TestWorldMadeManager(unittest.TestCase):
+    def _build(self, world_ui, make_gui_cls=_Frontend):
+        app = _Frontend()
+        ctx = _Ctx(make_gui_cls)
+        builder = ClientBuilder.LegacyKvuiClientBuilder(ctx, app, world_ui)
+        with _patched_frontend():
+            result = asyncio.run(builder.build())
+        return app, result
+
+    def test_run_gui_game_manager_is_built(self) -> None:
+        made = type("Manager", (_GameManager,), {})()
+        app, result = self._build(made)
+        self.assertEqual(app.built, [made])
+        self.assertEqual(result, {"builders": ["legacy_kvui"], "manager": made})
+
+    def test_run_gui_frontend_subclass_wins_over_make_gui(self) -> None:
+        """tboir's run_gui instantiates its make_gui() subclass, and each make_gui()
+        call mints a fresh class; only the world's own instance may build."""
+        def make_gui():
+            return type("Wrapper", (_Frontend,), {})
+
+        made = make_gui()()
+        app, _ = self._build(made, make_gui())
+        self.assertEqual(app.built, [made])
+
+    def test_world_ui_that_is_not_a_manager_falls_back_to_make_gui(self) -> None:
+        class Wrapper(_Frontend):
+            pass
+
+        for world_ui in (None, object(), _Frontend()):
+            with self.subTest(world_ui=world_ui):
+                app, _ = self._build(world_ui, Wrapper)
+                self.assertEqual(app.built, [Wrapper])
+
+    def test_takeover_hands_the_world_manager_to_the_build(self) -> None:
+        made = object()
+        live = SimpleNamespace(ctx=SimpleNamespace(
+            exit_event="exit", ui="live app", ui_task="live task", _is_transitioning=False))
+        seen = {}
+
+        class FakeGameClient:
+            def __init__(self, ctx, init_data):
+                seen.update(init_data)
+
+            async def build(self):
+                pass
+
+        ctx = SimpleNamespace(
+            ui=made, ui_task="world task", _ready_callback=lambda: None,
+            _error_callback=lambda: None, takeover_complete=asyncio.Event(),
+        )
+        with mock.patch("frontend_protocol.resolve_frontend_class", lambda: SimpleNamespace(_active_instance=live)), \
+                mock.patch.object(ClientBuilder, "GameClient", FakeGameClient):
+            asyncio.run(CommonClient.CommonContext._takeover_existing_ui(ctx))
+        self.assertIs(seen["world_ui"], made)
+        self.assertEqual((seen["ui"], ctx.ui, ctx.ui_task), ("live app", "live app", "live task"))
 
 
 # --------------------------------------------------------------------------- #

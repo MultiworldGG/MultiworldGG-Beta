@@ -108,6 +108,7 @@ class GameClient(ClientBuilder):
             legacy_builder = LegacyKvuiClientBuilder(
                 self.ctx,
                 self._init_data.get("ui"),
+                self._init_data.get("world_ui"),
             )
             legacy_result = await legacy_builder.build()
 
@@ -147,12 +148,16 @@ class LegacyKvuiClientBuilder(ClientBuilder):
     from needing to know whether a world uses an explicit build_gui hook or
     the old make_gui()/build() compatibility shape. Both run when both are
     present: a context inheriting TrackerGameContext gets build_gui from the
-    tracker while its own make_gui() subclass still owns the game tab.
+    tracker while its own make_gui() subclass still owns the game tab. A
+    manager the world's own run_gui made (``world_ui``) is built in place of
+    its make_gui() class.
     """
 
-    def __init__(self, ctx: 'CommonContext', app: Optional['FrontendProtocol'] = None):
+    def __init__(self, ctx: 'CommonContext', app: Optional['FrontendProtocol'] = None,
+                 world_ui: Any = None):
         super().__init__(ctx=ctx)
         self.app = app
+        self.world_ui = world_ui
         self.manager = None
 
     async def build(self) -> Dict[str, Any]:
@@ -173,19 +178,20 @@ class LegacyKvuiClientBuilder(ClientBuilder):
             logger.exception("Post-takeover build_gui hook failed")
 
         try:
-            manager_cls = self._legacy_manager_class(app)
+            instance = self._world_made_manager(app)
+            manager_cls = type(instance) if instance is not None else self._legacy_manager_class(app)
             if manager_cls is None:
                 return result
 
             build_legacy_kvui = getattr(app, "build_legacy_kvui", None)
             if build_legacy_kvui is not None:
-                self.manager = build_legacy_kvui(self.ctx, manager_cls)
+                self.manager = build_legacy_kvui(self.ctx, instance if instance is not None else manager_cls)
             else:
                 build_for_live_app = getattr(manager_cls, "build_for_live_app", None)
                 if build_for_live_app is not None:
-                    self.manager = build_for_live_app(self.ctx, app)
+                    self.manager = build_for_live_app(self.ctx, app, manager=instance)
                 else:
-                    self.manager = manager_cls(self.ctx)
+                    self.manager = instance if instance is not None else manager_cls(self.ctx)
                     self.manager.build()
 
             result["builders"].append("legacy_kvui")
@@ -209,6 +215,12 @@ class LegacyKvuiClientBuilder(ClientBuilder):
                 self.ctx._state = previous_state
         return True
 
+    def _world_made_manager(self, app: 'FrontendProtocol') -> Any:
+        world_ui = self.world_ui
+        if world_ui is None or world_ui is app or not self._is_legacy_manager_class(type(world_ui), app):
+            return None
+        return world_ui
+
     def _legacy_manager_class(self, app: 'FrontendProtocol') -> Optional[type]:
         try:
             manager_cls = self.ctx.make_gui()
@@ -216,26 +228,26 @@ class LegacyKvuiClientBuilder(ClientBuilder):
             logger.exception("Failed to resolve legacy kvui manager")
             return None
 
-        if not isinstance(manager_cls, type):
+        if not isinstance(manager_cls, type) or not self._is_legacy_manager_class(manager_cls, app):
             return None
+        return manager_cls
 
+    @staticmethod
+    def _is_legacy_manager_class(manager_cls: type, app: 'FrontendProtocol') -> bool:
         frontend_cls = resolve_frontend_class()
         if manager_cls is frontend_cls or manager_cls is type(app):
-            return None
+            return False
 
         # upstream make_gui()/build() shape: a subclass of the live frontend class
         if issubclass(manager_cls, frontend_cls) or hasattr(manager_cls, "build_for_live_app"):
-            return manager_cls
+            return True
 
         try:
             from kvui import GameManager
         except Exception:
-            return None
+            return False
 
-        if issubclass(manager_cls, GameManager):
-            return manager_cls
-
-        return None
+        return issubclass(manager_cls, GameManager)
 
     async def cleanup(self) -> None:
         self._is_running = False
