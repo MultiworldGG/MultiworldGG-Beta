@@ -267,13 +267,16 @@ else:
             self._running_app = app
 
         @classmethod
-        def build_for_live_app(cls, ctx, app: App):
+        def build_for_live_app(cls, ctx, app: App, manager: "GameManager | None" = None):
+            """Build a manager against the running frontend the way kivy's App.run
+            would, build() then on_start(). `manager` is one a world's run_gui made."""
             from ClientState import ClientState
 
             previous_state = getattr(ctx, "_state", None)
             ctx._state = ClientState.LEGACY_KVUI
             try:
-                manager = cls(ctx)
+                if manager is None:
+                    manager = cls(ctx)
                 manager.attach_live_app(app)
 
                 root_layout = getattr(app, "root_layout", None) or app.root
@@ -295,6 +298,10 @@ else:
                 # Subclasses declare the window title; the live app owns the property.
                 if manager.base_title:
                     app.base_title = manager.base_title
+                try:
+                    manager.on_start()
+                except Exception:
+                    logging.getLogger("kvui").exception("Legacy client on_start failed")
                 return manager
             finally:
                 if previous_state is not None:
@@ -302,6 +309,9 @@ else:
 
         def build_config(self, config) -> None:
             """Target for subclasses' super().build_config(config); super() bypasses __getattr__."""
+
+        def on_start(self) -> None:
+            """Target for subclasses' super().on_start(); the live app started long before."""
 
         def _load_legacy_config(self) -> None:
             """kivy App.load_config for a world's build_config/get_application_config
@@ -340,7 +350,7 @@ else:
             ''' Changing this 'run' to instead do the client takeover loop '''
             if self.ctx._can_takeover_existing_ui():
                 await self.ctx._takeover_existing_ui()
-                # Managers built in a world's run_gui never pass build_for_live_app.
+                # The takeover builds this manager; a failed build still titles the live app.
                 if self.base_title:
                     self.ctx.ui.base_title = self.base_title
             else:
