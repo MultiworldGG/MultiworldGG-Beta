@@ -715,17 +715,22 @@ def test_worlds_venv_error_without_frontend_returns_quietly(monkeypatch):
 
 # --- _route_module_when_ui_ready: a patch room's pinned world installs before the launch ---
 
-_PINNED_WORLD = {"version": [1, 2, 3], "custom": False}
+_PINNED_WORLD = "1.2.3"
 _PINNED_TAG = "sixteen-2026.05.16"
 
 
-class _RoomInfoSocket:
-    """Websocket stand-in: the server sends RoomInfo on open, before any Connect."""
+class _PatchRoomSocket:
+    """Websocket stand-in: the room sends RoomInfo on open, then answers the probe's
+    Connect and its Get for the room's world versions."""
+
+    async def send(self, data):
+        pass
 
     async def __aiter__(self):
         from NetUtils import encode
-        yield encode([{"cmd": "RoomInfo", "world_versions": {"Some Game": _PINNED_WORLD},
-                       "mwgg_index_tag": _PINNED_TAG}])
+        yield encode([{"cmd": "RoomInfo", "custom_world_games": [], "mwgg_index_tag": _PINNED_TAG}])
+        yield encode([{"cmd": "Connected"}])
+        yield encode([{"cmd": "Retrieved", "keys": {"_read_world_versions": {"Some Game": _PINNED_WORLD}}}])
 
     async def close(self):
         pass
@@ -752,7 +757,7 @@ def _pinned_world_frontend(choice=True, dialog=True):
 
 
 def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="localhost:38281",
-                         install_ok=True, auto_install=False, **launch_kwargs):
+                         player_name="Player", install_ok=True, auto_install=False, **launch_kwargs):
     """Route a patch whose room pins Some Game 1.2.3 against `app`; returns the
     websocket opens, pin checks, installs and launch in the order they happened."""
     import asyncio
@@ -760,15 +765,16 @@ def _pinned_patch_launch(monkeypatch, tmp_path, app, installed="1.0.0", server="
     import websockets
     patch = tmp_path / "seed.apsome"
     with zipfile.ZipFile(patch, "w") as zf:
-        zf.writestr("archipelago.json", json.dumps({"game": "Some Game", "server": server}))
+        zf.writestr("archipelago.json", json.dumps({"game": "Some Game", "server": server,
+                                                    "player_name": player_name}))
     events = []
 
     async def connect(address, **kwargs):
         events.append(f"open:{address}")
-        return _RoomInfoSocket()
+        return _PatchRoomSocket()
 
-    def check_world_pin(game, pin, tag):
-        events.append(("check", game, pin, tag))
+    def check_world_pin(game, want, tag, custom=False):
+        events.append(("check", game, want, tag))
         return ModuleUpdate.WorldPinCheck(game, "1.2.3", installed, "some_game", tag, False)
 
     def install_pinned_world(pin):
@@ -790,7 +796,7 @@ _PROBED = ["open:ws://localhost:38281", ("check", "Some Game", _PINNED_WORLD, _P
 
 @pytest.mark.parametrize("auto_install", [False, True])
 def test_route_patch_installs_room_pinned_world_before_launch(auto_install, monkeypatch, tmp_path):
-    """The room's RoomInfo pins another version of the patch's world: it installs
+    """The patch's room pins another version of the patch's world: it installs
     before the launch imports the world, asked unless auto_install_pinned_worlds."""
     app = _pinned_world_frontend()
     events = _pinned_patch_launch(monkeypatch, tmp_path, app, auto_install=auto_install)
@@ -823,10 +829,12 @@ def test_route_patch_probes_its_own_server_over_the_launch_address(monkeypatch, 
     assert events == [*_PROBED, "launch"]
 
 
-def test_route_patch_without_server_skips_room_probe(monkeypatch, tmp_path):
+@pytest.mark.parametrize("server, player_name", [("", "Player"), ("localhost:38281", "")],
+                         ids=["no_server", "no_slot_name"])
+def test_route_patch_without_server_or_slot_skips_room_probe(server, player_name, monkeypatch, tmp_path):
     """A local seed's patch carries an empty server; nothing to probe."""
     app = _pinned_world_frontend()
-    assert _pinned_patch_launch(monkeypatch, tmp_path, app, server="") == ["launch"]
+    assert _pinned_patch_launch(monkeypatch, tmp_path, app, server=server, player_name=player_name) == ["launch"]
     assert app.calls == ["client_console_init"]
 
 

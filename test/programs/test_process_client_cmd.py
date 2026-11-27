@@ -612,7 +612,9 @@ class TestSpacedPlayerNames(unittest.TestCase):
         self.assertEqual(echoes, ["!admin /players"])
 
 
-SLOT_PINS = {
+WORLD_VERSIONS = {"Game A": "1.2.3", "Game B": "0.5.0"}
+# beta seeds generated before the upstream world_versions format
+LEGACY_SLOT_PINS = {
     1: {"version": (1, 2, 3), "custom": False},
     2: {"version": (0, 5, 0), "custom": True},
 }
@@ -622,13 +624,14 @@ SLOT_PINS = {
 _LOAD_CLOBBERED = (
     "read_data", "generator_version", "minimum_client_versions", "slot_info", "games",
     "groups", "clients", "def_allow_collecting_from", "seed_name", "connect_names",
-    "locations", "slot_data", "er_hint_data", "spheres", "world_versions", "mwgg_index_tag", "played_games",
-    "player_names", "player_name_lookup",
+    "locations", "slot_data", "er_hint_data", "spheres", "custom_world_games", "mwgg_index_tag",
+    "played_games", "player_names", "player_name_lookup",
 )
 
 
 class TestWorldVersionPinFlow(unittest.TestCase):
-    """world_versions/mwgg_index_tag: multidata blob -> Context._load -> game-keyed RoomInfo."""
+    """world_versions/custom_world_games/mwgg_index_tag: multidata blob -> Context._load ->
+    the `_read_world_versions` key and RoomInfo."""
 
     @staticmethod
     def _minimal_multidata(with_pins: bool) -> dict:
@@ -651,7 +654,8 @@ class TestWorldVersionPinFlow(unittest.TestCase):
                             for game in ("Game A", "Game B")},
         }
         if with_pins:
-            data["world_versions"] = {slot: dict(pin) for slot, pin in SLOT_PINS.items()}
+            data["world_versions"] = dict(WORLD_VERSIONS)
+            data["custom_world_games"] = ["Game B"]
             data["mwgg_index_tag"] = "sixteen-2026.06.10"
         return data
 
@@ -663,7 +667,8 @@ class TestWorldVersionPinFlow(unittest.TestCase):
         try:
             ctx.games_package_cache = GamesPackageCache()  # _load consumes it
             ctx._load(multidata, False)
-            self.loaded_world_versions = ctx.world_versions
+            self.loaded_world_versions = ctx.read_data["world_versions"]()
+            self.loaded_custom_world_games = ctx.custom_world_games
             self.loaded_mwgg_index_tag = ctx.mwgg_index_tag
         finally:
             for attr, value in saved.items():
@@ -672,68 +677,60 @@ class TestWorldVersionPinFlow(unittest.TestCase):
                 else:
                     setattr(ctx, attr, value)
 
-    def test_pin_survives_multidata_blob(self) -> None:
+    def test_world_versions_survive_multidata_blob(self) -> None:
         """world_versions must round-trip through the same path Main writes / MultiServer reads."""
         import zlib
         from Utils import restricted_dumps, restricted_loads
-        blob = zlib.compress(restricted_dumps({"world_versions": SLOT_PINS}), 9)
+        blob = zlib.compress(restricted_dumps({"world_versions": WORLD_VERSIONS}), 9)
         restored = restricted_loads(zlib.decompress(blob))
-        self.assertEqual(restored["world_versions"], SLOT_PINS)
+        self.assertEqual(restored["world_versions"], WORLD_VERSIONS)
 
-    def test_load_populates_world_versions(self) -> None:
+    def test_load_serves_world_versions(self) -> None:
         ctx = build_context()
         self._load(ctx, self._minimal_multidata(with_pins=True))
-        self.assertEqual(self.loaded_world_versions, SLOT_PINS)
+        self.assertEqual(self.loaded_world_versions, WORLD_VERSIONS)
+        self.assertEqual(self.loaded_custom_world_games, ["Game B"])
         self.assertEqual(self.loaded_mwgg_index_tag, "sixteen-2026.06.10")
 
     def test_load_tolerates_pre_feature_seed(self) -> None:
         ctx = build_context()
         self._load(ctx, self._minimal_multidata(with_pins=False))
-        self.assertEqual(self.loaded_world_versions, {})
+        self.assertEqual(self.loaded_world_versions, {"Game A": "0.0.0", "Game B": "0.0.0"})
+        self.assertEqual(self.loaded_custom_world_games, [])
         self.assertIsNone(self.loaded_mwgg_index_tag)
 
-    def test_roominfo_collapses_slots_to_game_keys(self) -> None:
+    def test_load_converts_legacy_slot_pins(self) -> None:
+        multidata = self._minimal_multidata(with_pins=False)
+        multidata["world_versions"] = {slot: dict(pin) for slot, pin in LEGACY_SLOT_PINS.items()}
         ctx = build_context()
-        ctx.slot_info = {
-            1: NetworkSlot("Player1", "Game A", SlotType.player),
-            2: NetworkSlot("Player2", "Game B", SlotType.player),
-        }
-        ctx.world_versions = dict(SLOT_PINS)
+        self._load(ctx, multidata)
+        self.assertEqual(self.loaded_world_versions, WORLD_VERSIONS)
+        self.assertEqual(self.loaded_custom_world_games, ["Game B"])
+
+    def test_roominfo_carries_custom_world_games_and_tag(self) -> None:
+        ctx = build_context()
+        ctx.custom_world_games = ["Game B"]
         ctx.mwgg_index_tag = "sixteen-2026.06.10"
         try:
             client = make_client(ctx)
             asyncio.run(MultiServer.on_client_connected(ctx, client))
         finally:
-            ctx.slot_info = _base_ctx_slot_info()
-            ctx.world_versions = {}
+            ctx.custom_world_games = []
             ctx.mwgg_index_tag = None
 
         room_info = sent_packets(ctx)[-1]
         self.assertEqual(room_info["cmd"], "RoomInfo")
-        # game-keyed (the client cannot key by slot at RoomInfo time)
-        self.assertEqual(
-            room_info["world_versions"],
-            {"Game A": {"version": (1, 2, 3), "custom": False},
-             "Game B": {"version": (0, 5, 0), "custom": True}},
-        )
+        self.assertEqual(room_info["custom_world_games"], ["Game B"])
         self.assertEqual(room_info["mwgg_index_tag"], "sixteen-2026.06.10")
+        self.assertNotIn("world_versions", room_info)
 
-    def test_roominfo_empty_pins_on_pre_feature_seed(self) -> None:
+    def test_roominfo_on_pre_feature_seed(self) -> None:
         ctx = build_context()
-        ctx.world_versions = {}
-        ctx.mwgg_index_tag = None
         client = make_client(ctx)
         asyncio.run(MultiServer.on_client_connected(ctx, client))
         room_info = sent_packets(ctx)[-1]
-        self.assertEqual(room_info["world_versions"], {})
+        self.assertEqual(room_info["custom_world_games"], [])
         self.assertIsNone(room_info["mwgg_index_tag"])
-
-
-def _base_ctx_slot_info() -> dict:
-    return {
-        1: NetworkSlot("PlayerOne", GAME, SlotType.player),
-        2: NetworkSlot("PlayerTwo", GAME, SlotType.player),
-    }
 
 
 class _RecordingProcessor(MultiServer.CommandProcessor):

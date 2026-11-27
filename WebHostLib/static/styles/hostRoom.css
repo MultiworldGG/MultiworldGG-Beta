@@ -65,6 +65,12 @@
     background-color: var(--mw-sys-color-scrim-light);
 }
 
+#host-room #slots-table th:nth-child(4),
+#host-room #slots-table td:nth-child(4){
+    width: 1%;
+    white-space: nowrap;
+}
+
 #host-room #logger{
     font-family: 'Monaspace Neon';
     font-size: 14px;
@@ -116,9 +122,6 @@
         margin-right: 45px !important;
     }
 }
-
-/* Phase 2b: shareable room URL row. Brand colors match the route-migration nav palette. */
-
 .share-row {
     background: var(--mw-sys-color-surface-container);
     border: 1px solid var(--mw-sys-color-primary);

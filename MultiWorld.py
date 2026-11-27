@@ -388,21 +388,17 @@ async def _confirm_pinned_world(app, pin) -> bool:
 async def _install_patch_room_world(app, patch_file: str) -> None:
     """Install the world version the patch's room was generated with before the launch
     imports the world: a client holding the world's modules and native libraries cannot
-    replace them. Only the room's RoomInfo is read, so no slot name or password is needed."""
+    replace them. The room is probed as the patch's slot without a password, so a
+    password-protected room skips the check."""
     import frontend_protocol
-    import ModuleUpdate
     from Utils import read_patch_manifest
 
     logger = logging.getLogger("MultiWorld")
     manifest = read_patch_manifest(patch_file)
-    game, server = manifest.get("game"), manifest.get("server")
-    if not game or not server:
+    game, server, slot_name = manifest.get("game"), manifest.get("server"), manifest.get("player_name")
+    if not game or not server or not slot_name:
         return
-    room_info = await frontend_protocol.read_room_info(server)
-    if not room_info:
-        return
-    pin = ModuleUpdate.check_world_pin(game, (room_info.get("world_versions") or {}).get(game),
-                                       room_info.get("mwgg_index_tag"))
+    pin = (await frontend_protocol.verify_slot(server, slot_name, None, game)).world_pin
     # Custom and untagged mismatches are left to the client's notice after Connected.
     if pin is None or not pin.installable:
         return

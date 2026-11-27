@@ -11,6 +11,7 @@ from flask import request, redirect, url_for, render_template, Response, session
 from mwgg_igdb import GameIndex
 from sqlalchemy import select, func
 from werkzeug.utils import secure_filename
+from MultiServer import Context
 from Utils import __version__
 
 from . import app, cache
@@ -628,6 +629,10 @@ def host_room(seed: UUID, room: UUID):
         except FileNotFoundError:
             return "", 0
 
+    try:
+        world_versions = Context.decompress(room.seed.multidata).get("world_versions", {}) if room.seed.slots else {}
+    except Exception:  # a corrupt seed must not take the room page down with it
+        world_versions = {}
     from .dashboard import record_room_visit
     from .ownership import is_authorized, is_primary_owner
     is_authorized_room = is_authorized(room, session["_id"])
@@ -639,6 +644,7 @@ def host_room(seed: UUID, room: UUID):
         room=room,
         should_refresh=should_refresh,
         get_log=get_log,
+        world_versions=world_versions,
         is_authorized_room=is_authorized_room,
         is_primary_owner_room=is_primary_owner_room,
     )

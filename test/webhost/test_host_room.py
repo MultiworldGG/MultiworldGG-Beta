@@ -166,6 +166,33 @@ class TestHostFakeRoom(TestBase):
             self.assertIn("href=\"/play/seed/", response_text)
             self.assertIn(text, response_text)
 
+    def _give_seed_a_slot(self, multidata: bytes) -> None:
+        from WebHostLib.models import db, commit, Seed, Slot
+
+        with self.app.app_context():
+            seed: Seed = Seed.get(id=self.seed_id)
+            seed.multidata = multidata
+            db.session.add(Slot(player_id=1, player_name="Player1", game="Archipelago", seed_id=self.seed_id))
+            commit()
+
+    def _slots_table(self) -> str:
+        with self.app.app_context(), self.app.test_request_context():
+            response = self.client.get(url_for("host_room", seed=self.seed_id, room=self.room_id))
+        self.assertEqual(response.status_code, 200)
+        text = response.get_data(True)
+        return text[text.index('id="slots-table"'):]
+
+    def test_host_room_shows_world_versions(self) -> None:
+        import zlib
+        from Utils import restricted_dumps
+        self._give_seed_a_slot(bytes([3]) + zlib.compress(restricted_dumps({"world_versions": {"Archipelago": "1.2.3"}})))
+        self.assertIn("1.2.3", self._slots_table())
+
+    def test_host_room_survives_unreadable_multidata(self) -> None:
+        """test/hosting destroys a seed's multidata to check the room refuses to start."""
+        self._give_seed_a_slot(bytes([0]))
+        self.assertIn("Unknown", self._slots_table())
+
     def test_host_room_other(self) -> None:
         """Verify that non-own room gives the reduced output."""
         from WebHostLib.models import db, commit, Room
