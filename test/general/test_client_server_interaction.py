@@ -162,9 +162,11 @@ class _FakeVerifySocket:
     def __init__(self, *messages):
         from NetUtils import encode
         self.frames = [encode([message]) for message in messages]
+        self.sent = []
 
     async def send(self, data):
-        pass
+        from NetUtils import decode
+        self.sent.extend(decode(data))
 
     async def close(self):
         pass
@@ -178,15 +180,16 @@ class TestVerifySlotWorldPin(unittest.IsolatedAsyncioTestCase):
     """The launcher pre-flight reports the room's world version pin, so the pinned world
     installs before the client imports it."""
 
-    ROOM_INFO = {"cmd": "RoomInfo", "world_versions": {"Some Game": {"version": [1, 2, 3], "custom": False}},
-                 "mwgg_index_tag": "sixteen-2026.05.16"}
+    ROOM_INFO = {"cmd": "RoomInfo", "custom_world_games": [], "mwgg_index_tag": "sixteen-2026.05.16"}
+    RETRIEVED = {"cmd": "Retrieved", "keys": {"_read_world_versions": {"Some Game": "1.2.3"}}}
 
     async def _verify(self, *messages):
         import websockets
         from frontend_protocol import verify_slot
+        self.socket = _FakeVerifySocket(*messages)
 
         async def _connect(*args, **kwargs):
-            return _FakeVerifySocket(*messages)
+            return self.socket
 
         with mock.patch.object(websockets, "connect", _connect):
             return await verify_slot("localhost:38281", "Player", None, "Some Game")
@@ -199,10 +202,18 @@ class TestVerifySlotWorldPin(unittest.IsolatedAsyncioTestCase):
         import ModuleUpdate
         pin = self._pin("1.0.0")
         with mock.patch.object(ModuleUpdate, "check_world_pin", return_value=pin) as check:
-            result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"})
+            result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"}, self.RETRIEVED)
         self.assertTrue(result.ok)
         self.assertEqual(result.world_pin, pin)
-        check.assert_called_once_with("Some Game", {"version": [1, 2, 3], "custom": False}, "sixteen-2026.05.16")
+        self.assertEqual(self.socket.sent[-1], {"cmd": "Get", "keys": ["_read_world_versions"]})
+        check.assert_called_once_with("Some Game", "1.2.3", "sixteen-2026.05.16", False)
+
+    async def test_custom_world_game_is_flagged(self):
+        import ModuleUpdate
+        room_info = {**self.ROOM_INFO, "custom_world_games": ["Some Game"]}
+        with mock.patch.object(ModuleUpdate, "check_world_pin", return_value=None) as check:
+            await self._verify(room_info, {"cmd": "Connected"}, self.RETRIEVED)
+        check.assert_called_once_with("Some Game", "1.2.3", "sixteen-2026.05.16", True)
 
     async def test_matching_or_unresolvable_pin_is_not_reported(self):
         import ModuleUpdate
@@ -213,9 +224,14 @@ class TestVerifySlotWorldPin(unittest.IsolatedAsyncioTestCase):
         }
         for label, check in checks.items():
             with self.subTest(label), mock.patch.object(ModuleUpdate, "check_world_pin", check):
-                result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"})
+                result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"}, self.RETRIEVED)
                 self.assertTrue(result.ok)
                 self.assertIsNone(result.world_pin)
+
+    async def test_connected_without_world_versions_still_passes(self):
+        result = await self._verify(self.ROOM_INFO, {"cmd": "Connected"})
+        self.assertTrue(result.ok)
+        self.assertIsNone(result.world_pin)
 
     def test_install_pinned_world_reports_success(self):
         import ModuleUpdate

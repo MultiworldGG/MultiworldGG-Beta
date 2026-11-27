@@ -366,13 +366,8 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
                     # register_custom_worlds / GameIndex.add_game do not.
                     return entry is None or not entry.get("module_location")
 
-                world_versions: dict[int, NetUtils.WorldVersionPin] = {
-                    slot: {
-                        "version": tuple(multiworld.worlds[slot].world_version),  # type: ignore[typeddict-item]
-                        "custom": _is_custom_world(multiworld.worlds[slot]),
-                    }
-                    for slot in multiworld.player_ids
-                }
+                custom_world_games = sorted({game_world.game for game_world in multiworld.worlds.values()
+                                             if _is_custom_world(game_world)})
 
                 multidata: NetUtils.MultiData = {
                     "slot_data": slot_data,
@@ -394,7 +389,7 @@ def main(args, seed=None, baked_server_options: dict[str, object] | None = None,
                     "datapackage": data_package,
                     "race_mode": int(multiworld.is_race),
                     "allow_collecting_from": allow_collecting_from,
-                    "world_versions": world_versions,
+                    "custom_world_games": custom_world_games,
                 }
                 # Record the mwgg_igdb release tag this seed was generated against, so a
                 # client can reconstruct the same world set from that index snapshot.

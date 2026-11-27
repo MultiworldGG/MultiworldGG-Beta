@@ -784,11 +784,6 @@ class DataPackage(typing.TypedDict):
     games: dict[str, GamesPackage]
 
 
-class WorldVersionPin(typing.TypedDict):
-    version: tuple[int, int, int]
-    custom: bool
-
-
 class MultiData(typing.TypedDict):
     slot_data: dict[int, Mapping[str, typing.Any]]
     slot_info: dict[int, NetworkSlot]
@@ -806,7 +801,7 @@ class MultiData(typing.TypedDict):
     seed_name: str
     spheres: list[dict[int, set[int]]]
     datapackage: dict[str, GamesPackage]
-    world_versions: typing.NotRequired[dict[int, WorldVersionPin]]
+    custom_world_games: typing.NotRequired[list[str]]
     mwgg_index_tag: typing.NotRequired[str]
     race_mode: int
     allow_collecting_from: dict[int, bool]

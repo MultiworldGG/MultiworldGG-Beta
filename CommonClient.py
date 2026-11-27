@@ -712,10 +712,11 @@ class CommonContext(InitContext):
         self.jsontotextparser = JSONtoTextParser(self)
         self.rawjsontotextparser = RawJSONtoTextParser(self)
 
-        # Game-keyed world version pins from the last RoomInfo packet. The client doesn't
-        # know its slot at RoomInfo time, so the server keys by game name. Checked after
-        # Connected via _check_world_version_pin.
-        self.world_versions: dict[str, dict] = {}
+        # Game-keyed world versions from the server's `_read_world_versions` key, fetched after
+        # Connected and checked via _check_world_version_pin.
+        self.world_versions: dict[str, str] = {}
+        # Games the room generated from a custom apworld (from RoomInfo); their pins are notice-only.
+        self.custom_world_games: set[str] = set()
         # The mwgg_igdb release tag the room was generated against (from RoomInfo). Used to
         # install a managed world at its gen-time version WITHOUT overwriting the active index.
         self.mwgg_index_tag: typing.Optional[str] = None
@@ -1591,8 +1592,8 @@ async def server_autoreconnect(ctx: CommonContext):
 
 
 def _check_world_version_pin(ctx: CommonContext) -> None:
-    """After Connected, report a mismatch between the room's world version pin and the
-    installed world.
+    """Once the room's world versions arrive after Connected, report a mismatch between
+    the room's version of this game's world and the installed one.
 
     The launcher's pre-flight (frontend_protocol.verify_slot) installs a managed pin before
     the client imports the world; a running client holds the world's modules and native
@@ -1603,7 +1604,8 @@ def _check_world_version_pin(ctx: CommonContext) -> None:
     ModuleUpdate.set_room_pinned_worlds(())
     if ctx.game is None:
         return
-    pin = ModuleUpdate.check_world_pin(ctx.game, ctx.world_versions.get(ctx.game), ctx.mwgg_index_tag)
+    pin = ModuleUpdate.check_world_pin(ctx.game, ctx.world_versions.get(ctx.game), ctx.mwgg_index_tag,
+                                       ctx.game in ctx.custom_world_games)
     if pin is None:
         return
     if pin.custom:
@@ -1685,8 +1687,8 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             data_package_checksums = args.get("datapackage_checksums", {})
             await ctx.prepare_data_package(set(args["games"]), data_package_checksums)
 
-            # Store game-keyed world version pins + the index tag for use after Connected.
-            ctx.world_versions = args.get("world_versions", {}) or {}
+            # Store the custom-world games + the index tag for the pin check after Connected.
+            ctx.custom_world_games = set(args.get("custom_world_games") or ())
             ctx.mwgg_index_tag = args.get("mwgg_index_tag")
 
             await ctx.server_auth(args['password'])
@@ -1745,7 +1747,7 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
             if slot_id != 0:  # Skip Archipelago slot
                 ctx.stored_data_notification_keys.add(f"profile_data_{ctx.team}_{slot_id}")
                 ctx.stored_data_notification_keys.add(f"activity_{ctx.team}_{slot_id}")
-        msgs = []
+        msgs = [{"cmd": "Get", "keys": ["_read_world_versions"]}]
         if ctx.locations_checked:
             msgs.append({"cmd": "LocationChecks",
                          "locations": list(ctx.locations_checked)})
@@ -1777,9 +1779,6 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
         if ctx.ui:
             ctx.ui.on_connect()
-
-        # Check world version pin for this slot now that ctx.game is known.
-        _check_world_version_pin(ctx)
 
     elif cmd == 'ReceivedItems':
         start_index = args["index"]
@@ -1855,6 +1854,9 @@ async def process_server_cmd(ctx: CommonContext, args: dict):
 
     elif cmd == "Retrieved":
         ctx.stored_data.update(args["keys"])
+        if "_read_world_versions" in args["keys"]:
+            ctx.world_versions = args["keys"]["_read_world_versions"] or {}
+            _check_world_version_pin(ctx)
         if ctx.ui and f"_read_hints_{ctx.team}_{ctx.slot}" in args["keys"]:
             ctx.ui.update_hints()
         if ctx.ui and f"hints_{ctx.team}_{ctx.slot}_mwgg" in args["keys"]:

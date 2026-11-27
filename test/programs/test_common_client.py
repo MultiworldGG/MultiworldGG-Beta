@@ -108,10 +108,11 @@ class TestCommonContext(unittest.IsolatedAsyncioTestCase):
 PIN_TAG = "sixteen-2026.05.16"
 
 
-def _pin_ctx(game="Some Game", version=(1, 2, 3), custom=False, tag=PIN_TAG):
+def _pin_ctx(game="Some Game", version="1.2.3", custom=False, tag=PIN_TAG):
     return types.SimpleNamespace(
         game=game,
-        world_versions={game: {"version": version, "custom": custom}} if game else {},
+        world_versions={game: version} if game else {},
+        custom_world_games={game} if custom else set(),
         mwgg_index_tag=tag,
         ui=None,
     )
@@ -153,7 +154,7 @@ class TestWorldVersionPinCheck(unittest.TestCase):
 
     def test_matching_version_marks_world_room_pinned(self):
         import ModuleUpdate
-        self.check(_pin_ctx(version=(1, 0, 0)))
+        self.check(_pin_ctx(version="1.0.0"))
         self.assertEqual(ModuleUpdate._room_pinned_worlds(), {"some_game"})
 
     def test_new_room_without_a_held_pin_clears_the_previous_rooms_pin(self):
@@ -162,7 +163,7 @@ class TestWorldVersionPinCheck(unittest.TestCase):
             "mismatch not installed": _pin_ctx(),
             "custom pin": _pin_ctx(custom=True),
             "no tag": _pin_ctx(tag=None),
-            "unset pin": _pin_ctx(version=(0, 0, 0)),
+            "unset pin": _pin_ctx(version="0.0.0"),
             "no game": _pin_ctx(game=None),
         }
         for label, ctx in rooms.items():
@@ -170,6 +171,35 @@ class TestWorldVersionPinCheck(unittest.TestCase):
                 os.environ[ModuleUpdate._ROOM_PINNED_WORLDS_ENV] = "some_game"
                 self.check(ctx)
                 self.assertEqual(ModuleUpdate._room_pinned_worlds(), set())
+
+
+class TestWorldVersionsFetch(unittest.IsolatedAsyncioTestCase):
+    """The room's world versions come from the `_read_world_versions` data storage key."""
+
+    async def test_connected_requests_world_versions(self):
+        ctx = CommonContext()
+        ctx.server_address = "ws://room.example:38281"
+        ctx.send_msgs = mock.AsyncMock()
+        packet = {
+            "cmd": "Connected", "team": 0, "slot": 1,
+            "players": [NetUtils.NetworkPlayer(0, 1, "Player 1", "Player 1")],
+            "missing_locations": [], "checked_locations": [],
+            "slot_info": {"1": NetUtils.NetworkSlot("Player 1", "__TestGame1", NetUtils.SlotType.player)},
+        }
+        with mock.patch.object(Utils, "persistent_store"):
+            await process_server_cmd(ctx, packet)
+        sent = [msg for call in ctx.send_msgs.call_args_list for msg in call.args[0]]
+        self.assertIn({"cmd": "Get", "keys": ["_read_world_versions"]}, sent)
+
+    async def test_retrieved_world_versions_run_the_pin_check(self):
+        import CommonClient
+        for label, value, expected in (("versions", {"Some Game": "1.2.3"}, {"Some Game": "1.2.3"}),
+                                       ("older server", None, {})):
+            with self.subTest(label), mock.patch.object(CommonClient, "_check_world_version_pin") as check:
+                ctx = CommonContext()
+                await process_server_cmd(ctx, {"cmd": "Retrieved", "keys": {"_read_world_versions": value}})
+                self.assertEqual(ctx.world_versions, expected)
+                check.assert_called_once_with(ctx)
 
 
 class TestAdminCommandResultHook(unittest.IsolatedAsyncioTestCase):

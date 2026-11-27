@@ -66,7 +66,7 @@ if __name__ == "__main__":
     ModuleUpdate.update()
 
 from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, NetworkPlayer, Permission, NetworkSlot, \
-    SlotType, LocationStore, MultiData, WorldVersionPin, Hint, HintStatus, GamesPackage
+    SlotType, LocationStore, MultiData, Hint, HintStatus, GamesPackage
 from BaseClasses import ItemClassification
 from apmw.multiserver.gamespackagecache import GamesPackageCache
 
@@ -437,7 +437,7 @@ class Context:
         self.stored_data_notification_clients = collections.defaultdict(weakref.WeakSet)
         self.read_data = {}
         self.spheres = []
-        self.world_versions: typing.Dict[int, NetUtils.WorldVersionPin] = {}
+        self.custom_world_games: list[str] = []
         self.mwgg_index_tag: typing.Optional[str] = None
         self.games_package_cache = games_package_cache or GamesPackageCache()
 
@@ -646,6 +646,13 @@ class Context:
             server_options = decoded_obj.get("server_options", {})
             self._set_options(server_options)
 
+        legacy_pins = decoded_obj.get("world_versions", {})
+        if any(isinstance(pin, dict) for pin in legacy_pins.values()):  # older beta seeds: slot-keyed pins
+            decoded_obj["world_versions"] = {self.games[slot]: Version(*pin["version"]).as_simple_string()
+                                             for slot, pin in legacy_pins.items() if slot in self.games}
+            decoded_obj["custom_world_games"] = sorted({self.games[slot] for slot, pin in legacy_pins.items()
+                                                        if pin.get("custom") and slot in self.games})
+
         world_version = decoded_obj.get("world_versions", {
             world: "0.0.0" for world in self.games.values()
         })
@@ -664,8 +671,8 @@ class Context:
         # sorted access spheres
         self.spheres = decoded_obj.get("spheres", [])
 
-        # per-slot apworld version pins; absent on pre-feature seeds
-        self.world_versions = decoded_obj.get("world_versions", {})
+        # games whose world was a custom apworld at generation; those pins are notice-only
+        self.custom_world_games = decoded_obj.get("custom_world_games", [])
         # mwgg_igdb release tag this seed was generated against; None on pre-feature seeds
         self.mwgg_index_tag = decoded_obj.get("mwgg_index_tag")
 
@@ -1090,15 +1097,6 @@ async def server(websocket: "ServerConnection", path: str = "/", ctx: Context = 
 
 
 async def on_client_connected(ctx: Context, client: Client):
-    # Collapse slot-keyed world_versions into a game-keyed map for the RoomInfo fan-out.
-    # The client doesn't know its slot at RoomInfo time, so we key by game name.
-    # Slots that share a game name share a version; last one written wins (they should agree).
-    game_world_versions: dict[str, WorldVersionPin] = {}
-    for slot, pin in ctx.world_versions.items():
-        slot_info = ctx.slot_info.get(slot, None)
-        if slot_info is not None:
-            game_world_versions[slot_info.game] = pin
-
     await ctx.send_msgs(client, [{
         'cmd': 'RoomInfo',
         'password': bool(ctx.password),
@@ -1114,7 +1112,7 @@ async def on_client_connected(ctx: Context, client: Client):
         'datapackage_checksums': ctx.checksums,
         'seed_name': ctx.seed_name,
         'time': time.time(),
-        'world_versions': game_world_versions,
+        'custom_world_games': ctx.custom_world_games,
         'mwgg_index_tag': ctx.mwgg_index_tag,
     }])
 

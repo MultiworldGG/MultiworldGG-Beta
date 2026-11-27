@@ -236,19 +236,28 @@ def _game_resolves_to(monkeypatch, slug):
     monkeypatch.setattr(GameIndex, "get_module_for_game", lambda game_name, worlds=False: slug)
 
 
-@pytest.mark.parametrize("pin", [None, {}, {"version": None}, {"version": [0, 0, 0]}])
-def test_check_world_pin_ignores_unenforceable_pins(monkeypatch, pin):
+@pytest.mark.parametrize("want", [None, "", "0.0.0"])
+def test_check_world_pin_ignores_unenforceable_pins(monkeypatch, want):
     _game_resolves_to(monkeypatch, "alttp")
-    assert ModuleUpdate.check_world_pin("A Link to the Past", pin, INDEX_TAG) is None
+    assert ModuleUpdate.check_world_pin("A Link to the Past", want, INDEX_TAG) is None
 
 
 def test_check_world_pin_resolves_installable_mismatch(monkeypatch):
     _game_resolves_to(monkeypatch, "alttp")
     _set_installed_world_version(monkeypatch, "5.1.0")
-    pin = ModuleUpdate.check_world_pin("A Link to the Past", {"version": [5, 0, 0], "custom": False}, INDEX_TAG)
+    pin = ModuleUpdate.check_world_pin("A Link to the Past", "5.0.0", INDEX_TAG)
     assert pin == ModuleUpdate.WorldPinCheck("A Link to the Past", "5.0.0", "5.1.0", "alttp", INDEX_TAG, False)
     assert not pin.matches
     assert pin.installable
+
+
+@pytest.mark.parametrize("installed", ["5.0.0", "5.0", "5.0.0.post1"])
+def test_check_world_pin_matches_equal_versions_written_differently(monkeypatch, installed):
+    _game_resolves_to(monkeypatch, "alttp")
+    _set_installed_world_version(monkeypatch, installed)
+    pin = ModuleUpdate.check_world_pin("A Link to the Past", "5.0.0", INDEX_TAG)
+    assert pin.matches
+    assert not pin.installable
 
 
 @pytest.mark.parametrize("installed, custom, slug, tag", [
@@ -260,7 +269,7 @@ def test_check_world_pin_resolves_installable_mismatch(monkeypatch):
 def test_check_world_pin_not_installable(monkeypatch, installed, custom, slug, tag):
     _game_resolves_to(monkeypatch, slug)
     _set_installed_world_version(monkeypatch, installed)
-    pin = ModuleUpdate.check_world_pin("A Link to the Past", {"version": [5, 0, 0], "custom": custom}, tag)
+    pin = ModuleUpdate.check_world_pin("A Link to the Past", "5.0.0", tag, custom)
     assert pin is not None
     assert not pin.installable
 

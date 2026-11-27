@@ -1389,7 +1389,7 @@ class WorldPinCheck(NamedTuple):
 
     @property
     def matches(self) -> bool:
-        return self.installed == self.want
+        return self.installed is not None and tuplize_version(self.installed) == tuplize_version(self.want)
 
     @property
     def installable(self) -> bool:
@@ -1397,21 +1397,13 @@ class WorldPinCheck(NamedTuple):
         return not self.matches and not self.custom and bool(self.slug) and bool(self.tag)
 
 
-def check_world_pin(game: str, pin: Optional[dict[str, Any]], tag: Optional[str]) -> Optional[WorldPinCheck]:
-    """Resolve RoomInfo's `world_versions[game]` pin and `mwgg_index_tag` against the installed world.
+def check_world_pin(game: str, want: Optional[str], tag: Optional[str],
+                    custom: bool = False) -> Optional[WorldPinCheck]:
+    """Resolve the room's `world_versions[game]` and `mwgg_index_tag` against the installed world.
 
-    Returns None when the room pins nothing enforceable for `game` (no pin, or the unset 0.0.0).
+    Returns None when the room pins nothing enforceable for `game` (no version, or the unset 0.0.0).
     """
-    if not pin:
-        return None
-    want: Any = pin.get("version")  # [maj, min, build] over the wire
-    if want is None:
-        return None
-    if isinstance(want, (list, tuple)):
-        want_str = ".".join(str(part) for part in cast("Iterable[Any]", want))
-    else:
-        want_str = str(want)
-    if want_str == "0.0.0":
+    if not want or want == "0.0.0":
         return None
     try:
         from mwgg_igdb import GameIndex
@@ -1419,8 +1411,7 @@ def check_world_pin(game: str, pin: Optional[dict[str, Any]], tag: Optional[str]
     except Exception:
         slug = None
     dist = _world_dist(slug) if slug else None
-    return WorldPinCheck(game, want_str, dist.version if dist else None, slug or None, tag or None,
-                         bool(pin.get("custom", False)))
+    return WorldPinCheck(game, want, dist.version if dist else None, slug or None, tag or None, custom)
 
 
 def install_worlds_from_tag(slugs: list[str], tag: str, with_deps: bool = False) -> list[str]:
