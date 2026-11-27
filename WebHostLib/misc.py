@@ -629,7 +629,10 @@ def host_room(seed: UUID, room: UUID):
         except FileNotFoundError:
             return "", 0
 
-    world_versions = Context.decompress(room.seed.multidata).get("world_versions", {}) if room.seed.slots else {}
+    try:
+        world_versions = Context.decompress(room.seed.multidata).get("world_versions", {}) if room.seed.slots else {}
+    except Exception:  # a corrupt seed must not take the room page down with it
+        world_versions = {}
     from .dashboard import record_room_visit
     from .ownership import is_authorized, is_primary_owner
     is_authorized_room = is_authorized(room, session["_id"])
