@@ -1,5 +1,10 @@
 import unittest
-from MultiServer import Context, ServerCommandProcessor, raw_argument, split_command
+from unittest.mock import AsyncMock, MagicMock
+
+from MultiServer import (
+    Client, Context, ServerCommandProcessor, max_say_length, raw_argument, split_command,
+    process_client_cmd,  # pyright: ignore[reportUnknownVariableType]
+)
 
 
 class TestCommandSplitting(unittest.TestCase):
