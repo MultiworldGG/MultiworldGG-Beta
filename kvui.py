@@ -124,7 +124,7 @@ else:
     from NetUtils import HintStatus, KivyMarkupJSONtoTextParser as KivyJSONtoTextParser
     from kivymd.uix.scrollview import MDScrollView as ScrollBox
     from kivymd.uix.boxlayout import MDBoxLayout
-    from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty
+    from kivy.properties import ObjectProperty, NumericProperty, StringProperty, BooleanProperty, AliasProperty
     from kivy.metrics import dp
     from kivy.uix.widget import Widget
     from kivy.app import App
@@ -199,11 +199,15 @@ else:
     StretchOverScrollBehavior.on_touch_up = _legacy_scroll_effect_touch_up
 
     class HoverBehavior(MDHoverBehavior):
+        """Preserve the hover interface used by game clients on top of KivyMD."""
         hovered = BooleanProperty(False)
+        # TODO: Remove this property alias after UT fixed the behavior
+        border_point = AliasProperty(lambda self: self.enter_point, bind=("enter_point",), cache=True)
+
         def __init__(self, **kwargs):
-            self.register_event_type("on_enter")
-            self.register_event_type("on_leave")
-            Window.bind(mouse_pos=self.on_mouse_pos)
+            # self.register_event_type("on_enter") ## upstream finally is importing the actual kivy hoverbehavior
+            # self.register_event_type("on_leave")
+            # Window.bind(mouse_pos=self.on_mouse_pos)
             self.bind(hover_visible=lambda instance, value: setattr(self, 'hovered', value))
             super(HoverBehavior, self).__init__(**kwargs)
 

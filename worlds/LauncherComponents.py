@@ -34,4 +34,5 @@ from LauncherComponents import (
     export_datapackage,
     processes,
     resolve_icon_path,
+    open_file as open_folder,
 )

@@ -70,7 +70,9 @@ from NetUtils import Endpoint, ClientStatus, NetworkItem, decode, encode, Networ
 from BaseClasses import ItemClassification
 from apmw.multiserver.gamespackagecache import GamesPackageCache
 
-min_client_version = Version(0, 1, 6)
+
+min_client_version = Version(0, 5, 0)
+max_say_length = 2000  # longest chat message the server relays; longer Say packets get InvalidPacket
 colorama.just_fix_windows_console()
 
 no_version = Version(0, 0, 0)
@@ -643,6 +645,11 @@ class Context:
         if use_embedded_server_options:
             server_options = decoded_obj.get("server_options", {})
             self._set_options(server_options)
+
+        world_version = decoded_obj.get("world_versions", {
+            world: "0.0.0" for world in self.games.values()
+        })
+        self.read_data["world_versions"] = lambda: world_version
 
         # load and apply world data and (embedded) data package
         self._load_world_data()
@@ -2527,6 +2534,11 @@ async def process_client_cmd(ctx: Context, client: Client, args: dict):
         elif cmd == 'Say':
             if "text" not in args or type(args["text"]) is not str or not args["text"].isprintable():
                 await ctx.send_msgs(client, [{'cmd': 'InvalidPacket', "type": "arguments", "text": 'Say',
+                                              "original_cmd": cmd}])
+                return
+            if len(args["text"]) > max_say_length:
+                await ctx.send_msgs(client, [{"cmd": "InvalidPacket", "type": "arguments",
+                                              "text": f"Say: message is longer than {max_say_length} characters",
                                               "original_cmd": cmd}])
                 return
 
