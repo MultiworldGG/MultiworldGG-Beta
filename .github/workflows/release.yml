@@ -252,14 +252,12 @@ jobs:
           wget -nv https://github.com/$APPIMAGE_FORK/type2-runtime/releases/download/$APPIMAGE_RUNTIME_VERSION/runtime-x86_64
           echo "$APPIMAGE_RUNTIME_X86_64_HASH runtime-x86_64" | sha256sum -c
           chmod a+rx appimagetool-x86_64.AppImage
-          ./appimagetool-x86_64.AppImage --appimage-extract
-          echo -e '#/bin/sh\n./squashfs-root/AppRun --runtime-file runtime-x86_64 "$@"' > appimagetool
-          chmod a+rx appimagetool
       
       - name: Build AppImage
         run: |
           source venv/bin/activate
-          python setup.py bdist_appimage
+          # Without these cx_Freeze downloads the unpinned continuous appimagetool. Absolute: it runs from dist/.
+          python setup.py bdist_appimage --appimagetool="$PWD/appimagetool-x86_64.AppImage" --runtime-file="$PWD/runtime-x86_64"
       
       - name: Rename AppImage to include version suffix
         run: |
